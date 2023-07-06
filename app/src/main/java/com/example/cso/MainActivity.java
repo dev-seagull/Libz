@@ -395,6 +395,58 @@ public class MainActivity extends AppCompatActivity {
     private class GooglePhotosUpload extends AsyncTask<Void, Void, String> {
         @Override
         protected String doInBackground(Void... voids) {
+            String destinationFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator + "cso";
+
+            File fileDirectory = new File(destinationFolder);
+            File[] directoryFiles = fileDirectory.listFiles();
+
+            if (directoryFiles != null && directoryFiles.length > 0){
+                for (File file : directoryFiles){
+                    try{
+                        URL url = new URL("https://photoslibrary.googleapis.com/v1/uploads");
+                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                        connection.setRequestMethod("POST");
+                        connection.setDoOutput(true);
+                        connection.setUseCaches(false);
+
+                        String authorizationHeader = "Bearer " + accessToken;
+                        String contentTypeHeader = "application/octet-stream";
+                        String filename = file.getName();
+                        int dotIndex = filename.lastIndexOf(".");
+                        String fileFormat="";
+                        if (dotIndex >= 0 && dotIndex < filename.length() - 1) {
+                            fileFormat = filename.substring(dotIndex + 1);
+                        }
+                        String uploadContentTypeHeader="";
+                        if(fileFormat != null){
+                            uploadContentTypeHeader = fileFormat;
+                        }else{
+                            textViewAccessToken.setText("file format not found");
+                        }
+
+                        String uploadProtocolHeader = "raw";
+
+
+                        connection.setRequestProperty("Authorization", authorizationHeader);
+                        connection.setRequestProperty("Content-type", contentTypeHeader);
+                        connection.setRequestProperty("X-Goog-Upload-Content-Type", uploadContentTypeHeader);
+                        connection.setRequestProperty("X-Goog-Upload-Protocol", uploadProtocolHeader);
+
+
+                        //outputStream.close();
+                        //inputStream.close();
+
+                        int responseCode = connection.getResponseCode();
+                        if (responseCode == HttpURLConnection.HTTP_OK) {
+                                textViewAccessToken.setText(responseCode);
+                        }
+
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+
             return null;
         }
 
