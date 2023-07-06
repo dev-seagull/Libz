@@ -83,6 +83,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        uploadButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new GooglePhotosUpload().execute();
+            }
+        });
+
 
 
 
@@ -383,6 +390,18 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(String response) {
            textViewAccessToken.setText(Dcounter + " files were downloaded");
         }
+    }
+
+    private class GooglePhotosUpload extends AsyncTask<Void, Void, String> {
+        @Override
+        protected String doInBackground(Void... voids) {
+            return null;
+        }
+
+        protected void onPostExecute(String response) {
+
+        }
+
     }
 
 
