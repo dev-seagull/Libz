@@ -19,6 +19,13 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.Task;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.model.About;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -51,6 +58,9 @@ public class MainActivity extends AppCompatActivity {
     private GoogleSignInClient googleSignInClient;
     TextView textViewAccessToken;
     String accessToken;
+    String authcodeForPhotos ="";
+    String authcodeForDrive = "";
+
     ArrayList<String> baseUrls = new ArrayList<String>();;
     int Dcounter=0;
 
@@ -64,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
         Button googlephoto = findViewById(R.id.buttonphoto);
         Button downloadbtn = findViewById(R.id.buttonDownload);
         Button uploadButton = findViewById(R.id.uploadButton);
-        Button storageButton = findViewById(R.id.Storagebutton);
+        Button storageButton = findViewById(R.id.buttonStorage);
         textViewAccessToken = findViewById(R.id.accesstoken);
 
 
@@ -74,6 +84,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 new GooglePhotosRequestTask().execute();
+            }
+        });
+
+        storageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new GoogleStorage().execute();
             }
         });
 
@@ -95,7 +112,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestScopes(new Scope("https://www.googleapis.com/auth/photoslibrary.readonly"))
+                .requestScopes(new Scope("https://www.googleapis.com/auth/photoslibrary.readonly")
+                        ,new Scope("https://www.googleapis.com/auth/drive.readonly"))
                 .requestServerAuthCode(getString(R.string.web_client_id))
                 .requestEmail()
                 .build();
@@ -119,7 +137,9 @@ public class MainActivity extends AppCompatActivity {
                 GoogleSignInAccount account = task.getResult(ApiException.class);
 
                 String authCode = account.getServerAuthCode();
-                new TokenRequestTask().execute(authCode);
+                authcodeForPhotos = authCode;
+                authcodeForDrive = authCode;
+                new TokenRequestTask().execute(authcodeForPhotos);
 
             } catch (ApiException e) {
                 Toast.makeText(this, "Sign-in failed: " + e.getStatusCode(), Toast.LENGTH_SHORT).show();
@@ -164,9 +184,12 @@ public class MainActivity extends AppCompatActivity {
                 connection.setDoOutput(true);
                 connection.setDoInput(true);
 
+                String client_id= getString(R.string.client_id);
+                String client_secret = getString(R.string.client_secret);
+
                 String requestBody = "code=" + authCode +
-                        "&client_id="+ R.string.client_id+
-                        "&client_secret=" + R.string.client_secret+
+                        "&client_id="+ client_id+
+                        "&client_secret=" + client_secret+
                         "&grant_type=authorization_code";
 
                 byte[] postData = requestBody.getBytes(StandardCharsets.UTF_8);
@@ -222,6 +245,47 @@ public class MainActivity extends AppCompatActivity {
             }
 
             Toast.makeText(MainActivity.this, response, Toast.LENGTH_LONG).show();
+        }
+
+    }
+
+    private class GoogleStorage extends AsyncTask<Void, Void, String> {
+
+        @Override
+        protected String doInBackground(Void... voids) {
+            try {
+                final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+                final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+
+                HttpRequestInitializer requestInitializer = request -> {
+                    request.getHeaders().setAuthorization("Bearer " + accessToken);
+                    request.getHeaders().setContentType("application/json");
+
+                };
+
+                Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
+                        .setApplicationName("cso")
+                        .build();
+
+                About storage  = service.about().get().setFields("user, storageQuota").execute();
+
+               textViewAccessToken.setText(String.valueOf(storage));
+
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+
+
+
+
+
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String response) {
+
         }
 
     }
@@ -357,7 +421,7 @@ public class MainActivity extends AppCompatActivity {
                             byte[] buffer = new byte[1024];
                             int bytesRead;
                             while ((bytesRead = inputStream.read(buffer)) != -1) {
-                               Log.d("Write", "Bytes written: " + bytesRead);
+                                Log.d("Write", "Bytes written: " + bytesRead);
                                 outputStream.write(buffer, 0, bytesRead);
                             }
                             textViewAccessToken.setText("Download completed");
@@ -389,7 +453,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         protected void onPostExecute(String response) {
-           textViewAccessToken.setText(Dcounter + " files were downloaded");
+            textViewAccessToken.setText(Dcounter + " files were downloaded");
         }
     }
 
@@ -439,7 +503,7 @@ public class MainActivity extends AppCompatActivity {
 
                         int responseCode = connection.getResponseCode();
                         if (responseCode == HttpURLConnection.HTTP_OK) {
-                                textViewAccessToken.setText(responseCode);
+                            textViewAccessToken.setText(responseCode);
                         }
 
                     }catch (Exception e){

@@ -13,8 +13,9 @@
         android:layout_height="wrap_content"
         android:text="Login with Google" />
 
+
     <Button
-        android:id="@+id/Storagebutton"
+        android:id="@+id/buttonStorage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Storage" />
