@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
         Button googlephoto = findViewById(R.id.buttonphoto);
         Button downloadbtn = findViewById(R.id.buttonDownload);
         Button uploadButton = findViewById(R.id.uploadButton);
+        Button storageButton = findViewById(R.id.Storagebutton);
         textViewAccessToken = findViewById(R.id.accesstoken);
 
 
