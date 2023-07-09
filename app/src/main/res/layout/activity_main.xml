@@ -1,53 +1,87 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical"
+    android:padding="16dp"
     tools:context=".MainActivity">
 
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="100dp"
+        android:layout_marginTop="-40dp"
+        android:src="@drawable/seagulllogo" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Seagull CSO"
+        android:textSize="34sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="(Cloud storage optimization)"
+        android:textSize="24sp"
+        android:textStyle="bold" />
 
     <Button
         android:id="@+id/btnLogin"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Login with Google" />
-
-    <Button
-        android:id="@+id/buttonStorage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Storage" />
+        android:layout_marginBottom="16dp"
+        android:drawableRight="@drawable/googlelogo"
+        android:text="Login"
+        android:gravity="center"
+        android:paddingLeft="70dp"
+        android:textSize="24dp" />
 
+    <TextView
+        android:id="@+id/loginState"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="You haven't logged into your Google account yet"
+        android:textSize="16sp" />
 
     <com.github.mikephil.charting.charts.PieChart
         android:id="@+id/StoragepieChart"
-        android:layout_width="302dp"
-        android:layout_height="136dp"
-        android:layout_marginTop="16dp" />
+        android:layout_width="match_parent"
+        android:layout_height="159dp"
+        android:layout_gravity="left"
+        android:layout_marginBottom="16dp" />
 
     <Button
         android:id="@+id/buttonphoto"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="List of files" />
+        android:layout_marginBottom="8dp"
+        android:text="List of files"
+        android:textSize="16sp" />
 
     <Button
         android:id="@+id/buttonDownload"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Download" />
+        android:layout_marginBottom="8dp"
+        android:text="Download"
+        android:textSize="16sp" />
 
     <Button
         android:id="@+id/uploadButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Upload" />
+        android:text="Upload"
+        android:textSize="16sp" />
 
     <TextView
         android:id="@+id/accesstoken"
-        android:layout_width="400dp"
-        android:layout_height="250dp" />
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp" />
 
 </LinearLayout>

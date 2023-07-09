@@ -15,14 +15,11 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.LegendEntry;
-import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.formatter.PercentFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -39,7 +36,6 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 
-import org.checkerframework.checker.units.qual.A;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -57,8 +53,8 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -71,8 +67,11 @@ public class MainActivity extends AppCompatActivity {
     private GoogleSignInClient googleSignInClient;
     public double totalStorage;
     public double usageStorage;
+    public double driveUsageStorage;
+    public double gmail_plus_googlePhotos_storage;
     public  double freeSpace;
     TextView textViewAccessToken;
+    TextView textViewLoginState;
     String accessToken;
     String authcodeForPhotos ="";
     String authcodeForDrive = "";
@@ -91,17 +90,21 @@ public class MainActivity extends AppCompatActivity {
         Button googlephoto = findViewById(R.id.buttonphoto);
         Button downloadbtn = findViewById(R.id.buttonDownload);
         Button uploadButton = findViewById(R.id.uploadButton);
-        Button storageButton = findViewById(R.id.buttonStorage);
         textViewAccessToken = findViewById(R.id.accesstoken);
+        textViewLoginState = findViewById(R.id.loginState);
         storage_pieChart = findViewById(R.id.StoragepieChart);
+
         storage_pieChart.setNoDataText("Your storage chart will be displayed here after you login");
         storage_pieChart.setNoDataTextColor(Color.RED);
         Typeface customTypeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD);
         storage_pieChart.setNoDataTextTypeface(customTypeface);
+        storage_pieChart.getDescription().setEnabled(false);
 
 
 
-
+        if(accessToken == null){
+            textViewLoginState.setText("You haven't logged into your google account yet");
+        }
 
         btnLogin.setOnClickListener(v -> signIn());
 
@@ -112,12 +115,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        storageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                new GoogleStorage().execute();
-            }
-        });
 
         downloadbtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -178,6 +175,11 @@ public class MainActivity extends AppCompatActivity {
 
 
     private class TokenRequestTask extends AsyncTask<String, Void, String> {
+        public double convertToGigaByte(float storage){
+            double Divider = (Math.pow(1024,3));
+            return storage/Divider;
+        }
+
 
         @Override
         protected String doInBackground(String... params) {
@@ -241,9 +243,50 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                     response = responseBuilder.toString();
+                    JSONObject jsonResponse = null;
+                    try {
+                        jsonResponse = new JSONObject(response);
+                        accessToken = jsonResponse.getString("access_token");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+
+
+                    final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+                    final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+
+                    HttpRequestInitializer requestInitializer = request -> {
+                        request.getHeaders().setAuthorization("Bearer " + accessToken);
+                        request.getHeaders().setContentType("application/json");
+
+                    };
+
+                    Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
+                            .setApplicationName("cso")
+                            .build();
+
+
+                    totalStorage  = convertToGigaByte(service.about().get()
+                            .setFields("user, storageQuota")
+                            .execute().getStorageQuota().getLimit());
+
+                    usageStorage = convertToGigaByte(service.about().get()
+                            .setFields("user, storageQuota")
+                            .execute().getStorageQuota().getUsage());
+
+                    driveUsageStorage = convertToGigaByte(service.about().get()
+                            .setFields("user, storageQuota")
+                            .execute().getStorageQuota().getUsageInDrive());
+
+                    gmail_plus_googlePhotos_storage =  usageStorage - driveUsageStorage;
+
+                    freeSpace = totalStorage - usageStorage;
+
+
                 }
 
-            } catch (IOException e) {
+            } catch (IOException | GeneralSecurityException e) {
                 e.printStackTrace();
             }
 
@@ -252,102 +295,40 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String response) {
-            JSONObject jsonResponse = null;
-            try {
-                jsonResponse = new JSONObject(response);
-            } catch (JSONException e) {
-                e.printStackTrace();
+
+            if(accessToken != null){
+                textViewLoginState.setText("You have successfully logged into your account");
             }
-            try {
-                accessToken = jsonResponse.getString("access_token");
-                textViewAccessToken.setText(accessToken);
-                //new GooglePhotosTask().execute(accessToken);
-
-
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            Toast.makeText(MainActivity.this, response, Toast.LENGTH_LONG).show();
-        }
-
-    }
-
-    private class GoogleStorage extends AsyncTask<Void, Void, String> {
-
-        public double convertToGigaByte(float storage){
-            double Divider = (Math.pow(1024,3));
-            return storage/Divider;
-        }
-
-        @Override
-        protected String doInBackground(Void... voids) {
-            try {
-                final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-                final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-
-                HttpRequestInitializer requestInitializer = request -> {
-                    request.getHeaders().setAuthorization("Bearer " + accessToken);
-                    request.getHeaders().setContentType("application/json");
-
-                };
-
-                Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                        .setApplicationName("cso")
-                        .build();
-
-
-                 totalStorage  = convertToGigaByte(service.about().get()
-                         .setFields("user, storageQuota")
-                         .execute().getStorageQuota().getLimit());
-
-                 usageStorage = convertToGigaByte(service.about().get()
-                         .setFields("user, storageQuota")
-                         .execute().getStorageQuota().getUsage());
-
-                 freeSpace = totalStorage - usageStorage;
-
-
-               textViewAccessToken.setText("User total storage: "+ String.valueOf(totalStorage)+ "\n"+
-                               "User free space: "+ String.valueOf(freeSpace));
-
-            } catch (Exception e){
-                e.printStackTrace();
-            }
-
-
-
-
-
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String response) {
-            storage_pieChart.getDescription().setEnabled(false);
 
             ArrayList<PieEntry> entries = new ArrayList<>();
             ArrayList<String> labels = new ArrayList<>();
             entries.add(new PieEntry((float) totalStorage, 0));
             labels.add("Total Storage");
 
-            entries.add(new PieEntry((float) usageStorage, 1));
-            labels.add("Usage Storage");
+            entries.add(new PieEntry((float) driveUsageStorage,1));
+            labels.add("Google Drive");
 
             entries.add(new PieEntry((float)  freeSpace, 2));
             labels.add("Free Space");
 
-            PieDataSet dataSet = new PieDataSet(entries, "Storage");
+            entries.add(new PieEntry((float) gmail_plus_googlePhotos_storage, 3));
+            labels.add("Gmail and Google Photos");
+
+            PieDataSet dataSet = new PieDataSet(entries, "GStorage");
             dataSet.setDrawValues(true);
+            dataSet.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
             dataSet.setColors(ColorTemplate.COLORFUL_COLORS);
             dataSet.setValueFormatter(new ValueFormatter() {
                 @Override
                 public String getFormattedValue(float value) {
-                    return value + " GB";
+                    String formattedValue = String.valueOf(value);
+                    if (formattedValue.length() > 4) {
+                        formattedValue = formattedValue.substring(0, 4);
+                    }
+                    return formattedValue + " GB";
                 }
             });
+
             PieData data = new PieData(dataSet);
             storage_pieChart.setData(data);
             storage_pieChart.invalidate();
@@ -361,8 +342,6 @@ public class MainActivity extends AppCompatActivity {
             legend.setXEntrySpace(10f);
             legend.setYEntrySpace(10f);
 
-
-
             ArrayList<LegendEntry> legendEntries = new ArrayList<>();
             for (int i = 0; i < labels.size(); i++) {
                 LegendEntry entry = new LegendEntry();
@@ -371,10 +350,10 @@ public class MainActivity extends AppCompatActivity {
                 legendEntries.add(entry);
             }
             legend.setCustom(legendEntries);
-
         }
 
     }
+
 
     private class GooglePhotosRequestTask extends AsyncTask<Void, Void, String> {
 
@@ -382,16 +361,16 @@ public class MainActivity extends AppCompatActivity {
         protected String doInBackground(Void... voids) {
 
             try {
-                // Create the URL object with the API endpoint
+
                 URL url = new URL("https://photoslibrary.googleapis.com/v1/mediaItems");
 
-                // Create the HttpURLConnection object
+
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-                // Set the request method
+
                 connection.setRequestMethod("GET");
 
-                // Set the request headers
+
                 connection.setRequestProperty("Content-type", "application/json");
                 connection.setRequestProperty("Authorization", "Bearer " + accessToken);
 
@@ -410,9 +389,9 @@ public class MainActivity extends AppCompatActivity {
 
                     reader.close();
 
-                    // Parse the response JSON
+
                     String jsonResponse = response.toString();
-                    // Extract the first media item content
+
                     JSONObject responseJson = new JSONObject(jsonResponse);
                     JSONArray mediaItems = responseJson.getJSONArray("mediaItems");
                     StringBuilder filenames = new StringBuilder();
