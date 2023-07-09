@@ -1,6 +1,8 @@
 package com.example.cso;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -12,6 +14,17 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.AxisBase;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.LegendEntry;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.PercentFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -25,8 +38,8 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.model.About;
 
+import org.checkerframework.checker.units.qual.A;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -44,8 +57,8 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.sql.SQLOutput;
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -56,6 +69,9 @@ public class MainActivity extends AppCompatActivity {
     private static final int RC_SIGN_IN = 1001;
 
     private GoogleSignInClient googleSignInClient;
+    public double totalStorage;
+    public double usageStorage;
+    public  double freeSpace;
     TextView textViewAccessToken;
     String accessToken;
     String authcodeForPhotos ="";
@@ -63,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<String> baseUrls = new ArrayList<String>();;
     int Dcounter=0;
+    PieChart storage_pieChart;
 
 
     @Override
@@ -76,6 +93,14 @@ public class MainActivity extends AppCompatActivity {
         Button uploadButton = findViewById(R.id.uploadButton);
         Button storageButton = findViewById(R.id.buttonStorage);
         textViewAccessToken = findViewById(R.id.accesstoken);
+        storage_pieChart = findViewById(R.id.StoragepieChart);
+        storage_pieChart.setNoDataText("Your storage chart will be displayed here after you login");
+        storage_pieChart.setNoDataTextColor(Color.RED);
+        Typeface customTypeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD);
+        storage_pieChart.setNoDataTextTypeface(customTypeface);
+
+
+
 
 
         btnLogin.setOnClickListener(v -> signIn());
@@ -251,6 +276,11 @@ public class MainActivity extends AppCompatActivity {
 
     private class GoogleStorage extends AsyncTask<Void, Void, String> {
 
+        public double convertToGigaByte(float storage){
+            double Divider = (Math.pow(1024,3));
+            return storage/Divider;
+        }
+
         @Override
         protected String doInBackground(Void... voids) {
             try {
@@ -267,9 +297,20 @@ public class MainActivity extends AppCompatActivity {
                         .setApplicationName("cso")
                         .build();
 
-                About storage  = service.about().get().setFields("user, storageQuota").execute();
 
-               textViewAccessToken.setText(String.valueOf(storage));
+                 totalStorage  = convertToGigaByte(service.about().get()
+                         .setFields("user, storageQuota")
+                         .execute().getStorageQuota().getLimit());
+
+                 usageStorage = convertToGigaByte(service.about().get()
+                         .setFields("user, storageQuota")
+                         .execute().getStorageQuota().getUsage());
+
+                 freeSpace = totalStorage - usageStorage;
+
+
+               textViewAccessToken.setText("User total storage: "+ String.valueOf(totalStorage)+ "\n"+
+                               "User free space: "+ String.valueOf(freeSpace));
 
             } catch (Exception e){
                 e.printStackTrace();
@@ -285,6 +326,51 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String response) {
+            storage_pieChart.getDescription().setEnabled(false);
+
+            ArrayList<PieEntry> entries = new ArrayList<>();
+            ArrayList<String> labels = new ArrayList<>();
+            entries.add(new PieEntry((float) totalStorage, 0));
+            labels.add("Total Storage");
+
+            entries.add(new PieEntry((float) usageStorage, 1));
+            labels.add("Usage Storage");
+
+            entries.add(new PieEntry((float)  freeSpace, 2));
+            labels.add("Free Space");
+
+            PieDataSet dataSet = new PieDataSet(entries, "Storage");
+            dataSet.setDrawValues(true);
+            dataSet.setColors(ColorTemplate.COLORFUL_COLORS);
+            dataSet.setValueFormatter(new ValueFormatter() {
+                @Override
+                public String getFormattedValue(float value) {
+                    return value + " GB";
+                }
+            });
+            PieData data = new PieData(dataSet);
+            storage_pieChart.setData(data);
+            storage_pieChart.invalidate();
+
+            Legend legend = storage_pieChart.getLegend();
+            legend.setForm(Legend.LegendForm.CIRCLE);
+            legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.RIGHT);
+            legend.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
+            legend.setOrientation(Legend.LegendOrientation.VERTICAL);
+            legend.setDrawInside(false);
+            legend.setXEntrySpace(10f);
+            legend.setYEntrySpace(10f);
+
+
+
+            ArrayList<LegendEntry> legendEntries = new ArrayList<>();
+            for (int i = 0; i < labels.size(); i++) {
+                LegendEntry entry = new LegendEntry();
+                entry.label = labels.get(i);
+                entry.formColor = dataSet.getColor(i);
+                legendEntries.add(entry);
+            }
+            legend.setCustom(legendEntries);
 
         }
 
