@@ -360,6 +360,11 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(Void... voids) {
 
+            int pageSize = 100;
+            String nextPageToken = null;
+            JSONArray mediaItems = null;
+            StringBuilder filenames = null;
+
             try {
 
                 URL url = new URL("https://photoslibrary.googleapis.com/v1/mediaItems");
@@ -370,15 +375,13 @@ public class MainActivity extends AppCompatActivity {
 
                 connection.setRequestMethod("GET");
 
-
                 connection.setRequestProperty("Content-type", "application/json");
                 connection.setRequestProperty("Authorization", "Bearer " + accessToken);
 
-                // Send the request
+
                 int responseCode = connection.getResponseCode();
 
                 if (responseCode == HttpURLConnection.HTTP_OK) {
-                    // Read the response
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     StringBuilder response = new StringBuilder();
                     String line;
@@ -387,14 +390,14 @@ public class MainActivity extends AppCompatActivity {
                         response.append(line);
                     }
 
-                    reader.close();
 
+                    reader.close();
 
                     String jsonResponse = response.toString();
 
                     JSONObject responseJson = new JSONObject(jsonResponse);
-                    JSONArray mediaItems = responseJson.getJSONArray("mediaItems");
-                    StringBuilder filenames = new StringBuilder();
+                    mediaItems = responseJson.getJSONArray("mediaItems");
+                    filenames = new StringBuilder();
                     for (int i = 0; i < mediaItems.length(); i++) {
                         JSONObject mediaItem = mediaItems.getJSONObject(i);
                         String filename = mediaItem.getString("filename");
@@ -402,23 +405,73 @@ public class MainActivity extends AppCompatActivity {
                         baseUrls.add(baseUrl);
                         filenames.append(filename).append("\n");
                     }
+                    nextPageToken = responseJson.optString("nextPageToken", null);
+                    while (responseJson.has("nextPageToken") && nextPageToken!=null && responseJson.has("mediaItems")) {
+                        nextPageToken = responseJson.optString("nextPageToken",null);
+                        //System.out.println(nextPageToken);
+
+                        // connection = (HttpURLConnection) new URL(url.toString() + params).openConnection();
+                        String nextPageUrl = "https://photoslibrary.googleapis.com/v1/mediaItems?pageToken=" + nextPageToken;
+                        URL nextUrl = new URL(nextPageUrl);
+                        connection = (HttpURLConnection) nextUrl.openConnection();
+
+                        connection.setRequestMethod("GET");
+                        connection.setRequestProperty("Content-type", "application/json");
+                        connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+
+                        responseCode = connection.getResponseCode();
+
+                        if (responseCode == HttpURLConnection.HTTP_OK) {
+                            reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                            response = new StringBuilder();
+
+                            while ((line = reader.readLine()) != null) {
+                                response.append(line);
+                            }
 
 
-                    return String.valueOf(mediaItems.length())+" "+ filenames.toString();
+                            reader.close();
+
+                            jsonResponse = response.toString();
+
+                            responseJson = new JSONObject(jsonResponse);
+
+                            if(responseJson.has("mediaItems")){
+                                mediaItems = responseJson.getJSONArray("mediaItems");
+                            }else{
+                                mediaItems = new JSONArray();
+                            }
+
+
+                            filenames = new StringBuilder();
+
+
+                            for (int i = 0; i < mediaItems.length(); i++) {
+                                    JSONObject mediaItem = mediaItems.getJSONObject(i);
+                                    String filename = mediaItem.getString("filename");
+                                    String baseUrl = mediaItem.getString("baseUrl");
+                                    baseUrls.add(baseUrl);
+                                    filenames.append(filename).append("\n");
+                            }
+
+
+
+                        }
+                    }
+
+                    connection.disconnect();
                 }
 
-                // Close the connection
-                connection.disconnect();
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
 
-            return null;
+            return String.valueOf(baseUrls.size());
         }
 
-        protected void onPostExecute(String response) {
+            protected void onPostExecute(String response) {
             if (response != null) {
-                textViewAccessToken.setText(response);
+                textViewAccessToken.setText("Number of media items in Google Photos: "+response);
                 Toast.makeText(MainActivity.this, response, Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(MainActivity.this, "Failed to retrieve data", Toast.LENGTH_LONG).show();
