@@ -5,8 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
@@ -33,6 +32,23 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="(Cloud storage optimization)"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:alpha="1"
+            android:background="#050505" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="10dp"
+            android:text="Main account: An account which will be the main storage of you"
             android:textSize="24sp"
             android:textStyle="bold" />
 
@@ -78,6 +94,24 @@
             android:text="Download"
             android:textSize="16sp" />
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:alpha="1"
+            android:background="#050505" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="10dp"
+            android:text="Back-up account: An account which will be a back-up for your main storage"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+
         <Button
             android:id="@+id/btnLoginBackup"
             android:layout_width="match_parent"
@@ -88,6 +122,7 @@
             android:gravity="center"
             android:paddingLeft="70dp"
             android:textSize="24dp" />
+
 
         <Button
             android:id="@+id/uploadButton"
@@ -103,6 +138,14 @@
             android:layout_marginTop="16dp" />
 
 
+
+
+
+
+
     </LinearLayout>
+
+
+
 
 </ScrollView>
