@@ -31,6 +31,7 @@ import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.Task;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -41,8 +42,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -87,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Button btnLogin = findViewById(R.id.btnLogin);
+        Button btnBackUpLogin = findViewById(R.id.btnLoginBackup);
         Button googlephoto = findViewById(R.id.buttonphoto);
         Button downloadbtn = findViewById(R.id.buttonDownload);
         Button uploadButton = findViewById(R.id.uploadButton);
@@ -107,6 +112,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         btnLogin.setOnClickListener(v -> signIn());
+        btnBackUpLogin.setOnClickListener(v -> signInBackupAccount());
+
 
         googlephoto.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -123,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
         uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -135,7 +143,8 @@ public class MainActivity extends AppCompatActivity {
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestScopes(new Scope("https://www.googleapis.com/auth/photoslibrary.readonly")
-                        ,new Scope("https://www.googleapis.com/auth/drive.readonly"))
+                        ,new Scope("https://www.googleapis.com/auth/drive.readonly" ),
+                        new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly"))
                 .requestServerAuthCode(getString(R.string.web_client_id))
                 .requestEmail()
                 .build();
@@ -146,6 +155,25 @@ public class MainActivity extends AppCompatActivity {
     private void signIn() {
         Intent signInIntent = googleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
+    }
+
+    private void signInBackupAccount() {
+        googleSignInClient.signOut().addOnCompleteListener(task -> {
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestScopes(new Scope("https://www.googleapis.com/auth/photoslibrary.readonly"),
+                            new Scope("https://www.googleapis.com/auth/drive.readonly"),
+                            new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly"))
+                    .requestServerAuthCode(getString(R.string.web_client_id))
+                    .requestEmail()
+                    .build();
+
+            GoogleSignInClient googleSignInClientBackup = GoogleSignIn.getClient(this, gso);
+
+            Intent signInIntent = googleSignInClientBackup.getSignInIntent();
+            startActivityForResult(signInIntent, RC_SIGN_IN);
+
+                });
+
     }
 
     @Override
@@ -454,8 +482,6 @@ public class MainActivity extends AppCompatActivity {
                                     filenames.append(filename).append("\n");
                             }
 
-
-
                         }
                     }
 
@@ -486,30 +512,13 @@ public class MainActivity extends AppCompatActivity {
         protected String doInBackground(Void... voids) {
 
             try {
-                // Create the URL object with the API endpoint
                 for(String baseUrl: baseUrls){
                     URL url = new URL(baseUrl+"=d");
 
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-                    // Set the request method
                     connection.setRequestMethod("GET");
 
-                    //BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                    //StringBuilder response = new StringBuilder();
-                    //String line;
-
-                    //while ((line = reader.readLine()) != null) {
-                    //    response.append(line);
-                    //}
-
-                    //reader.close();
-
-                    // Parse the response JSON
-                    //String jsonResponse = response.toString();
-
                     int responseCode = connection.getResponseCode();
-                    System.out.println(responseCode);
                     if (responseCode == HttpURLConnection.HTTP_OK) {
                         InputStream inputStream = new BufferedInputStream(connection.getInputStream());
 
@@ -518,23 +527,18 @@ public class MainActivity extends AppCompatActivity {
                         if (!folder.exists()) {
                             boolean folderCreated = folder.mkdirs();
                             if (!folderCreated) {
-                                // Failed to create the folder, handle the error
                                 textViewAccessToken.setText("couldn't create directory");
                             }
 
                         }
                         String fileName = ("filename"+Dcounter+".jpg").substring(("filename"+Dcounter+".jpg").lastIndexOf("/") + 1);
-                        //System.out.println(fileName);
                         String filePath = destinationFolder + File.separator + fileName;
-                        //System.out.println(filePath);
 
                         OutputStream outputStream = null;
                         try {
                             File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator + "cso"+File.separator + "picture"+Dcounter+".jpg");
-                            System.out.println(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator + "cso"+File.separator + "picture"+Dcounter+".jpg");
                             file.createNewFile();
                             outputStream = new FileOutputStream(file);
-                            //outputStream.write(jsonResponse.getBytes());
 
                             byte[] buffer = new byte[1024];
                             int bytesRead;
@@ -542,14 +546,14 @@ public class MainActivity extends AppCompatActivity {
                                 Log.d("Write", "Bytes written: " + bytesRead);
                                 outputStream.write(buffer, 0, bytesRead);
                             }
-                            textViewAccessToken.setText("Download completed");
+                            Dcounter = Dcounter + 1;
+                            textViewAccessToken.setText(Dcounter+ " files were downloaded");
                         } catch (IOException e) {
                             e.printStackTrace();
                             textViewAccessToken.setText("Failed to save the file");
                         } finally {
                             try {
                                 if (outputStream != null) {
-                                    System.out.println("it is not null");
                                     outputStream.close();
                                 }
                             } catch (IOException e) {
@@ -559,11 +563,13 @@ public class MainActivity extends AppCompatActivity {
                         outputStream.close();
 
                         inputStream.close();
-                        textViewAccessToken.setText("Download completed");
+
+                        connection.disconnect();
+
                     }
-                    connection.disconnect();
-                    Dcounter = Dcounter + 1;
+
                 }
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -576,6 +582,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private class GooglePhotosUpload extends AsyncTask<Void, Void, String> {
+
+        byte[] inputStreamToByteArray(InputStream inputStream) throws IOException {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            int nRead;
+            byte[] data = new byte[1024];
+            while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+            buffer.flush();
+            return buffer.toByteArray();
+        }
+
         @Override
         protected String doInBackground(Void... voids) {
             String destinationFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator + "cso";
@@ -583,7 +601,9 @@ public class MainActivity extends AppCompatActivity {
             File fileDirectory = new File(destinationFolder);
             File[] directoryFiles = fileDirectory.listFiles();
 
+
             if (directoryFiles != null && directoryFiles.length > 0){
+                int counter = 0;
                 for (File file : directoryFiles){
                     try{
                         URL url = new URL("https://photoslibrary.googleapis.com/v1/uploads");
@@ -593,7 +613,6 @@ public class MainActivity extends AppCompatActivity {
                         connection.setUseCaches(false);
 
                         String authorizationHeader = "Bearer " + accessToken;
-                        String contentTypeHeader = "application/octet-stream";
                         String filename = file.getName();
                         int dotIndex = filename.lastIndexOf(".");
                         String fileFormat="";
@@ -607,27 +626,80 @@ public class MainActivity extends AppCompatActivity {
                             textViewAccessToken.setText("file format not found");
                         }
 
-                        String uploadProtocolHeader = "raw";
-
-
                         connection.setRequestProperty("Authorization", authorizationHeader);
-                        connection.setRequestProperty("Content-type", contentTypeHeader);
+                        connection.setRequestProperty("Content-type", "application/octet-stream");
                         connection.setRequestProperty("X-Goog-Upload-Content-Type", uploadContentTypeHeader);
-                        connection.setRequestProperty("X-Goog-Upload-Protocol", uploadProtocolHeader);
+                        connection.setRequestProperty("X-Goog-Upload-Protocol",  "raw");
 
-
-                        //outputStream.close();
-                        //inputStream.close();
+                        BufferedOutputStream outputStream = new BufferedOutputStream(connection.getOutputStream());
+                        InputStream fileInputStream = new FileInputStream(file);
+                        byte[] data = inputStreamToByteArray(fileInputStream);
+                        outputStream.write(data);
+                        outputStream.flush();
+                        outputStream.close();
 
                         int responseCode = connection.getResponseCode();
-                        if (responseCode == HttpURLConnection.HTTP_OK) {
-                            textViewAccessToken.setText(responseCode);
+
+                        if(responseCode == HttpURLConnection.HTTP_OK){
+                            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                            StringBuilder response = new StringBuilder();
+                            String line;
+
+                            while ((line = reader.readLine()) != null) {
+                                response.append(line);
+                            }
+
+                            reader.close();
+
+                            String uploadToken = response.toString();
+                            JSONObject newUploadedMediaItem = new JSONObject();
+                            newUploadedMediaItem.put("description", "uploaded by CSO");
+                            newUploadedMediaItem.put("simpleMediaItem", new JSONObject()
+                                    .put("fileName", filename)
+                                    .put("uploadToken", uploadToken));
+
+
+                            JSONArray newUploadedMediaItemsArray = new JSONArray();
+                            newUploadedMediaItemsArray.put(newUploadedMediaItem);
+
+                            JSONObject requestBody = new JSONObject();
+                            requestBody.put("newMediaItems", newUploadedMediaItemsArray);
+
+                            url = new URL("https://photoslibrary.googleapis.com/v1/mediaItems:batchCreate");
+                            connection = (HttpURLConnection) url.openConnection();
+                            connection.setRequestMethod("POST");
+                            connection.setRequestProperty("Content-type", "application/json");
+                            connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+                            connection.setDoOutput(true);
+
+                            outputStream = new BufferedOutputStream(connection.getOutputStream());
+                            outputStream.write(requestBody.toString().getBytes("UTF-8"));
+                            outputStream.flush();
+                            outputStream.close();
+
+                            responseCode = connection.getResponseCode();
+                            if(responseCode == HttpURLConnection.HTTP_OK){
+                                reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                                response = new StringBuilder();
+
+                                while ((line = reader.readLine()) != null) {
+                                    response.append(line);
+                                }
+                                reader.close();
+
+                                String jsonResponse = response.toString();
+                                counter = counter + 1;
+                                textViewAccessToken.setText(counter+ " files were uploaded");
+                            }
                         }
+
 
                     }catch (Exception e){
                         e.printStackTrace();
                     }
                 }
+
+
             }
 
             return null;
