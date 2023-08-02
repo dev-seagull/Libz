@@ -1,11 +1,16 @@
 package com.example.cso;
 
+import android.app.ActivityManager;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.StatFs;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -31,7 +36,6 @@ import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.Task;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -76,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
     public  double freeSpace;
     TextView textViewAccessToken;
     TextView textViewLoginState;
+    TextView galleryTextView;
     String accessToken;
     String authcodeForPhotos ="";
     String authcodeForDrive = "";
@@ -95,7 +100,10 @@ public class MainActivity extends AppCompatActivity {
         Button googlephoto = findViewById(R.id.buttonphoto);
         Button downloadbtn = findViewById(R.id.buttonDownload);
         Button uploadButton = findViewById(R.id.uploadButton);
+        Button galleryButton = findViewById(R.id.GalleryButton);
         textViewAccessToken = findViewById(R.id.accesstoken);
+        galleryTextView = findViewById(R.id.gallery);
+        galleryTextView.setText("");
         textViewLoginState = findViewById(R.id.loginState);
         storage_pieChart = findViewById(R.id.StoragepieChart);
 
@@ -139,6 +147,76 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+        galleryButton.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        new Gallery().execute();
+                    }
+                    /*
+                    public void onClick(View view) {
+                        ArrayList<String> imagePath = new ArrayList<>();
+                        Cursor imageCursor = null;
+                        try{
+                            Uri imageUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                            String[] imageProjection = {MediaStore.Images.Media.DATA};
+                            imageCursor = MainActivity.this.getContentResolver().query(imageUri, imageProjection, null, null, null);
+                            if (imageCursor != null) {
+                                Integer column_index_data = imageCursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+                                //returns 0
+                                //galleryTextView.append("Image cursor is not null ");
+
+                                while (imageCursor.moveToNext()) {
+                                    StringBuilder cursorData = new StringBuilder();
+                                    String[] columnNames = imageCursor.getColumnNames();
+                                    for (String columnName : columnNames) {
+                                        int columnIndex = imageCursor.getColumnIndexOrThrow(columnName);
+                                        String columnValue = imageCursor.getString(columnIndex);
+                                        cursorData.append(columnName).append(": ").append(columnValue).append("\n");
+                                    }
+                                    galleryTextView.append("Cursor values: \n" + cursorData.toString() + "\n");
+
+                                    //String PathOfImage = imageCursor.getString(column_index_data);
+                                    //if(PathOfImage != null){
+                                    //    galleryTextView.append("path is: " +PathOfImage);
+                                    //    imagePath.add(PathOfImage);
+                                    //}else{
+                                    //    galleryTextView.append("Path of images cannot be found!");
+                                    //}
+                               }
+                               // if(PathOfImage != null)
+                               // {
+                               //     textViewAccessToken.setText(PathOfImage);
+                                //}else{
+                                //    textViewAccessToken.setText("it's null");
+                                //}
+                                //String[] t = imageCursor.getColumnNames();
+                                //StringBuilder sb = new StringBuilder();
+
+                                //for (String columnName : t) {
+                                    //sb.append(columnName).append("\n");
+                                //}
+
+                                //galleryTextView.append(sb.toString());
+                                //returns _data
+                                imageCursor.close();
+                                //if(imagePath != null){
+                                //    galleryTextView.setText(imagePath.get(1));
+                                //}
+
+                                //galleryTextView.append(Integer.toString(imagePath.size()));
+
+                            }else {
+                                galleryTextView.append("No images were found in your gallery!");
+                            }
+
+                        } catch (Exception e){
+                            galleryTextView.append(e.getMessage());
+                        }
+
+                    }*/
+                }
+        );
 
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -709,6 +787,134 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
+    }
+
+    private class Gallery extends AsyncTask<Void, Void, String> {
+
+        private String formatSize(long sizeBytes) {
+            String[] units = {"B", "KB", "MB", "GB", "TB"};
+            int unitIndex = 0;
+            double size = sizeBytes;
+
+            while (size >= 1024 && unitIndex < units.length - 1) {
+                size /= 1024;
+                unitIndex++;
+            }
+
+            return String.format("%.2f %s", size, units[unitIndex]);
+        }
+
+        @Override
+        protected String doInBackground(Void... voids) {
+
+            File externalDir  = Environment.getExternalStorageDirectory();
+
+            long availableSpaceBytes, totalSpaceBytes;
+
+            StatFs stat = new StatFs(externalDir.getPath());
+
+            if (android.os.Build.VERSION.SDK_INT >=
+                    android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                availableSpaceBytes = stat.getAvailableBytes();
+                totalSpaceBytes = stat.getTotalBytes();
+
+
+            }else{
+                long blockSize = stat.getBlockSizeLong();
+                long availableBlocks = stat.getAvailableBlocksLong();
+                long totalBlocks = stat.getBlockCountLong();
+                availableSpaceBytes = blockSize * availableBlocks;
+                totalSpaceBytes = blockSize * totalBlocks;
+
+
+            }
+            String availableSpace = formatSize(availableSpaceBytes);
+            String totalSpace = formatSize(totalSpaceBytes);
+
+
+            ;
+                //if (imageCursor != null) {
+                  //  int column_index_data = imageCursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME);
+                    //returns 0
+                    //galleryTextView.append("Image cursor is not null ");
+                //    String[] columnNames = imageCursor.getColumnNames();
+                    // "_data"
+                //    galleryTextView.append("number of columns:"+ columnNames.length +" ");
+
+                //    int cursorCount = imageCursor.getCount();
+                //    galleryTextView.append("cursoCount is: " + cursorCount);
+                    //if(cursorCount<20){
+                    //    for(int i=0; i<cursorCount; i++){
+                    //        imageCursor.moveToPosition(i);
+                    //        String PathOfImage = imageCursor.getString(column_index_data);
+                    //        galleryTextView.append(" name "+ PathOfImage);
+                    //        imagePath.add(PathOfImage);
+
+                    //    }
+                    //}else{
+                     //   for(int i=0; i<20; i++){
+                    //        imageCursor.moveToPosition(i);
+                    //        String PathOfImage = imageCursor.getString(column_index_data);
+                    //        imagePath.add(PathOfImage);
+
+                    //    }
+                   // }
+
+
+                    //while (imageCursor.moveToNext()) {
+                            //int columnIndex = imageCursor.getColumnIndexOrThrow(columnName);
+                            //String columnValue = imageCursor.getString(columnIndex);
+                            //cursorData.append(columnName);
+                                    //.append(": ");
+                                    //.append(columnValue).append("\n");
+
+                        //galleryTextView.append("Cursor columns: " + cursorData.toString());
+
+                        //String PathOfImage = imageCursor.getString(column_index_data);
+                        //if(PathOfImage != null){
+                        //    galleryTextView.append("path is: " +PathOfImage);
+                        //    imagePath.add(PathOfImage);
+                        //}else{
+                        //    galleryTextView.append("Path of images cannot be found!");
+                        //}
+                    //}
+                    // if(PathOfImage != null)
+                    // {
+                    //     textViewAccessToken.setText(PathOfImage);
+                    //}else{
+                    //    textViewAccessToken.setText("it's null");
+                    //}
+                    //String[] t = imageCursor.getColumnNames();
+                    //StringBuilder sb = new StringBuilder();
+
+                    //for (String columnName : t) {
+                    //sb.append(columnName).append("\n");
+                    //}
+
+                    //galleryTextView.append(sb.toString());
+                    //returns _data
+                //    imageCursor.close();
+                    //if(imagePath != null){
+                    //    galleryTextView.setText(imagePath.get(1));
+                    //}
+
+                    //galleryTextView.append(Integer.toString(imagePath.size()));
+
+                //}else {
+                //    galleryTextView.append("No images were found in your gallery!");
+                //}
+
+            //} catch (Exception e){
+            //    galleryTextView.append(e.getMessage());
+            //}
+
+            return  totalSpace+ " " + availableSpace;
+
+        }
+
+        protected void onPostExecute(String response) {
+            galleryTextView.setText(" Total Space + Available Space + Rams: " + response);
+        }
     }
 
 
