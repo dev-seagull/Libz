@@ -19,21 +19,6 @@
             android:layout_marginTop="-40dp"
             android:src="@drawable/seagulllogo" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Seagull CSO"
-            android:textSize="34sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="(Cloud storage optimization)"
-            android:textSize="24sp"
-            android:textStyle="bold" />
 
         <View
             android:layout_width="match_parent"
@@ -48,8 +33,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
             android:layout_marginBottom="10dp"
-            android:text="Main account: An account which will be the main storage of you"
-            android:textSize="24sp"
+            android:textColor="@android:color/holo_red_dark"
+            android:text="Login to your main account which will be synced with more accounts for back-up"
+            android:textSize="20sp"
             android:textStyle="bold" />
 
         <Button
@@ -61,7 +47,7 @@
             android:text="Login"
             android:gravity="center"
             android:paddingLeft="70dp"
-            android:textSize="24dp" />
+            android:textSize="20dp" />
 
         <TextView
             android:id="@+id/loginState"
@@ -78,21 +64,74 @@
             android:layout_gravity="left"
             android:layout_marginBottom="16dp" />
 
-        <Button
-            android:id="@+id/buttonphoto"
+        <TextView
+            android:id="@+id/googlePhotosMediaItemsCount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="List of files"
-            android:textSize="16sp" />
+            > </TextView>
 
         <Button
-            android:id="@+id/buttonDownload"
+            android:id="@+id/mediaItemsLayout"
+            android:text="Detail of items"
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="Download"
-            android:textSize="16sp" />
+            > </Button>
+
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:alpha="1"
+            android:background="#050505" />
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="3dp"
+            android:layout_marginTop="16dp"
+            android:text="Android device"
+            android:gravity="left"
+            android:textSize="24sp" />
+        <TextView
+            android:id="@+id/androidDeviceTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="3dp"
+            android:layout_marginTop="16dp"
+            android:text="Android device"
+            android:gravity="left"
+            android:textSize="24sp" />
+
+        <com.github.mikephil.charting.charts.HorizontalBarChart
+            android:id="@+id/androidStorageBarChart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"></com.github.mikephil.charting.charts.HorizontalBarChart>
+
+        <Button
+            android:id="@+id/syncAndroidDevice"
+            android:text="Sync"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"> </Button>
+
+        <ProgressBar
+            android:id="@+id/androidImageProgressBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:visibility="gone"
+            style="@android:style/Widget.ProgressBar.Horizontal"> </ProgressBar>
+
+
+        <TextView
+            android:id="@+id/androidTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:layout_marginTop="5dp" />
 
         <View
             android:layout_width="match_parent"
@@ -107,8 +146,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
             android:layout_marginBottom="10dp"
-            android:text="Back-up account: An account which will be a back-up for your main storage"
-            android:textSize="24sp"
+            android:text="Login to your back-up account, so it will be synced with your main account"
+            android:textColor="@android:color/holo_red_dark"
+            android:textSize="20sp"
             android:textStyle="bold" />
 
 
@@ -125,40 +165,18 @@
 
 
         <Button
-            android:id="@+id/uploadButton"
+            android:id="@+id/syncToBackUpAccountButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Upload"
+            android:text="Sync"
             android:textSize="16sp" />
 
         <TextView
-            android:id="@+id/accesstoken"
+            android:id="@+id/syncToBackUpAccountTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp" />
 
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="5dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp"
-            android:alpha="1"
-            android:background="#050505" />
-
-        <Button
-            android:id="@+id/GalleryButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Gallery"
-            android:textSize="16sp" />
-
-        <TextView
-            android:id="@+id/gallery"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp" />
-        
     </LinearLayout>
 
 

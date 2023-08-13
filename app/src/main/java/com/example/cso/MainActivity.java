@@ -1,27 +1,35 @@
 package com.example.cso;
 
-import android.app.ActivityManager;
+import android.Manifest;
 import android.content.Intent;
-import android.database.Cursor;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.StatFs;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import com.github.mikephil.charting.charts.HorizontalBarChart;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.LegendEntry;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
@@ -35,12 +43,15 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.Task;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.FileContent;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
+import com.jaredrummler.android.device.DeviceName;
 
+import org.checkerframework.checker.units.qual.A;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -63,31 +74,88 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Locale;
+import java.util.Queue;
 
 
 public class MainActivity extends AppCompatActivity {
 
-
-
-
     private static final int RC_SIGN_IN = 1001;
 
+    String userLoginAccountEmail;
+    Button mediaItemsLayoutButton;
+    Button btnLogin;
+    Button btnBackUpLogin;
     private GoogleSignInClient googleSignInClient;
     public double totalStorage;
     public double usageStorage;
     public double driveUsageStorage;
     public double gmail_plus_googlePhotos_storage;
     public  double freeSpace;
-    TextView textViewAccessToken;
+    TextView syncToBackUpAccountTextView;
+    TextView androidTextView;
     TextView textViewLoginState;
+    TextView textviewGooglePhotosMediaItemsCount;
     TextView galleryTextView;
-    String accessToken;
+    ArrayList<String> accessTokens = new ArrayList<String>();
     String authcodeForPhotos ="";
     String authcodeForDrive = "";
+    Drive service;
 
-    ArrayList<String> baseUrls = new ArrayList<String>();;
+    ArrayList<String> baseUrls = new ArrayList<String>();
+    ArrayList<String> fileNames = new ArrayList<String>();
+    ArrayList<String> productUrls = new ArrayList<String>();
+
     int Dcounter=0;
     PieChart storage_pieChart;
+    HorizontalBarChart androidStorageBarChart;
+    ProgressBar androidProgressBar;
+
+
+    String formatSize(long sizeBytes) {
+        float sizeGB = sizeBytes / (1024f * 1024f * 1024f);
+        return String.format(Locale.getDefault(), "%.2f", sizeGB);
+    }
+
+    public static boolean isImageOrVideoFile(File file, String[] imageExtensions) {
+        String filePath = file.getPath().toLowerCase();
+        String memeType = filePath.substring(filePath.lastIndexOf("."));
+        for (String extension : imageExtensions) {
+            if (memeType.equals(extension)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public void createMediaItemsModel(String name,String productUrl,LinearLayout parentLayout){
+        String mediaItemName = name;
+        TextView textViewName = new TextView(parentLayout.getContext());
+        textViewName.setText(mediaItemName);
+
+        TextView textViewBackUpStatus = new TextView(parentLayout.getContext());
+        textViewBackUpStatus.setText("no back-up");
+
+        Button mediaItemDisplayButton = new Button(parentLayout.getContext());
+        mediaItemDisplayButton.setVisibility(View.VISIBLE);
+        mediaItemDisplayButton.setText("Click here to see the image");
+
+
+        mediaItemDisplayButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(productUrl));
+                parentLayout.getContext().startActivity(intent);
+            }
+        });
+
+        parentLayout.addView(textViewName);
+        parentLayout.addView(textViewBackUpStatus);
+        parentLayout.addView(mediaItemDisplayButton);
+    }
+
 
 
     @Override
@@ -95,17 +163,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Button btnLogin = findViewById(R.id.btnLogin);
-        Button btnBackUpLogin = findViewById(R.id.btnLoginBackup);
-        Button googlephoto = findViewById(R.id.buttonphoto);
-        Button downloadbtn = findViewById(R.id.buttonDownload);
-        Button uploadButton = findViewById(R.id.uploadButton);
-        Button galleryButton = findViewById(R.id.GalleryButton);
-        textViewAccessToken = findViewById(R.id.accesstoken);
-        galleryTextView = findViewById(R.id.gallery);
-        galleryTextView.setText("");
+
+        btnLogin = findViewById(R.id.btnLogin);
+        btnBackUpLogin = findViewById(R.id.btnLoginBackup);
+        Button syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
+        Button syncAndroidButton = findViewById(R.id.syncAndroidDevice);
+        mediaItemsLayoutButton = findViewById(R.id.mediaItemsLayout);
+        syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
         textViewLoginState = findViewById(R.id.loginState);
+        textviewGooglePhotosMediaItemsCount = findViewById(R.id.googlePhotosMediaItemsCount);
+        TextView textViewAndroidDeviceName = findViewById(R.id.androidDeviceTextView);
         storage_pieChart = findViewById(R.id.StoragepieChart);
+        androidStorageBarChart = findViewById(R.id.androidStorageBarChart);
+        androidProgressBar = findViewById(R.id.androidImageProgressBar);
+        androidTextView = findViewById(R.id.androidTextView);
 
         storage_pieChart.setNoDataText("Your storage chart will be displayed here after you login");
         storage_pieChart.setNoDataTextColor(Color.RED);
@@ -114,32 +185,17 @@ public class MainActivity extends AppCompatActivity {
         storage_pieChart.getDescription().setEnabled(false);
 
 
+        String androidDeviceName = DeviceName.getDeviceName();
+        textViewAndroidDeviceName.setText(androidDeviceName);
 
-        if(accessToken == null){
+        if(accessTokens.size() == 0){
             textViewLoginState.setText("You haven't logged into your google account yet");
         }
 
         btnLogin.setOnClickListener(v -> signIn());
         btnBackUpLogin.setOnClickListener(v -> signInBackupAccount());
 
-
-        googlephoto.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                new GooglePhotosRequestTask().execute();
-            }
-        });
-
-
-        downloadbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                new GooglePhotosDownlaod().execute();
-            }
-        });
-
-
-        uploadButton.setOnClickListener(new View.OnClickListener() {
+        syncToBackUpAccountButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 new GooglePhotosUpload().execute();
@@ -147,82 +203,22 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        galleryButton.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        new Gallery().execute();
-                    }
-                    /*
-                    public void onClick(View view) {
-                        ArrayList<String> imagePath = new ArrayList<>();
-                        Cursor imageCursor = null;
-                        try{
-                            Uri imageUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                            String[] imageProjection = {MediaStore.Images.Media.DATA};
-                            imageCursor = MainActivity.this.getContentResolver().query(imageUri, imageProjection, null, null, null);
-                            if (imageCursor != null) {
-                                Integer column_index_data = imageCursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
-                                //returns 0
-                                //galleryTextView.append("Image cursor is not null ");
+        syncAndroidButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new SyncAndroid().execute();
+            }
+        });
 
-                                while (imageCursor.moveToNext()) {
-                                    StringBuilder cursorData = new StringBuilder();
-                                    String[] columnNames = imageCursor.getColumnNames();
-                                    for (String columnName : columnNames) {
-                                        int columnIndex = imageCursor.getColumnIndexOrThrow(columnName);
-                                        String columnValue = imageCursor.getString(columnIndex);
-                                        cursorData.append(columnName).append(": ").append(columnValue).append("\n");
-                                    }
-                                    galleryTextView.append("Cursor values: \n" + cursorData.toString() + "\n");
-
-                                    //String PathOfImage = imageCursor.getString(column_index_data);
-                                    //if(PathOfImage != null){
-                                    //    galleryTextView.append("path is: " +PathOfImage);
-                                    //    imagePath.add(PathOfImage);
-                                    //}else{
-                                    //    galleryTextView.append("Path of images cannot be found!");
-                                    //}
-                               }
-                               // if(PathOfImage != null)
-                               // {
-                               //     textViewAccessToken.setText(PathOfImage);
-                                //}else{
-                                //    textViewAccessToken.setText("it's null");
-                                //}
-                                //String[] t = imageCursor.getColumnNames();
-                                //StringBuilder sb = new StringBuilder();
-
-                                //for (String columnName : t) {
-                                    //sb.append(columnName).append("\n");
-                                //}
-
-                                //galleryTextView.append(sb.toString());
-                                //returns _data
-                                imageCursor.close();
-                                //if(imagePath != null){
-                                //    galleryTextView.setText(imagePath.get(1));
-                                //}
-
-                                //galleryTextView.append(Integer.toString(imagePath.size()));
-
-                            }else {
-                                galleryTextView.append("No images were found in your gallery!");
-                            }
-
-                        } catch (Exception e){
-                            galleryTextView.append(e.getMessage());
-                        }
-
-                    }*/
-                }
-        );
+        AndroidStorageTask androidStorageTask = new AndroidStorageTask();
+        androidStorageTask.execute();
 
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestScopes(new Scope("https://www.googleapis.com/auth/photoslibrary.readonly")
                         ,new Scope("https://www.googleapis.com/auth/drive.readonly" ),
-                        new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly"))
+                        new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly"),
+                        new Scope("https://www.googleapis.com/auth/drive.file"))
                 .requestServerAuthCode(getString(R.string.web_client_id))
                 .requestEmail()
                 .build();
@@ -240,7 +236,8 @@ public class MainActivity extends AppCompatActivity {
             GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                     .requestScopes(new Scope("https://www.googleapis.com/auth/photoslibrary.readonly"),
                             new Scope("https://www.googleapis.com/auth/drive.readonly"),
-                            new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly"))
+                            new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly"),
+                            new Scope("https://www.googleapis.com/auth/drive.file"))
                     .requestServerAuthCode(getString(R.string.web_client_id))
                     .requestEmail()
                     .build();
@@ -251,7 +248,6 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(signInIntent, RC_SIGN_IN);
 
                 });
-
     }
 
     @Override
@@ -264,6 +260,8 @@ public class MainActivity extends AppCompatActivity {
                 Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
                 GoogleSignInAccount account = task.getResult(ApiException.class);
 
+                userLoginAccountEmail = account.getEmail();
+
                 String authCode = account.getServerAuthCode();
                 authcodeForPhotos = authCode;
                 authcodeForDrive = authCode;
@@ -275,12 +273,57 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "An error occurred: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
+
+
+
+        mediaItemsLayoutButton.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        setContentView(R.layout.activity_mediaitems);
+                        LinearLayout mediaItemsLinearLayout = findViewById(R.id.mediaItemsLinearLayout);
+                        LinearLayout.LayoutParams mediaItemsLinearLayoutParams = new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT
+                        );
+                        mediaItemsLinearLayoutParams.setMargins(0,5,0, 0);
+
+                        for (int i=0;i<fileNames.size();i++) {
+                            createMediaItemsModel(fileNames.get(i)
+                                    , productUrls.get(i)
+                                    ,mediaItemsLinearLayout);
+                        }
+
+                    }
+                }
+        );
     }
 
+    private  static  class TokenRequestResult{
+        ArrayList<String> fileNames;
+        ArrayList<String> baseurls;
 
+        TokenRequestResult(ArrayList<String> fileNames, ArrayList<String> baseurls){
+            this.fileNames = fileNames;
+            this.baseurls = baseurls;
+        }
 
+    }
 
-    private class TokenRequestTask extends AsyncTask<String, Void, String> {
+    private class TokenRequestTask extends AsyncTask<String, Void, TokenRequestResult> {
+
+        @Override
+        protected  void  onPreExecute(){
+            super.onPreExecute();
+            if(accessTokens.size()==0){
+                btnLogin.setText("Please wait, it may take some minutes to get things done here...");
+            }
+
+            if(accessTokens.size() > 0){
+                btnBackUpLogin.setText("Please wait, it may take some minutes to get things done here...");
+            }
+        }
+
         public double convertToGigaByte(float storage){
             double Divider = (Math.pow(1024,3));
             return storage/Divider;
@@ -288,10 +331,11 @@ public class MainActivity extends AppCompatActivity {
 
 
         @Override
-        protected String doInBackground(String... params) {
+        protected TokenRequestResult doInBackground(String... params) {
+
             String authCode = params[0];
             int responseCode = 0;
-            String  response= "";
+            String response = "";
 
             try {
                 URL url = null;
@@ -317,12 +361,12 @@ public class MainActivity extends AppCompatActivity {
                 connection.setDoOutput(true);
                 connection.setDoInput(true);
 
-                String client_id= getString(R.string.client_id);
+                String client_id = getString(R.string.client_id);
                 String client_secret = getString(R.string.client_secret);
 
                 String requestBody = "code=" + authCode +
-                        "&client_id="+ client_id+
-                        "&client_secret=" + client_secret+
+                        "&client_id=" + client_id +
+                        "&client_secret=" + client_secret +
                         "&grant_type=authorization_code";
 
                 byte[] postData = requestBody.getBytes(StandardCharsets.UTF_8);
@@ -347,33 +391,34 @@ public class MainActivity extends AppCompatActivity {
                         while ((line = reader.readLine()) != null) {
                             responseBuilder.append(line);
                         }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                     response = responseBuilder.toString();
                     JSONObject jsonResponse = null;
                     try {
                         jsonResponse = new JSONObject(response);
-                        accessToken = jsonResponse.getString("access_token");
+                         accessTokens.add(jsonResponse.getString("access_token"));
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-
 
 
                     final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
                     final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
                     HttpRequestInitializer requestInitializer = request -> {
-                        request.getHeaders().setAuthorization("Bearer " + accessToken);
+                        request.getHeaders().setAuthorization("Bearer " + accessTokens.get(0));
                         request.getHeaders().setContentType("application/json");
 
                     };
 
-                    Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
+                    service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
                             .setApplicationName("cso")
                             .build();
 
 
-                    totalStorage  = convertToGigaByte(service.about().get()
+                    totalStorage = convertToGigaByte(service.about().get()
                             .setFields("user, storageQuota")
                             .execute().getStorageQuota().getLimit());
 
@@ -381,29 +426,141 @@ public class MainActivity extends AppCompatActivity {
                             .setFields("user, storageQuota")
                             .execute().getStorageQuota().getUsage());
 
-                    driveUsageStorage = convertToGigaByte(service.about().get()
-                            .setFields("user, storageQuota")
-                            .execute().getStorageQuota().getUsageInDrive());
+                    try {
+                        driveUsageStorage = convertToGigaByte(service.about().get()
+                                .setFields("user, storageQuota")
+                                .execute().getStorageQuota().getUsageInDrive());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
-                    gmail_plus_googlePhotos_storage =  usageStorage - driveUsageStorage;
+                    gmail_plus_googlePhotos_storage = usageStorage - driveUsageStorage;
 
                     freeSpace = totalStorage - usageStorage;
-
-
                 }
 
-            } catch (IOException | GeneralSecurityException e) {
+                for (String at :  accessTokens){
+                    System.out.println(at);
+                }
+
+                int pageSize = 100;
+                String nextPageToken = null;
+                JSONArray mediaItems = null;
+
+                try {
+                    url = new URL("https://photoslibrary.googleapis.com/v1/mediaItems");
+
+                    connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("GET");
+                    connection.setRequestProperty("Content-type", "application/json");
+                    connection.setRequestProperty("Authorization", "Bearer " + accessTokens.get(0));
+                    System.out.println("m with" + accessTokens.get(0));
+
+                    responseCode = connection.getResponseCode();
+                    System.out.println("r is " + responseCode);
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                        StringBuilder mediaItemsresponse = new StringBuilder();
+                        String line;
+
+                        while ((line = reader.readLine()) != null) {
+                            mediaItemsresponse.append(line);
+                        }
+                        reader.close();
+
+                        String mediaItemResponseString = mediaItemsresponse.toString();
+
+                        JSONObject mediaItemResponseJson = new JSONObject(mediaItemResponseString);
+                        mediaItems = mediaItemResponseJson.getJSONArray("mediaItems");
+                        fileNames = new ArrayList<String>();
+                        for (int i = 0; i < mediaItems.length(); i++) {
+                            JSONObject mediaItem = mediaItems.getJSONObject(i);
+                            String filename = mediaItem.getString("filename");
+                            String baseUrl = mediaItem.getString("baseUrl");
+                            String productUrl = mediaItem.getString("productUrl");
+                            productUrls.add(productUrl);
+                            baseUrls.add(baseUrl);
+                            fileNames.add(filename);
+                        }
+                        nextPageToken = mediaItemResponseJson.optString("nextPageToken", null);
+                        while (mediaItemResponseJson.has("nextPageToken") && nextPageToken != null && mediaItemResponseJson.has("mediaItems")) {
+                            nextPageToken = mediaItemResponseJson.optString("nextPageToken", null);
+                            String nextPageUrl = "https://photoslibrary.googleapis.com/v1/mediaItems?pageToken=" + nextPageToken;
+                            URL nextUrl = new URL(nextPageUrl);
+                            connection = (HttpURLConnection) nextUrl.openConnection();
+                            connection.setRequestMethod("GET");
+                            connection.setRequestProperty("Content-type", "application/json");
+                            connection.setRequestProperty("Authorization", "Bearer " + accessTokens.get(0));
+                            responseCode = connection.getResponseCode();
+
+                            if (responseCode == HttpURLConnection.HTTP_OK) {
+                                reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                                mediaItemsresponse = new StringBuilder();
+                                while ((line = reader.readLine()) != null) {
+                                    mediaItemsresponse.append(line);
+                                }
+                                reader.close();
+
+                                mediaItemResponseString = mediaItemsresponse.toString();
+
+                                mediaItemResponseJson = new JSONObject(mediaItemResponseString);
+
+                                if (mediaItemResponseJson.has("mediaItems")) {
+                                    mediaItems = mediaItemResponseJson.getJSONArray("mediaItems");
+                                } else {
+                                    mediaItems = new JSONArray();
+                                }
+
+
+                                for (int i = 0; i < mediaItems.length(); i++) {
+                                    JSONObject mediaItem = mediaItems.getJSONObject(i);
+                                    String filename = mediaItem.getString("filename");
+                                    String baseUrl = mediaItem.getString("baseUrl");
+                                    String productUrl = mediaItem.getString("productUrl");
+                                    productUrls.add(productUrl);
+                                    baseUrls.add(baseUrl);
+                                    fileNames.add(filename);
+                                }
+
+                            }
+                        }
+                        connection.disconnect();
+                    }
+
+                } catch (IOException | JSONException e) {
+                    e.printStackTrace();
+                }
+
+
+            } catch (GeneralSecurityException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
-
-            return response;
+            return new TokenRequestResult(fileNames,baseUrls);
         }
-
         @Override
-        protected void onPostExecute(String response) {
+        protected void onPostExecute(TokenRequestResult tokenRequestResult) {
 
-            if(accessToken != null){
+            if(accessTokens.get(0) != null && userLoginAccountEmail != null){
                 textViewLoginState.setText("You have successfully logged into your account");
+                if(fileNames != null){
+                    textviewGooglePhotosMediaItemsCount.setText(fileNames.size() + " items were found in your Google Photos account");
+                    mediaItemsLayoutButton.setVisibility(View.VISIBLE);
+                }else{
+                    textviewGooglePhotosMediaItemsCount.setText("No items were found in your Google Photos account");
+                }
+            }else {
+                textViewLoginState.setText("The login wasn't successful");
+            }
+            if(accessTokens.get(accessTokens.size()-1) != null && userLoginAccountEmail != null
+            && accessTokens.size()-1 == 0){
+                btnLogin.setText(userLoginAccountEmail);
+            }
+
+            if(accessTokens.get(accessTokens.size()-1) != null && userLoginAccountEmail != null
+                    && accessTokens.size()-1 != 0){
+                btnBackUpLogin.setText(userLoginAccountEmail);
             }
 
             ArrayList<PieEntry> entries = new ArrayList<>();
@@ -456,140 +613,32 @@ public class MainActivity extends AppCompatActivity {
                 legendEntries.add(entry);
             }
             legend.setCustom(legendEntries);
-        }
 
-    }
+            ArrayList<String > fileNames = tokenRequestResult.fileNames;
+            ArrayList<String> baseUrls = tokenRequestResult.baseurls;
 
-
-    private class GooglePhotosRequestTask extends AsyncTask<Void, Void, String> {
-
-        @Override
-        protected String doInBackground(Void... voids) {
-
-            int pageSize = 100;
-            String nextPageToken = null;
-            JSONArray mediaItems = null;
-            StringBuilder filenames = null;
-
-            try {
-
-                URL url = new URL("https://photoslibrary.googleapis.com/v1/mediaItems");
-
-
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-
-                connection.setRequestMethod("GET");
-
-                connection.setRequestProperty("Content-type", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + accessToken);
-
-
-                int responseCode = connection.getResponseCode();
-
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-
-                    while ((line = reader.readLine()) != null) {
-                        response.append(line);
-                    }
-
-
-                    reader.close();
-
-                    String jsonResponse = response.toString();
-
-                    JSONObject responseJson = new JSONObject(jsonResponse);
-                    mediaItems = responseJson.getJSONArray("mediaItems");
-                    filenames = new StringBuilder();
-                    for (int i = 0; i < mediaItems.length(); i++) {
-                        JSONObject mediaItem = mediaItems.getJSONObject(i);
-                        String filename = mediaItem.getString("filename");
-                        String baseUrl = mediaItem.getString("baseUrl");
-                        baseUrls.add(baseUrl);
-                        filenames.append(filename).append("\n");
-                    }
-                    nextPageToken = responseJson.optString("nextPageToken", null);
-                    while (responseJson.has("nextPageToken") && nextPageToken!=null && responseJson.has("mediaItems")) {
-                        nextPageToken = responseJson.optString("nextPageToken",null);
-                        //System.out.println(nextPageToken);
-
-                        // connection = (HttpURLConnection) new URL(url.toString() + params).openConnection();
-                        String nextPageUrl = "https://photoslibrary.googleapis.com/v1/mediaItems?pageToken=" + nextPageToken;
-                        URL nextUrl = new URL(nextPageUrl);
-                        connection = (HttpURLConnection) nextUrl.openConnection();
-
-                        connection.setRequestMethod("GET");
-                        connection.setRequestProperty("Content-type", "application/json");
-                        connection.setRequestProperty("Authorization", "Bearer " + accessToken);
-
-                        responseCode = connection.getResponseCode();
-
-                        if (responseCode == HttpURLConnection.HTTP_OK) {
-                            reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                            response = new StringBuilder();
-
-                            while ((line = reader.readLine()) != null) {
-                                response.append(line);
-                            }
-
-
-                            reader.close();
-
-                            jsonResponse = response.toString();
-
-                            responseJson = new JSONObject(jsonResponse);
-
-                            if(responseJson.has("mediaItems")){
-                                mediaItems = responseJson.getJSONArray("mediaItems");
-                            }else{
-                                mediaItems = new JSONArray();
-                            }
-
-
-                            filenames = new StringBuilder();
-
-
-                            for (int i = 0; i < mediaItems.length(); i++) {
-                                    JSONObject mediaItem = mediaItems.getJSONObject(i);
-                                    String filename = mediaItem.getString("filename");
-                                    String baseUrl = mediaItem.getString("baseUrl");
-                                    baseUrls.add(baseUrl);
-                                    filenames.append(filename).append("\n");
-                            }
-
-                        }
-                    }
-
-                    connection.disconnect();
-                }
-
-            } catch (IOException | JSONException e) {
-                e.printStackTrace();
-            }
-
-            return String.valueOf(baseUrls.size());
-        }
-
-            protected void onPostExecute(String response) {
-            if (response != null) {
-                textViewAccessToken.setText("Number of media items in Google Photos: "+response);
-                Toast.makeText(MainActivity.this, response, Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(MainActivity.this, "Failed to retrieve data", Toast.LENGTH_LONG).show();
-            }
         }
     }
 
+    private class GooglePhotosUpload extends AsyncTask<Void, Void, String> {
 
-    private class GooglePhotosDownlaod extends AsyncTask<Void, Void, String> {
+        int counter = 0;
+
+        byte[] inputStreamToByteArray(InputStream inputStream) throws IOException {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            int nRead;
+            byte[] data = new byte[1024];
+            while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+            buffer.flush();
+            return buffer.toByteArray();
+        }
 
         @Override
         protected String doInBackground(Void... voids) {
-
             try {
+                int i = 0;
                 for(String baseUrl: baseUrls){
                     URL url = new URL(baseUrl+"=d");
 
@@ -605,16 +654,23 @@ public class MainActivity extends AppCompatActivity {
                         if (!folder.exists()) {
                             boolean folderCreated = folder.mkdirs();
                             if (!folderCreated) {
-                                textViewAccessToken.setText("couldn't create directory");
+                                syncToBackUpAccountTextView.setText("couldn't create directory");
                             }
 
                         }
-                        String fileName = ("filename"+Dcounter+".jpg").substring(("filename"+Dcounter+".jpg").lastIndexOf("/") + 1);
+                        String fileName = fileNames.get(i);
+                        //int dotIndex = fileName.lastIndexOf(".");
+                        //String fileFormat="";
+                        //if (dotIndex >= 0 && dotIndex < fileName.length() - 1) {
+                        //    fileFormat = fileName.substring(dotIndex + 1);
+                        //}
+
+                        i++;
                         String filePath = destinationFolder + File.separator + fileName;
 
                         OutputStream outputStream = null;
                         try {
-                            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator + "cso"+File.separator + "picture"+Dcounter+".jpg");
+                            File file = new File(filePath);
                             file.createNewFile();
                             outputStream = new FileOutputStream(file);
 
@@ -625,10 +681,9 @@ public class MainActivity extends AppCompatActivity {
                                 outputStream.write(buffer, 0, bytesRead);
                             }
                             Dcounter = Dcounter + 1;
-                            textViewAccessToken.setText(Dcounter+ " files were downloaded");
                         } catch (IOException e) {
                             e.printStackTrace();
-                            textViewAccessToken.setText("Failed to save the file");
+                            syncToBackUpAccountTextView.setText("Failed to download the itmes");
                         } finally {
                             try {
                                 if (outputStream != null) {
@@ -638,7 +693,6 @@ public class MainActivity extends AppCompatActivity {
                                 e.printStackTrace();
                             }
                         }
-                        outputStream.close();
 
                         inputStream.close();
 
@@ -651,37 +705,13 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return null;
-        }
 
-        protected void onPostExecute(String response) {
-            textViewAccessToken.setText(Dcounter + " files were downloaded");
-        }
-    }
-
-    private class GooglePhotosUpload extends AsyncTask<Void, Void, String> {
-
-        byte[] inputStreamToByteArray(InputStream inputStream) throws IOException {
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            int nRead;
-            byte[] data = new byte[1024];
-            while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
-                buffer.write(data, 0, nRead);
-            }
-            buffer.flush();
-            return buffer.toByteArray();
-        }
-
-        @Override
-        protected String doInBackground(Void... voids) {
             String destinationFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator + "cso";
 
             File fileDirectory = new File(destinationFolder);
             File[] directoryFiles = fileDirectory.listFiles();
 
-
             if (directoryFiles != null && directoryFiles.length > 0){
-                int counter = 0;
                 for (File file : directoryFiles){
                     try{
                         URL url = new URL("https://photoslibrary.googleapis.com/v1/uploads");
@@ -690,7 +720,7 @@ public class MainActivity extends AppCompatActivity {
                         connection.setDoOutput(true);
                         connection.setUseCaches(false);
 
-                        String authorizationHeader = "Bearer " + accessToken;
+                        String authorizationHeader = "Bearer " + accessTokens.get(1);
                         String filename = file.getName();
                         int dotIndex = filename.lastIndexOf(".");
                         String fileFormat="";
@@ -701,7 +731,7 @@ public class MainActivity extends AppCompatActivity {
                         if(fileFormat != null){
                             uploadContentTypeHeader = fileFormat;
                         }else{
-                            textViewAccessToken.setText("file format not found");
+                            syncToBackUpAccountTextView.setText("Item format not found");
                         }
 
                         connection.setRequestProperty("Authorization", authorizationHeader);
@@ -717,6 +747,7 @@ public class MainActivity extends AppCompatActivity {
                         outputStream.close();
 
                         int responseCode = connection.getResponseCode();
+                        System.out.println("r for upload is " + responseCode);
 
                         if(responseCode == HttpURLConnection.HTTP_OK){
                             BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -747,7 +778,7 @@ public class MainActivity extends AppCompatActivity {
                             connection = (HttpURLConnection) url.openConnection();
                             connection.setRequestMethod("POST");
                             connection.setRequestProperty("Content-type", "application/json");
-                            connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+                            connection.setRequestProperty("Authorization", "Bearer " + accessTokens.get(1));
                             connection.setDoOutput(true);
 
                             outputStream = new BufferedOutputStream(connection.getOutputStream());
@@ -767,7 +798,6 @@ public class MainActivity extends AppCompatActivity {
 
                                 String jsonResponse = response.toString();
                                 counter = counter + 1;
-                                textViewAccessToken.setText(counter+ " files were uploaded");
                             }
                         }
 
@@ -775,37 +805,190 @@ public class MainActivity extends AppCompatActivity {
                     }catch (Exception e){
                         e.printStackTrace();
                     }
+                    if(fileDirectory.exists()) {
+                        fileDirectory.delete();
+                    }
                 }
-
-
             }
 
             return null;
         }
-
         protected void onPostExecute(String response) {
+            syncToBackUpAccountTextView.setText(counter+ " items were synced");
+        }
+    }
 
+    private static class SyncResult {
+        ArrayList<ArrayList<String>> result1;
+        ArrayList<String> result2;
+
+        SyncResult(ArrayList<ArrayList<String>> result1,ArrayList<String> result2) {
+            this.result1 = result1;
+            this.result2 = result2;
+        }
+    }
+
+    private class SyncAndroid extends AsyncTask<Void, Integer, SyncResult> {
+
+        ArrayList<String> uploadedCounter  = new ArrayList<>();
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            androidProgressBar.setVisibility(View.VISIBLE);
+            androidProgressBar.setProgress(0);
+        }
+
+        @Override
+        protected SyncResult doInBackground(Void... voids) {
+
+            while (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                    ContextCompat.checkSelfPermission(getApplicationContext(),
+                            Manifest.permission.READ_EXTERNAL_STORAGE) !=
+                            PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+            }
+
+
+            File rootDirectory = Environment.getExternalStorageDirectory();
+            ArrayList<ArrayList<String>> fileInfoList = new ArrayList<>();
+            Queue<File> directoriesQueue = new LinkedList<>();
+            directoriesQueue.add(rootDirectory);
+
+            String[] imageAndVideoExtensions = {".jpg", ".jpeg", ".png", ".bmp", ".webp",".heic", ".heif",
+                    ".gif", ".mp4", ".mkv",".webm",".3gp",".ts"};
+
+            int totalFiles = 0;
+            int processedFiles = 0;
+
+
+            while (!directoriesQueue.isEmpty()){
+                File currentDirectory = directoriesQueue.poll();
+                if(currentDirectory.getPath().equals(rootDirectory + "/Android")){
+                    continue;
+                }else{
+                    File[] files = currentDirectory.listFiles();
+
+                    if(files != null){
+                        for(File file: files){
+                            if(file.isDirectory() && !file.isHidden()){
+                                directoriesQueue.add(file);
+                                totalFiles++;
+
+                            }else if(file.isFile()){
+                                totalFiles++;
+
+                                if(isImageOrVideoFile(file, imageAndVideoExtensions)){
+
+                                    String fileName = file.getName();
+                                    String filePath = file.getPath();
+                                    Integer fileHash = file.hashCode();
+
+                                    ArrayList<String> fileInfo = new ArrayList<>();
+                                    fileInfo.add(fileName);
+                                    fileInfo.add(filePath);
+                                    fileInfo.add(String.valueOf(fileHash));
+                                    fileInfoList.add(fileInfo);
+                                    String memeType = filePath.substring(filePath.lastIndexOf("."));
+
+                                    processedFiles++;
+
+
+
+
+                                        //System.out.println("upload file name:" + fileName);
+                                        com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+                                        fileMetadata.setName(fileName);
+
+                                        FileContent mediaContent = null;
+                                        if(memeType.equals(".jpeg") | memeType.equals(".jpg")){
+                                            mediaContent = new FileContent("image/jpeg" ,new File(filePath));
+                                            uploadedCounter.add(fileName);
+                                        }
+
+                                        else if(memeType.equals(".png")){
+                                            mediaContent = new FileContent("image/png" ,new File(filePath));
+                                            uploadedCounter.add(fileName);
+                                        }
+
+                                        else if(memeType.equals(".gif")){
+                                            mediaContent = new FileContent("image/gif" ,new File(filePath));
+                                            uploadedCounter.add(fileName);
+                                        }
+
+                                        else if(memeType.equals(".bmp")){
+                                            mediaContent = new FileContent("image/bmp" ,new File(filePath));
+                                            uploadedCounter.add(fileName);
+                                        }
+
+                                        else if(memeType.equals(".mp4")){
+                                            mediaContent = new FileContent("video/mp4" ,new File(filePath));
+                                            uploadedCounter.add(fileName);
+                                        }
+
+                                        else if(memeType.equals(".mkv")){
+                                            mediaContent = new FileContent("video/x-matroska" ,new File(filePath));
+                                            uploadedCounter.add(fileName);
+                                        }
+
+
+
+                                        try {
+                                            com.google.api.services.drive.model.File uploadFile = service.files().create(fileMetadata, mediaContent)
+                                                    .setFields("id")
+                                                    .execute();
+
+                                            System.out.println("File ID: " + uploadFile.getId());
+
+                                        } catch (IOException e) {
+                                            System.out.println("Unable to upload: " + e.getMessage());;
+                                        }
+
+                                }
+
+                            }
+                            int progress = (int) ((processedFiles / (float) totalFiles) * 100);
+                            publishProgress(progress);
+                        }
+                    }
+                }
+            }
+
+
+            return new SyncResult(fileInfoList , uploadedCounter);
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+            int progress = values[0];
+            androidProgressBar.setProgress(progress);
+        }
+
+
+
+        protected void onPostExecute(SyncResult response) {
+            ArrayList<ArrayList<String>> resultList1 = response.result1;
+            ArrayList<String> resultList2 = response.result2;
+            StringBuilder uploadedFilenames = null;
+            for(String rs2: resultList2){
+                uploadedFilenames.append( rs2+ " ");
+            }
+            androidProgressBar.setProgress(100);
+            androidTextView.setText("Search of your images and videos is finished and you have this number of them: " +
+               resultList1.size() + " and "+ resultList2.size()  +
+                    " of them were uploaded to google drive"
+            + "\n" + "filenames: " + uploadedFilenames);
         }
 
     }
 
-    private class Gallery extends AsyncTask<Void, Void, String> {
+    private class AndroidStorageTask extends AsyncTask<Void, Void,ArrayList<String>> {
 
-        private String formatSize(long sizeBytes) {
-            String[] units = {"B", "KB", "MB", "GB", "TB"};
-            int unitIndex = 0;
-            double size = sizeBytes;
-
-            while (size >= 1024 && unitIndex < units.length - 1) {
-                size /= 1024;
-                unitIndex++;
-            }
-
-            return String.format("%.2f %s", size, units[unitIndex]);
-        }
+        ArrayList<String> responses = new ArrayList<>();
 
         @Override
-        protected String doInBackground(Void... voids) {
+        protected ArrayList<String> doInBackground(Void... voids) {
 
             File externalDir  = Environment.getExternalStorageDirectory();
 
@@ -828,95 +1011,85 @@ public class MainActivity extends AppCompatActivity {
 
 
             }
-            String availableSpace = formatSize(availableSpaceBytes);
-            String totalSpace = formatSize(totalSpaceBytes);
+            String availableSpaceString = formatSize(availableSpaceBytes);
+            String totalSpaceString = formatSize(totalSpaceBytes);
+
+            responses.add(totalSpaceString);
+            responses.add(availableSpaceString);
 
 
-            ;
-                //if (imageCursor != null) {
-                  //  int column_index_data = imageCursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME);
-                    //returns 0
-                    //galleryTextView.append("Image cursor is not null ");
-                //    String[] columnNames = imageCursor.getColumnNames();
-                    // "_data"
-                //    galleryTextView.append("number of columns:"+ columnNames.length +" ");
 
-                //    int cursorCount = imageCursor.getCount();
-                //    galleryTextView.append("cursoCount is: " + cursorCount);
-                    //if(cursorCount<20){
-                    //    for(int i=0; i<cursorCount; i++){
-                    //        imageCursor.moveToPosition(i);
-                    //        String PathOfImage = imageCursor.getString(column_index_data);
-                    //        galleryTextView.append(" name "+ PathOfImage);
-                    //        imagePath.add(PathOfImage);
-
-                    //    }
-                    //}else{
-                     //   for(int i=0; i<20; i++){
-                    //        imageCursor.moveToPosition(i);
-                    //        String PathOfImage = imageCursor.getString(column_index_data);
-                    //        imagePath.add(PathOfImage);
-
-                    //    }
-                   // }
-
-
-                    //while (imageCursor.moveToNext()) {
-                            //int columnIndex = imageCursor.getColumnIndexOrThrow(columnName);
-                            //String columnValue = imageCursor.getString(columnIndex);
-                            //cursorData.append(columnName);
-                                    //.append(": ");
-                                    //.append(columnValue).append("\n");
-
-                        //galleryTextView.append("Cursor columns: " + cursorData.toString());
-
-                        //String PathOfImage = imageCursor.getString(column_index_data);
-                        //if(PathOfImage != null){
-                        //    galleryTextView.append("path is: " +PathOfImage);
-                        //    imagePath.add(PathOfImage);
-                        //}else{
-                        //    galleryTextView.append("Path of images cannot be found!");
-                        //}
-                    //}
-                    // if(PathOfImage != null)
-                    // {
-                    //     textViewAccessToken.setText(PathOfImage);
-                    //}else{
-                    //    textViewAccessToken.setText("it's null");
-                    //}
-                    //String[] t = imageCursor.getColumnNames();
-                    //StringBuilder sb = new StringBuilder();
-
-                    //for (String columnName : t) {
-                    //sb.append(columnName).append("\n");
-                    //}
-
-                    //galleryTextView.append(sb.toString());
-                    //returns _data
-                //    imageCursor.close();
-                    //if(imagePath != null){
-                    //    galleryTextView.setText(imagePath.get(1));
-                    //}
-
-                    //galleryTextView.append(Integer.toString(imagePath.size()));
-
-                //}else {
-                //    galleryTextView.append("No images were found in your gallery!");
-                //}
-
-            //} catch (Exception e){
-            //    galleryTextView.append(e.getMessage());
+            //if(accessToken != null){
+            //    textViewLoginState.setText("You have successfully logged into your account");
             //}
 
-            return  totalSpace+ " " + availableSpace;
-
+            return responses;
         }
 
-        protected void onPostExecute(String response) {
-            galleryTextView.setText(" Total Space + Available Space + Rams: " + response);
+        protected void onPostExecute(ArrayList<String> response) {
+
+            Float totalSpace = Float.valueOf(responses.get(0));
+            Float availableSpace = Float.valueOf(responses.get(1));
+            Float usedSpace = totalSpace - availableSpace;
+
+            ArrayList<BarEntry> barEntries = new ArrayList<>();
+            ArrayList<String> barLabels = new ArrayList<>();
+            barEntries.add(new BarEntry(0,new float[] {availableSpace,usedSpace} ));
+            barLabels.add("Free Space: " + availableSpace + " GB");
+            barLabels.add("Used space: " + usedSpace + " GB");
+
+            for(BarEntry barent: barEntries){
+                System.out.println("bar entry: " + String.valueOf(barent));
+            }
+
+            BarDataSet androidStorageBarChartDataSet = new BarDataSet(barEntries, "Android device Storage");
+            androidStorageBarChartDataSet.setDrawValues(false);
+            //androidStorageBarChartDataSet.(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+            androidStorageBarChartDataSet.setColors(ColorTemplate.COLORFUL_COLORS);
+
+
+
+
+            BarData barData = new BarData(androidStorageBarChartDataSet);
+            androidStorageBarChart.setData(barData);
+            androidStorageBarChart.invalidate();
+            androidStorageBarChart.setFitBars(true);
+            androidStorageBarChart.getDescription().setEnabled(false);
+            androidStorageBarChart.setDrawGridBackground(false);
+            androidStorageBarChart.getAxisLeft().setEnabled(false);
+            androidStorageBarChart.getAxisRight().setEnabled(false);
+            androidStorageBarChart.getXAxis().setEnabled(false);
+            androidStorageBarChart.setDrawBorders(false);
+            androidStorageBarChart.getLegend().setEnabled(true);
+            Legend barLegend = androidStorageBarChart.getLegend();
+            barLegend.setForm(Legend.LegendForm.CIRCLE);
+            barLegend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.RIGHT);
+            barLegend.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
+            barLegend.setOrientation(Legend.LegendOrientation.VERTICAL);
+            barLegend.setDrawInside(false);
+            barLegend.setXEntrySpace(2f);
+            barLegend.setYEntrySpace(2f);
+            barLegend.setTextColor( Color.parseColor("#808080"));
+
+
+            ArrayList<LegendEntry> BarLegendEntries = new ArrayList<>();
+            for (int i = 0; i < barLabels.size(); i++) {
+                LegendEntry barEntry = new LegendEntry();
+                barEntry.label = barLabels.get(i);
+                barEntry.formColor = androidStorageBarChartDataSet.getColor(i);
+                BarLegendEntries.add(barEntry);
+            }
+            barLegend.setCustom(BarLegendEntries);
+
+            if(!androidStorageBarChart.isShown()){
+                androidStorageBarChart.setNoDataText("Data for the storage of your device is not available.");
+            }
         }
     }
 
 
 
 }
+
+
+
