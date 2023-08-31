@@ -6,25 +6,22 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-
-
-
     <LinearLayout
-        android:id="@+id/mediaItemsLinearLayout"
+        android:id="@+id/androidMediaItemsLinearLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
         android:gravity="center"
-        tools:context=".MediaItemsActivity">
-
+        android:orientation="vertical"
+        android:padding="16dp"
+        tools:context=".AndroidMediaItemsActivity">
 
         <Button
-            android:id="@+id/mediaItemsBackButton"
+            android:id="@+id/androidMediaItemsBackButton"
             android:layout_width="56dp"
-            android:layout_height="40dp"
+            android:layout_height="48dp"
+            android:layout_gravity="start"
             android:layout_marginLeft="0dp"
             android:layout_marginTop="0dp"
-            android:layout_gravity="start"
             android:backgroundTint="@color/white"
             android:contentDescription="Back button"
             android:drawableLeft="@drawable/backbutton"

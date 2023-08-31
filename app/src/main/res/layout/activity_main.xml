@@ -19,7 +19,6 @@
             android:layout_marginTop="-40dp"
             android:src="@drawable/seagulllogo" />
 
-
         <View
             android:layout_width="match_parent"
             android:layout_height="5dp"
@@ -43,11 +42,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:drawableRight="@drawable/googlelogo"
+            android:drawableLeft="@drawable/googlelogo"
             android:text="Login"
             android:gravity="center"
-            android:paddingLeft="70dp"
-            android:textSize="20dp" />
+            android:backgroundTint="#007ACC"
+            android:paddingRight="70dp"
+            android:textSize="18dp" />
 
         <TextView
             android:id="@+id/loginState"
@@ -57,12 +57,12 @@
             android:text="You haven't logged into your Google account yet"
             android:textSize="16sp" />
 
-        <com.github.mikephil.charting.charts.PieChart
-            android:id="@+id/StoragepieChart"
+        <com.github.mikephil.charting.charts.HorizontalBarChart
+            android:id="@+id/StorageHorizontalBarChart"
             android:layout_width="match_parent"
-            android:layout_height="159dp"
-            android:layout_gravity="left"
-            android:layout_marginBottom="16dp" />
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="50dp"></com.github.mikephil.charting.charts.HorizontalBarChart>
+
 
         <TextView
             android:id="@+id/googlePhotosMediaItemsCount"
@@ -73,6 +73,7 @@
         <Button
             android:id="@+id/mediaItemsLayout"
             android:text="Detail of items"
+            android:backgroundTint="#007ACC"
             android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -88,14 +89,6 @@
             android:background="#050505" />
 
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="3dp"
-            android:layout_marginTop="16dp"
-            android:text="Android device"
-            android:gravity="left"
-            android:textSize="24sp" />
         <TextView
             android:id="@+id/androidDeviceTextView"
             android:layout_width="wrap_content"
@@ -115,6 +108,7 @@
             android:id="@+id/syncAndroidDevice"
             android:text="Sync"
             android:layout_width="match_parent"
+            android:backgroundTint="#007ACC"
             android:layout_height="wrap_content"> </Button>
 
         <ProgressBar
@@ -132,6 +126,17 @@
             android:layout_height="wrap_content"
             android:textSize="20sp"
             android:layout_marginTop="5dp" />
+
+        <Button
+            android:id="@+id/androidMediaItemsButton"
+            android:text="Detail of android items"
+            android:clickable="true"
+            android:backgroundTint="#007ACC"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            > </Button>
+
 
         <View
             android:layout_width="match_parent"
@@ -156,18 +161,21 @@
             android:id="@+id/btnLoginBackup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:backgroundTint="#bf8c2e"
             android:layout_marginBottom="16dp"
-            android:drawableRight="@drawable/googlelogo"
+            android:drawableLeft="@drawable/googlelogo"
             android:text="Login to your back-up account"
             android:gravity="center"
-            android:paddingLeft="70dp"
-            android:textSize="24dp" />
+            android:paddingRight="70dp"
+            android:textSize="18dp" />
+
 
 
         <Button
             android:id="@+id/syncToBackUpAccountButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:backgroundTint="#bf8c2e"
             android:text="Sync"
             android:textSize="16sp" />
 
@@ -176,6 +184,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp" />
+
 
     </LinearLayout>
 

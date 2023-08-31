@@ -3,10 +3,15 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/computerscience/Seagull/CSO-Cloud-storage-optimization-/app/src/main/res/layout/activity_android_mediaitems.xml" value="0.25025641025641027" />
+        <entry key="..\:/computerscience/Seagull/CSO-Cloud-storage-optimization-/app/src/main/res/layout/activity_androidfolders_and_format_selection.xml" value="0.17291666666666666" />
+        <entry key="..\:/computerscience/Seagull/CSO-Cloud-storage-optimization-/app/src/main/res/layout/activity_androidmediaitems.xml" value="0.11197916666666667" />
         <entry key="..\:/computerscience/Seagull/CSO-Cloud-storage-optimization-/app/src/main/res/layout/activity_main.xml" value="0.2" />
-        <entry key="..\:/computerscience/Seagull/CSO-Cloud-storage-optimization-/app/src/main/res/layout/activity_mediaitems.xml" value="0.14635416666666667" />
+        <entry key="..\:/computerscience/Seagull/CSO-Cloud-storage-optimization-/app/src/main/res/layout/activity_mediaitems.xml" value="0.264" />
         <entry key="..\:/computerscience/Seagull/CSO-Cloud-storage-optimization-/app/src/main/res/layout/media_item_view.xml" value="0.264" />
         <entry key="..\:/computerscience/Seagull/CSO-Cloud-storage-optimization-/app/src/main/res/layout/mediaitemslayout.xml" value="0.176" />
+        <entry key="..\:/computerscience/Seagull/CSO-Cloud-storage-optimization-/app/src/main/res/layout/test.xml" value="0.2" />
+        <entry key="..\:/computerscience/Seagull/CSO-Cloud-storage-optimization-/app/src/main/res/xml/provider_paths.xml" value="0.1765625" />
       </map>
     </option>
   </component>

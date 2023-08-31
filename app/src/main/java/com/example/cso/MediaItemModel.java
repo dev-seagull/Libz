@@ -1,30 +1,81 @@
 package com.example.cso;
 
+
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public class MediaItemModel {
+import androidx.appcompat.app.AppCompatActivity;
 
-    TextView textViewMediaItemName;
-    TextView textViewMediaItemBackUpStatus;
-    Button buttonMediaItemDisplay;
+import java.util.ArrayList;
 
-    public MediaItemModel(TextView textViewMediaItemName,TextView textViewMediaItemBackUpStatus, Button buttonMediaItemDisplay) {
-        this.textViewMediaItemBackUpStatus = textViewMediaItemBackUpStatus;
-        this.textViewMediaItemName = textViewMediaItemName;
-        this.buttonMediaItemDisplay = buttonMediaItemDisplay;
-    }
 
-    public TextView getTextViewMediaItemName() {
-        return textViewMediaItemName;
-    }
+public class MediaItemModel extends AppCompatActivity {
+        private int unique_request_code = 456;
 
-    public Button getButtonMediaItemDisplay() {
-        return buttonMediaItemDisplay;
-    }
+        public void createMediaItemsModel(String name,String productUrl,LinearLayout parentLayout){
+            String mediaItemName = name;
+            TextView textViewName = new TextView(parentLayout.getContext());
+            textViewName.setText(mediaItemName);
 
-    public TextView  gettextViewMediaItemBackUpStatus() {
-        return textViewMediaItemBackUpStatus;
-    }
+            TextView textViewBackUpStatus = new TextView(parentLayout.getContext());
+            textViewBackUpStatus.setText("no back-up");
 
+            Button mediaItemDisplayButton = new Button(parentLayout.getContext());
+            mediaItemDisplayButton.setVisibility(View.VISIBLE);
+            mediaItemDisplayButton.setText("Click here to see the image");
+
+
+            mediaItemDisplayButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(productUrl));
+                    parentLayout.getContext().startActivity(intent);
+                }
+            });
+
+
+
+
+            parentLayout.addView(textViewName);
+            parentLayout.addView(textViewBackUpStatus);
+            parentLayout.addView(mediaItemDisplayButton);
+        }
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState){
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.activity_mediaitems);
+
+            LinearLayout mediaItemsLinearLayout = findViewById(R.id.mediaItemsLinearLayout);
+            LinearLayout.LayoutParams mediaItemsLinearLayoutParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+
+            mediaItemsLinearLayoutParams.setMargins(0,5,0, 0);
+
+            Intent intent = getIntent();
+            ArrayList<String> fileNames = intent.getStringArrayListExtra("fileNames");
+            ArrayList<String> productUrls = intent.getStringArrayListExtra("productUrls");
+
+            for (int i=0;i<fileNames.size();i++) {
+                createMediaItemsModel(fileNames.get(i)
+                        , productUrls.get(i)
+                        ,mediaItemsLinearLayout);
+            }
+
+            Button mediaItemsBackButton =  findViewById(R.id.mediaItemsBackButton);
+            mediaItemsBackButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    setResult(RESULT_OK);
+                    finish();
+                }
+            });
+        }
 }
