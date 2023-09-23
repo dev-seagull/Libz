@@ -24,8 +24,7 @@
             android:layout_marginTop="5dp"
             android:layout_marginBottom="10dp"
             android:textColor="@android:color/holo_red_dark"
-            android:text="No image or video was found in your gallery.
-            Select the formats to search for images and videos throughout you file manager."
+            android:text="No image or video was found in your gallery. Select the formats to search for images and videos throughout you file manager."
             android:textSize="20sp"
             android:textStyle="bold" />
 

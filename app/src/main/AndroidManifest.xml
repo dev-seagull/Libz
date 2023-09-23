@@ -45,6 +45,7 @@
         <activity android:name=".AndroidFoldersSelectionActivity" />
         <activity android:name=".MediaItemModel"/>
         <activity android:name=".AndroidMediaItems"/>
+        <activity android:name=".GoogleCloud"/>
     </application>
 
 </manifest>

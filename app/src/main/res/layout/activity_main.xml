@@ -9,6 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
+        android:background="@color/sky_blue"
         android:orientation="vertical"
         android:padding="16dp"
         tools:context=".MainActivity">
@@ -19,6 +20,11 @@
             android:layout_marginTop="-40dp"
             android:src="@drawable/seagulllogo" />
 
+        <com.anychart.AnyChartView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+        ></com.anychart.AnyChartView>
+
         <View
             android:layout_width="match_parent"
             android:layout_height="5dp"
@@ -27,35 +33,24 @@
             android:alpha="1"
             android:background="#050505" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="10dp"
-            android:textColor="@android:color/holo_red_dark"
-            android:text="Login to your main account which will be synced with more accounts for back-up"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
         <Button
-            android:id="@+id/btnLogin"
+            android:id="@+id/loginButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:drawableLeft="@drawable/googlelogo"
-            android:text="Login"
+            android:drawableLeft="@drawable/googlephotosicon_resized"
+            android:text="Add a primary account"
             android:gravity="center"
-            android:backgroundTint="#007ACC"
+            android:backgroundTint="#0D47A1"
             android:paddingRight="70dp"
             android:textSize="18dp" />
 
-        <TextView
-            android:id="@+id/loginState"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/primaryAccountsButtons"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:text="You haven't logged into your Google account yet"
-            android:textSize="16sp" />
+            android:orientation="vertical"
+            android:gravity="center"> </LinearLayout>
 
         <com.github.mikephil.charting.charts.HorizontalBarChart
             android:id="@+id/StorageHorizontalBarChart"
@@ -73,7 +68,7 @@
         <Button
             android:id="@+id/mediaItemsLayout"
             android:text="Detail of items"
-            android:backgroundTint="#007ACC"
+            android:backgroundTint="#0D47A1"
             android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -108,7 +103,8 @@
             android:id="@+id/syncAndroidDevice"
             android:text="Sync"
             android:layout_width="match_parent"
-            android:backgroundTint="#007ACC"
+            android:backgroundTint="#0D47A1"
+            android:textColor="@color/white"
             android:layout_height="wrap_content"> </Button>
 
         <ProgressBar
@@ -131,12 +127,26 @@
             android:id="@+id/androidMediaItemsButton"
             android:text="Detail of android items"
             android:clickable="true"
-            android:backgroundTint="#007ACC"
+            android:backgroundTint="#0D47A1"
             android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             > </Button>
 
+        <Button
+            android:id="@+id/duplicatedbutton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#0D47A1"
+            android:text="find duplicated images and videos"
+            ></Button>
+        <TextView
+            android:id="@+id/duplicatedTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:text=""
+            android:layout_marginTop="5dp" />
 
         <View
             android:layout_width="match_parent"
@@ -146,24 +156,13 @@
             android:alpha="1"
             android:background="#050505" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="10dp"
-            android:text="Login to your back-up account, so it will be synced with your main account"
-            android:textColor="@android:color/holo_red_dark"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-
         <Button
             android:id="@+id/btnLoginBackup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="#bf8c2e"
+            android:backgroundTint="#42A5F5"
             android:layout_marginBottom="16dp"
-            android:drawableLeft="@drawable/googlelogo"
+            android:drawableLeft="@drawable/googledriveimage_resized"
             android:text="Login to your back-up account"
             android:gravity="center"
             android:paddingRight="70dp"
@@ -175,7 +174,7 @@
             android:id="@+id/syncToBackUpAccountButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="#bf8c2e"
+            android:backgroundTint="#42A5F5"
             android:text="Sync"
             android:textSize="16sp" />
 
@@ -187,8 +186,5 @@
 
 
     </LinearLayout>
-
-
-
 
 </ScrollView>
