@@ -2,12 +2,11 @@ package com.example.cso;
 
 
 public class PrimaryAccountInfo {
-    String buttonId;
-    //GoogleCloud.Tokens tokens;
-    //private Storage storage;
     //private AndroidFiles androidFiles;
     private String userEmail;
     private Tokens tokens;
+    private Storage storage;
+
 
     public static class Tokens {
         private final String refreshToken;
@@ -27,32 +26,30 @@ public class PrimaryAccountInfo {
         }
     }
 
-    public PrimaryAccountInfo(String buttonId, String userEmail) {
-        this.buttonId = buttonId;
-      //  this.token = token;
-      //  this.storage = storage;
-      //  this.androidFiles = androidFiles;
+
+    public static class Storage{
+        private Double totalStorage;
+        private Double usedStorage;
+
+        public Storage(Double totalStorage, Double usedStorage){
+            this.totalStorage = totalStorage;
+            this.usedStorage = usedStorage;
+        }
+
+        public Double getTotalStorage() {return totalStorage;}
+        public Double getUsedStorage() {return usedStorage;}
+    }
+
+    public PrimaryAccountInfo(String userEmail, Tokens tokens, Storage storage) {
         this.userEmail = userEmail;
+        this.tokens = tokens;
+        this.storage = storage;
     }
-
-    public String getButtonId() {
-        return buttonId;
-    }
-
-   // public Token getToken() {
-   //     return token;
-   // }
-
-    //public Storage getStorage() {
-    //    return storage;
-    //}
-
-    //public AndroidFiles getAndroidFiles() {
-    //    return androidFiles;
-    //}
 
     public String getUserEmail() {
         return userEmail;
     }
+    public Tokens getTokens() {return tokens;}
+    public Storage getStorage() {return storage;}
 }
 

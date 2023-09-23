@@ -22,9 +22,11 @@
     import com.google.android.gms.common.api.Scope;
     import com.google.android.gms.tasks.Task;
     import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+    import com.google.api.client.http.HttpRequestInitializer;
     import com.google.api.client.http.javanet.NetHttpTransport;
     import com.google.api.client.json.JsonFactory;
     import com.google.api.client.json.gson.GsonFactory;
+    import com.google.api.services.drive.Drive;
 
     import org.json.JSONObject;
 
@@ -34,6 +36,7 @@
     import java.net.HttpURLConnection;
     import java.net.URL;
     import java.nio.charset.StandardCharsets;
+    import java.text.DecimalFormat;
     import java.util.concurrent.Callable;
     import java.util.concurrent.ExecutorService;
     import java.util.concurrent.Executors;
@@ -49,6 +52,17 @@
 
         public GoogleCloud(FragmentActivity activity){
             this.activity = activity;
+        }
+
+
+        public double convertStorageToGigaByte(float storage){
+            double divider = (Math.pow(1024,3));
+            double result = storage / divider;
+
+            DecimalFormat decimalFormat = new DecimalFormat("#.##");
+            Double formattedResult = Double.parseDouble(decimalFormat.format(result));
+
+            return formattedResult;
         }
 
 
@@ -88,6 +102,7 @@
             String authCode = "";
             PrimaryAccountInfo.Tokens tokens = null;
             Button finalLoginButton = null;
+            PrimaryAccountInfo.Storage storage = null;
 
             try{
                 Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
@@ -98,12 +113,14 @@
                     userEmail = account.getEmail();
                     userEmail = userEmail.replace("@gmail.com","");
                 }
+                System.out.println("the user email is: " + userEmail);
 
                 authCode = account.getServerAuthCode();
                 //here you should get the tokens, storage and display it then using chart, gphotos files,
                 // and also drive files?
                 // you should add more background tasks to do that
-                tokens = getTokens(authCode); // done with this
+                tokens = getTokens(authCode);
+                storage = getStorage(tokens);
 
                 LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
                 createLoginButton(primaryAccountsButtonsLinearLayout);
@@ -112,7 +129,7 @@
                 Toast.makeText(activity,"Login failed: " + e.getLocalizedMessage(),Toast.LENGTH_SHORT).show();
             }
 
-            return new PrimaryAccountInfo(userEmail, authCode);
+            return new PrimaryAccountInfo(userEmail, tokens, storage);
         }
 
 
@@ -216,31 +233,49 @@
         }
 
 
-        public PrimaryAccountInfo.Tokens getStorage(PrimaryAccountInfo.Tokens tokens){
+        public PrimaryAccountInfo.Storage getStorage(PrimaryAccountInfo.Tokens tokens){
             ExecutorService executor = Executors.newSingleThreadExecutor();
             String refreshToken = tokens.getRefreshToken();
             String accessToken = tokens.getAccessToken();
+            final PrimaryAccountInfo.Storage[] storage = new PrimaryAccountInfo.Storage[1];
+            final Double[] totalStorage = new Double[1];
+            final Double[] usedStorage = new Double[1];
 
             try{
-                Callable<PrimaryAccountInfo.Tokens> backgroundTask = () -> {
+                Callable<PrimaryAccountInfo.Storage> backgroundTask = () -> {
 
                     final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
                     final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+                    HttpRequestInitializer httpRequestInitializer = request -> {
+                        request.getHeaders().setAuthorization("Bearer " + accessToken);
+                        request.getHeaders().setContentType("application/json");
+                    };
 
-                    return null;
+                    Drive driveService = new Drive.Builder(netHttpTransport, jsonFactory, httpRequestInitializer)
+                            .setApplicationName("cso").build();
+
+                    totalStorage[0] = convertStorageToGigaByte(driveService.about().get()
+                            .setFields("user, storageQuota")
+                            .execute().getStorageQuota().getLimit());
+
+                    usedStorage[0] = convertStorageToGigaByte(driveService.about().get()
+                            .setFields("user, storageQuota")
+                            .execute().getStorageQuota().getUsage());
+
+                    storage[0] = new PrimaryAccountInfo.Storage(totalStorage[0], usedStorage[0]);
+
+
+                    return storage[0];
                 };
 
-                Future<PrimaryAccountInfo.Tokens> future = executor.submit(backgroundTask);
-                //tokens[0] = future.get();
+                Future<PrimaryAccountInfo.Storage> future = executor.submit(backgroundTask);
+                storage[0] = future.get();
             }catch (Exception e){
                 System.out.println(e.getLocalizedMessage());
             }
 
-           // return tokens[0];
-            return  null;
+            return  storage[0];
         }
-
-
     }
 
 

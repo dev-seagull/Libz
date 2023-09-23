@@ -386,7 +386,9 @@ public class MainActivity extends AppCompatActivity {
             result -> {
                 if(result.getResultCode() == RESULT_OK){
 
-                    googleCloud.handleSignInResult(result.getData());
+                    PrimaryAccountInfo primaryAccountInfo = googleCloud.handleSignInResult(result.getData());
+                    Button button = findViewById(R.id.loginButton);
+                    button.setText(primaryAccountInfo.getUserEmail());
                     //here through handleSignInResult
                     //GoogleCloud.SignInToGoogleCloudResult signInToGoogleCloudResult =
                     //        googleCloud.handleSignInResult(result.getData(), button);
@@ -435,18 +437,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-
-            //           public double convertToGigaByte(float storage){
-                //              double Divider = (Math.pow(1024,3));
-                //              return storage/Divider;
-                //          }
-
-
- //           public double convertToGigaByte(float storage){
-  //              double Divider = (Math.pow(1024,3));
-  //              return storage/Divider;
-  //          }
-
 
         }catch (Exception e) {
             //loginStateTextView.setText("Sign-in failed: " + e.getLocalizedMessage());
