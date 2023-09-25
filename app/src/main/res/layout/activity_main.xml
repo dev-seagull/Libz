@@ -20,11 +20,6 @@
             android:layout_marginTop="-40dp"
             android:src="@drawable/seagulllogo" />
 
-        <com.anychart.AnyChartView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-        ></com.anychart.AnyChartView>
-
         <View
             android:layout_width="match_parent"
             android:layout_height="5dp"
@@ -38,11 +33,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:drawableLeft="@drawable/googlephotosicon_resized"
-            android:text="Add a primary account"
-            android:gravity="center"
             android:backgroundTint="#0D47A1"
+            android:drawableLeft="@drawable/googlephotosicon_resized"
+            android:gravity="center"
             android:paddingRight="70dp"
+            android:text="Add a primary account"
             android:textSize="18dp" />
 
         <LinearLayout
@@ -51,6 +46,12 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"> </LinearLayout>
+
+        <com.anychart.AnyChartView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/primaryAccountsStorageChart"
+            ></com.anychart.AnyChartView>
 
         <com.github.mikephil.charting.charts.HorizontalBarChart
             android:id="@+id/StorageHorizontalBarChart"

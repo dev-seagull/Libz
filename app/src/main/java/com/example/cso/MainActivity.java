@@ -29,9 +29,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.anychart.AnyChart;
+import com.anychart.AnyChartView;
+import com.anychart.chart.common.dataentry.DataEntry;
+import com.anychart.chart.common.dataentry.ValueDataEntry;
 import com.github.mikephil.charting.charts.HorizontalBarChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.LegendEntry;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
@@ -72,6 +78,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Queue;
 
@@ -112,10 +119,9 @@ public class MainActivity extends AppCompatActivity {
     HorizontalBarChart storage_horizontalBarChart;
     HorizontalBarChart androidStorageBarChart;
     ProgressBar androidProgressBar;
-
     GoogleCloud googleCloud;
-
-
+    AnyChartView primaryAccountsStorageAnyChartView;
+    ActivityResultLauncher<Intent> signInLauncher;
     HashMap<String, PrimaryAccountInfo> primaryAccountHashMap = new HashMap<>();
 
 
@@ -373,26 +379,46 @@ public class MainActivity extends AppCompatActivity {
         @Override
     protected void onStart(){
         super.onStart();
+        updateButtonsListeners();
+        //updatePrimaryAccountsStorageChart();
 
         try{
             googleCloud = new GoogleCloud(this);
+            primaryAccountsStorageAnyChartView = findViewById(R.id.primaryAccountsStorageChart);
         }catch (Exception e){
 
             //loginStateTextView.setText("Sign-in failed: " + e.getLocalizedMessage());
         }
 
-        ActivityResultLauncher<Intent> signInLauncher = registerForActivityResult(
+            signInLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 if(result.getResultCode() == RESULT_OK){
 
                     PrimaryAccountInfo primaryAccountInfo = googleCloud.handleSignInResult(result.getData());
-                    Button button = findViewById(R.id.loginButton);
-                    button.setText(primaryAccountInfo.getUserEmail());
+                    //Button button = findViewById(R.id.loginButton);
+                    //button.setText(primaryAccountInfo.getUserEmail());
+                    userEmail = primaryAccountInfo.getUserEmail();
+                    primaryAccountHashMap.put(primaryAccountInfo.getUserEmail(), primaryAccountInfo);
+
+                    LinearLayout primary = findViewById(R.id.primaryAccountsButtons);
+                    if(primary.getChildCount() == 1){
+                        Button bt = findViewById(R.id.loginButton);
+                        bt.setText(userEmail);
+                    }else{
+                        View childview = primary.getChildAt(primary.getChildCount() - 2);
+                        if(childview instanceof Button){
+                            Button bt = (Button) childview;
+                            bt.setText(userEmail);
+                        }
+                    }
                     //here through handleSignInResult
                     //GoogleCloud.SignInToGoogleCloudResult signInToGoogleCloudResult =
                     //        googleCloud.handleSignInResult(result.getData(), button);
 
+                    updateButtonsListeners();
+                    updatePrimaryAccountsStorageChart();
+                    //updatePrimaryAccountsButtons(finalSignInLauncher);
                     //userEmail = signInToGoogleCloudResult.getUserEmail();
 
                     //  googleCloud.getAccessToken(authCode, textViewLoginState);
@@ -403,45 +429,141 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         );
+    }
 
-        try{
-            LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
+    private void updateButtonsListeners() {
+        LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
 
-            if(primaryAccountsButtonsLinearLayout.getChildCount() ==0){
-                Button button = findViewById(R.id.loginButton);
-                button.setOnClickListener(
-                    new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            googleCloud.signInToGoogleCloud(signInLauncher);
-                            button.setText(userEmail);
-                        }
-                    }
-                );
-            }
-            else {
-                for(int i=0; i<primaryAccountsButtonsLinearLayout.getChildCount();i++){
-                    View childView = primaryAccountsButtonsLinearLayout.getChildAt(i);
-
-                    if(childView instanceof Button){
-                        Button button = (Button) childView;
-                        button.setOnClickListener(
-                            new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    googleCloud.signInToGoogleCloud(signInLauncher);
-                                    button.setText(userEmail);
-                                }
-                            }
-                         );
+        Button loginButton = findViewById(R.id.loginButton);
+        loginButton.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        googleCloud.signInToGoogleCloud(signInLauncher);
                     }
                 }
-            }
+        );
 
-        }catch (Exception e) {
-            //loginStateTextView.setText("Sign-in failed: " + e.getLocalizedMessage());
+        for (int i = 0; i < primaryAccountsButtonsLinearLayout.getChildCount(); i++) {
+            View childView = primaryAccountsButtonsLinearLayout.getChildAt(i);
+
+            if (childView instanceof Button) {
+                Button button = (Button) childView;
+                button.setOnClickListener(
+                        new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                googleCloud.signInToGoogleCloud(signInLauncher);
+                            }
+                        }
+                );
+            }
         }
     }
+
+
+
+    private void updatePrimaryAccountsStorageChart() {
+        try {
+            HorizontalBarChart horizontalBarChart = findViewById(R.id.StorageHorizontalBarChart);
+            horizontalBarChart.getDescription().setEnabled(false);
+            //horizontalBarChart.setDrawBarShadow(false);
+            horizontalBarChart.setDrawValueAboveBar(true);
+            horizontalBarChart.setDrawGridBackground(false);
+            horizontalBarChart.getLegend().setEnabled(false); // Hide legends
+
+            XAxis xAxis = horizontalBarChart.getXAxis();
+            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+            xAxis.setDrawGridLines(false);
+            xAxis.setDrawAxisLine(false);
+            xAxis.setDrawLabels(false);
+
+            YAxis yAxis = horizontalBarChart.getAxisLeft();
+            yAxis.setDrawGridLines(false);
+            yAxis.setDrawAxisLine(false);
+            yAxis.setDrawLabels(false);
+
+            horizontalBarChart.getAxisRight().setEnabled(false);
+
+            // Use a list of Float to store usedStorage values
+           // List<Float> chartfloatvalues = new ArrayList<>();
+
+            //List<BarEntry> entries = new ArrayList<>();
+            //BarData barData = new BarData();
+
+            Double freeStorage = 0.0;
+            int m = 1;
+
+            int[] barColors = {Color.RED, Color.GRAY, Color.GREEN, Color.BLACK, Color.BLUE};
+
+            List<Float> chartfloatvalues = new ArrayList<>();
+
+
+            ArrayList<BarEntry> barEntries = new ArrayList<>();
+            ArrayList<String> barLabels = new ArrayList<>();
+            //barEntries.add(new BarEntry(0,new float[] {availableSpace,usedSpace} ));
+           // barLabels.add("Free Space: " + availableSpace + " GB");
+           // barLabels.add("Used space: " + usedSpace + " GB");
+
+            for (String userEmail : primaryAccountHashMap.keySet()) {
+                PrimaryAccountInfo primaryAccountInfo = primaryAccountHashMap.get(userEmail);
+                Double totalStorage = primaryAccountInfo.getStorage().getTotalStorage();
+                Double usedStorage = primaryAccountInfo.getStorage().getUsedStorage();
+                freeStorage += totalStorage - usedStorage;
+
+                // Store usedStorage values in the list
+                chartfloatvalues.add(usedStorage.floatValue());
+                m++;
+            }
+
+            float[] usedStorageArray = new float[chartfloatvalues.size()];
+            for (int i = 0; i < chartfloatvalues.size(); i++) {
+                usedStorageArray[i] = chartfloatvalues.get(i);
+            }
+
+            BarEntry barEntry = new BarEntry(0, usedStorageArray);
+            barEntries.add(barEntry);
+            //androidStorageBarChartDataSet.(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+
+            // Convert the list of usedStorage values to an array
+            barEntries.add(new BarEntry(0,new float[] {freeStorage.floatValue()}));
+
+            for(BarEntry be: barEntries){
+                //
+            }
+
+            BarDataSet barDataSet = new BarDataSet(barEntries, "");
+            barDataSet.setDrawValues(true);// Adjust the width as needed
+            barDataSet.setColors(barColors);
+            barDataSet.setColors(ColorTemplate.COLORFUL_COLORS);
+
+            BarData barData = new BarData(barDataSet);
+            androidStorageBarChart.setData(barData);
+            androidStorageBarChart.invalidate();
+
+            //BarEntry barEntry = new BarEntry(m, usedStorageArray);
+            //String freeSpaceLabel = "used Space: " + freeStorage;
+            //freeSpaceLabel.setD
+            //entries.add(barEntry);
+
+           // BarEntry freeSpaceEntry = new BarEntry(m , new float[]{freeStorage.floatValue()});
+           // String freeSpaceLabel = "Free Space: " + freeStorage;
+           // freeSpaceEntry.setData(freeSpaceLabel);
+           // entries.add(freeSpaceEntry);
+
+            // Set the bar data to the horizontalBarChart
+            horizontalBarChart.setData(barData);
+            horizontalBarChart.invalidate();
+
+            // Configure other properties as needed
+
+            System.out.println("successful2");
+        } catch (Exception e) {
+            System.out.println("error " + e.getLocalizedMessage());
+        }
+
+    }
+
 
     @Override
     protected void onSaveInstanceState(Bundle outState){
@@ -851,7 +973,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
 
-             
+
 
 
 

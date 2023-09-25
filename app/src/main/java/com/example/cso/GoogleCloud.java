@@ -4,8 +4,10 @@
     import android.content.Intent;
     import android.content.res.ColorStateList;
     import android.graphics.Color;
+    import android.graphics.drawable.Drawable;
     import android.util.TypedValue;
     import android.view.View;
+    import android.view.ViewGroup;
     import android.widget.Button;
     import android.widget.LinearLayout;
     import android.widget.Toast;
@@ -47,8 +49,6 @@
         private final Activity activity;
         private GoogleSignInClient googleSignInClient;
 
-        String userEmail = "";
-        boolean firstLoginButton = true;
 
         public GoogleCloud(FragmentActivity activity){
             this.activity = activity;
@@ -68,7 +68,6 @@
 
         public void signInToGoogleCloud(ActivityResultLauncher<Intent> signInLauncher) {
             boolean forceCodeForRefreshToken = true;
-            final Button finalLoginButton;
 
             try {
                         GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -85,10 +84,6 @@
                 googleSignInClient.signOut().addOnCompleteListener(task -> {
                     Intent signInIntent = googleSignInClient.getSignInIntent();
                     signInLauncher.launch(signInIntent);
-                    //till here now try to handle result
-
-
-                    LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
                 });
 
             } catch (Exception e){
@@ -138,16 +133,25 @@
             newLoginButton.setText("Add a primary account");
             newLoginButton.setVisibility(View.VISIBLE);
 
-            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            );
-
-            layoutParams.setMargins(16,0,0,0);
-            newLoginButton.setLayoutParams(layoutParams);
             newLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
             newLoginButton.setPadding(0,0,70,0);
             newLoginButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP,18);
+
+            Button loginButton = activity.findViewById(R.id.loginButton);
+            Drawable loginButtonLeftDrawable = loginButton.getCompoundDrawables()[0];
+            newLoginButton.setCompoundDrawablesWithIntrinsicBounds(loginButtonLeftDrawable, null, null, null);
+            //int drawablePadding = 7; // Adjust the value as needed
+            //newLoginButton.setCompoundDrawablePadding(drawablePadding);
+
+
+            int loginButtonWidth = loginButton.getWidth();
+            int loginButtonHeight = loginButton.getHeight();
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    loginButtonHeight
+            );
+            layoutParams.setMargins(16,0,0,0);
+            newLoginButton.setLayoutParams(layoutParams);
 
             if(linearLayout != null){
                 linearLayout.addView(newLoginButton);
