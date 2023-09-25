@@ -87,7 +87,7 @@
                 });
 
             } catch (Exception e){
-                Toast.makeText(activity,"Login failed: "+ e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity,"Login failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             }
         }
 
@@ -121,7 +121,7 @@
                 createLoginButton(primaryAccountsButtonsLinearLayout);
 
             }catch (Exception e){
-                Toast.makeText(activity,"Login failed: " + e.getLocalizedMessage(),Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity,"Login failed: " + e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
             }
 
             return new PrimaryAccountInfo(userEmail, tokens, storage);
@@ -157,7 +157,7 @@
                 linearLayout.addView(newLoginButton);
             }else{
                 Toast.makeText(activity,"Creating a new login button failed",
-                        Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_LONG).show();
             }
         }
 
@@ -215,12 +215,11 @@
 
                         }
                         else{
-                            Toast.makeText(activity,"Login failed", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity,"Login failed", Toast.LENGTH_LONG).show();
                         }
 
                     } catch (Exception e) {
-                        //Toast.makeText(activity,"Login failed:" + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-                        System.out.println("Login failed: " + e.getLocalizedMessage());
+                        Toast.makeText(activity,"Login failed:" + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                     }
 
                     tokens[0] = new PrimaryAccountInfo.Tokens(accessToken[0], refreshToken[0]);
@@ -230,7 +229,7 @@
                 Future<PrimaryAccountInfo.Tokens> future = executor.submit(backgroundTask);
                 tokens[0] = future.get();
             }catch (Exception e){
-                System.out.println(e.getLocalizedMessage());
+                Toast.makeText(activity,"Login failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             }
 
             return tokens[0];
@@ -275,7 +274,7 @@
                 Future<PrimaryAccountInfo.Storage> future = executor.submit(backgroundTask);
                 storage[0] = future.get();
             }catch (Exception e){
-                System.out.println(e.getLocalizedMessage());
+                Toast.makeText(activity,"Login failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             }
 
             return  storage[0];
