@@ -2,9 +2,7 @@ package com.example.cso;
 
 import android.Manifest;
 import android.content.Intent;
-import android.content.pm.LabeledIntent;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -15,8 +13,6 @@ import android.os.Environment;
 import android.os.StatFs;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -29,10 +25,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.anychart.AnyChart;
 import com.anychart.AnyChartView;
-import com.anychart.chart.common.dataentry.DataEntry;
-import com.anychart.chart.common.dataentry.ValueDataEntry;
 import com.github.mikephil.charting.charts.HorizontalBarChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.LegendEntry;
@@ -53,25 +46,16 @@ import com.google.api.services.drive.Drive;
 import com.google.gson.Gson;
 import com.jaredrummler.android.device.DeviceName;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -123,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
     AnyChartView primaryAccountsStorageAnyChartView;
     ActivityResultLauncher<Intent> signInLauncher;
     HashMap<String, PrimaryAccountInfo> primaryAccountHashMap = new HashMap<>();
+    HashMap<String, PrimaryAccountInfo> backUpAccountHashMap = new HashMap<>();
 
 
     public String calculateHash(String filePath) throws IOException {
@@ -291,7 +276,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         androidMediaItemsButton = findViewById(R.id.androidMediaItemsButton);
-        btnBackUpLogin = findViewById(R.id.btnLoginBackup);
         syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
         syncAndroidButton = findViewById(R.id.syncAndroidDevice);
 
@@ -384,7 +368,7 @@ public class MainActivity extends AppCompatActivity {
 
         try{
             googleCloud = new GoogleCloud(this);
-            primaryAccountsStorageAnyChartView = findViewById(R.id.primaryAccountsStorageChart);
+            //primaryAccountsStorageAnyChartView = findViewById(R.id.primaryAccountsStorageChart);
         }catch (Exception e){
 
             //loginStateTextView.setText("Sign-in failed: " + e.getLocalizedMessage());
@@ -395,7 +379,7 @@ public class MainActivity extends AppCompatActivity {
             result -> {
                 if(result.getResultCode() == RESULT_OK){
 
-                    PrimaryAccountInfo primaryAccountInfo = googleCloud.handleSignInResult(result.getData());
+                    PrimaryAccountInfo primaryAccountInfo = googleCloud.handleSignInResult(result.getData(),this);
                     //Button button = findViewById(R.id.loginButton);
                     //button.setText(primaryAccountInfo.getUserEmail());
                     userEmail = primaryAccountInfo.getUserEmail();
@@ -417,7 +401,7 @@ public class MainActivity extends AppCompatActivity {
                     //        googleCloud.handleSignInResult(result.getData(), button);
 
                     updateButtonsListeners();
-                    updatePrimaryAccountsStorageChart();
+                    //updatePrimaryAccountsStorageChart();
                     //updatePrimaryAccountsButtons(finalSignInLauncher);
                     //userEmail = signInToGoogleCloudResult.getUserEmail();
 
@@ -446,6 +430,35 @@ public class MainActivity extends AppCompatActivity {
 
         for (int i = 0; i < primaryAccountsButtonsLinearLayout.getChildCount(); i++) {
             View childView = primaryAccountsButtonsLinearLayout.getChildAt(i);
+
+            if (childView instanceof Button) {
+                Button button = (Button) childView;
+                button.setOnClickListener(
+                        new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                googleCloud.signInToGoogleCloud(signInLauncher);
+                            }
+                        }
+                );
+            }
+        }
+
+
+        LinearLayout backUpAccountsButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
+
+        Button backUpLoginButton = findViewById(R.id.backUpLoginButton);
+        backUpLoginButton.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        googleCloud.signInToGoogleCloud(signInLauncher);
+                    }
+                }
+        );
+
+        for (int i = 0; i < backUpAccountsButtonsLinearLayout.getChildCount(); i++) {
+            View childView = backUpAccountsButtonsLinearLayout.getChildAt(i);
 
             if (childView instanceof Button) {
                 Button button = (Button) childView;
@@ -641,22 +654,6 @@ public class MainActivity extends AppCompatActivity {
 
         int counter = 0;
 
-        byte[] inputStreamToByteArray(InputStream inputStream) throws IOException {
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            int nRead;
-            byte[] data = new byte[1024];
-            while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
-                buffer.write(data, 0, nRead);
-            }
-            buffer.flush();
-            return buffer.toByteArray();
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            syncToBackUpAccountButton.setText("Wait...");
-        }
 
         @Override
         protected String doInBackground(Void... voids) {
@@ -824,10 +821,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
             return null;
-        }
-        protected void onPostExecute(String response) {
-            syncToBackUpAccountTextView.setText(counter+ " items were synced");
-            syncToBackUpAccountButton.setText("Sync");
         }
     }
 

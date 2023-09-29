@@ -47,11 +47,6 @@
             android:orientation="vertical"
             android:gravity="center"> </LinearLayout>
 
-        <com.anychart.AnyChartView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/primaryAccountsStorageChart"
-            ></com.anychart.AnyChartView>
 
         <com.github.mikephil.charting.charts.HorizontalBarChart
             android:id="@+id/StorageHorizontalBarChart"
@@ -158,17 +153,23 @@
             android:background="#050505" />
 
         <Button
-            android:id="@+id/btnLoginBackup"
+            android:id="@+id/backUpLoginButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:backgroundTint="#42A5F5"
             android:layout_marginBottom="16dp"
             android:drawableLeft="@drawable/googledriveimage_resized"
-            android:text="Login to your back-up account"
+            android:text="Add back up account"
             android:gravity="center"
             android:paddingRight="70dp"
             android:textSize="18dp" />
 
+        <LinearLayout
+            android:id="@+id/backUpAccountsButtons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"> </LinearLayout>
 
 
         <Button

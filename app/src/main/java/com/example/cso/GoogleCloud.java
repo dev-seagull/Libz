@@ -92,7 +92,7 @@
         }
 
 
-        public PrimaryAccountInfo handleSignInResult(Intent data){
+        public PrimaryAccountInfo handleSignInResult(Intent data, FragmentActivity activity){
             String userEmail = "";
             String authCode = "";
             PrimaryAccountInfo.Tokens tokens = null;
@@ -120,6 +120,8 @@
                 LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
                 createLoginButton(primaryAccountsButtonsLinearLayout);
 
+                GooglePhotos googlePhotos = new GooglePhotos(activity);
+                googlePhotos.getGooglePhotosMediaItems(tokens);
             }catch (Exception e){
                 Toast.makeText(activity,"Login failed: " + e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
             }
