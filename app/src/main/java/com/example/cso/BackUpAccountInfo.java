@@ -1,14 +1,9 @@
 package com.example.cso;
 
-
-import java.util.ArrayList;
-
-public class PrimaryAccountInfo {
-    //private AndroidFiles androidFiles;
+public class BackUpAccountInfo {
     private String userEmail;
-    private Tokens tokens;
-    private Storage storage;
-    private ArrayList<GooglePhotos.MediaItem> mediaItems;
+    private com.example.cso.PrimaryAccountInfo.Tokens tokens;
+    private com.example.cso.PrimaryAccountInfo.Storage storage;
 
 
     public static class Tokens {
@@ -43,21 +38,16 @@ public class PrimaryAccountInfo {
         public Double getUsedStorage() {return usedStorage;}
     }
 
-    public PrimaryAccountInfo(String userEmail, Tokens tokens, Storage storage,
-                              ArrayList<GooglePhotos.MediaItem> mediaItems) {
+    public BackUpAccountInfo(String userEmail, com.example.cso.PrimaryAccountInfo.Tokens tokens, com.example.cso.PrimaryAccountInfo.Storage storage) {
         this.userEmail = userEmail;
         this.tokens = tokens;
         this.storage = storage;
-        this.mediaItems = mediaItems;
     }
-
 
     public String getUserEmail() {
         return userEmail;
     }
-    public Tokens getTokens() {return tokens;}
-    public Storage getStorage() {return storage;}
-    public ArrayList<GooglePhotos.MediaItem> getMediaItems() {return mediaItems;}
+    public com.example.cso.PrimaryAccountInfo.Tokens getTokens() {return tokens;}
+    public com.example.cso.PrimaryAccountInfo.Storage getStorage() {return storage;}
 
 }
-

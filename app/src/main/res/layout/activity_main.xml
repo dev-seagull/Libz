@@ -159,7 +159,7 @@
             android:backgroundTint="#42A5F5"
             android:layout_marginBottom="16dp"
             android:drawableLeft="@drawable/googledriveimage_resized"
-            android:text="Add back up account"
+            android:text="Add a back up account"
             android:gravity="center"
             android:paddingRight="70dp"
             android:textSize="18dp" />

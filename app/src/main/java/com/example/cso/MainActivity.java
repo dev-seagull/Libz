@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -47,7 +48,6 @@ import com.google.gson.Gson;
 import com.jaredrummler.android.device.DeviceName;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -70,7 +70,6 @@ import java.util.Queue;
 public class MainActivity extends AppCompatActivity {
 
     ArrayList<String> androidImageAndVideoPaths;
-    String userEmail;
     Button mediaItemsLayoutButton;
     Button btnBackUpLogin;
     Button androidMediaItemsButton;
@@ -105,9 +104,11 @@ public class MainActivity extends AppCompatActivity {
     ProgressBar androidProgressBar;
     GoogleCloud googleCloud;
     AnyChartView primaryAccountsStorageAnyChartView;
-    ActivityResultLauncher<Intent> signInLauncher;
+    ActivityResultLauncher<Intent> signInToPrimaryLauncher;
+    ActivityResultLauncher<Intent> signInToBackUpLauncher;
+    GooglePhotos googlePhotos;
     HashMap<String, PrimaryAccountInfo> primaryAccountHashMap = new HashMap<>();
-    HashMap<String, PrimaryAccountInfo> backUpAccountHashMap = new HashMap<>();
+    HashMap<String, BackUpAccountInfo> backUpAccountHashMap = new HashMap<String, BackUpAccountInfo>();
 
 
     public String calculateHash(String filePath) throws IOException {
@@ -303,15 +304,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-
-        syncToBackUpAccountButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                new GooglePhotosUpload().execute();
-            }
-        });
-
-
         syncAndroidButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -368,51 +360,80 @@ public class MainActivity extends AppCompatActivity {
 
         try{
             googleCloud = new GoogleCloud(this);
-            //primaryAccountsStorageAnyChartView = findViewById(R.id.primaryAccountsStorageChart);
+            googlePhotos = new GooglePhotos(this);
         }catch (Exception e){
-
-            //loginStateTextView.setText("Sign-in failed: " + e.getLocalizedMessage());
+            Toast.makeText(this,e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
         }
 
-            signInLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
+        signInToPrimaryLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 if(result.getResultCode() == RESULT_OK){
-
-                    PrimaryAccountInfo primaryAccountInfo = googleCloud.handleSignInResult(result.getData(),this);
-                    //Button button = findViewById(R.id.loginButton);
-                    //button.setText(primaryAccountInfo.getUserEmail());
-                    userEmail = primaryAccountInfo.getUserEmail();
+                    LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
+                    PrimaryAccountInfo primaryAccountInfo = googleCloud.handleSignInToPrimaryResult(result.getData(),
+                            this, primaryAccountsButtonsLinearLayout);
+                    String userEmail = primaryAccountInfo.getUserEmail();
                     primaryAccountHashMap.put(primaryAccountInfo.getUserEmail(), primaryAccountInfo);
 
-                    LinearLayout primary = findViewById(R.id.primaryAccountsButtons);
-                    if(primary.getChildCount() == 1){
+                    if(primaryAccountsButtonsLinearLayout.getChildCount() == 1){
                         Button bt = findViewById(R.id.loginButton);
                         bt.setText(userEmail);
                     }else{
-                        View childview = primary.getChildAt(primary.getChildCount() - 2);
+                        View childview = primaryAccountsButtonsLinearLayout.getChildAt(
+                                primaryAccountsButtonsLinearLayout.getChildCount() - 2);
                         if(childview instanceof Button){
                             Button bt = (Button) childview;
                             bt.setText(userEmail);
                         }
                     }
-                    //here through handleSignInResult
-                    //GoogleCloud.SignInToGoogleCloudResult signInToGoogleCloudResult =
-                    //        googleCloud.handleSignInResult(result.getData(), button);
 
                     updateButtonsListeners();
-                    //updatePrimaryAccountsStorageChart();
-                    //updatePrimaryAccountsButtons(finalSignInLauncher);
-                    //userEmail = signInToGoogleCloudResult.getUserEmail();
-
-                    //  googleCloud.getAccessToken(authCode, textViewLoginState);
-                    //googleCloud.executeBackgroundTask(authCode);
-
-                    //TokenRequestResult tokenRequestResult = new TokenRequestResult(fileNames,baseUrls);
-                    //tokenRequestResult().execute();
                 }
             }
         );
+
+        signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if(result.getResultCode() == RESULT_OK){
+                    LinearLayout backUpAccountsButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
+                    BackUpAccountInfo backUpAccountInfo = googleCloud.handleSignInToBackupResult(result.getData(),
+                            this, backUpAccountsButtonsLinearLayout);
+                    String userEmail = backUpAccountInfo.getUserEmail();
+                    backUpAccountHashMap.put(backUpAccountInfo.getUserEmail(), backUpAccountInfo);
+
+                    if(backUpAccountsButtonsLinearLayout.getChildCount() == 1){
+                        Button bt = findViewById(R.id.backUpLoginButton);
+                        bt.setText(userEmail);
+                    }else{
+                        View childview = backUpAccountsButtonsLinearLayout.getChildAt(
+                                backUpAccountsButtonsLinearLayout.getChildCount() - 2);
+                        if(childview instanceof Button){
+                            Button bt = (Button) childview;
+                            bt.setText(userEmail);
+                        }
+                    }
+
+                    updateButtonsListeners();
+                }
+            });
+
+        syncToBackUpAccountButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                TextView syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
+                syncToBackUpAccountTextView.setText("Wait untill the uploading process is finished");
+
+                BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
+                String backUpAccessToken = firstBackUpAccountInfo.getTokens().getAccessToken();
+                for (PrimaryAccountInfo primaryAccountInfo : primaryAccountHashMap.values()) {
+                    ArrayList<GooglePhotos.MediaItem> mediaItems = primaryAccountInfo.getMediaItems();
+                    googlePhotos.uploadToGoogleDrive(mediaItems, backUpAccessToken);
+                }
+
+                syncToBackUpAccountTextView.setText("Uploading process is finished");
+            }
+        });
+
     }
 
     private void updateButtonsListeners() {
@@ -423,7 +444,8 @@ public class MainActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        googleCloud.signInToGoogleCloud(signInLauncher);
+                        googleCloud.signInToGoogleCloud(signInToPrimaryLauncher);
+                        //wait
                     }
                 }
         );
@@ -437,7 +459,7 @@ public class MainActivity extends AppCompatActivity {
                         new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
-                                googleCloud.signInToGoogleCloud(signInLauncher);
+                                googleCloud.signInToGoogleCloud(signInToPrimaryLauncher);
                             }
                         }
                 );
@@ -452,7 +474,7 @@ public class MainActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        googleCloud.signInToGoogleCloud(signInLauncher);
+                        googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
                     }
                 }
         );
@@ -466,7 +488,7 @@ public class MainActivity extends AppCompatActivity {
                         new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
-                                googleCloud.signInToGoogleCloud(signInLauncher);
+                                googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
                             }
                         }
                 );
