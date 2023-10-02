@@ -1,18 +1,19 @@
 package com.example.cso;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.StatFs;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -37,12 +38,6 @@ import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.FileContent;
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.gson.Gson;
 import com.jaredrummler.android.device.DeviceName;
@@ -50,13 +45,7 @@ import com.jaredrummler.android.device.DeviceName;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -111,14 +100,15 @@ public class MainActivity extends AppCompatActivity {
     HashMap<String, BackUpAccountInfo> backUpAccountHashMap = new HashMap<String, BackUpAccountInfo>();
 
 
-    public String calculateHash(String filePath) throws IOException {
-
+    public static String calculateHash(String filePath, Activity activity) throws IOException {
         final int BUFFER_SIZE = 8192;
+        StringBuilder hexString = new StringBuilder();
 
         MessageDigest digest = null;
         try {
             digest = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
+            Toast.makeText(activity,"Calculating hash failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             throw new RuntimeException("SHA-256 algorithm not available", e);
         }
 
@@ -134,12 +124,13 @@ public class MainActivity extends AppCompatActivity {
             bufferedInputStream.close();
 
             byte[] hash = digest.digest();
-            StringBuilder hexString = new StringBuilder();
             for (byte b : hash) {
                 hexString.append(String.format("%02X", b));
             }
-            return  hexString.toString();
+        }catch (Exception e){
+            Toast.makeText(activity,"Calculating hash failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         }
+        return hexString.toString();
     }
 
 
@@ -159,56 +150,26 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
+    ArrayList<Android.MediaItem> mediaItems = Android.getGalleryMediaItems(this);
 
-    private ArrayList<String> getGalleryImagesAndVideos() {
-        ArrayList<String> mediaItemPaths = new ArrayList<>();
-
-        String[] projection = {MediaStore.Files.FileColumns.DATA};
-        String selection = MediaStore.Files.FileColumns.MEDIA_TYPE + "=? OR " +
-                MediaStore.Files.FileColumns.MEDIA_TYPE + "=?";
-        String[] selectionArgs = {String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE),
-                String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO)};
-        String sortOrder = MediaStore.Images.Media.DATE_MODIFIED + " DESC";
-
-        Cursor cursor = getContentResolver().query(
-                MediaStore.Files.getContentUri("external"),
-                projection,
-                selection,
-                selectionArgs,
-                sortOrder
-        );
-
-        if (cursor != null) {
-            int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA);
-            while (cursor.moveToNext()) {
-                String mediaItemPath = cursor.getString(columnIndex);
-                mediaItemPaths.add(mediaItemPath);
-            }
-            cursor.close();
-        }
-
-        return mediaItemPaths;
-    }
-
-    public ArrayList<String> getAndroidImagesAndVideos(){
+    public ArrayList<Android.MediaItem> getAndroidMediaItems(){
+        int requestCode = 1;
 
         while (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
                 ContextCompat.checkSelfPermission(getApplicationContext(),
                         Manifest.permission.READ_EXTERNAL_STORAGE) !=
                         PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, requestCode);
         }
 
-        ArrayList<String> imagesAndVideosPaths = getGalleryImagesAndVideos();
+        ArrayList<Android.MediaItem> mediaItems = Android.getGalleryMediaItems(this);
 
-        if(imagesAndVideosPaths.isEmpty()){
+        if(mediaItems.isEmpty()){
             Intent intent = new Intent(getApplicationContext(),AndroidFoldersSelectionActivity.class);
-            //private static final int REQUEST_CODE_FOLDER_SELECTION = 1;
             startActivityForResult(intent,123);
         }
 
-        System.out.println("number of image and videos path: "+ imagesAndVideosPaths.size());
-        return imagesAndVideosPaths;
+        return null;
 
     }
 
@@ -221,8 +182,6 @@ public class MainActivity extends AppCompatActivity {
         //String json = sharedPreferences.getString("AndroidImageAndVideoPaths",null);
         //if(json == null){
 
-        androidImageAndVideoPaths = getAndroidImagesAndVideos();
-        System.out.println("size of android files: " + androidImageAndVideoPaths.size());
 
         Button duplicatedbutton = findViewById(R.id.duplicatedbutton);
         TextView dupliacterdTextview = findViewById(R.id.duplicatedTextView);
@@ -232,36 +191,29 @@ public class MainActivity extends AppCompatActivity {
                 duplicatedbutton.setText("Wait,it may take a bit long to find duplicated files...");
 
                                       ArrayList<ArrayList<String>> androidduplicatedfiles = new ArrayList<ArrayList<String>>();
-                                      try {
-                                          ArrayList<String> newGroup = new ArrayList<String>();
-                                          newGroup.add(calculateHash(androidImageAndVideoPaths.get(0)));
-                                          newGroup.add(androidImageAndVideoPaths.get(0));
-                                          androidduplicatedfiles.add(newGroup);
-                                      } catch (IOException e) {
-                                          throw new RuntimeException(e);
-                                      }
-                                      for (int i = 1; i < androidImageAndVideoPaths.size(); i++) {
+                ArrayList<String> newGroup = new ArrayList<String>();
+                // newGroup.add(calculateHash(androidImageAndVideoPaths.get(0)));
+                // newGroup.add(androidImageAndVideoPaths.get(0));
+                // androidduplicatedfiles.add(newGroup);
+                for (int i = 1; i < androidImageAndVideoPaths.size(); i++) {
                                           System.out.println("here");
                                           boolean wasIn = false;
-                                          try {
-                                              String hash = calculateHash(androidImageAndVideoPaths.get(i));
-                                              for (int j = 0; j < androidduplicatedfiles.size(); j++) {
-                                                  if (androidduplicatedfiles.get(j).get(0).equals(hash)) {
-                                                      androidduplicatedfiles.get(j).add(androidImageAndVideoPaths.get(i));
-                                                      wasIn = true;
-                                                  }
-                                              }
-                                              if (wasIn == false) {
-                                                  ArrayList<String> newGroup = new ArrayList<String>();
-                                                  newGroup.add(calculateHash(androidImageAndVideoPaths.get(i)));
-                                                  newGroup.add(androidImageAndVideoPaths.get(i));
-                                                  androidduplicatedfiles.add(newGroup);
-                                              }
+                    //    String hash = calculateHash(androidImageAndVideoPaths.get(i));
+                    String hash = "a";
+                    for (int j = 0; j < androidduplicatedfiles.size(); j++) {
+                        if (androidduplicatedfiles.get(j).get(0).equals(hash)) {
+                            androidduplicatedfiles.get(j).add(androidImageAndVideoPaths.get(i));
+                            wasIn = true;
+                        }
+                    }
+                    if (wasIn == false) {
+                       // ArrayList<String> newGroup = new ArrayList<String>();
+                        //newGroup.add(calculateHash(androidImageAndVideoPaths.get(i)));
+                       // newGroup.add(androidImageAndVideoPaths.get(i));
+                        //androidduplicatedfiles.add(newGroup);
+                    }
 
-                                          } catch (IOException e) {
-                                              throw new RuntimeException(e);
-                                          }
-                                      }
+                }
                                       dupliacterdTextview.setText("dupliacted files: "+ "\n");
                                       for(ArrayList<String> androiduplicate: androidduplicatedfiles){
                                           if(androiduplicate.size() > 2){
@@ -307,37 +259,25 @@ public class MainActivity extends AppCompatActivity {
         syncAndroidButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                SyncAndroid syncAndroid = new SyncAndroid();
-                syncAndroid.execute();
             }
         });
-
-        AndroidStorageTask androidStorageTask = new AndroidStorageTask();
-        androidStorageTask.execute();
 
         androidMediaItemsButton.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Intent intent = new Intent(getApplicationContext(), AndroidMediaItems.class);
+                      //  Intent intent = new Intent(getApplicationContext(), AndroidMediaItems.class);
                         ArrayList<String> serializedAndroidFileInfoList = new ArrayList<>();
                         for (ArrayList<String> fileInfo : androidFileInfoList) {
                             serializedAndroidFileInfoList.add(new Gson().toJson(fileInfo));
                         }
-                        intent.putStringArrayListExtra("androidFileInfoList", serializedAndroidFileInfoList);
-                        startActivityForResult(intent,789);
+                        //intent.putStringArrayListExtra("androidFileInfoList", serializedAndroidFileInfoList);
+                        //
+                        // startActivityForResult(intent,789);
                     }
                 }
         );
 
-
-        if(accessTokens.size() > 1){
-            syncAndroidButton.setEnabled(true);
-            syncAndroidButton.setText("Sync");
-        }else if(accessTokens.size() <2){
-            syncAndroidButton.setEnabled(false);
-            syncAndroidButton.setText("Sync (First login to your back-up account)");
-        }
 
         mediaItemsLayoutButton.setOnClickListener(
                 new View.OnClickListener() {
@@ -610,17 +550,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-
-        if(accessTokens.size() > 1){
-            syncAndroidButton.setEnabled(true);
-            syncAndroidButton.setText("Sync");
-        }else if(accessTokens.size() <2){
-            syncAndroidButton.setEnabled(false);
-            syncAndroidButton.setText("Sync (First login to your back-up account)");
-        }
-
-        System.out.println("ac size" + accessTokens.size());
-
         //private static final int REQUEST_CODE_FOLDER_SELECTION = 1;
         if (requestCode == 123 && resultCode == RESULT_OK) {
 
@@ -660,191 +589,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private static  class TokenRequestResult{
-        ArrayList<String> fileNames;
-        ArrayList<String> baseurls;
-
-        TokenRequestResult(ArrayList<String> fileNames, ArrayList<String> baseurls){
-            this.fileNames = fileNames;
-            this.baseurls = baseurls;
-        }
-
-    }
-
-
-    private class GooglePhotosUpload extends AsyncTask<Void, Void, String> {
-
-        int counter = 0;
-
-
-        @Override
-        protected String doInBackground(Void... voids) {
-            try {
-                int i = 0;
-                for(String baseUrl: baseUrls){
-                    URL url = new URL(baseUrl+"=d");
-
-                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                    connection.setRequestMethod("GET");
-
-                    int responseCode = connection.getResponseCode();
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        InputStream inputStream = new BufferedInputStream(connection.getInputStream());
-
-                        String destinationFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator + "cso";
-                        File folder = new File(destinationFolder);
-                        if (!folder.exists()) {
-                            boolean folderCreated = folder.mkdirs();
-                            if (!folderCreated) {
-                                syncToBackUpAccountTextView.setText("couldn't create directory");
-                            }
-
-                        }
-                        String fileName = fileNames.get(i);
-                        //int dotIndex = fileName.lastIndexOf(".");
-                        //String fileFormat="";
-                        //if (dotIndex >= 0 && dotIndex < fileName.length() - 1) {
-                        //    fileFormat = fileName.substring(dotIndex + 1);
-                        //}
-
-                        i++;
-                        String filePath = destinationFolder + File.separator + fileName;
-
-                        OutputStream outputStream = null;
-                        try {
-                            File file = new File(filePath);
-                            file.createNewFile();
-                            outputStream = new FileOutputStream(file);
-
-                            byte[] buffer = new byte[1024];
-                            int bytesRead;
-                            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                                Log.d("Write", "Bytes written: " + bytesRead);
-                                outputStream.write(buffer, 0, bytesRead);
-                            }
-                            Dcounter = Dcounter + 1;
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            syncToBackUpAccountTextView.setText("Failed to download the itmes");
-                        } finally {
-                            try {
-                                if (outputStream != null) {
-                                    outputStream.close();
-                                }
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        inputStream.close();
-
-                        connection.disconnect();
-
-                    }
-
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            String destinationFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator + "cso";
-
-            File fileDirectory = new File(destinationFolder);
-            File[] directoryFiles = fileDirectory.listFiles();
-            ArrayList<String> uploadedCounter = new ArrayList<String>();
-
-            NetHttpTransport HTTP_TRANSPORT = null;
-            try {
-                HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-            } catch (GeneralSecurityException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-
-            HttpRequestInitializer requestInitializer = request -> {
-                request.getHeaders().setAuthorization("Bearer " + accessTokens.get(1));
-                request.getHeaders().setContentType("application/json");
-
-            };
-
-            service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                    .setApplicationName("cso")
-                    .build();
-
-            if (directoryFiles != null && directoryFiles.length > 0){
-                for (File file : directoryFiles){
-                    com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                    fileMetadata.setName(file.getName());
-
-                    int dotIndex = file.getName().lastIndexOf(".");
-                    String memeType="";
-                    if (dotIndex >= 0 && dotIndex < file.getName().length() - 1) {
-                        memeType = file.getName().substring(dotIndex + 1);
-                    }
-
-                    FileContent mediaContent = null;
-                    if(memeType.equals("jpeg") | memeType.equals("jpg")){
-                        mediaContent = new FileContent("image/jpeg" ,new File(file.getPath()));
-                        uploadedCounter.add(file.getName());
-                    }
-
-                    else if(memeType.equals("png")){
-                        mediaContent = new FileContent("image/png" ,new File(file.getPath()));
-                        uploadedCounter.add(file.getName());
-                    }
-
-                    else if(memeType.equals("gif")){
-                        mediaContent = new FileContent("image/gif" ,new File(file.getPath()));
-                        uploadedCounter.add(file.getName());
-                    }
-
-                    else if(memeType.equals("bmp")){
-                        mediaContent = new FileContent("image/bmp" ,new File(file.getPath()));
-                        uploadedCounter.add(file.getName());
-                    }
-
-                    else if(memeType.equals("mp4")){
-                        mediaContent = new FileContent("video/mp4" ,new File(file.getPath()));
-                        uploadedCounter.add(file.getName());
-                    }
-
-                    else if(memeType.equals("mkv")){
-                        mediaContent = new FileContent("video/x-matroska" ,new File(file.getPath()));
-                        uploadedCounter.add(file.getName());
-                    }
-
-                    //System.out.println(mediaContent);
-
-                    try {
-                        com.google.api.services.drive.model.File uploadFile = service.files().create(fileMetadata, mediaContent)
-                                .setFields("id")
-                                .execute();
-
-                        System.out.println("File ID: " + uploadFile.getId());
-                        counter++;
-
-                    } catch (IOException e) {
-                        System.out.println("Unable to upload: " + e.getMessage());;
-                    }
-
-                }
-            }
-
-            String[] children = fileDirectory.list();
-            for (int i = 0; i < children.length; i++)
-            {
-                new File(fileDirectory, children[i]).delete();
-            }
-            if(fileDirectory.exists()){
-                fileDirectory.delete();
-            }
-
-            return null;
-        }
-    }
 
     private static class SyncResult {
         ArrayList<ArrayList<String>> result1;
@@ -856,203 +600,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private class SyncAndroid extends AsyncTask<Void, Integer, SyncResult> {
-
-        ArrayList<String> uploadedCounter  = new ArrayList<>();
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            androidProgressBar.setVisibility(View.VISIBLE);
-            androidProgressBar.setProgress(0);
-        }
-
-        @Override
-        protected SyncResult doInBackground(Void... voids) {
-
-
-            NetHttpTransport HTTP_TRANSPORT = null;
-            try {
-                HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-            } catch (GeneralSecurityException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-
-            HttpRequestInitializer requestInitializer = request -> {
-                request.getHeaders().setAuthorization("Bearer " + accessTokens.get(1));
-                request.getHeaders().setContentType("application/json");
-
-            };
-
-            service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                    .setApplicationName("cso")
-                    .build();
-
-
-            int totalFiles = androidImageAndVideoPaths.size();
-            int processedFiles = 0;
-
-
-            int i = 0;
-                for(String androidImageAndVideoPath:
-                    androidImageAndVideoPaths) {
-
-                    i++;
-                    int progress = (int) ((processedFiles / (float) totalFiles) * 100);
-                    publishProgress(progress);
-                    processedFiles++;
-
-                    File file  = new File(androidImageAndVideoPath);
-                    ArrayList<String> imageAndVideoExtensions = new ArrayList<String>(){{
-                        add(".jpg");
-                        add(".jpeg");
-                        add(".png");
-                        add(".bmp");
-                        add(".webp");
-                        add(".gif");
-                        add(".mp4");
-                        add(".mkv");
-                        add(".webm");
-                    }};
-
-                    String fileName = file.getName();
-                    String filePath = file.getPath();
-                    String fileHash = null;
-                    try {
-                        fileHash = calculateHash(filePath);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    ArrayList<String> fileInfo = new ArrayList<>();
-                    fileInfo.add(fileName);
-                    fileInfo.add(filePath);
-                    fileInfo.add(fileHash);
-                    androidFileInfoList.add(fileInfo);
-
-                    if(isImageOrVideoFile(file, imageAndVideoExtensions) && i<5){
-
-
-                        String memeType = filePath.substring(filePath.lastIndexOf("."));
-
-                        com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                        fileMetadata.setName(fileName);
-
-                        FileContent mediaContent = null;
-                        if(memeType.equals(".jpeg") | memeType.equals(".jpg")){
-                            mediaContent = new FileContent("image/jpeg" ,new File(filePath));
-                            uploadedCounter.add(fileName);
-                        }
-
-                        else if(memeType.equals(".png")){
-                            mediaContent = new FileContent("image/png" ,new File(filePath));
-                            uploadedCounter.add(fileName);
-                        }
-
-                        else if(memeType.equals(".gif")){
-                            mediaContent = new FileContent("image/gif" ,new File(filePath));
-                            uploadedCounter.add(fileName);
-                        }
-
-                        else if(memeType.equals(".bmp")){
-                            mediaContent = new FileContent("image/bmp" ,new File(filePath));
-                            uploadedCounter.add(fileName);
-                        }
-
-                        else if(memeType.equals(".mp4")){
-                            mediaContent = new FileContent("video/mp4" ,new File(filePath));
-                            uploadedCounter.add(fileName);
-                        }
-
-                        else if(memeType.equals(".mkv")){
-                            mediaContent = new FileContent("video/x-matroska" ,new File(filePath));
-                            uploadedCounter.add(fileName);
-                        }
-
-
-
-                        try {
-                            com.google.api.services.drive.model.File uploadFile = service.files().create(fileMetadata, mediaContent)
-                                    .setFields("id")
-                                    .execute();
-
-                            System.out.println("File ID: " + uploadFile.getId());
-
-                        } catch (IOException e) {
-                            System.out.println("Unable to upload: " + e.getMessage());;
-                        }
-                    }
-
-            }
-
-
-
-
-
-            return new SyncResult(androidFileInfoList , uploadedCounter);
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
-            int progress = values[0];
-            androidProgressBar.setProgress(progress);
-        }
-
-
-        protected void onPostExecute(SyncResult response) {
-            //androidFolderToChooseButton.setVisibility(View.VISIBLE);
-
-            int uploadCounter =0;
-                androidMediaItemsButton.setVisibility(View.VISIBLE);
-                ArrayList<ArrayList<String>> resultList1 = response.result1;
-                ArrayList<String> resultList2 = response.result2;
-
-                ArrayList<ArrayList<String>> hashed = new ArrayList<ArrayList<String>>();
-                ArrayList<String> toAdd = new ArrayList<String>();
-                toAdd.add(resultList1.get(0).get(2));
-                toAdd.add(resultList1.get(0).get(1));
-                hashed.add(toAdd);
-
-                boolean wasInarrayList = false;
-                for(int i=1;i<resultList1.size();i++){
-                    wasInarrayList = false;
-                    for(int j=0;j<hashed.size();j++){
-                        if(hashed.get(j).get(0).equals(resultList1.get(i).get(2))){
-                            hashed.get(j).add(resultList1.get(i).get(1));
-                            wasInarrayList = true;
-                            break;
-                        }
-                    }
-                    if(wasInarrayList == false){
-                        toAdd = new ArrayList<String>();
-                        toAdd.add(resultList1.get(i).get(2));
-                        toAdd.add(resultList1.get(i).get(1));
-                        hashed.add(toAdd);
-                        //System.out.println(resultList1.get(i).get(1) + " was added");
-                    }
-                }
-
-                for (ArrayList<String> hash: hashed){
-                    if(hash.size()> 2){
-                        System.out.println("found duplicated files:"+"\n");
-                        for(String h: hash){
-                            System.out.println(h + " ");
-                        }
-                        System.out.println("\n");
-                    }
-                }
-
-                androidProgressBar.setProgress(100);
-                androidTextView.setText("Search of your images and videos is finished and you have this number of them: " +
-                        resultList1.size() + " and " + resultList2.size() +
-                        " of them were uploaded to google drive");
-        }
-
-    }
 
     private class AndroidStorageTask extends AsyncTask<Void, Void,ArrayList<String>> {
 

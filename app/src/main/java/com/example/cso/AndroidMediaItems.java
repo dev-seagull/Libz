@@ -1,25 +1,9 @@
 package com.example.cso;
 
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.view.View;
-import android.webkit.MimeTypeMap;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+public class AndroidMediaItems{
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import java.io.File;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-
-public class AndroidMediaItems extends AppCompatActivity {
+/*
     private  int unique_request_code = 789;
 
     void openMediaInGallery(String filePath) {
@@ -103,4 +87,6 @@ public class AndroidMediaItems extends AppCompatActivity {
 
     }
 
+
+     */
 }
