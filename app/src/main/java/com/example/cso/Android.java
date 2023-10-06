@@ -1,10 +1,18 @@
 package com.example.cso;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.os.Build;
 import android.provider.MediaStore;
 import android.widget.Toast;
 
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -12,58 +20,70 @@ import java.util.ArrayList;
 public class Android {
     ArrayList<MediaItem> mediaItems;
 
-    public static ArrayList<MediaItem> getGalleryMediaItems(Activity activity) {
+    public ArrayList<MediaItem> getGalleryMediaItems(Activity activity) {
         ArrayList<MediaItem> androidMediaItems = new ArrayList<>();
 
-        String[] projection = {
-                MediaStore.Files.FileColumns.DATA,
-                MediaStore.Files.FileColumns.TITLE,
-                MediaStore.Files.FileColumns.SIZE,
-                MediaStore.Files.FileColumns.DATE_ADDED,
-                MediaStore.Files.FileColumns.DATE_MODIFIED,
-                MediaStore.Files.FileColumns.MIME_TYPE
-        };
+        int requestCode =1;
+        while (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                ContextCompat.checkSelfPermission(activity.getApplicationContext(),
+                        android.Manifest.permission.READ_EXTERNAL_STORAGE) !=
+                        PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, requestCode);
+        }
 
-        String selection = MediaStore.Files.FileColumns.MEDIA_TYPE + "=? OR " +
-                MediaStore.Files.FileColumns.MEDIA_TYPE + "=?";
-        String[] selectionArgs = {String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE),
-                String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO)};
-        String sortOrder = MediaStore.Images.Media.DATE_MODIFIED + " DESC";
+        try{
+           String[] projection = {
+                   MediaStore.Files.FileColumns.DATA,
+                   MediaStore.Files.FileColumns.DATE_ADDED,
+                   MediaStore.Files.FileColumns.DATE_MODIFIED,
+                   MediaStore.Files.FileColumns.SIZE,
+                   MediaStore.Files.FileColumns.MIME_TYPE
+           };
 
-        Cursor cursor = activity.getContentResolver().query(
-                MediaStore.Files.getContentUri("external"),
-                projection,
-                selection,
-                selectionArgs,
-                sortOrder
-        );
+           String selection = MediaStore.Files.FileColumns.MEDIA_TYPE + "=? OR " +
+                   MediaStore.Files.FileColumns.MEDIA_TYPE + "=?";
+           String[] selectionArgs = {String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE),
+                   String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO)};
+           String sortOrder = MediaStore.Images.Media.DATE_MODIFIED + " DESC";
 
-        if (cursor != null) {
-            int columnIndexPath = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA);
-            int columnIndexName = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.TITLE);
-            int columnIndexSize = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.SIZE);
-            int columnIndexDateAdded = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATE_ADDED);
-            int columnIndexDateModified = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATE_MODIFIED);
-            int columnIndexMimeType = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MIME_TYPE);
+           Cursor cursor = activity.getContentResolver().query(
+                   MediaStore.Files.getContentUri("external"),
+                   projection,
+                   selection,
+                   selectionArgs,
+                   sortOrder
+           );
 
-            while (cursor.moveToNext()) {
-                String mediaItemPath = cursor.getString(columnIndexPath);
-                String mediaItemName = cursor.getString(columnIndexName);
-                double mediaItemSize = Double.valueOf(cursor.getString(columnIndexSize));
-                String mediaItemDateAdded = cursor.getString(columnIndexDateAdded);
-                String mediaItemDateModified = cursor.getString(columnIndexDateModified);
-                try {
-                    String mediaItemHash = MainActivity.calculateHash(mediaItemPath, activity);
-                } catch (IOException e) {
-                    Toast.makeText(activity,"Calculating hash failed: " + e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
-                    throw new RuntimeException(e);
-                }
-                String mediaItemMimeType = cursor.getString(columnIndexMimeType);
-                MediaItem androidMediaItem = new MediaItem(mediaItemName, mediaItemPath,
-                        mediaItemDateAdded, mediaItemDateModified, "", mediaItemSize,mediaItemMimeType);
-                androidMediaItems.add(androidMediaItem);
-            }
-            cursor.close();
+           int b =5 ;
+           if (cursor != null) {
+               int columnIndexPath = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA);
+               int columnIndexDateAdded = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATE_ADDED);
+               int columnIndexDateModified = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATE_MODIFIED);
+               int columnIndexSize = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.SIZE);
+               int columnIndexMemeType = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MIME_TYPE);
+
+               while (cursor.moveToNext()) {
+                   String mediaItemPath = cursor.getString(columnIndexPath);
+                   File mediaItemFile = new File(mediaItemPath);
+                   //String mediaItemFileHash = MainActivity.calculateHash(mediaItemFile, activity);
+                   String mediaItemName = mediaItemFile.getName();
+                   String mediaItemDateAdded = cursor.getString(columnIndexDateAdded);
+                   String mediaItemDateModified = cursor.getString(columnIndexDateModified);
+                   Double mediaItemSize = Double.valueOf(cursor.getString(columnIndexSize));
+                   String mediaItemMemeType = cursor.getString(columnIndexMemeType);
+                   if(b>0){
+                       System.out.println("the android path "  + mediaItemPath + " " +  mediaItemName + " " + mediaItemDateAdded
+                       + " " +  mediaItemDateModified +  " " + mediaItemSize + " " + mediaItemMemeType);
+                       b--;
+                   }
+                   MediaItem androidMediaItem = new MediaItem(mediaItemName, mediaItemPath, mediaItemDateAdded,
+                           mediaItemDateModified, "", mediaItemSize, mediaItemMemeType);
+                   androidMediaItems.add(androidMediaItem);
+               }
+               cursor.close();
+           }
+       }catch (Exception e){
+            Toast.makeText(activity, "Getting device files failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         }
 
         return androidMediaItems;

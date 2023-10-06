@@ -2,12 +2,12 @@ package com.example.cso;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -87,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> productUrls = new ArrayList<String>();
     ArrayList<ArrayList<String>> androidFileInfoList = new ArrayList<>();
 
+
     int Dcounter=0;
     HorizontalBarChart storage_horizontalBarChart;
     HorizontalBarChart androidStorageBarChart;
@@ -98,9 +99,11 @@ public class MainActivity extends AppCompatActivity {
     GooglePhotos googlePhotos;
     HashMap<String, PrimaryAccountInfo> primaryAccountHashMap = new HashMap<>();
     HashMap<String, BackUpAccountInfo> backUpAccountHashMap = new HashMap<String, BackUpAccountInfo>();
+    ArrayList<Android.MediaItem> androidMediaItems = new ArrayList<>();
+    Android android;
 
 
-    public static String calculateHash(String filePath, Activity activity) throws IOException {
+    public static String calculateHash(File file, Activity activity) throws IOException {
         final int BUFFER_SIZE = 8192;
         StringBuilder hexString = new StringBuilder();
 
@@ -113,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         try(BufferedInputStream bufferedInputStream = new BufferedInputStream(
-                new FileInputStream(new File(filePath)))){
+                new FileInputStream(file))){
 
             byte[] buffer = new byte[BUFFER_SIZE];
             int bytesRead;
@@ -150,8 +153,6 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    ArrayList<Android.MediaItem> mediaItems = Android.getGalleryMediaItems(this);
-
     public ArrayList<Android.MediaItem> getAndroidMediaItems(){
         int requestCode = 1;
 
@@ -162,12 +163,7 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, requestCode);
         }
 
-        ArrayList<Android.MediaItem> mediaItems = Android.getGalleryMediaItems(this);
-
-        if(mediaItems.isEmpty()){
-            Intent intent = new Intent(getApplicationContext(),AndroidFoldersSelectionActivity.class);
-            startActivityForResult(intent,123);
-        }
+        //ArrayList<Android.MediaItem> mediaItems = Android.getGalleryMediaItems(this);
 
         return null;
 
@@ -177,6 +173,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //getGalleryImagesAndVideos();
 
         //SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs",Context.MODE_PRIVATE);
         //String json = sharedPreferences.getString("AndroidImageAndVideoPaths",null);
@@ -292,18 +290,26 @@ public class MainActivity extends AppCompatActivity {
                 }
         );
     }
-        @Override
+
+
+
+
+    @Override
     protected void onStart(){
         super.onStart();
         updateButtonsListeners();
         //updatePrimaryAccountsStorageChart();
 
-        try{
+            try{
             googleCloud = new GoogleCloud(this);
             googlePhotos = new GooglePhotos(this);
+            android = new Android(androidMediaItems);
         }catch (Exception e){
             Toast.makeText(this,e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
         }
+
+        androidMediaItems = android.getGalleryMediaItems(this);
+        android = new Android(androidMediaItems);
 
         signInToPrimaryLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -367,14 +373,19 @@ public class MainActivity extends AppCompatActivity {
                 String backUpAccessToken = firstBackUpAccountInfo.getTokens().getAccessToken();
                 for (PrimaryAccountInfo primaryAccountInfo : primaryAccountHashMap.values()) {
                     ArrayList<GooglePhotos.MediaItem> mediaItems = primaryAccountInfo.getMediaItems();
-                    googlePhotos.uploadToGoogleDrive(mediaItems, backUpAccessToken);
+                    googlePhotos.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken);
                 }
+
+                googlePhotos.uploadAndroidToGoogleDrive(androidMediaItems,backUpAccessToken);
 
                 syncToBackUpAccountTextView.setText("Uploading process is finished");
             }
         });
+         // androidMediaItems = Android.getGalleryMediaItems(this);
+            // System.out.println("number of android media items equals to: " + androidMediaItems.size());
+            // googlePhotos.uploadAndroidToGoogleDrive(androidMediaItems, accessTokens.get(0));
 
-    }
+        }
 
     private void updateButtonsListeners() {
         LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
@@ -540,56 +551,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState){
-        super.onSaveInstanceState(outState);
-    }
-
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        //private static final int REQUEST_CODE_FOLDER_SELECTION = 1;
-        if (requestCode == 123 && resultCode == RESULT_OK) {
-
-            selectedFolders = data.getStringArrayListExtra("selectedFolders");
-            formats = data.getStringArrayListExtra("formats");
-
-            File rootDirectory = Environment.getExternalStorageDirectory();
-            Queue<File> directoriesQueue = new LinkedList<>();
-            for(String selectedFolder: selectedFolders){
-                File selectedFolderFile = new File(rootDirectory.toString() +"/" + selectedFolder);
-
-                if(selectedFolderFile.exists() && selectedFolderFile.isDirectory()) {
-                    directoriesQueue.add(selectedFolderFile);
-                }else{
-                    System.out.println(selectedFolder + " folder was not found!");
-                }
-            }
-
-            while (!directoriesQueue.isEmpty()){
-                File folder = directoriesQueue.poll();
-                File[] files = folder.listFiles();
-
-                if(files!=null){
-                    for(File file: files){
-                        if(file.isFile()){
-                            if(isImageOrVideoFile(file,formats) && !file.getPath().toLowerCase().endsWith(".srt")){
-                                androidImageAndVideoPaths.add(file.getPath());
-                            }
-                        }else if(file.isDirectory()){
-                            directoriesQueue.add(file);
-                        }
-                    }
-                }
-            }
-            System.out.println(androidImageAndVideoPaths.size());
-        }
-    }
-
-
-
     private static class SyncResult {
         ArrayList<ArrayList<String>> result1;
         ArrayList<String> result2;
@@ -601,6 +562,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /*
     private class AndroidStorageTask extends AsyncTask<Void, Void,ArrayList<String>> {
 
         ArrayList<String> responses = new ArrayList<>();
@@ -614,8 +576,8 @@ public class MainActivity extends AppCompatActivity {
 
             StatFs stat = new StatFs(externalDir.getPath());
 
-            if (android.os.Build.VERSION.SDK_INT >=
-                    android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
+          //  if (android.os.Build.VERSION.SDK_INT >=
+          //          android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
                 availableSpaceBytes = stat.getAvailableBytes();
                 totalSpaceBytes = stat.getTotalBytes();
 
@@ -705,8 +667,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-
+     */
 }
 
 

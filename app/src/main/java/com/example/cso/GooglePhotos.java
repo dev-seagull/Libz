@@ -2,11 +2,7 @@ package com.example.cso;
 
 import android.app.Activity;
 import android.os.Environment;
-import android.util.Log;
-import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.fragment.app.FragmentActivity;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.FileContent;
@@ -16,7 +12,6 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 
-import org.checkerframework.checker.units.qual.A;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -76,13 +71,13 @@ public class GooglePhotos {
         final String[] nextPageToken = {null};
         String accessToken = tokens.getAccessToken();
         String refreshToken = tokens.getRefreshToken();
-        ArrayList<MediaItem> mediaItems = new ArrayList<>();
+        ArrayList<MediaItem> MediaItems = new ArrayList<>();
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
-        ArrayList<MediaItem> finalMediaItems = mediaItems;
+        ArrayList<MediaItem> finalMediaItems = MediaItems;
         Callable<ArrayList<MediaItem>> backgroundTask = () -> {
             try {
-                URL url = new URL("https://photoslibrary.googleapis.com/v1/mediaItems");
+                URL url = new URL("https://photoslibrary.googleapis.com/v1/MediaItems");
                 HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                 httpURLConnection.setRequestMethod("GET");
                 httpURLConnection.setRequestProperty("Content-type", "application/json");
@@ -101,22 +96,22 @@ public class GooglePhotos {
                     bufferedReader.close();
                     String response  = responseStringBuilder.toString();
                     JSONObject responseJson = new JSONObject(response);
-                    JSONArray mediaItemsResponse = responseJson.getJSONArray("mediaItems");
-                    for (int i = 0; i < mediaItemsResponse.length(); i++) {
-                        JSONObject mediaItemJsonObject = mediaItemsResponse.getJSONObject(i);
-                        String filename = mediaItemJsonObject.getString("filename");
-                        String baseUrl = mediaItemJsonObject.getString("baseUrl");
-                        String id = mediaItemJsonObject.getString("id");
-                        MediaItem mediaItem = new MediaItem(id, baseUrl, "2-2-2", filename);
-                        finalMediaItems.add(mediaItem);
-                        //mediaItem.getString()
+                    JSONArray MediaItemsResponse = responseJson.getJSONArray("MediaItems");
+                    for (int i = 0; i < MediaItemsResponse.length(); i++) {
+                        JSONObject MediaItemJsonObject = MediaItemsResponse.getJSONObject(i);
+                        String filename = MediaItemJsonObject.getString("filename");
+                        String baseUrl = MediaItemJsonObject.getString("baseUrl");
+                        String id = MediaItemJsonObject.getString("id");
+                        MediaItem MediaItem = new MediaItem(id, baseUrl, "2-2-2", filename);
+                        finalMediaItems.add(MediaItem);
+                        //MediaItem.getString()
                     }
                     nextPageToken[0] = responseJson.optString("nextPageToken", null);
                     while (responseJson.has("nextPageToken") && nextPageToken != null
-                        && responseJson.has("mediaItems")) {
+                        && responseJson.has("MediaItems")) {
                         nextPageToken[0] = responseJson.optString("nextPageToken", null);
                         System.out.println("next page token:" + nextPageToken[0]);
-                        String nextPageUrlString = "https://photoslibrary.googleapis.com/v1/mediaItems?pageToken=" +
+                        String nextPageUrlString = "https://photoslibrary.googleapis.com/v1/MediaItems?pageToken=" +
                                 nextPageToken[0];
                         URL nextPageUrl = new URL(nextPageUrlString);
                         HttpURLConnection nextHttpURLConnection = (HttpURLConnection) nextPageUrl.openConnection();
@@ -135,25 +130,25 @@ public class GooglePhotos {
                             nextBufferedReader.close();
                             response = responseStringBuilder.toString();
                             responseJson = new JSONObject(response);
-                            if (responseJson.has("mediaItems")) {
-                                mediaItemsResponse = responseJson.getJSONArray("mediaItems");
+                            if (responseJson.has("MediaItems")) {
+                                MediaItemsResponse = responseJson.getJSONArray("MediaItems");
                             } else {
-                                mediaItemsResponse = new JSONArray();
+                                MediaItemsResponse = new JSONArray();
                             }
-                            for (int i = 0; i < mediaItemsResponse.length(); i++) {
-                                JSONObject mediaItemJsonObject = mediaItemsResponse.getJSONObject(i);
-                                String filename = mediaItemJsonObject.getString("filename");
-                                String baseUrl = mediaItemJsonObject.getString("baseUrl");
-                                String id = mediaItemJsonObject.getString("id");
+                            for (int i = 0; i < MediaItemsResponse.length(); i++) {
+                                JSONObject MediaItemJsonObject = MediaItemsResponse.getJSONObject(i);
+                                String filename = MediaItemJsonObject.getString("filename");
+                                String baseUrl = MediaItemJsonObject.getString("baseUrl");
+                                String id = MediaItemJsonObject.getString("id");
                                 String creationTime = "";
-                                if (mediaItemJsonObject.has("mediaMetadata")) {
-                                    JSONObject mediaMetadata = mediaItemJsonObject.getJSONObject("mediaMetadata");
+                                if (MediaItemJsonObject.has("mediaMetadata")) {
+                                    JSONObject mediaMetadata = MediaItemJsonObject.getJSONObject("mediaMetadata");
                                     if (mediaMetadata.has("creationTime")) {
                                         creationTime = mediaMetadata.getString("creationTime");
                                     }
                                 }
-                                MediaItem mediaItem = new MediaItem(id, baseUrl, creationTime, filename);
-                                finalMediaItems.add(mediaItem);
+                                MediaItem MediaItem = new MediaItem(id, baseUrl, creationTime, filename);
+                                finalMediaItems.add(MediaItem);
                             }
 
                         }
@@ -174,14 +169,14 @@ public class GooglePhotos {
         };
         Future<ArrayList<MediaItem>> future = executor.submit(backgroundTask);
         try {
-            mediaItems = future.get();
+            MediaItems = future.get();
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
         System.out.println("second Number of your media items equals to: ") ;
-        return mediaItems;
+        return MediaItems;
     }
 
 
@@ -238,13 +233,13 @@ public class GooglePhotos {
         }
     }
 
-    public void uploadToGoogleDrive(ArrayList<MediaItem> mediaItems, String accessToken) {
+    public void uploadPhotosToGoogleDrive(ArrayList<MediaItem> MediaItems, String accessToken) {
 
         ArrayList<String> baseUrls = new ArrayList<>();
         ArrayList<String> fileNames = new ArrayList<>();
-        for (MediaItem mediaItem : mediaItems) {
-            baseUrls.add(mediaItem.getBaseUrl());
-            fileNames.add(mediaItem.getFileName());
+        for (MediaItem MediaItem : MediaItems) {
+            baseUrls.add(MediaItem.getBaseUrl());
+            fileNames.add(MediaItem.getFileName());
         }
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -369,6 +364,69 @@ public class GooglePhotos {
                 }
             }catch (Exception e){
                 Toast.makeText(activity,"Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+            }
+        };
+
+        executor.submit(uploadTask);
+    }
+
+
+    public void uploadAndroidToGoogleDrive(ArrayList<Android.MediaItem> mediaItems, String accessToken) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Runnable uploadTask = () -> {
+            try {
+                int i = 0;
+                for (Android.MediaItem mediaItem : mediaItems) {
+                    try {
+                        NetHttpTransport HTTP_TRANSPORT = null;
+                        try {
+                            HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+                        } catch (GeneralSecurityException e) {
+                            Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                        } catch (IOException e) {
+                            Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                        }
+                        final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+
+                        HttpRequestInitializer requestInitializer = request -> {
+                            request.getHeaders().setAuthorization("Bearer " + accessToken);
+                            request.getHeaders().setContentType("application/json");
+                        };
+
+                        Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
+                                .setApplicationName("cso")
+                                .build();
+
+                        com.google.api.services.drive.model.File fileMetadata =
+                                new com.google.api.services.drive.model.File();
+                        fileMetadata.setName(mediaItem.getFileName());
+                        String memeType = mediaItem.getMeme_type();
+
+                        FileContent mediaContent = null;
+                        if(isImage(memeType)) {
+                            String mediaItemPath = mediaItem.getFilePath();
+                            mediaContent = new FileContent("image/" + memeType.toLowerCase() ,
+                                    new File(mediaItemPath));
+                        }else if(isVideo(memeType)){
+                            String mediaItemPath = mediaItem.getFilePath();
+
+                            if(memeType.toLowerCase().endsWith("mkv")){
+                                mediaContent = new FileContent("video/x-matroska" ,
+                                        new File(mediaItemPath));
+                            }else{
+                                mediaContent = new FileContent("video/" + memeType.toLowerCase() ,
+                                        new File(mediaItemPath));
+                            }
+                        }
+
+                        com.google.api.services.drive.model.File uploadFile =
+                                service.files().create(fileMetadata, mediaContent).setFields("id").execute();
+                    } catch (Exception e) {
+                        Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                    }
+                }
+            } catch (Exception e){
+                Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             }
         };
 
