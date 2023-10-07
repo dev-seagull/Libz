@@ -123,6 +123,7 @@
 
                 GooglePhotos googlePhotos = new GooglePhotos(activity);
                 mediaItems = googlePhotos.getGooglePhotosMediaItems(tokens);
+                System.out.println("m size: " + mediaItems.size());
                 System.out.println("Number of your media items equals to: " + mediaItems.size());
             }catch (Exception e){
                 System.out.println("catch login error: " + e.getMessage());

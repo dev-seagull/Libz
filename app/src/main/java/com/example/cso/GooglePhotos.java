@@ -77,7 +77,7 @@ public class GooglePhotos {
         ArrayList<MediaItem> finalMediaItems = MediaItems;
         Callable<ArrayList<MediaItem>> backgroundTask = () -> {
             try {
-                URL url = new URL("https://photoslibrary.googleapis.com/v1/MediaItems");
+                URL url = new URL("https://photoslibrary.googleapis.com/v1/mediaItems");
                 HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                 httpURLConnection.setRequestMethod("GET");
                 httpURLConnection.setRequestProperty("Content-type", "application/json");
@@ -85,6 +85,7 @@ public class GooglePhotos {
                 httpURLConnection.setRequestProperty("Authorization", "Bearer " + accessToken);
 
                 int responseCode = httpURLConnection.getResponseCode();
+                System.out.println(responseCode);
                 if(responseCode == HttpURLConnection.HTTP_OK){
                     InputStreamReader inputStreamReader = new InputStreamReader(httpURLConnection.getInputStream());
                     BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
@@ -95,8 +96,9 @@ public class GooglePhotos {
                     }
                     bufferedReader.close();
                     String response  = responseStringBuilder.toString();
+                    System.out.println("response" + response);
                     JSONObject responseJson = new JSONObject(response);
-                    JSONArray MediaItemsResponse = responseJson.getJSONArray("MediaItems");
+                    JSONArray MediaItemsResponse = responseJson.getJSONArray("mediaItems");
                     for (int i = 0; i < MediaItemsResponse.length(); i++) {
                         JSONObject MediaItemJsonObject = MediaItemsResponse.getJSONObject(i);
                         String filename = MediaItemJsonObject.getString("filename");
@@ -108,10 +110,10 @@ public class GooglePhotos {
                     }
                     nextPageToken[0] = responseJson.optString("nextPageToken", null);
                     while (responseJson.has("nextPageToken") && nextPageToken != null
-                        && responseJson.has("MediaItems")) {
+                        && responseJson.has("mediaItems")) {
                         nextPageToken[0] = responseJson.optString("nextPageToken", null);
                         System.out.println("next page token:" + nextPageToken[0]);
-                        String nextPageUrlString = "https://photoslibrary.googleapis.com/v1/MediaItems?pageToken=" +
+                        String nextPageUrlString = "https://photoslibrary.googleapis.com/v1/mediaItems?pageToken=" +
                                 nextPageToken[0];
                         URL nextPageUrl = new URL(nextPageUrlString);
                         HttpURLConnection nextHttpURLConnection = (HttpURLConnection) nextPageUrl.openConnection();
@@ -130,8 +132,8 @@ public class GooglePhotos {
                             nextBufferedReader.close();
                             response = responseStringBuilder.toString();
                             responseJson = new JSONObject(response);
-                            if (responseJson.has("MediaItems")) {
-                                MediaItemsResponse = responseJson.getJSONArray("MediaItems");
+                            if (responseJson.has("mediaItems")) {
+                                MediaItemsResponse = responseJson.getJSONArray("mediaItems");
                             } else {
                                 MediaItemsResponse = new JSONArray();
                             }
@@ -162,7 +164,7 @@ public class GooglePhotos {
             }finally {
                 executor.shutdown();
             }
-            System.out.println("first Number of your media items equals to: " + finalMediaItems.size());
+            System.out.println("Number of your media items equals to: " + finalMediaItems.size());
             //Future<ArrayList<MediaItem>> future = executor.submit(backgroundTask);
             //storage[0] = future.get();
             return finalMediaItems;
@@ -175,7 +177,6 @@ public class GooglePhotos {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        System.out.println("second Number of your media items equals to: ") ;
         return MediaItems;
     }
 
@@ -242,6 +243,8 @@ public class GooglePhotos {
             fileNames.add(MediaItem.getFileName());
         }
 
+        System.out.println("photos media items len : " + baseUrls.size());
+
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Runnable uploadTask = () -> {
             try{
@@ -258,6 +261,7 @@ public class GooglePhotos {
                         connection.setRequestMethod("GET");
 
                         int responseCode = connection.getResponseCode();
+                        System.out.println("photos download respones code: " + responseCode);
                         if (responseCode == HttpURLConnection.HTTP_OK) {
                             InputStream inputStream = new BufferedInputStream(connection.getInputStream());
 
@@ -269,6 +273,7 @@ public class GooglePhotos {
                             }
 
                             String fileName = fileNames.get(i);
+                            System.out.println("file name tp upload: " + fileName);
                             i++;
                             String filePath = destinationFolder + File.separator + fileName;
                             OutputStream outputStream = null;
@@ -322,39 +327,64 @@ public class GooglePhotos {
                     request.getHeaders().setContentType("application/json");
                 };
 
-                Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                        .setApplicationName("cso")
-                        .build();
+                try{
+                    Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
+                            .setApplicationName("cso")
+                            .build();
 
-                if(destinationFolderFiles != null && destinationFolderFiles.length> 0){
-                    for(File destinationFolderFile : destinationFolderFiles){
-                        com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                        fileMetadata.setName(destinationFolderFile.getName());
-                        String memeType = getMemeType(destinationFolderFile);
+                    System.out.println("files founded to upload: " + destinationFolderFiles.length);
+                    if(destinationFolderFiles != null && destinationFolderFiles.length> 0){
+                        for(File destinationFolderFile : destinationFolderFiles){
+                            com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+                            fileMetadata.setName(destinationFolderFile.getName());
+                            String memeType = getMemeType(destinationFolderFile);
 
-                        FileContent mediaContent = null;
-                        if(isImage(memeType)){
-                            String destinationFolderFilePath = destinationFolderFile.getPath();
-                            mediaContent = new FileContent("image/" + memeType.toLowerCase() ,
-                                    new File(destinationFolderFilePath));
-                        }else if(isVideo(memeType)){
-                            String destinationFolderFilePath = destinationFolderFile.getPath();
+                            FileContent mediaContent = null;
+                            if(isImage(memeType)){
+                                String destinationFolderFilePath = destinationFolderFile.getPath();
 
-                            if(memeType.toLowerCase().endsWith("mkv")){
-                                mediaContent = new FileContent("video/x-matroska" ,
-                                        new File(destinationFolderFilePath));
-                            }else{
-                                mediaContent = new FileContent("video/" + memeType.toLowerCase() ,
-                                        new File(destinationFolderFilePath));
+                                if(memeType.toLowerCase().endsWith("jpg")){
+                                    mediaContent = new FileContent("image/jpeg" ,
+                                            new File(destinationFolderFilePath));
+
+                                }else{
+                                    mediaContent = new FileContent("image/" + memeType.toLowerCase() ,
+                                            new File(destinationFolderFilePath));
+                                }
+                            }else if(isVideo(memeType)){
+                                String destinationFolderFilePath = destinationFolderFile.getPath();
+
+                                if(memeType.toLowerCase().endsWith("mkv")){
+                                    mediaContent = new FileContent("video/x-matroska" ,
+                                            new File(destinationFolderFilePath));
+                                }else{
+                                    mediaContent = new FileContent("video/" + memeType.toLowerCase() ,
+                                            new File(destinationFolderFilePath));
+                                }
+                            }
+
+                            if(mediaContent == null){
+                                System.out.println("media content of photos null ");
+                            }else {
+                                System.out.println("media content of photos not null ");
+                            }
+
+                            com.google.api.services.drive.model.File uploadFile =
+                                    service.files().create(fileMetadata, mediaContent).setFields("id").execute();
+                            String uploadFileId = uploadFile.getId();
+                            synchronized (this) {
+                                while (uploadFileId.isEmpty()){
+                                    this.wait();
+                                }
                             }
                         }
-
-                        com.google.api.services.drive.model.File uploadFile =
-                                service.files().create(fileMetadata, mediaContent).setFields("id").execute();
+                    }else{
+                        Toast.makeText(activity,"Uploading failed", Toast.LENGTH_LONG).show();
                     }
-                }else{
-                    Toast.makeText(activity,"Uploading failed", Toast.LENGTH_LONG).show();
+                }catch (Exception e){
+                    System.out.println("this is the error: " + e.getLocalizedMessage());
                 }
+
 
                 for (File destinationFolderFile: destinationFolderFiles) {
                     destinationFolderFile.delete();
@@ -362,6 +392,7 @@ public class GooglePhotos {
                 if(destinationFolder.exists()){
                     destinationFolder.delete();
                 }
+
             }catch (Exception e){
                 Toast.makeText(activity,"Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             }
@@ -372,11 +403,13 @@ public class GooglePhotos {
 
 
     public void uploadAndroidToGoogleDrive(ArrayList<Android.MediaItem> mediaItems, String accessToken) {
+        System.out.println("len of android files equals to: " + mediaItems.size());
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Runnable uploadTask = () -> {
             try {
                 int i = 0;
                 for (Android.MediaItem mediaItem : mediaItems) {
+                    System.out.println("mediaItem upload: " + mediaItem.getFileName());
                     try {
                         NetHttpTransport HTTP_TRANSPORT = null;
                         try {
@@ -400,14 +433,24 @@ public class GooglePhotos {
                         com.google.api.services.drive.model.File fileMetadata =
                                 new com.google.api.services.drive.model.File();
                         fileMetadata.setName(mediaItem.getFileName());
-                        String memeType = mediaItem.getMeme_type();
+                        String memeType = getMemeType(new File(mediaItem.getFilePath()));
 
                         FileContent mediaContent = null;
                         if(isImage(memeType)) {
                             String mediaItemPath = mediaItem.getFilePath();
-                            mediaContent = new FileContent("image/" + memeType.toLowerCase() ,
-                                    new File(mediaItemPath));
-                        }else if(isVideo(memeType)){
+                            if(new File(mediaItemPath).exists()){
+                                System.out.println("the android file exists");
+                            }else{
+                                System.out.println("the android file doesn't exist");
+                            }
+
+                            if(memeType.toLowerCase().endsWith("jpg")){
+                                mediaContent = new FileContent("image/jpeg" ,
+                                        new File(mediaItemPath));
+                            }else{
+                                mediaContent = new FileContent("image/" + memeType.toLowerCase() ,
+                                        new File(mediaItemPath));
+                            }}else if(isVideo(memeType)){
                             String mediaItemPath = mediaItem.getFilePath();
 
                             if(memeType.toLowerCase().endsWith("mkv")){
@@ -421,15 +464,23 @@ public class GooglePhotos {
 
                         com.google.api.services.drive.model.File uploadFile =
                                 service.files().create(fileMetadata, mediaContent).setFields("id").execute();
+                        String uploadFileId = uploadFile.getId();
+                        System.out.println(uploadFileId  + "ufi");
+                        synchronized (this) {
+                            while (uploadFileId.isEmpty()){
+                                wait();
+                            }
+                        }
                     } catch (Exception e) {
+                        System.out.println("Uploading android error: " + e.getMessage());
                         Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                     }
                 }
             } catch (Exception e){
+                System.out.println("Uploading android error: " + e.getMessage());
                 Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             }
         };
-
         executor.submit(uploadTask);
     }
 

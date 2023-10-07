@@ -78,7 +78,11 @@ public class Android {
                    }
                    MediaItem androidMediaItem = new MediaItem(mediaItemName, mediaItemPath, mediaItemDateAdded,
                            mediaItemDateModified, "", mediaItemSize, mediaItemMemeType);
-                   androidMediaItems.add(androidMediaItem);
+
+                   File androidFile = new File(mediaItemPath);
+                   if(androidFile.exists()){
+                       androidMediaItems.add(androidMediaItem);
+                   }
                }
                cursor.close();
            }

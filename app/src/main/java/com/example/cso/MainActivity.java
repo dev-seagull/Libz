@@ -292,8 +292,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
-
     @Override
     protected void onStart(){
         super.onStart();
@@ -376,6 +374,7 @@ public class MainActivity extends AppCompatActivity {
                     googlePhotos.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken);
                 }
 
+                System.out.println("Now it's uploading from android");
                 googlePhotos.uploadAndroidToGoogleDrive(androidMediaItems,backUpAccessToken);
 
                 syncToBackUpAccountTextView.setText("Uploading process is finished");
