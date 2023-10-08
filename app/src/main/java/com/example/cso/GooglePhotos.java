@@ -201,7 +201,7 @@ public class GooglePhotos {
         return buffer.toByteArray();
     }
 
-    public String getMemeType(File file){
+    public static String getMemeType(File file){
         int dotIndex = file.getName().lastIndexOf(".");
         String memeType="";
         if (dotIndex >= 0 && dotIndex < file.getName().length() - 1) {
@@ -295,18 +295,18 @@ public class GooglePhotos {
                                         outputStream.close();
                                     }
                                 } catch (IOException e) {
-                                    Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                                    //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                                 }
                             }
                             inputStream.close();
                             connection.disconnect();
                         }
                     } catch (MalformedURLException e) {
-                        Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                        //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                     } catch (ProtocolException e) {
-                        Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                        //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                     } catch (IOException e) {
-                        Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                        //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                     }
                 }
 
@@ -316,9 +316,9 @@ public class GooglePhotos {
                 try {
                     HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
                 } catch (GeneralSecurityException e) {
-                    Toast.makeText(activity,"Uploading failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                    //Toast.makeText(activity,"Uploading failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                 } catch (IOException e) {
-                    Toast.makeText(activity,"Uploading failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                    //Toast.makeText(activity,"Uploading failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                 }
                 final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
@@ -379,7 +379,7 @@ public class GooglePhotos {
                             }
                         }
                     }else{
-                        Toast.makeText(activity,"Uploading failed", Toast.LENGTH_LONG).show();
+                        //Toast.makeText(activity,"Uploading failed", Toast.LENGTH_LONG).show();
                     }
                 }catch (Exception e){
                     System.out.println("this is the error: " + e.getLocalizedMessage());
@@ -465,7 +465,7 @@ public class GooglePhotos {
                         com.google.api.services.drive.model.File uploadFile =
                                 service.files().create(fileMetadata, mediaContent).setFields("id").execute();
                         String uploadFileId = uploadFile.getId();
-                        System.out.println(uploadFileId  + "ufi");
+
                         synchronized (this) {
                             while (uploadFileId.isEmpty()){
                                 wait();

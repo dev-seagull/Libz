@@ -60,40 +60,14 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<String> androidImageAndVideoPaths;
     Button mediaItemsLayoutButton;
-    Button btnBackUpLogin;
     Button androidMediaItemsButton;
     Button syncAndroidButton;
     Button syncToBackUpAccountButton;
-    private GoogleSignInClient googleSignInClient;
-    public double totalStorage;
-    public double usageStorage;
-    public double driveUsageStorage;
-    public double gmail_plus_googlePhotos_storage;
-    public  double freeSpace;
     TextView syncToBackUpAccountTextView;
     TextView androidTextView;
-    TextView textViewLoginState;
     TextView textviewGooglePhotosMediaItemsCount;
-    TextView galleryTextView;
-    ArrayList<String> accessTokens = new ArrayList<String>();
-    public String authcodeForGooglePhotos ="";
-    public String authcodeForGoogleDrive = "";
-    Drive service;
-
-    ArrayList<String> baseUrls = new ArrayList<String>();
-    ArrayList<String> selectedFolders = new ArrayList<>();
-    public ArrayList<String> formats = new ArrayList<String>();
-    ArrayList<String> fileNames = new ArrayList<String>();
-    ArrayList<String> productUrls = new ArrayList<String>();
-    ArrayList<ArrayList<String>> androidFileInfoList = new ArrayList<>();
-
-
-    int Dcounter=0;
-    HorizontalBarChart storage_horizontalBarChart;
-    HorizontalBarChart androidStorageBarChart;
     ProgressBar androidProgressBar;
     GoogleCloud googleCloud;
-    AnyChartView primaryAccountsStorageAnyChartView;
     ActivityResultLauncher<Intent> signInToPrimaryLauncher;
     ActivityResultLauncher<Intent> signInToBackUpLauncher;
     GooglePhotos googlePhotos;
@@ -137,21 +111,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    String formatSize(long sizeBytes) {
-        float sizeGB = sizeBytes / (1024f * 1024f * 1024f);
-        return String.format(Locale.getDefault(), "%.2f", sizeGB);
-    }
-
-    public static boolean isImageOrVideoFile(File file, ArrayList<String> imageExtensions) {
-        String filePath = file.getPath().toLowerCase();
-        String memeType = filePath.substring(filePath.lastIndexOf("."));
-        for (String extension : imageExtensions) {
-            if (memeType.equals(extension)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     public ArrayList<Android.MediaItem> getAndroidMediaItems(){
         int requestCode = 1;
@@ -174,57 +133,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //getGalleryImagesAndVideos();
-
         //SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs",Context.MODE_PRIVATE);
         //String json = sharedPreferences.getString("AndroidImageAndVideoPaths",null);
         //if(json == null){
-
-
-        Button duplicatedbutton = findViewById(R.id.duplicatedbutton);
-        TextView dupliacterdTextview = findViewById(R.id.duplicatedTextView);
-        duplicatedbutton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                duplicatedbutton.setText("Wait,it may take a bit long to find duplicated files...");
-
-                                      ArrayList<ArrayList<String>> androidduplicatedfiles = new ArrayList<ArrayList<String>>();
-                ArrayList<String> newGroup = new ArrayList<String>();
-                // newGroup.add(calculateHash(androidImageAndVideoPaths.get(0)));
-                // newGroup.add(androidImageAndVideoPaths.get(0));
-                // androidduplicatedfiles.add(newGroup);
-                for (int i = 1; i < androidImageAndVideoPaths.size(); i++) {
-                                          System.out.println("here");
-                                          boolean wasIn = false;
-                    //    String hash = calculateHash(androidImageAndVideoPaths.get(i));
-                    String hash = "a";
-                    for (int j = 0; j < androidduplicatedfiles.size(); j++) {
-                        if (androidduplicatedfiles.get(j).get(0).equals(hash)) {
-                            androidduplicatedfiles.get(j).add(androidImageAndVideoPaths.get(i));
-                            wasIn = true;
-                        }
-                    }
-                    if (wasIn == false) {
-                       // ArrayList<String> newGroup = new ArrayList<String>();
-                        //newGroup.add(calculateHash(androidImageAndVideoPaths.get(i)));
-                       // newGroup.add(androidImageAndVideoPaths.get(i));
-                        //androidduplicatedfiles.add(newGroup);
-                    }
-
-                }
-                                      dupliacterdTextview.setText("dupliacted files: "+ "\n");
-                                      for(ArrayList<String> androiduplicate: androidduplicatedfiles){
-                                          if(androiduplicate.size() > 2){
-                                              for(String s: androiduplicate){
-                                                  dupliacterdTextview.append(s + " - ");
-                                              }
-                                              dupliacterdTextview.append("\n");
-                                          }
-                                      }
-
-                duplicatedbutton.setText("find duplicated images and videos");
-            }
-        });
 
         androidMediaItemsButton = findViewById(R.id.androidMediaItemsButton);
         syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
@@ -234,61 +145,11 @@ public class MainActivity extends AppCompatActivity {
         syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
         textviewGooglePhotosMediaItemsCount = findViewById(R.id.googlePhotosMediaItemsCount);
         TextView textViewAndroidDeviceName = findViewById(R.id.androidDeviceTextView);
-        storage_horizontalBarChart = findViewById(R.id.StorageHorizontalBarChart);
-        androidStorageBarChart = findViewById(R.id.androidStorageBarChart);
         androidProgressBar = findViewById(R.id.androidImageProgressBar);
         androidTextView = findViewById(R.id.androidTextView);
 
-        storage_horizontalBarChart.setNoDataText("Your storage chart will be displayed here after you login");
-        storage_horizontalBarChart.setNoDataTextColor(Color.RED);
-        Typeface customTypeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD);
-        storage_horizontalBarChart.setNoDataTextTypeface(customTypeface);
-        storage_horizontalBarChart.getDescription().setEnabled(false);
-
-
         String androidDeviceName = DeviceName.getDeviceName();
         textViewAndroidDeviceName.setText(androidDeviceName);
-
-        if(accessTokens.size() == 0){
-            //textViewLoginState.setText("You haven't logged into your google account yet");
-        }
-
-
-        syncAndroidButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-            }
-        });
-
-        androidMediaItemsButton.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                      //  Intent intent = new Intent(getApplicationContext(), AndroidMediaItems.class);
-                        ArrayList<String> serializedAndroidFileInfoList = new ArrayList<>();
-                        for (ArrayList<String> fileInfo : androidFileInfoList) {
-                            serializedAndroidFileInfoList.add(new Gson().toJson(fileInfo));
-                        }
-                        //intent.putStringArrayListExtra("androidFileInfoList", serializedAndroidFileInfoList);
-                        //
-                        // startActivityForResult(intent,789);
-                    }
-                }
-        );
-
-
-        mediaItemsLayoutButton.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        Intent intent = new Intent(getApplicationContext(),MediaItemModel.class);
-                        intent.putStringArrayListExtra("fileNames", fileNames);
-                        intent.putStringArrayListExtra("productUrls", productUrls);
-                        startActivityForResult(intent,456);
-
-                    }
-                }
-        );
     }
 
 
@@ -306,7 +167,12 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this,e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
         }
 
-        androidMediaItems = android.getGalleryMediaItems(this);
+        new Thread(new Runnable() {@Override
+            public void run() {androidMediaItems = android.getGalleryMediaItems(MainActivity.this);}
+        }).start();
+
+
+        //androidMediaItems = android.getGalleryMediaItems(this);
         android = new Android(androidMediaItems);
 
         signInToPrimaryLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
@@ -449,6 +315,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void updatePrimaryAccountsStorageChart() {
+        /*
         try {
             HorizontalBarChart horizontalBarChart = findViewById(R.id.StorageHorizontalBarChart);
             horizontalBarChart.getDescription().setEnabled(false);
@@ -546,127 +413,8 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             System.out.println("error " + e.getLocalizedMessage());
         }
-
+         */
     }
-
-
-    private static class SyncResult {
-        ArrayList<ArrayList<String>> result1;
-        ArrayList<String> result2;
-
-        SyncResult(ArrayList<ArrayList<String>> result1,ArrayList<String> result2) {
-            this.result1 = result1;
-            this.result2 = result2;
-        }
-    }
-
-
-    /*
-    private class AndroidStorageTask extends AsyncTask<Void, Void,ArrayList<String>> {
-
-        ArrayList<String> responses = new ArrayList<>();
-
-        @Override
-        protected ArrayList<String> doInBackground(Void... voids) {
-
-            File externalDir  = Environment.getExternalStorageDirectory();
-
-            long availableSpaceBytes, totalSpaceBytes;
-
-            StatFs stat = new StatFs(externalDir.getPath());
-
-          //  if (android.os.Build.VERSION.SDK_INT >=
-          //          android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                availableSpaceBytes = stat.getAvailableBytes();
-                totalSpaceBytes = stat.getTotalBytes();
-
-
-            }else{
-                long blockSize = stat.getBlockSizeLong();
-                long availableBlocks = stat.getAvailableBlocksLong();
-                long totalBlocks = stat.getBlockCountLong();
-                availableSpaceBytes = blockSize * availableBlocks;
-                totalSpaceBytes = blockSize * totalBlocks;
-
-
-            }
-            String availableSpaceString = formatSize(availableSpaceBytes);
-            String totalSpaceString = formatSize(totalSpaceBytes);
-
-            responses.add(totalSpaceString);
-            responses.add(availableSpaceString);
-
-
-
-            //if(accessToken != null){
-            //    textViewLoginState.setText("You have successfully logged into your account");
-            //}
-
-            return responses;
-        }
-
-        protected void onPostExecute(ArrayList<String> response) {
-
-            Float totalSpace = Float.valueOf(responses.get(0));
-            Float availableSpace = Float.valueOf(responses.get(1));
-            Float usedSpace = totalSpace - availableSpace;
-
-            ArrayList<BarEntry> barEntries = new ArrayList<>();
-            ArrayList<String> barLabels = new ArrayList<>();
-            barEntries.add(new BarEntry(0,new float[] {availableSpace,usedSpace} ));
-            barLabels.add("Free Space: " + availableSpace + " GB");
-            barLabels.add("Used space: " + usedSpace + " GB");
-
-            for(BarEntry barent: barEntries){
-                System.out.println("bar entry: " + String.valueOf(barent));
-            }
-
-            BarDataSet androidStorageBarChartDataSet = new BarDataSet(barEntries, "Android device Storage");
-            androidStorageBarChartDataSet.setDrawValues(false);
-            //androidStorageBarChartDataSet.(PieDataSet.ValuePosition.OUTSIDE_SLICE);
-            androidStorageBarChartDataSet.setColors(ColorTemplate.COLORFUL_COLORS);
-
-
-
-
-            BarData barData = new BarData(androidStorageBarChartDataSet);
-            androidStorageBarChart.setData(barData);
-            androidStorageBarChart.invalidate();
-            androidStorageBarChart.setFitBars(true);
-            androidStorageBarChart.getDescription().setEnabled(false);
-            androidStorageBarChart.setDrawGridBackground(false);
-            androidStorageBarChart.getAxisLeft().setEnabled(false);
-            androidStorageBarChart.getAxisRight().setEnabled(false);
-            androidStorageBarChart.getXAxis().setEnabled(false);
-            androidStorageBarChart.setDrawBorders(false);
-            androidStorageBarChart.getLegend().setEnabled(true);
-            Legend barLegend = androidStorageBarChart.getLegend();
-            barLegend.setForm(Legend.LegendForm.CIRCLE);
-            barLegend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.RIGHT);
-            barLegend.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
-            barLegend.setOrientation(Legend.LegendOrientation.VERTICAL);
-            barLegend.setDrawInside(false);
-            barLegend.setXEntrySpace(2f);
-            barLegend.setYEntrySpace(2f);
-            barLegend.setTextColor( Color.parseColor("#808080"));
-
-
-            ArrayList<LegendEntry> BarLegendEntries = new ArrayList<>();
-            for (int i = 0; i < barLabels.size(); i++) {
-                LegendEntry barEntry = new LegendEntry();
-                barEntry.label = barLabels.get(i);
-                barEntry.formColor = androidStorageBarChartDataSet.getColor(i);
-                BarLegendEntries.add(barEntry);
-            }
-            barLegend.setCustom(BarLegendEntries);
-
-            if(!androidStorageBarChart.isShown()){
-                androidStorageBarChart.setNoDataText("Data for the storage of your device is not available.");
-            }
-        }
-    }
-
-     */
 }
 
 
