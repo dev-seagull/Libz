@@ -2,18 +2,10 @@ package com.example.cso;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.graphics.Color;
-import android.graphics.Typeface;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.StatFs;
-import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -27,19 +19,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.anychart.AnyChartView;
-import com.github.mikephil.charting.charts.HorizontalBarChart;
-import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.components.LegendEntry;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.BarData;
-import com.github.mikephil.charting.data.BarDataSet;
-import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.utils.ColorTemplate;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.api.services.drive.Drive;
-import com.google.gson.Gson;
 import com.jaredrummler.android.device.DeviceName;
 
 import java.io.BufferedInputStream;
@@ -50,10 +29,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Queue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -112,21 +92,6 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    public ArrayList<Android.MediaItem> getAndroidMediaItems(){
-        int requestCode = 1;
-
-        while (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                ContextCompat.checkSelfPermission(getApplicationContext(),
-                        Manifest.permission.READ_EXTERNAL_STORAGE) !=
-                        PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, requestCode);
-        }
-
-        //ArrayList<Android.MediaItem> mediaItems = Android.getGalleryMediaItems(this);
-
-        return null;
-
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -168,11 +133,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         new Thread(new Runnable() {@Override
-            public void run() {androidMediaItems = android.getGalleryMediaItems(MainActivity.this);}
+        public void run() {androidMediaItems = android.getGalleryMediaItems(MainActivity.this);}
         }).start();
-
-
-        //androidMediaItems = android.getGalleryMediaItems(this);
         android = new Android(androidMediaItems);
 
         signInToPrimaryLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
@@ -240,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
                     googlePhotos.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken);
                 }
 
-                System.out.println("Now it's uploading from android");
+                System.out.println("Now it's uploading from android "  + androidMediaItems.size());
                 googlePhotos.uploadAndroidToGoogleDrive(androidMediaItems,backUpAccessToken);
 
                 syncToBackUpAccountTextView.setText("Uploading process is finished");

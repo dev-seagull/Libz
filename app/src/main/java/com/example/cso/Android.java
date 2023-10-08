@@ -25,7 +25,8 @@ public class Android {
 
     public ArrayList<MediaItem> getGalleryMediaItems(Activity activity) {
         ArrayList<MediaItem> androidMediaItems = new ArrayList<>();
-        
+
+        /*
         int requestCode =1;
         while (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
                 ContextCompat.checkSelfPermission(activity.getApplicationContext(),
@@ -92,13 +93,16 @@ public class Android {
        }catch (Exception e){
             Toast.makeText(activity, "Getting device files failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         }
-
+         */
 
         try{
             if(androidMediaItems.isEmpty()){
-                getFileManagerMediaItems(activity);
+                androidMediaItems = getFileManagerMediaItems(activity);
+            }else{
+                System.out.println("it's not empty");
             }
         }catch (Exception e){
+            System.out.println("error: "  +e.getLocalizedMessage());
             Toast.makeText(activity, "Getting device files failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         }
 

@@ -372,11 +372,6 @@ public class GooglePhotos {
                             com.google.api.services.drive.model.File uploadFile =
                                     service.files().create(fileMetadata, mediaContent).setFields("id").execute();
                             String uploadFileId = uploadFile.getId();
-                            synchronized (this) {
-                                while (uploadFileId.isEmpty()){
-                                    this.wait();
-                                }
-                            }
                         }
                     }else{
                         //Toast.makeText(activity,"Uploading failed", Toast.LENGTH_LONG).show();
@@ -404,6 +399,7 @@ public class GooglePhotos {
 
     public void uploadAndroidToGoogleDrive(ArrayList<Android.MediaItem> mediaItems, String accessToken) {
         System.out.println("len of android files equals to: " + mediaItems.size());
+        final int[] test = {3};
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Runnable uploadTask = () -> {
             try {
@@ -462,15 +458,13 @@ public class GooglePhotos {
                             }
                         }
 
-                        com.google.api.services.drive.model.File uploadFile =
-                                service.files().create(fileMetadata, mediaContent).setFields("id").execute();
-                        String uploadFileId = uploadFile.getId();
+                        //if (test[0] >0 && !isVideo(memeType)){
+                            com.google.api.services.drive.model.File uploadFile =
+                                    service.files().create(fileMetadata, mediaContent).setFields("id").execute();
+                            String uploadFileId = uploadFile.getId();
 
-                        synchronized (this) {
-                            while (uploadFileId.isEmpty()){
-                                wait();
-                            }
-                        }
+                        //    test[0]--;
+                        //}
                     } catch (Exception e) {
                         System.out.println("Uploading android error: " + e.getMessage());
                         Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
