@@ -159,11 +159,11 @@
                 tokens = getTokens(authCode);
                 storage = getStorage(tokens);
 
+                GoogleDrive googleDrive = new GoogleDrive();
+                ArrayList<GoogleDrive.MediaItem> googleDriveMediaItems = googleDrive.getMediaItems(tokens);
+
                 //LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
                 createBackUpLoginButton(linearLayout);
-
-                GooglePhotos googlePhotos = new GooglePhotos(activity);
-                googlePhotos.getGooglePhotosMediaItems(tokens);
             }catch (Exception e){
                 Toast.makeText(activity,"Login failed: " + e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
             }

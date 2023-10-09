@@ -26,7 +26,7 @@ public class Android {
     public ArrayList<MediaItem> getGalleryMediaItems(Activity activity) {
         ArrayList<MediaItem> androidMediaItems = new ArrayList<>();
 
-        /*
+
         int requestCode =1;
         while (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
                 ContextCompat.checkSelfPermission(activity.getApplicationContext(),
@@ -58,7 +58,6 @@ public class Android {
                    sortOrder
            );
 
-           int b =5 ;
            if (cursor != null) {
                int columnIndexPath = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA);
                int columnIndexDateAdded = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATE_ADDED);
@@ -75,11 +74,6 @@ public class Android {
                    String mediaItemDateModified = cursor.getString(columnIndexDateModified);
                    Double mediaItemSize = Double.valueOf(cursor.getString(columnIndexSize));
                    String mediaItemMemeType = cursor.getString(columnIndexMemeType);
-                   if(b>0){
-                       System.out.println("the android path "  + mediaItemPath + " " +  mediaItemName + " " + mediaItemDateAdded
-                       + " " +  mediaItemDateModified +  " " + mediaItemSize + " " + mediaItemMemeType);
-                       b--;
-                   }
                    MediaItem androidMediaItem = new MediaItem(mediaItemName, mediaItemPath, mediaItemDateAdded,
                            mediaItemDateModified, "", mediaItemSize, mediaItemMemeType);
 
@@ -91,9 +85,9 @@ public class Android {
                cursor.close();
            }
        }catch (Exception e){
-            Toast.makeText(activity, "Getting device files failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+            //Toast.makeText(activity, "Getting device files failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         }
-         */
+         
 
         try{
             if(androidMediaItems.isEmpty()){
