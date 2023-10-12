@@ -72,7 +72,9 @@ public class Android {
                    String mediaItemName = mediaItemFile.getName();
                    String mediaItemDateAdded = cursor.getString(columnIndexDateAdded);
                    String mediaItemDateModified = cursor.getString(columnIndexDateModified);
-                   Double mediaItemSize = Double.valueOf(cursor.getString(columnIndexSize));
+                   System.out.println(" first one "+ Double.valueOf(cursor.getString(columnIndexSize)));
+                   Double mediaItemSize = Double.valueOf(cursor.getString(columnIndexSize))  / Double.valueOf(1073741824) ;
+                   System.out.println(" second one "+ mediaItemSize);
                    String mediaItemMemeType = cursor.getString(columnIndexMemeType);
                    MediaItem androidMediaItem = new MediaItem(mediaItemName, mediaItemPath, mediaItemDateAdded,
                            mediaItemDateModified, "", mediaItemSize, mediaItemMemeType);
@@ -85,6 +87,7 @@ public class Android {
                cursor.close();
            }
        }catch (Exception e){
+            System.out.println("for divide :"+e.getLocalizedMessage());
             //Toast.makeText(activity, "Getting device files failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         }
          

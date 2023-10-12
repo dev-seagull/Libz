@@ -56,7 +56,6 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<Android.MediaItem> androidMediaItems = new ArrayList<>();
     Android android;
 
-
     public static String calculateHash(File file, Activity activity) throws IOException {
         final int BUFFER_SIZE = 8192;
         StringBuilder hexString = new StringBuilder();
@@ -104,7 +103,6 @@ public class MainActivity extends AppCompatActivity {
 
         androidMediaItemsButton = findViewById(R.id.androidMediaItemsButton);
         syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
-        syncAndroidButton = findViewById(R.id.syncAndroidDevice);
 
         mediaItemsLayoutButton = findViewById(R.id.mediaItemsLayout);
         syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
@@ -137,6 +135,7 @@ public class MainActivity extends AppCompatActivity {
         }).start();
         android = new Android(androidMediaItems);
 
+
         signInToPrimaryLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 if(result.getResultCode() == RESULT_OK){
@@ -162,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         );
-
+        System.out.println("is it true 2:"+androidMediaItems.size());
         signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 if(result.getResultCode() == RESULT_OK){
@@ -191,7 +190,18 @@ public class MainActivity extends AppCompatActivity {
         syncToBackUpAccountButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Double totalVolume = 0.0 ;
+                System.out.println("total usage volume 1:" + totalVolume);
+                for (PrimaryAccountInfo primaryAccountInfo : primaryAccountHashMap.values()) {
+                    totalVolume += primaryAccountInfo.getStorage().getUsedInGmailAndPhotosStorage();
+                }
+                System.out.println("is it true :"+androidMediaItems.size());
+                for (Android.MediaItem mediaItem : androidMediaItems){
+                    totalVolume += mediaItem.getFileSize();
 
+                    System.out.println(" android file size : " + mediaItem.getFileSize());
+                }
+                System.out.println("total usage volume :" + totalVolume);
                 TextView syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
                 syncToBackUpAccountTextView.setText("Wait untill the uploading process is finished");
 

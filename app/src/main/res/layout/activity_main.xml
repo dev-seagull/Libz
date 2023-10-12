@@ -95,14 +95,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"></com.github.mikephil.charting.charts.HorizontalBarChart>
 
-        <Button
-            android:id="@+id/syncAndroidDevice"
-            android:text="Sync"
-            android:layout_width="match_parent"
-            android:backgroundTint="#0D47A1"
-            android:textColor="@color/white"
-            android:layout_height="wrap_content"> </Button>
-
         <ProgressBar
             android:id="@+id/androidImageProgressBar"
             android:layout_width="match_parent"
@@ -185,6 +177,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp" />
+
+        <ProgressBar
+            android:id="@+id/syncProgressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
 
     </LinearLayout>

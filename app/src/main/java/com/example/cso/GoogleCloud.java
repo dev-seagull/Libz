@@ -117,7 +117,7 @@
                 // you should add more background tasks to do that
                 tokens = getTokens(authCode);
                 storage = getStorage(tokens);
-
+                System.out.println("usages :" + storage.getTotalStorage() + " and "+  storage.getUsedStorage() +" and "+ storage.getUsedInDriveStorage() +" and "+ storage.getUsedInGmailAndPhotosStorage());
                 //LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
                 createPrimaryLoginButton(linearLayout);
 
@@ -322,6 +322,7 @@
             final PrimaryAccountInfo.Storage[] storage = new PrimaryAccountInfo.Storage[1];
             final Double[] totalStorage = new Double[1];
             final Double[] usedStorage = new Double[1];
+            final Double[] usedInDriveStorage = new Double[1];
 
             try{
                 Callable<PrimaryAccountInfo.Storage> backgroundTask = () -> {
@@ -344,7 +345,12 @@
                             .setFields("user, storageQuota")
                             .execute().getStorageQuota().getUsage());
 
-                    storage[0] = new PrimaryAccountInfo.Storage(totalStorage[0], usedStorage[0]);
+                    usedInDriveStorage[0] = convertStorageToGigaByte(driveService.about().get()
+                            .setFields("user, storageQuota")
+                            .execute().getStorageQuota().getUsageInDrive());
+
+
+                    storage[0] = new PrimaryAccountInfo.Storage(totalStorage[0], usedStorage[0],usedInDriveStorage[0]);
 
 
                     return storage[0];

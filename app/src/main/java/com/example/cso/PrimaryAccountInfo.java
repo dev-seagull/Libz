@@ -10,7 +10,6 @@ public class PrimaryAccountInfo {
     private Storage storage;
     private ArrayList<GooglePhotos.MediaItem> mediaItems;
 
-
     public static class Tokens {
         private final String refreshToken;
         private final String accessToken;
@@ -33,12 +32,20 @@ public class PrimaryAccountInfo {
     public static class Storage{
         private Double totalStorage;
         private Double usedStorage;
+        private Double usedInDriveStorage;
+        private Double UsedInGmailAndPhotosStorage;
 
-        public Storage(Double totalStorage, Double usedStorage){
+
+        public Storage(Double totalStorage, Double usedStorage,
+                       Double usedInDriveStorage){
             this.totalStorage = totalStorage;
             this.usedStorage = usedStorage;
-        }
+            this.usedInDriveStorage = usedInDriveStorage;
+            this.UsedInGmailAndPhotosStorage = usedStorage - usedInDriveStorage;
 
+        }
+        public Double getUsedInDriveStorage() {return usedInDriveStorage;}
+        public Double getUsedInGmailAndPhotosStorage() {return UsedInGmailAndPhotosStorage;}
         public Double getTotalStorage() {return totalStorage;}
         public Double getUsedStorage() {return usedStorage;}
     }
@@ -58,6 +65,5 @@ public class PrimaryAccountInfo {
     public Tokens getTokens() {return tokens;}
     public Storage getStorage() {return storage;}
     public ArrayList<GooglePhotos.MediaItem> getMediaItems() {return mediaItems;}
-
 }
 

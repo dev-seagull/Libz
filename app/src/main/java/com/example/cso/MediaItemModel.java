@@ -10,13 +10,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
-
+import java.io.File;
 import java.util.ArrayList;
 
 
 public class MediaItemModel extends AppCompatActivity {
-        private int unique_request_code = 456;
+    private int unique_request_code = 456;
 
+    public static float all_volumn;
         public void createMediaItemsModel(String name,String productUrl,LinearLayout parentLayout){
             String mediaItemName = name;
             TextView textViewName = new TextView(parentLayout.getContext());
