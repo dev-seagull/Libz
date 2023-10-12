@@ -236,6 +236,8 @@ public class GooglePhotos {
 
     public void uploadPhotosToGoogleDrive(ArrayList<MediaItem> MediaItems, String accessToken) {
 
+        final int[] test = {5};
+
         ArrayList<String> baseUrls = new ArrayList<>();
         ArrayList<String> fileNames = new ArrayList<>();
         for (MediaItem MediaItem : MediaItems) {
@@ -369,9 +371,12 @@ public class GooglePhotos {
                                 System.out.println("media content of photos not null ");
                             }
 
-                            com.google.api.services.drive.model.File uploadFile =
-                                    service.files().create(fileMetadata, mediaContent).setFields("id").execute();
-                            String uploadFileId = uploadFile.getId();
+                            while(test[0] > 0){
+                                com.google.api.services.drive.model.File uploadFile =
+                                        service.files().create(fileMetadata, mediaContent).setFields("id").execute();
+                                String uploadFileId = uploadFile.getId();
+                                test[0]--;
+                            }
                         }
                     }else{
                         //Toast.makeText(activity,"Uploading failed", Toast.LENGTH_LONG).show();
@@ -398,6 +403,7 @@ public class GooglePhotos {
 
 
     public void uploadAndroidToGoogleDrive(ArrayList<Android.MediaItem> mediaItems, String accessToken) {
+
         System.out.println("len of android files equals to: " + mediaItems.size());
         final int[] test = {3};
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -405,7 +411,7 @@ public class GooglePhotos {
             try {
                 int i = 0;
                 for (Android.MediaItem mediaItem : mediaItems) {
-                    System.out.println("mediaItem upload: " + mediaItem.getFileName());
+                    System.out.println("mediaItem android upload: " + mediaItem.getFileName());
                     try {
                         NetHttpTransport HTTP_TRANSPORT = null;
                         try {
@@ -458,13 +464,13 @@ public class GooglePhotos {
                             }
                         }
 
-                        //if (test[0] >0 && !isVideo(memeType)){
+                        if (test[0] >0 && !isVideo(memeType)){
                             com.google.api.services.drive.model.File uploadFile =
                                     service.files().create(fileMetadata, mediaContent).setFields("id").execute();
                             String uploadFileId = uploadFile.getId();
 
-                        //    test[0]--;
-                        //}
+                            test[0]--;
+                        }
                     } catch (Exception e) {
                         System.out.println("Uploading android error: " + e.getMessage());
                         Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();

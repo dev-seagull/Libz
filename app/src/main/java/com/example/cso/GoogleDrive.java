@@ -66,7 +66,7 @@ public class GoogleDrive {
         List<File> driveFiles = null;
         try{
             driveFiles = service.files().list()
-                    .setFields("files(id, name, md5Checksum, videoMediaMetadata)").execute().getFiles();
+                    .setFields("files(id, name)").execute().getFiles();
             System.out.println("len: " + driveFiles.size());
         }catch (Exception e){
             System.out.println(e.getMessage());

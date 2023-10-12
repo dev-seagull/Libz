@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -207,13 +208,14 @@ public class MainActivity extends AppCompatActivity {
 
                 BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
                 String backUpAccessToken = firstBackUpAccountInfo.getTokens().getAccessToken();
-                for (PrimaryAccountInfo primaryAccountInfo : primaryAccountHashMap.values()) {
-                    ArrayList<GooglePhotos.MediaItem> mediaItems = primaryAccountInfo.getMediaItems();
-                    googlePhotos.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken);
-                }
+
+                ExecutorService executor = Executors.newFixedThreadPool(2);
+                executor.execute( () -> { uploadPhotosToDriveAccounts(backUpAccessToken); });
+
+                executor.execute( () -> { uploadAndroidToDriveAccounts(backUpAccessToken); });
+                executor.shutdown();
 
                 System.out.println("Now it's uploading from android "  + androidMediaItems.size());
-                googlePhotos.uploadAndroidToGoogleDrive(androidMediaItems,backUpAccessToken);
 
                 syncToBackUpAccountTextView.setText("Uploading process is finished");
             }
@@ -222,7 +224,18 @@ public class MainActivity extends AppCompatActivity {
             // System.out.println("number of android media items equals to: " + androidMediaItems.size());
             // googlePhotos.uploadAndroidToGoogleDrive(androidMediaItems, accessTokens.get(0));
 
+    }
+
+    void uploadPhotosToDriveAccounts(String backUpAccessToken){
+        for (PrimaryAccountInfo primaryAccountInfo : primaryAccountHashMap.values()) {
+            ArrayList<GooglePhotos.MediaItem> mediaItems = primaryAccountInfo.getMediaItems();
+            googlePhotos.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken);
         }
+    }
+
+    void uploadAndroidToDriveAccounts(String backUpAccessToken){
+        googlePhotos.uploadAndroidToGoogleDrive(androidMediaItems,backUpAccessToken);
+    }
 
     private void updateButtonsListeners() {
         LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
