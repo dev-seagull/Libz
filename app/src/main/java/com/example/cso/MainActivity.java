@@ -12,6 +12,8 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -209,10 +211,13 @@ public class MainActivity extends AppCompatActivity {
                 BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
                 String backUpAccessToken = firstBackUpAccountInfo.getTokens().getAccessToken();
 
-                ExecutorService executor = Executors.newFixedThreadPool(2);
-                executor.execute( () -> { uploadPhotosToDriveAccounts(backUpAccessToken); });
+                ExecutorService executor = Executors.newFixedThreadPool(1);
 
-                executor.execute( () -> { uploadAndroidToDriveAccounts(backUpAccessToken); });
+                executor.execute(() -> {
+                    uploadPhotosToDriveAccounts(backUpAccessToken);
+                    uploadAndroidToDriveAccounts(backUpAccessToken);
+                });
+
                 executor.shutdown();
 
                 System.out.println("Now it's uploading from android "  + androidMediaItems.size());

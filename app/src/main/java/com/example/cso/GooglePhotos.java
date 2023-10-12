@@ -39,6 +39,7 @@ import java.util.concurrent.Future;
 
 public class GooglePhotos {
     private final Activity activity;
+    public static boolean is_first_task_finish = false;
     public GooglePhotos(Activity activity){
         this.activity = activity;
     }
@@ -96,7 +97,6 @@ public class GooglePhotos {
                     }
                     bufferedReader.close();
                     String response  = responseStringBuilder.toString();
-                    System.out.println("response" + response);
                     JSONObject responseJson = new JSONObject(response);
                     JSONArray MediaItemsResponse = responseJson.getJSONArray("mediaItems");
                     for (int i = 0; i < MediaItemsResponse.length(); i++) {
@@ -164,7 +164,7 @@ public class GooglePhotos {
             }finally {
                 executor.shutdown();
             }
-            System.out.println("Number of your media items equals to: " + finalMediaItems.size());
+            System.out.println("Number of your media items in photos equals to: " + finalMediaItems.size());
             //Future<ArrayList<MediaItem>> future = executor.submit(backgroundTask);
             //storage[0] = future.get();
             return finalMediaItems;
@@ -235,7 +235,7 @@ public class GooglePhotos {
     }
 
     public void uploadPhotosToGoogleDrive(ArrayList<MediaItem> MediaItems, String accessToken) {
-
+        System.out.println("-------first----->");
         final int[] test = {5};
 
         ArrayList<String> baseUrls = new ArrayList<>();
@@ -245,10 +245,9 @@ public class GooglePhotos {
             fileNames.add(MediaItem.getFileName());
         }
 
-        System.out.println("photos media items len : " + baseUrls.size());
-
+        ArrayList<String> uploadFileIDs  = new ArrayList();
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Runnable uploadTask = () -> {
+        Callable<ArrayList<String>>  uploadTask = () -> {
             try{
                 String destinationFolderPath = Environment.getExternalStoragePublicDirectory
                         (Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator + "cso";
@@ -275,7 +274,6 @@ public class GooglePhotos {
                             }
 
                             String fileName = fileNames.get(i);
-                            System.out.println("file name tp upload: " + fileName);
                             i++;
                             String filePath = destinationFolder + File.separator + fileName;
                             OutputStream outputStream = null;
@@ -333,8 +331,6 @@ public class GooglePhotos {
                     Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
                             .setApplicationName("cso")
                             .build();
-
-                    System.out.println("files founded to upload: " + destinationFolderFiles.length);
                     if(destinationFolderFiles != null && destinationFolderFiles.length> 0){
                         for(File destinationFolderFile : destinationFolderFiles){
                             com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
@@ -365,18 +361,23 @@ public class GooglePhotos {
                                 }
                             }
 
-                            if(mediaContent == null){
-                                System.out.println("media content of photos null ");
-                            }else {
-                                System.out.println("media content of photos not null ");
-                            }
+//                            if(mediaContent == null){
+//                                System.out.println("media content of photos null ");
+//                            }else {
+//                                System.out.println("media content of photos not null ");
+//                            }
 
-                            while(test[0] > 0){
+                            if(test[0] > 0){
                                 com.google.api.services.drive.model.File uploadFile =
                                         service.files().create(fileMetadata, mediaContent).setFields("id").execute();
                                 String uploadFileId = uploadFile.getId();
-                                test[0]--;
+                                while(uploadFileId.isEmpty() | uploadFileId == null){
+                                    wait();
+                                }
+                                uploadFileIDs.add(uploadFileId);
+                                System.out.println("upload finished with this uploadfile id :" + uploadFileId.toString());
                             }
+                            test[0]--;
                         }
                     }else{
                         //Toast.makeText(activity,"Uploading failed", Toast.LENGTH_LONG).show();
@@ -395,16 +396,35 @@ public class GooglePhotos {
 
             }catch (Exception e){
                 Toast.makeText(activity,"Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                return null;
             }
+            return uploadFileIDs;
         };
+        Future<ArrayList<String>> future = executor.submit(uploadTask);
 
-        executor.submit(uploadTask);
+        try {
+            // Wait for the task to complete and get the result
+            ArrayList<String> uploadFileIDs_fromFuture = future.get();
+            uploadFileIDs_fromFuture.size();
+            System.out.println("future is completed ");
+            for(String str : uploadFileIDs_fromFuture){
+                System.out.println("ids :" + str);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        } finally {
+            executor.shutdown();
+        }
+        System.out.println("-----end of first ----->");
+        is_first_task_finish = true;
     }
 
 
     public void uploadAndroidToGoogleDrive(ArrayList<Android.MediaItem> mediaItems, String accessToken) {
+        while(is_first_task_finish == false){
 
-        System.out.println("len of android files equals to: " + mediaItems.size());
+        }
+        System.out.println("-------second----->");
         final int[] test = {3};
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Runnable uploadTask = () -> {
@@ -440,11 +460,11 @@ public class GooglePhotos {
                         FileContent mediaContent = null;
                         if(isImage(memeType)) {
                             String mediaItemPath = mediaItem.getFilePath();
-                            if(new File(mediaItemPath).exists()){
-                                System.out.println("the android file exists");
-                            }else{
-                                System.out.println("the android file doesn't exist");
-                            }
+//                            if(new File(mediaItemPath).exists()){
+//                                System.out.println("the android file exists");
+//                            }else{
+//                                System.out.println("the android file doesn't exist");
+//                            }
 
                             if(memeType.toLowerCase().endsWith("jpg")){
                                 mediaContent = new FileContent("image/jpeg" ,
@@ -463,14 +483,14 @@ public class GooglePhotos {
                                         new File(mediaItemPath));
                             }
                         }
-
-                        if (test[0] >0 && !isVideo(memeType)){
+//
+//                        if (test[0] >0 && !isVideo(memeType)){
                             com.google.api.services.drive.model.File uploadFile =
                                     service.files().create(fileMetadata, mediaContent).setFields("id").execute();
                             String uploadFileId = uploadFile.getId();
 
-                            test[0]--;
-                        }
+//                            test[0]--;
+//                        }
                     } catch (Exception e) {
                         System.out.println("Uploading android error: " + e.getMessage());
                         Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
