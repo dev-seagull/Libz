@@ -235,7 +235,6 @@ public class GooglePhotos {
             return false;
         }
     }
-
     public boolean isDuplicatedInBackup(ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems
             ,File file, Activity activity){
         boolean isDuplicatedInBackup = false;
@@ -247,12 +246,14 @@ public class GooglePhotos {
             System.out.println(e.getLocalizedMessage());
             throw new RuntimeException(e);
         }
-
+        System.out.println("file hash is :" + fileHash);
         for(BackUpAccountInfo.MediaItem backUpMediaItem: backUpMediaItems){
             String backUpHash = backUpMediaItem.getHash();
+            System.out.println("backup hash :" + backUpHash);
             if(fileHash.equals(backUpHash)){
                 System.out.println(file.getName() + " is duplicated");
                 isDuplicatedInBackup = true;
+                break;
             }
         }
 
@@ -340,7 +341,7 @@ public class GooglePhotos {
                     }
                 }
 
-                if(!isDuplicatedInBackup(backUpMediaItems,file[0],activity)){
+                if(isDuplicatedInBackup(backUpMediaItems,file[0],activity) == false){
                     File[] destinationFolderFiles = destinationFolder.listFiles();
 
                     NetHttpTransport HTTP_TRANSPORT = null;

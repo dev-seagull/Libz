@@ -342,7 +342,7 @@
                     Drive driveService = new Drive.Builder(netHttpTransport, jsonFactory, httpRequestInitializer)
                             .setApplicationName("cso").build();
                     FileList result = driveService.files().list()
-                            .setFields("files(id, name, md5Checksum)")
+                            .setFields("files(id, name, sha256Checksum)")
                             .execute();
 
                     List<File> files = result.getFiles();
@@ -351,7 +351,7 @@
                             if (GooglePhotos.isVideo(getMemeType(file.getName())) |
                                     GooglePhotos.isImage(getMemeType(file.getName()))){
                                 BackUpAccountInfo.MediaItem mediaItem = new BackUpAccountInfo.MediaItem(file.getName(),
-                                        file.getMd5Checksum().toLowerCase(), file.getId());
+                                        file.getSha256Checksum().toLowerCase(), file.getId());
                                 mediaItems.add(mediaItem);
                             }
 
