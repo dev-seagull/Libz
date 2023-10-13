@@ -236,12 +236,34 @@ public class GooglePhotos {
         }
     }
 
-    public boolean isDuplicatedInBackup(String hash,BackUpAccountInfo.MediaItem.gethash()){
+    public boolean isDuplicatedInBackup(ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems
+            ,File file, Activity activity){
+        boolean isDuplicatedInBackup = false;
+        String fileHash;
 
+        try {
+            fileHash = MainActivity.calculateHash(file,activity).toLowerCase();
+        } catch (IOException e) {
+            System.out.println(e.getLocalizedMessage());
+            throw new RuntimeException(e);
+        }
+
+        for(BackUpAccountInfo.MediaItem backUpMediaItem: backUpMediaItems){
+            String backUpHash = backUpMediaItem.getHash();
+            if(fileHash.equals(backUpHash)){
+                System.out.println(file.getName() + " is duplicated");
+                isDuplicatedInBackup = true;
+            }
+        }
+
+        return isDuplicatedInBackup;
     }
-    public void uploadPhotosToGoogleDrive(ArrayList<MediaItem> MediaItems, String accessToken) {
+
+    public void uploadPhotosToGoogleDrive(ArrayList<MediaItem> MediaItems, String accessToken,
+                                          ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems, Activity activity) {
         System.out.println("-------first----->");
         final int[] test = {5};
+        final File[] file = new File[1];
 
         ArrayList<String> baseUrls = new ArrayList<>();
         ArrayList<String> fileNames = new ArrayList<>();
@@ -283,17 +305,17 @@ public class GooglePhotos {
                             String filePath = destinationFolder + File.separator + fileName;
                             OutputStream outputStream = null;
                             try {
-                                File file = new File(filePath);
-                                file.createNewFile();
-                                outputStream = new FileOutputStream(file);
+                                file[0] = new File(filePath);
+                                file[0].createNewFile();
+                                outputStream = new FileOutputStream(file[0]);
 
                                 byte[] buffer = new byte[1024];
                                 int bytesRead;
                                 while ((bytesRead = inputStream.read(buffer)) != -1) {
                                     outputStream.write(buffer, 0, bytesRead);
                                 }
-                                if (!isVideo(getMemeType(file))){
-                                    String this_hash = MainActivity.calculateHash(file,activity);
+                                if (!isVideo(getMemeType(file[0]))){
+                                    String this_hash = MainActivity.calculateHash(file[0],activity);
                                     }
                             } catch (IOException e) {
                                 Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
@@ -318,56 +340,57 @@ public class GooglePhotos {
                     }
                 }
 
-                File[] destinationFolderFiles = destinationFolder.listFiles();
+                if(!isDuplicatedInBackup(backUpMediaItems,file[0],activity)){
+                    File[] destinationFolderFiles = destinationFolder.listFiles();
 
-                NetHttpTransport HTTP_TRANSPORT = null;
-                try {
-                    HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-                } catch (GeneralSecurityException e) {
-                    //Toast.makeText(activity,"Uploading failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-                } catch (IOException e) {
-                    //Toast.makeText(activity,"Uploading failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-                }
-                final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+                    NetHttpTransport HTTP_TRANSPORT = null;
+                    try {
+                        HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+                    } catch (GeneralSecurityException e) {
+                        //Toast.makeText(activity,"Uploading failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                    } catch (IOException e) {
+                        //Toast.makeText(activity,"Uploading failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                    }
+                    final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
-                HttpRequestInitializer requestInitializer = request -> {
-                    request.getHeaders().setAuthorization("Bearer " + accessToken);
-                    request.getHeaders().setContentType("application/json");
-                };
+                    HttpRequestInitializer requestInitializer = request -> {
+                        request.getHeaders().setAuthorization("Bearer " + accessToken);
+                        request.getHeaders().setContentType("application/json");
+                    };
 
-                try{
-                    Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                            .setApplicationName("cso")
-                            .build();
-                    if(destinationFolderFiles != null && destinationFolderFiles.length> 0){
-                        for(File destinationFolderFile : destinationFolderFiles){
-                            com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                            fileMetadata.setName(destinationFolderFile.getName());
-                            String memeType = getMemeType(destinationFolderFile);
+                    try{
+                        Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
+                                .setApplicationName("cso")
+                                .build();
+                        if(destinationFolderFiles != null && destinationFolderFiles.length> 0){
+                            for(File destinationFolderFile : destinationFolderFiles){
+                                com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+                                fileMetadata.setName(destinationFolderFile.getName());
+                                String memeType = getMemeType(destinationFolderFile);
 
-                            FileContent mediaContent = null;
-                            if(isImage(memeType)){
-                                String destinationFolderFilePath = destinationFolderFile.getPath();
+                                FileContent mediaContent = null;
+                                if(isImage(memeType)){
+                                    String destinationFolderFilePath = destinationFolderFile.getPath();
 
-                                if(memeType.toLowerCase().endsWith("jpg")){
-                                    mediaContent = new FileContent("image/jpeg" ,
-                                            new File(destinationFolderFilePath));
+                                    if(memeType.toLowerCase().endsWith("jpg")){
+                                        mediaContent = new FileContent("image/jpeg" ,
+                                                new File(destinationFolderFilePath));
 
-                                }else{
-                                    mediaContent = new FileContent("image/" + memeType.toLowerCase() ,
-                                            new File(destinationFolderFilePath));
+                                    }else{
+                                        mediaContent = new FileContent("image/" + memeType.toLowerCase() ,
+                                                new File(destinationFolderFilePath));
+                                    }
+                                }else if(isVideo(memeType)){
+                                    String destinationFolderFilePath = destinationFolderFile.getPath();
+
+                                    if(memeType.toLowerCase().endsWith("mkv")){
+                                        mediaContent = new FileContent("video/x-matroska" ,
+                                                new File(destinationFolderFilePath));
+                                    }else{
+                                        mediaContent = new FileContent("video/" + memeType.toLowerCase() ,
+                                                new File(destinationFolderFilePath));
+                                    }
                                 }
-                            }else if(isVideo(memeType)){
-                                String destinationFolderFilePath = destinationFolderFile.getPath();
-
-                                if(memeType.toLowerCase().endsWith("mkv")){
-                                    mediaContent = new FileContent("video/x-matroska" ,
-                                            new File(destinationFolderFilePath));
-                                }else{
-                                    mediaContent = new FileContent("video/" + memeType.toLowerCase() ,
-                                            new File(destinationFolderFilePath));
-                                }
-                            }
 
 //                            if(mediaContent == null){
 //                                System.out.println("media content of photos null ");
@@ -375,32 +398,33 @@ public class GooglePhotos {
 //                                System.out.println("media content of photos not null ");
 //                            }
 
-                            if(test[0] > 0){
-                                com.google.api.services.drive.model.File uploadFile =
-                                        service.files().create(fileMetadata, mediaContent).setFields("id").execute();
-                                String uploadFileId = uploadFile.getId();
-                                while(uploadFileId.isEmpty() | uploadFileId == null){
-                                    wait();
+                                if(test[0] > 0){
+                                    com.google.api.services.drive.model.File uploadFile =
+                                            service.files().create(fileMetadata, mediaContent).setFields("id").execute();
+                                    String uploadFileId = uploadFile.getId();
+                                    while(uploadFileId.isEmpty() | uploadFileId == null){
+                                        wait();
+                                    }
+                                    uploadFileIDs.add(uploadFileId);
+                                    System.out.println("upload finished with this uploadfile id :" + uploadFileId.toString());
                                 }
-                                uploadFileIDs.add(uploadFileId);
-                                System.out.println("upload finished with this uploadfile id :" + uploadFileId.toString());
+                                test[0]--;
                             }
-                            test[0]--;
+                        }else{
+                            //Toast.makeText(activity,"Uploading failed", Toast.LENGTH_LONG).show();
                         }
-                    }else{
-                        //Toast.makeText(activity,"Uploading failed", Toast.LENGTH_LONG).show();
+                    }catch (Exception e){
+                        System.out.println("this is the error: " + e.getLocalizedMessage());
                     }
-                }catch (Exception e){
-                    System.out.println("this is the error: " + e.getLocalizedMessage());
+
+                    for (File destinationFolderFile: destinationFolderFiles) {
+                        destinationFolderFile.delete();
+                    }
+                    if(destinationFolder.exists()){
+                        destinationFolder.delete();
+                    }
                 }
 
-
-                for (File destinationFolderFile: destinationFolderFiles) {
-                    destinationFolderFile.delete();
-                }
-                if(destinationFolder.exists()){
-                    destinationFolder.delete();
-                }
 
             }catch (Exception e){
                 Toast.makeText(activity,"Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
@@ -492,11 +516,7 @@ public class GooglePhotos {
                             }
                         }
                         if (isVideo(getMemeType(new File(mediaItem.getFilePath())))){
-                            LocalTime currentTime = LocalTime.now();
-                            System.out.println("before cal android " + currentTime);
                             String this_hash = MainActivity.calculateHash(new File(mediaItem.getFilePath()),activity);
-                            currentTime = LocalTime.now();
-                            System.out.println("after cal android " + currentTime);
                         }
 
 //

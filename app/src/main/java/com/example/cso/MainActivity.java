@@ -144,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
                 if(result.getResultCode() == RESULT_OK){
                     LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
                     PrimaryAccountInfo primaryAccountInfo = googleCloud.handleSignInToPrimaryResult(result.getData(),
+
                             this, primaryAccountsButtonsLinearLayout);
                     String userEmail = primaryAccountInfo.getUserEmail();
                     primaryAccountHashMap.put(primaryAccountInfo.getUserEmail(), primaryAccountInfo);
@@ -233,8 +234,11 @@ public class MainActivity extends AppCompatActivity {
 
     void uploadPhotosToDriveAccounts(String backUpAccessToken){
         for (PrimaryAccountInfo primaryAccountInfo : primaryAccountHashMap.values()) {
+            BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
+            ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems = firstBackUpAccountInfo.getMediaItems();
             ArrayList<GooglePhotos.MediaItem> mediaItems = primaryAccountInfo.getMediaItems();
-            googlePhotos.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken);
+            googlePhotos.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken
+                    ,backUpMediaItems, this);
         }
     }
 
