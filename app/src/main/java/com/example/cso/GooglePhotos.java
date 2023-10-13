@@ -453,7 +453,8 @@ public class GooglePhotos {
     }
 
 
-    public void uploadAndroidToGoogleDrive(ArrayList<Android.MediaItem> mediaItems, String accessToken) {
+    public void uploadAndroidToGoogleDrive(ArrayList<Android.MediaItem> mediaItems, String accessToken,
+                                           ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems, Activity activity) {
         while(is_first_task_finish == false){
 
         }
@@ -464,6 +465,10 @@ public class GooglePhotos {
             try {
                 int i = 0;
                 for (Android.MediaItem mediaItem : mediaItems) {
+                    File file = new File(mediaItem.getFilePath());
+                    if(isDuplicatedInBackup(backUpMediaItems, file, activity))
+
+
                     System.out.println("mediaItem android upload: " + mediaItem.getFileName());
                     try {
                         NetHttpTransport HTTP_TRANSPORT = null;

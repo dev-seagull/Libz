@@ -243,7 +243,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void uploadAndroidToDriveAccounts(String backUpAccessToken){
-        googlePhotos.uploadAndroidToGoogleDrive(androidMediaItems,backUpAccessToken);
+        BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
+        ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems = firstBackUpAccountInfo.getMediaItems();
+        googlePhotos.uploadAndroidToGoogleDrive(androidMediaItems,backUpAccessToken,
+                backUpMediaItems, this);
     }
 
     private void updateButtonsListeners() {
