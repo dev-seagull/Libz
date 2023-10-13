@@ -29,6 +29,7 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
@@ -36,6 +37,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.time.LocalTime;
 
 public class GooglePhotos {
     private final Activity activity;
@@ -210,7 +212,7 @@ public class GooglePhotos {
         return memeType;
     }
 
-    public boolean isImage(String memeType){
+    public static boolean isImage(String memeType){
         memeType = memeType.toLowerCase();
         ArrayList<String> imageExtensions = new ArrayList<String>(
                 Arrays.asList("jpeg", "jpg", "png", "gif", "bmp")
@@ -222,7 +224,7 @@ public class GooglePhotos {
         }
     }
 
-    public boolean isVideo(String memeType){
+    public static boolean isVideo(String memeType){
         memeType = memeType.toLowerCase();
         ArrayList<String> videoExtensions = new ArrayList<String>(
                 Arrays.asList("mkv", "mp4")
@@ -234,6 +236,9 @@ public class GooglePhotos {
         }
     }
 
+    public boolean isDuplicatedInBackup(String hash,BackUpAccountInfo.MediaItem.gethash()){
+
+    }
     public void uploadPhotosToGoogleDrive(ArrayList<MediaItem> MediaItems, String accessToken) {
         System.out.println("-------first----->");
         final int[] test = {5};
@@ -287,6 +292,9 @@ public class GooglePhotos {
                                 while ((bytesRead = inputStream.read(buffer)) != -1) {
                                     outputStream.write(buffer, 0, bytesRead);
                                 }
+                                if (!isVideo(getMemeType(file))){
+                                    String this_hash = MainActivity.calculateHash(file,activity);
+                                    }
                             } catch (IOException e) {
                                 Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                             } finally {
@@ -483,6 +491,14 @@ public class GooglePhotos {
                                         new File(mediaItemPath));
                             }
                         }
+                        if (isVideo(getMemeType(new File(mediaItem.getFilePath())))){
+                            LocalTime currentTime = LocalTime.now();
+                            System.out.println("before cal android " + currentTime);
+                            String this_hash = MainActivity.calculateHash(new File(mediaItem.getFilePath()),activity);
+                            currentTime = LocalTime.now();
+                            System.out.println("after cal android " + currentTime);
+                        }
+
 //
 //                        if (test[0] >0 && !isVideo(memeType)){
                             com.google.api.services.drive.model.File uploadFile =
