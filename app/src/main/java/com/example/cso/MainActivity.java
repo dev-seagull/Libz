@@ -147,6 +147,7 @@ public class MainActivity extends AppCompatActivity {
 
                             this, primaryAccountsButtonsLinearLayout);
                     String userEmail = primaryAccountInfo.getUserEmail();
+                    NotificationHandler.sendNotification("1","helloWordToEmail", userEmail, this);
                     primaryAccountHashMap.put(primaryAccountInfo.getUserEmail(), primaryAccountInfo);
 
                     if(primaryAccountsButtonsLinearLayout.getChildCount() == 1){
