@@ -371,7 +371,7 @@ public class GooglePhotos {
                                 System.out.println("media content of photos not null ");
                             }
 
-                            while(test[0] > 0){
+                            if(test[0] > 0){
                                 com.google.api.services.drive.model.File uploadFile =
                                         service.files().create(fileMetadata, mediaContent).setFields("id").execute();
                                 String uploadFileId = uploadFile.getId();
