@@ -29,6 +29,8 @@
     import com.google.api.client.json.JsonFactory;
     import com.google.api.client.json.gson.GsonFactory;
     import com.google.api.services.drive.Drive;
+    import com.google.api.services.drive.model.File;
+    import com.google.api.services.drive.model.FileList;
 
     import org.json.JSONObject;
 
@@ -40,7 +42,9 @@
     import java.nio.charset.StandardCharsets;
     import java.text.DecimalFormat;
     import java.util.ArrayList;
+    import java.util.List;
     import java.util.concurrent.Callable;
+    import java.util.concurrent.ExecutionException;
     import java.util.concurrent.ExecutorService;
     import java.util.concurrent.Executors;
     import java.util.concurrent.Future;
@@ -140,7 +144,7 @@
             PrimaryAccountInfo.Tokens tokens = null;
             Button finalLoginButton = null;
             PrimaryAccountInfo.Storage storage = null;
-
+            ArrayList<BackUpAccountInfo.MediaItem> mediaItems  = null;
             try{
                 Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
                 GoogleSignInAccount account = googleSignInTask.getResult(ApiException.class);
@@ -158,6 +162,7 @@
                 // you should add more background tasks to do that
                 tokens = getTokens(authCode);
                 storage = getStorage(tokens);
+                mediaItems = getMediaItems(tokens);
 
                 GoogleDrive googleDrive = new GoogleDrive();
                 ArrayList<GoogleDrive.MediaItem> googleDriveMediaItems = googleDrive.getMediaItems(tokens);
@@ -167,8 +172,7 @@
             }catch (Exception e){
                 Toast.makeText(activity,"Login failed: " + e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
             }
-
-            return new BackUpAccountInfo(userEmail, tokens, storage);
+            return new BackUpAccountInfo(userEmail, tokens, storage,mediaItems);
         }
 
 
@@ -314,6 +318,70 @@
             return tokens[0];
         }
 
+        public static String getMemeType(String fileName){
+            int dotIndex = fileName.lastIndexOf(".");
+            String memeType="";
+            if (dotIndex >= 0 && dotIndex < fileName.length() - 1) {
+                memeType = fileName.substring(dotIndex + 1);
+            }
+            return memeType;
+        }
+        public ArrayList<BackUpAccountInfo.MediaItem> getMediaItems(PrimaryAccountInfo.Tokens tokens) {
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            String refreshToken = tokens.getRefreshToken();
+            String accessToken = tokens.getAccessToken();
+            final ArrayList<BackUpAccountInfo.MediaItem> mediaItems = new ArrayList<>();
+            Callable<ArrayList<BackUpAccountInfo.MediaItem>> backgroundTask = () -> {
+                try {
+                    final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
+                    final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+                    HttpRequestInitializer httpRequestInitializer = request -> {
+                        request.getHeaders().setAuthorization("Bearer " + accessToken);
+                        request.getHeaders().setContentType("application/json");
+                    };
+                    Drive driveService = new Drive.Builder(netHttpTransport, jsonFactory, httpRequestInitializer)
+                            .setApplicationName("cso").build();
+                    FileList result = driveService.files().list()
+                            .setFields("files(id, name, md5Checksum)")
+                            .execute();
+
+                    List<File> files = result.getFiles();
+                    if (files != null && !files.isEmpty()) {
+                        for (File file : files) {
+                            if (GooglePhotos.isVideo(getMemeType(file.getName())) |
+                                    GooglePhotos.isImage(getMemeType(file.getName()))){
+                                BackUpAccountInfo.MediaItem mediaItem = new BackUpAccountInfo.MediaItem(file.getName(),
+                                        file.getMd5Checksum().toLowerCase(), file.getId());
+                                mediaItems.add(mediaItem);
+                            }
+
+                        }
+                    } else {
+                        System.out.println("No files found in Google Drive.");
+                    }
+
+                    return mediaItems;
+                }catch (Exception e) {
+                    System.out.println(e.getLocalizedMessage());
+                }
+                return mediaItems;
+            };
+            Future<ArrayList<BackUpAccountInfo.MediaItem>> future = executor.submit(backgroundTask);
+
+            try {
+                ArrayList<BackUpAccountInfo.MediaItem> uploadFileIDs_fromFuture = future.get();
+                System.out.println("future is completed ");
+                for(BackUpAccountInfo.MediaItem str : uploadFileIDs_fromFuture){
+                    System.out.println("get name --> :" + str.getFileName() + "get hash --> "+  str.getHash().toLowerCase() +"getid -->"+ str.getId());
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            } finally {
+                System.out.println("finished");
+                executor.shutdown();
+            }
+            return mediaItems;
+        }
 
         public PrimaryAccountInfo.Storage getStorage(PrimaryAccountInfo.Tokens tokens){
             ExecutorService executor = Executors.newSingleThreadExecutor();
