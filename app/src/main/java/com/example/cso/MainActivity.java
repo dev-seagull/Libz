@@ -67,7 +67,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             digest = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
-            Toast.makeText(activity,"Calculating hash failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+            System.out.println("no such algorithm for hash calculating " + e.getLocalizedMessage());
+            // Toast.makeText(activity,"Calculating hash failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             throw new RuntimeException("SHA-256 algorithm not available", e);
         }
 
@@ -87,7 +88,8 @@ public class MainActivity extends AppCompatActivity {
                 hexString.append(String.format("%02X", b));
             }
         }catch (Exception e){
-            Toast.makeText(activity,"Calculating hash failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+            System.out.println("error in calculate hash :" + e.getLocalizedMessage());
+//            Toast.makeText(activity,"Calculating hash failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         }
         return hexString.toString();
     }
@@ -130,7 +132,8 @@ public class MainActivity extends AppCompatActivity {
             googlePhotos = new GooglePhotos(this);
             android = new Android(androidMediaItems);
         }catch (Exception e){
-            Toast.makeText(this,e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
+//            Toast.makeText(this,e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
+                System.out.println("on start error :" + e.getLocalizedMessage());
         }
 
         new Thread(new Runnable() {@Override

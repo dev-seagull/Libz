@@ -252,10 +252,8 @@ public class GooglePhotos {
             System.out.println(e.getLocalizedMessage());
             throw new RuntimeException(e);
         }
-        System.out.println("file hash is :" + fileHash);
         for(BackUpAccountInfo.MediaItem backUpMediaItem: backUpMediaItems){
             String backUpHash = backUpMediaItem.getHash();
-            System.out.println("backup hash :" + backUpHash);
             if(fileHash.equals(backUpHash)){
                 System.out.println(file.getName() + " is duplicated");
                 isDuplicatedInBackup = true;
@@ -316,6 +314,7 @@ public class GooglePhotos {
 
                 int i =0;
                 for(String baseUrl: baseUrls) {
+                    System.out.println("base url : " + baseUrl);
                     try {
                         URL url = new URL(baseUrl + "=d");
                         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -329,12 +328,14 @@ public class GooglePhotos {
                             if (!destinationFolder.exists()) {
                                 boolean isFolderCreated = destinationFolder.mkdirs();
                                 if (!isFolderCreated) {
-                                    Toast.makeText(activity, "Uploading failed", Toast.LENGTH_LONG).show();
+                                    System.out.println("uploading failed -- > cant create folder");
+//                                    Toast.makeText(activity, "Uploading failed", Toast.LENGTH_LONG).show();
                                 }
                             }
 
                             String fileName = fileNames.get(i);
                             String filePath = destinationFolder + File.separator + fileName;
+                            System.out.println("file name : "+ fileName + " file path :" + filePath);
                             OutputStream outputStream = null;
                             try {
                                 file[0] = new File(filePath);
@@ -346,16 +347,16 @@ public class GooglePhotos {
                                 while ((bytesRead = inputStream.read(buffer)) != -1) {
                                     outputStream.write(buffer, 0, bytesRead);
                                 }
-                                String hash = MainActivity.calculateHash(file[0],activity);
-                                mediaItems.get(i).setHash(hash);
                             } catch (IOException e) {
-                                Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                                System.out.println("error in file output stream handling " + e.getLocalizedMessage() );
+//                                Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                             } finally {
                                 try {
                                     if (outputStream != null) {
                                         outputStream.close();
                                     }
                                 } catch (IOException e) {
+                                    System.out.println("error in closing outputstream" + e.getLocalizedMessage());
                                     //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                                 }
                             }
@@ -369,6 +370,9 @@ public class GooglePhotos {
                     } catch (IOException e) {
                         //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                     }
+                    String hash = MainActivity.calculateHash(file[0],activity);
+                    System.out.println("try to set hash : " + hash);
+                    mediaItems.get(i).setHash(hash);
                     i++;
                 }
 
@@ -448,18 +452,19 @@ public class GooglePhotos {
                     }catch (Exception e){
                         System.out.println("this is the error: " + e.getLocalizedMessage());
                     }
-
-                    for (File destinationFolderFile: destinationFolderFiles) {
-                        destinationFolderFile.delete();
-                    }
-                    if(destinationFolder.exists()){
-                        destinationFolder.delete();
-                    }
+//
+//                    for (File destinationFolderFile: destinationFolderFiles) {
+//                        destinationFolderFile.delete();
+//                    }
+//                    if(destinationFolder.exists()){
+//                        destinationFolder.delete();
+//                    }
                 }
 
 
             }catch (Exception e){
-                Toast.makeText(activity,"Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                // Toast.makeText(activity,"Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                System.out.println("error in uploading :" + e.getLocalizedMessage());
                 return null;
             }
             return uploadFileIDs;
@@ -541,6 +546,7 @@ public class GooglePhotos {
                                     mediaContent = new FileContent("image/" + memeType.toLowerCase(),
                                             new File(mediaItemPath));
                                 }
+                                String this_hash = MainActivity.calculateHash(new File(mediaItem.getFilePath()), activity);
                             } else if (isVideo(memeType)) {
                                 String mediaItemPath = mediaItem.getFilePath();
 
@@ -551,9 +557,9 @@ public class GooglePhotos {
                                     mediaContent = new FileContent("video/" + memeType.toLowerCase(),
                                             new File(mediaItemPath));
                                 }
+                                String this_hash = MainActivity.calculateHash(new File(mediaItem.getFilePath()), activity);
                             }
 
-                            String this_hash = MainActivity.calculateHash(new File(mediaItem.getFilePath()), activity);
 
 //
 //                        if (test[0] >0 && !isVideo(memeType)){

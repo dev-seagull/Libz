@@ -371,9 +371,6 @@
             try {
                 ArrayList<BackUpAccountInfo.MediaItem> uploadFileIDs_fromFuture = future.get();
                 System.out.println("future is completed ");
-                for(BackUpAccountInfo.MediaItem str : uploadFileIDs_fromFuture){
-                    System.out.println("get name --> :" + str.getFileName() + "get hash --> "+  str.getHash().toLowerCase() +"getid -->"+ str.getId());
-                }
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             } finally {
