@@ -51,18 +51,25 @@ public class GooglePhotos {
         private String Id;
         private String baseUrl;
         private String creationTime;
-        public  String fileName;
+        private String fileName;
+        private String hash;
 
-        public MediaItem(String Id, String baseUrl, String creationTime, String fileName) {
+        public MediaItem(String Id, String baseUrl, String creationTime,
+                         String fileName, String hash) {
             this.Id = Id;
             this.baseUrl = baseUrl;
             this.creationTime = creationTime;
             this.fileName = fileName;
+            this.hash = hash;
         }
 
         public String getId() {return Id;}
 
         public String getBaseUrl() {return baseUrl;}
+
+        public void setHash(String hash) {this.hash = hash;}
+
+        public String getHash() {return hash;}
 
         public String getCreationTime() {return creationTime;}
 
@@ -106,7 +113,7 @@ public class GooglePhotos {
                         String filename = MediaItemJsonObject.getString("filename");
                         String baseUrl = MediaItemJsonObject.getString("baseUrl");
                         String id = MediaItemJsonObject.getString("id");
-                        MediaItem MediaItem = new MediaItem(id, baseUrl, "2-2-2", filename);
+                        MediaItem MediaItem = new MediaItem(id, baseUrl, "2-2-2", filename, null);
                         finalMediaItems.add(MediaItem);
                         //MediaItem.getString()
                     }
@@ -151,10 +158,9 @@ public class GooglePhotos {
                                         creationTime = mediaMetadata.getString("creationTime");
                                     }
                                 }
-                                MediaItem MediaItem = new MediaItem(id, baseUrl, creationTime, filename);
+                                MediaItem MediaItem = new MediaItem(id, baseUrl, creationTime, filename, null);
                                 finalMediaItems.add(MediaItem);
                             }
-
                         }
                         nextHttpURLConnection.disconnect();
                     }
@@ -260,7 +266,33 @@ public class GooglePhotos {
         return isDuplicatedInBackup;
     }
 
-    public void uploadPhotosToGoogleDrive(ArrayList<MediaItem> MediaItems, String accessToken,
+
+    public boolean isDuplicatedInPrimary(ArrayList<GooglePhotos.MediaItem> primaryMediaItems
+            ,File file, Activity activity){
+        boolean isDuplicatedInPrimary = false;
+        String fileHash;
+
+        try {
+            fileHash = MainActivity.calculateHash(file,activity).toLowerCase();
+        } catch (IOException e) {
+            System.out.println(e.getLocalizedMessage());
+            throw new RuntimeException(e);
+        }
+        System.out.println("file hash is :" + fileHash);
+        for(GooglePhotos.MediaItem primaryMediaItem: primaryMediaItems){
+            String primaryHash = primaryMediaItem.getHash();
+            System.out.println("backup hash :" + primaryHash);
+            if(fileHash.equals(primaryHash)){
+                System.out.println(file.getName() + " is duplicated");
+                isDuplicatedInPrimary = true;
+                break;
+            }
+        }
+
+        return isDuplicatedInPrimary;
+    }
+
+    public void uploadPhotosToGoogleDrive(ArrayList<MediaItem> mediaItems, String accessToken,
                                           ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems, Activity activity) {
         System.out.println("-------first----->");
         final int[] test = {5};
@@ -268,9 +300,9 @@ public class GooglePhotos {
 
         ArrayList<String> baseUrls = new ArrayList<>();
         ArrayList<String> fileNames = new ArrayList<>();
-        for (MediaItem MediaItem : MediaItems) {
-            baseUrls.add(MediaItem.getBaseUrl());
-            fileNames.add(MediaItem.getFileName());
+        for (MediaItem mediaItem : mediaItems) {
+            baseUrls.add(mediaItem.getBaseUrl());
+            fileNames.add(mediaItem.getFileName());
         }
 
         ArrayList<String> uploadFileIDs  = new ArrayList();
@@ -302,7 +334,6 @@ public class GooglePhotos {
                             }
 
                             String fileName = fileNames.get(i);
-                            i++;
                             String filePath = destinationFolder + File.separator + fileName;
                             OutputStream outputStream = null;
                             try {
@@ -315,9 +346,8 @@ public class GooglePhotos {
                                 while ((bytesRead = inputStream.read(buffer)) != -1) {
                                     outputStream.write(buffer, 0, bytesRead);
                                 }
-                                if (!isVideo(getMemeType(file[0]))){
-                                    String this_hash = MainActivity.calculateHash(file[0],activity);
-                                    }
+                                String hash = MainActivity.calculateHash(file[0],activity);
+                                mediaItems.get(i).setHash(hash);
                             } catch (IOException e) {
                                 Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                             } finally {
@@ -339,6 +369,7 @@ public class GooglePhotos {
                     } catch (IOException e) {
                         //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                     }
+                    i++;
                 }
 
                 if(isDuplicatedInBackup(backUpMediaItems,file[0],activity) == false){
@@ -453,7 +484,7 @@ public class GooglePhotos {
     }
 
 
-    public void uploadAndroidToGoogleDrive(ArrayList<Android.MediaItem> mediaItems, String accessToken,
+    public void uploadAndroidToGoogleDrive(ArrayList<Android.MediaItem> mediaItems,ArrayList<MediaItem> primaryMediaItems ,String accessToken,
                                            ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems, Activity activity) {
         while(is_first_task_finish == false){
 
@@ -466,7 +497,8 @@ public class GooglePhotos {
                 int i = 0;
                 for (Android.MediaItem mediaItem : mediaItems) {
                     File file = new File(mediaItem.getFilePath());
-                    if (isDuplicatedInBackup(backUpMediaItems, file, activity) == false) {
+                    if (isDuplicatedInBackup(backUpMediaItems, file, activity) == false &&
+                     isDuplicatedInPrimary(primaryMediaItems, file, activity) == false) {
                         System.out.println("mediaItem android upload: " + mediaItem.getFileName());
                         try {
                             NetHttpTransport HTTP_TRANSPORT = null;
@@ -520,9 +552,8 @@ public class GooglePhotos {
                                             new File(mediaItemPath));
                                 }
                             }
-                            if (isVideo(getMemeType(new File(mediaItem.getFilePath())))) {
-                                String this_hash = MainActivity.calculateHash(new File(mediaItem.getFilePath()), activity);
-                            }
+
+                            String this_hash = MainActivity.calculateHash(new File(mediaItem.getFilePath()), activity);
 
 //
 //                        if (test[0] >0 && !isVideo(memeType)){
