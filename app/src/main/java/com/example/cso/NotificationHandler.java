@@ -16,7 +16,7 @@ import androidx.core.app.NotificationManagerCompat;
 
 public class NotificationHandler {
 
-    public static void sendNotification(String channelId, String channelName, String userEmail, Activity activity) {
+    public static void sendNotification(String channelId, String channelName, Activity activity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel notificationChannel = new NotificationChannel(channelId, channelName,
                     NotificationManager.IMPORTANCE_DEFAULT);
@@ -26,8 +26,8 @@ public class NotificationHandler {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(activity, channelId)
                 .setSmallIcon(R.drawable.googlephotosicon)
-                .setContentTitle("Notification Hello world")
-                .setContentText("Hello " + userEmail)
+                .setContentTitle("Syncing is finished")
+                .setContentText("You're files are backed-up!")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
         Intent intent = new Intent(activity, MainActivity.class);

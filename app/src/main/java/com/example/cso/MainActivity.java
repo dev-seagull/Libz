@@ -150,7 +150,6 @@ public class MainActivity extends AppCompatActivity {
 
                             this, primaryAccountsButtonsLinearLayout);
                     String userEmail = primaryAccountInfo.getUserEmail();
-                    NotificationHandler.sendNotification("1","helloWordToEmail", userEmail, this);
                     primaryAccountHashMap.put(primaryAccountInfo.getUserEmail(), primaryAccountInfo);
 
                     if(primaryAccountsButtonsLinearLayout.getChildCount() == 1){
@@ -207,11 +206,11 @@ public class MainActivity extends AppCompatActivity {
                 for (Android.MediaItem mediaItem : androidMediaItems){
                     totalVolume += mediaItem.getFileSize();
 
-                    System.out.println(" android file size : " + mediaItem.getFileSize());
+                    //System.out.println(" android file size : " + mediaItem.getFileSize());
                 }
                 System.out.println("total usage volume :" + totalVolume);
                 TextView syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
-                syncToBackUpAccountTextView.setText("Wait untill the uploading process is finished");
+                syncToBackUpAccountTextView.setText("Wait until the uploading process is finished");
 
                 BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
                 String backUpAccessToken = firstBackUpAccountInfo.getTokens().getAccessToken();
@@ -225,9 +224,6 @@ public class MainActivity extends AppCompatActivity {
 
                 executor.shutdown();
 
-                System.out.println("Now it's uploading from android "  + androidMediaItems.size());
-
-                syncToBackUpAccountTextView.setText("Uploading process is finished");
             }
         });
          // androidMediaItems = Android.getGalleryMediaItems(this);
@@ -251,7 +247,7 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems = firstBackUpAccountInfo.getMediaItems();
         for(PrimaryAccountInfo primaryAccountInfo: primaryAccountHashMap.values()){
             ArrayList<GooglePhotos.MediaItem> primaryMediaItems = primaryAccountInfo.getMediaItems();
-
+            System.out.println("here to sync android!");
             googlePhotos.uploadAndroidToGoogleDrive(androidMediaItems, primaryMediaItems ,backUpAccessToken,
                     backUpMediaItems, this);
         }

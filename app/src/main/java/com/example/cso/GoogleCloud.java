@@ -164,9 +164,6 @@
                 storage = getStorage(tokens);
                 mediaItems = getMediaItems(tokens);
 
-                GoogleDrive googleDrive = new GoogleDrive();
-                ArrayList<GoogleDrive.MediaItem> googleDriveMediaItems = googleDrive.getMediaItems(tokens);
-
                 //LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
                 createBackUpLoginButton(linearLayout);
             }catch (Exception e){
@@ -370,6 +367,7 @@
 
             try {
                 ArrayList<BackUpAccountInfo.MediaItem> uploadFileIDs_fromFuture = future.get();
+                System.out.println(uploadFileIDs_fromFuture.size());
                 System.out.println("future is completed ");
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
