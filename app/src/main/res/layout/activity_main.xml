@@ -1,213 +1,218 @@
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.drawerlayout.widget.DrawerLayout android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <LinearLayout
+
+    <ScrollView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:background="@color/sky_blue"
-        android:orientation="vertical"
-        android:padding="16dp"
-        tools:context=".MainActivity">
+        android:layout_height="wrap_content">
 
-        <androidx.drawerlayout.widget.DrawerLayout
-            android:id="@+id/drawer_layout"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:app="http://schemas.android.com/apk/res-auto"
-            xmlns:tools="http://schemas.android.com/tools"
-            tools:context= ".MainActivity" >
+            android:gravity="center"
+            android:background="@color/sky_blue"
+            android:orientation="vertical"
+            android:padding="16dp"
+            tools:context=".MainActivity">
 
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"></FrameLayout>
 
-            <com.google.android.material.navigation.NavigationView
-                android:id="@+id/navigationView"
+
+            <ImageView
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="start"
-                app:headerLayout="@layout/nav_header"
-                app:menu="@menu/nav_menu"
-                />
-        </androidx.drawerlayout.widget.DrawerLayout>
+                android:layout_height="100dp"
+                android:layout_marginTop="-40dp"
+                android:src="@drawable/seagulllogo" />
 
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="100dp"
-            android:layout_marginTop="-40dp"
-            android:src="@drawable/seagulllogo" />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="5dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:alpha="1"
+                android:background="#050505" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="5dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
-            android:alpha="1"
-            android:background="#050505" />
+            <Button
+                android:id="@+id/loginButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="#0D47A1"
+                android:drawableLeft="@drawable/googlephotosicon_resized"
+                android:gravity="center"
+                android:paddingRight="70dp"
+                android:text="Add a primary account"
+                android:textSize="18dp" />
 
-        <Button
-            android:id="@+id/loginButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="#0D47A1"
-            android:drawableLeft="@drawable/googlephotosicon_resized"
-            android:gravity="center"
-            android:paddingRight="70dp"
-            android:text="Add a primary account"
-            android:textSize="18dp" />
-
-        <LinearLayout
-            android:id="@+id/primaryAccountsButtons"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"> </LinearLayout>
+            <LinearLayout
+                android:id="@+id/primaryAccountsButtons"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"> </LinearLayout>
 
 
-        <com.github.mikephil.charting.charts.HorizontalBarChart
-            android:id="@+id/StorageHorizontalBarChart"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="50dp"></com.github.mikephil.charting.charts.HorizontalBarChart>
+            <com.github.mikephil.charting.charts.HorizontalBarChart
+                android:id="@+id/StorageHorizontalBarChart"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="50dp"></com.github.mikephil.charting.charts.HorizontalBarChart>
 
 
-        <TextView
-            android:id="@+id/googlePhotosMediaItemsCount"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            > </TextView>
+            <TextView
+                android:id="@+id/googlePhotosMediaItemsCount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                > </TextView>
 
-        <Button
-            android:id="@+id/mediaItemsLayout"
-            android:text="Detail of items"
-            android:backgroundTint="#0D47A1"
-            android:visibility="gone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            > </Button>
-
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="5dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp"
-            android:alpha="1"
-            android:background="#050505" />
+            <Button
+                android:id="@+id/mediaItemsLayout"
+                android:text="Detail of items"
+                android:backgroundTint="#0D47A1"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                > </Button>
 
 
-        <TextView
-            android:id="@+id/androidDeviceTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="3dp"
-            android:layout_marginTop="16dp"
-            android:text="Android device"
-            android:gravity="left"
-            android:textSize="24sp" />
-
-        <com.github.mikephil.charting.charts.HorizontalBarChart
-            android:id="@+id/androidStorageBarChart"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"></com.github.mikephil.charting.charts.HorizontalBarChart>
-
-        <ProgressBar
-            android:id="@+id/androidImageProgressBar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:visibility="gone"
-            style="@android:style/Widget.ProgressBar.Horizontal"> </ProgressBar>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:alpha="1"
+                android:background="#050505" />
 
 
-        <TextView
-            android:id="@+id/androidTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:layout_marginTop="5dp" />
+            <TextView
+                android:id="@+id/androidDeviceTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="3dp"
+                android:layout_marginTop="16dp"
+                android:text="Android device"
+                android:gravity="left"
+                android:textSize="24sp" />
 
-        <Button
-            android:id="@+id/androidMediaItemsButton"
-            android:text="Detail of android items"
-            android:clickable="true"
-            android:backgroundTint="#0D47A1"
-            android:visibility="gone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            > </Button>
+            <com.github.mikephil.charting.charts.HorizontalBarChart
+                android:id="@+id/androidStorageBarChart"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"></com.github.mikephil.charting.charts.HorizontalBarChart>
 
-        <Button
-            android:id="@+id/duplicatedbutton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="#0D47A1"
-            android:text="find duplicated images and videos"
-            ></Button>
-        <TextView
-            android:id="@+id/duplicatedTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:text=""
-            android:layout_marginTop="5dp" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="5dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp"
-            android:alpha="1"
-            android:background="#050505" />
-
-        <Button
-            android:id="@+id/backUpLoginButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:backgroundTint="#42A5F5"
-            android:layout_marginBottom="16dp"
-            android:drawableLeft="@drawable/googledriveimage_resized"
-            android:text="Add a back up account"
-            android:gravity="center"
-            android:paddingRight="70dp"
-            android:textSize="18dp" />
-
-        <LinearLayout
-            android:id="@+id/backUpAccountsButtons"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"> </LinearLayout>
+            <ProgressBar
+                android:id="@+id/androidImageProgressBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:visibility="gone"
+                style="@android:style/Widget.ProgressBar.Horizontal"> </ProgressBar>
 
 
-        <Button
-            android:id="@+id/syncToBackUpAccountButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:backgroundTint="#42A5F5"
-            android:text="Sync"
-            android:textSize="16sp" />
+            <TextView
+                android:id="@+id/androidTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:layout_marginTop="5dp" />
 
-        <TextView
-            android:id="@+id/syncToBackUpAccountTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp" />
+            <Button
+                android:id="@+id/androidMediaItemsButton"
+                android:text="Detail of android items"
+                android:clickable="true"
+                android:backgroundTint="#0D47A1"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                > </Button>
 
-        <ProgressBar
-            android:id="@+id/syncProgressBar"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            <Button
+                android:id="@+id/duplicatedbutton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#0D47A1"
+                android:text="find duplicated images and videos"
+                ></Button>
+            <TextView
+                android:id="@+id/duplicatedTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:text=""
+                android:layout_marginTop="5dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:alpha="1"
+                android:background="#050505" />
+
+            <Button
+                android:id="@+id/backUpLoginButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#42A5F5"
+                android:layout_marginBottom="16dp"
+                android:drawableLeft="@drawable/googledriveimage_resized"
+                android:text="Add a back up account"
+                android:gravity="center"
+                android:paddingRight="70dp"
+                android:textSize="18dp" />
+
+            <LinearLayout
+                android:id="@+id/backUpAccountsButtons"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"> </LinearLayout>
 
 
-    </LinearLayout>
+            <Button
+                android:id="@+id/syncToBackUpAccountButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#42A5F5"
+                android:text="Sync"
+                android:textSize="16sp" />
 
-</ScrollView>
+            <TextView
+                android:id="@+id/syncToBackUpAccountTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp" />
+
+            <ProgressBar
+                android:id="@+id/syncProgressBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+
+        </LinearLayout>
+
+    </ScrollView>
+    <!-- Your main content goes here -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <!-- Your main content views -->
+    </FrameLayout>
+
+    <!-- NavigationView for the drawer -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navigationView"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        app:headerLayout="@layout/nav_header"
+        app:menu="@menu/nav_menu" />
+</androidx.drawerlayout.widget.DrawerLayout>
+
+
+
