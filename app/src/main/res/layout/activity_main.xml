@@ -4,6 +4,13 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navigationView"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        app:headerLayout="@layout/nav_header"
+        app:menu="@menu/nav_menu" />
 
     <ScrollView
         xmlns:android="http://schemas.android.com/apk/res/android"
@@ -197,21 +204,7 @@
         </LinearLayout>
 
     </ScrollView>
-    <!-- Your main content goes here -->
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <!-- Your main content views -->
-    </FrameLayout>
 
-    <!-- NavigationView for the drawer -->
-    <com.google.android.material.navigation.NavigationView
-        android:id="@+id/navigationView"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        app:headerLayout="@layout/nav_header"
-        app:menu="@menu/nav_menu" />
 </androidx.drawerlayout.widget.DrawerLayout>
 
 
