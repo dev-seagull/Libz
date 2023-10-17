@@ -162,9 +162,26 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println("on start error :" + e.getLocalizedMessage());
         }
 
-        new Thread(new Runnable() {@Override
-        public void run() {androidMediaItems = android.getGalleryMediaItems(MainActivity.this);}
-        }).start();
+
+        System.out.println("Starting android executor");
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Callable<ArrayList<Android.MediaItem>> androidBackgroundTask = () -> {
+            androidMediaItems = android.getGalleryMediaItems(MainActivity.this);
+
+
+            return androidMediaItems;
+        };
+        Future<ArrayList<Android.MediaItem>> future = executor.submit(androidBackgroundTask);
+        try {
+            ArrayList<Android.MediaItem> batchMediaItems = future.get();
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        executor.shutdown();
+        System.out.println("shut down android executor");
+
         android = new Android(androidMediaItems);
 
 
@@ -173,7 +190,6 @@ public class MainActivity extends AppCompatActivity {
                 if(result.getResultCode() == RESULT_OK){
                     LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
                     PrimaryAccountInfo primaryAccountInfo = googleCloud.handleSignInToPrimaryResult(result.getData(),
-
                             this, primaryAccountsButtonsLinearLayout);
                     String userEmail = primaryAccountInfo.getUserEmail();
                     primaryAccountHashMap.put(primaryAccountInfo.getUserEmail(), primaryAccountInfo);
@@ -191,6 +207,8 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     updateButtonsListeners();
+                    //System.out.println("done with update button listener");
+                    //probably here
                 }
             }
         );

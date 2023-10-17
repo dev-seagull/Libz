@@ -92,7 +92,7 @@
                 });
 
             } catch (Exception e){
-                Toast.makeText(activity,"Login failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                //Toast.makeText(activity,"Login failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             }
         }
 
@@ -123,7 +123,12 @@
                 storage = getStorage(tokens);
                 System.out.println("usages :" + storage.getTotalStorage() + " and "+  storage.getUsedStorage() +" and "+ storage.getUsedInDriveStorage() +" and "+ storage.getUsedInGmailAndPhotosStorage());
                 //LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
-                createPrimaryLoginButton(linearLayout);
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        createPrimaryLoginButton(linearLayout);
+//                    }
+//                });
 
                 GooglePhotos googlePhotos = new GooglePhotos(activity);
                 mediaItems = googlePhotos.getGooglePhotosMediaItems(tokens);
@@ -131,9 +136,10 @@
                 System.out.println("Number of your media items equals to: " + mediaItems.size());
             }catch (Exception e){
                 System.out.println("catch login error: " + e.getMessage());
-                Toast.makeText(activity,"Login failed: " + e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
+                //Toast.makeText(activity,"Login failed: " + e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
             }
 
+            System.out.println("done with login");
             return new PrimaryAccountInfo(userEmail, tokens, storage, mediaItems);
         }
 
@@ -167,7 +173,7 @@
                 //LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
                 createBackUpLoginButton(linearLayout);
             }catch (Exception e){
-                Toast.makeText(activity,"Login failed: " + e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
+                //Toast.makeText(activity,"Login failed: " + e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
             }
             return new BackUpAccountInfo(userEmail, tokens, storage,mediaItems);
         }
@@ -202,8 +208,8 @@
             if(linearLayout != null){
                 linearLayout.addView(newLoginButton);
             }else{
-                Toast.makeText(activity,"Creating a new login button failed",
-                        Toast.LENGTH_LONG).show();
+               // Toast.makeText(activity,"Creating a new login button failed",
+               //         Toast.LENGTH_LONG).show();
             }
         }
 
@@ -235,8 +241,8 @@
             if(linearLayout != null){
                 linearLayout.addView(newLoginButton);
             }else{
-                Toast.makeText(activity,"Creating a new login button failed",
-                        Toast.LENGTH_LONG).show();
+              //  Toast.makeText(activity,"Creating a new login button failed",
+               //         Toast.LENGTH_LONG).show();
             }
         }
 
@@ -295,11 +301,11 @@
 
                         }
                         else{
-                            Toast.makeText(activity,"Login failed", Toast.LENGTH_LONG).show();
+                          //  Toast.makeText(activity,"Login failed", Toast.LENGTH_LONG).show();
                         }
 
                     } catch (Exception e) {
-                        Toast.makeText(activity,"Login failed:" + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                        //Toast.makeText(activity,"Login failed:" + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                     }
 
                     tokens[0] = new PrimaryAccountInfo.Tokens(accessToken[0], refreshToken[0]);
@@ -309,8 +315,9 @@
                 Future<PrimaryAccountInfo.Tokens> future = executor.submit(backgroundTask);
                 tokens[0] = future.get();
             }catch (Exception e){
-                Toast.makeText(activity,"Login failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+              //  Toast.makeText(activity,"Login failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             }
+            executor.shutdown();
 
             return tokens[0];
         }
@@ -422,8 +429,9 @@
                 Future<PrimaryAccountInfo.Storage> future = executor.submit(backgroundTask);
                 storage[0] = future.get();
             }catch (Exception e){
-                Toast.makeText(activity,"Login failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+               // Toast.makeText(activity,"Login failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             }
+            executor.shutdown();
 
             return  storage[0];
         }
