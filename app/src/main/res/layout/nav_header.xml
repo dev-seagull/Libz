@@ -10,6 +10,6 @@
         android:layout_height="wrap_content"
         android:text="CSO"
         android:gravity="center"
-        android:textColor="#FFFFFF" />
+        android:textColor="#808080" />
 
 </LinearLayout>
