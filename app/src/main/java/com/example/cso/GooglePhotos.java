@@ -9,6 +9,7 @@ import android.widget.Toast;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.FileContent;
 import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -42,6 +43,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.time.LocalTime;
+import java.util.concurrent.TimeUnit;
 
 public class GooglePhotos {
     private final Activity activity;
@@ -89,11 +91,12 @@ public class GooglePhotos {
         final JSONObject[] responseJson = new JSONObject[1];
         ArrayList<MediaItem> finalMediaItems = MediaItems;
 
+        ExecutorService executor = Executors.newSingleThreadExecutor();
         do{
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-
             Callable<ArrayList<MediaItem>> backgroundTask = () -> {
                 try {
+                    System.out.println("hello there photos!");
+                    System.out.println(Thread.getAllStackTraces().keySet().toString());
                     URL url;
                     if(nextPageToken[0] == null) {
                         url = new URL("https://photoslibrary.googleapis.com/v1/mediaItems");
@@ -151,33 +154,23 @@ public class GooglePhotos {
                 }
                 //Future<ArrayList<MediaItem>> future = executor.submit(backgroundTask);
                 //storage[0] = future.get();
-
                 return finalMediaItems;
             };
 
             Future<ArrayList<MediaItem>> future = executor.submit(backgroundTask);
 
+            ArrayList<MediaItem> batchMediaItems = null;
             try {
-                ArrayList<MediaItem> batchMediaItems = future.get();
-                MediaItems.addAll(batchMediaItems);
-                System.out.println("done with the executor");
-                executor.shutdown();
+                batchMediaItems = future.get();
+                //wait(1);
             } catch (ExecutionException e) {
                 throw new RuntimeException(e);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-
-            if ((responseJson[0].has("nextPageToken") && nextPageToken != null
-                    && responseJson[0].has("mediaItems"))) {
-                try {
-                    nextPageToken[0] = responseJson[0].getString("nextPageToken");
-                } catch (JSONException e) {
-                    throw new RuntimeException(e);
-                }
-            }else {
-                nextPageToken[0] = null;
-            }
+            MediaItems.addAll(batchMediaItems);
+            System.out.println("done with the executor");
+            executor.shutdown();
 
             System.out.println("next page token: "  + nextPageToken[0]);
 

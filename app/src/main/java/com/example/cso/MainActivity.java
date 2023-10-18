@@ -150,7 +150,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart(){
         super.onStart();
-        updateButtonsListeners();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {updateButtonsListeners();}
+        });
         //updatePrimaryAccountsStorageChart();
 
             try{
@@ -162,13 +165,10 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println("on start error :" + e.getLocalizedMessage());
         }
 
-
         System.out.println("Starting android executor");
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<ArrayList<Android.MediaItem>> androidBackgroundTask = () -> {
             androidMediaItems = android.getGalleryMediaItems(MainActivity.this);
-
-
             return androidMediaItems;
         };
         Future<ArrayList<Android.MediaItem>> future = executor.submit(androidBackgroundTask);
@@ -194,82 +194,111 @@ public class MainActivity extends AppCompatActivity {
                     String userEmail = primaryAccountInfo.getUserEmail();
                     primaryAccountHashMap.put(primaryAccountInfo.getUserEmail(), primaryAccountInfo);
 
-                    if(primaryAccountsButtonsLinearLayout.getChildCount() == 1){
-                        Button bt = findViewById(R.id.loginButton);
-                        bt.setText(userEmail);
-                    }else{
-                        View childview = primaryAccountsButtonsLinearLayout.getChildAt(
-                                primaryAccountsButtonsLinearLayout.getChildCount() - 2);
-                        if(childview instanceof Button){
-                            Button bt = (Button) childview;
-                            bt.setText(userEmail);
+                    runOnUiThread(new Runnable(){
+                        @Override
+                        public void run(){
+                            if(primaryAccountsButtonsLinearLayout.getChildCount() == 1){
+                                Button bt = findViewById(R.id.loginButton);
+                                bt.setText(userEmail);
+                            }else{
+                                View childview = primaryAccountsButtonsLinearLayout.getChildAt(
+                                        primaryAccountsButtonsLinearLayout.getChildCount() - 2);
+                                if(childview instanceof Button){
+                                    Button bt = (Button) childview;
+                                    bt.setText(userEmail);
+                                }
+                            }
                         }
-                    }
+                    });
+                    System.out.println("done with first ui on thread");
 
-                    updateButtonsListeners();
+                    System.out.println("hello there3!");
+                    System.out.println(Thread.getAllStackTraces().keySet().size());
+
+                    runOnUiThread(new Runnable(){
+                        @Override
+                        public void run(){
+                            updateButtonsListeners();
+                        }
+                    } );
+
+                    System.out.println("done with second ui on thread");
+
+                    //updateButtonsListeners();
                     //System.out.println("done with update button listener");
                     //probably here
                 }
             }
         );
+        System.out.println("hello there4!");
+        System.out.println(Thread.getAllStackTraces().keySet().size());
+
         System.out.println("is it true 2:"+androidMediaItems.size());
-        signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if(result.getResultCode() == RESULT_OK){
-                    LinearLayout backUpAccountsButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
-                    BackUpAccountInfo backUpAccountInfo = googleCloud.handleSignInToBackupResult(result.getData(),
-                            this, backUpAccountsButtonsLinearLayout);
-                    String userEmail = backUpAccountInfo.getUserEmail();
-                    backUpAccountHashMap.put(backUpAccountInfo.getUserEmail(), backUpAccountInfo);
+//        signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+//            result -> {
+//                if(result.getResultCode() == RESULT_OK){
+//                    LinearLayout backUpAccountsButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
+//                    BackUpAccountInfo backUpAccountInfo = googleCloud.handleSignInToBackupResult(result.getData(),
+//                            this, backUpAccountsButtonsLinearLayout);
+//                    String userEmail = backUpAccountInfo.getUserEmail();
+//                    backUpAccountHashMap.put(backUpAccountInfo.getUserEmail(), backUpAccountInfo);
+//
+//                    runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            if(backUpAccountsButtonsLinearLayout.getChildCount() == 1){
+//                                Button bt = findViewById(R.id.backUpLoginButton);
+//                                bt.setText(userEmail);
+//                            }else{
+//                                View childview = backUpAccountsButtonsLinearLayout.getChildAt(
+//                                        backUpAccountsButtonsLinearLayout.getChildCount() - 2);
+//                                if(childview instanceof Button){
+//                                    Button bt = (Button) childview;
+//                                    bt.setText(userEmail);
+//                                }
+//                            }
+//                        }
+//                    });
+//
+//                    runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {updateButtonsListeners();}
+//                    });
+//                }
+//            });
 
-                    if(backUpAccountsButtonsLinearLayout.getChildCount() == 1){
-                        Button bt = findViewById(R.id.backUpLoginButton);
-                        bt.setText(userEmail);
-                    }else{
-                        View childview = backUpAccountsButtonsLinearLayout.getChildAt(
-                                backUpAccountsButtonsLinearLayout.getChildCount() - 2);
-                        if(childview instanceof Button){
-                            Button bt = (Button) childview;
-                            bt.setText(userEmail);
-                        }
-                    }
-
-                    updateButtonsListeners();
-                }
-            });
-
-        syncToBackUpAccountButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Double totalVolume = 0.0 ;
-                System.out.println("total usage volume 1:" + totalVolume);
-                for (PrimaryAccountInfo primaryAccountInfo : primaryAccountHashMap.values()) {
-                    totalVolume += primaryAccountInfo.getStorage().getUsedInGmailAndPhotosStorage();
-                }
-                System.out.println("is it true :"+androidMediaItems.size());
-                for (Android.MediaItem mediaItem : androidMediaItems){
-                    totalVolume += mediaItem.getFileSize();
-
-                    //System.out.println(" android file size : " + mediaItem.getFileSize());
-                }
-                System.out.println("total usage volume :" + totalVolume);
-                TextView syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
-                syncToBackUpAccountTextView.setText("Wait until the uploading process is finished");
-
-                BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
-                String backUpAccessToken = firstBackUpAccountInfo.getTokens().getAccessToken();
-
-                ExecutorService executor = Executors.newFixedThreadPool(1);
-
-                executor.execute(() -> {
-                    uploadPhotosToDriveAccounts(backUpAccessToken);
-                    uploadAndroidToDriveAccounts(backUpAccessToken);
-                });
-
-                executor.shutdown();
-
-            }
-        });
+//        syncToBackUpAccountButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Double totalVolume = 0.0 ;
+//                System.out.println("total usage volume 1:" + totalVolume);
+//                for (PrimaryAccountInfo primaryAccountInfo : primaryAccountHashMap.values()) {
+//                    totalVolume += primaryAccountInfo.getStorage().getUsedInGmailAndPhotosStorage();
+//                }
+//                System.out.println("is it true :"+androidMediaItems.size());
+//                for (Android.MediaItem mediaItem : androidMediaItems){
+//                    totalVolume += mediaItem.getFileSize();
+//
+//                    //System.out.println(" android file size : " + mediaItem.getFileSize());
+//                }
+//                System.out.println("total usage volume :" + totalVolume);
+//                TextView syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
+//                syncToBackUpAccountTextView.setText("Wait until the uploading process is finished");
+//
+//                BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
+//                String backUpAccessToken = firstBackUpAccountInfo.getTokens().getAccessToken();
+//
+//                ExecutorService executor = Executors.newFixedThreadPool(1);
+//
+//                executor.execute(() -> {
+//                    uploadPhotosToDriveAccounts(backUpAccessToken);
+//                    uploadAndroidToDriveAccounts(backUpAccessToken);
+//                });
+//
+//                executor.shutdown();
+//
+//            }
+//        });
          // androidMediaItems = Android.getGalleryMediaItems(this);
             // System.out.println("number of android media items equals to: " + androidMediaItems.size());
             // googlePhotos.uploadAndroidToGoogleDrive(androidMediaItems, accessTokens.get(0));
@@ -298,6 +327,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateButtonsListeners() {
+
         LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
 
         Button loginButton = findViewById(R.id.loginButton);
