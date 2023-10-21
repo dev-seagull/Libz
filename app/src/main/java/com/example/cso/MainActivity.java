@@ -150,6 +150,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart(){
         super.onStart();
+
+        NotificationHandler.sendNotification("1","syncingAlert", this,
+                "CSO","Welcome");
+
         runOnUiThread(new Runnable() {@Override public void run() {updateButtonsListeners();}});
 
         try{
