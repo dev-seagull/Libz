@@ -46,14 +46,12 @@ import java.time.LocalTime;
 import java.util.concurrent.TimeUnit;
 
 public class GooglePhotos {
-    private final Activity activity;
     public static boolean is_first_task_finish = false;
-    public GooglePhotos(Activity activity){
-        this.activity = activity;
+    public GooglePhotos(){
     }
 
 
-    public class MediaItem{
+    public static class MediaItem{
         private String Id;
         private String baseUrl;
         private String creationTime;
@@ -82,105 +80,72 @@ public class GooglePhotos {
         public String getFileName() {return fileName;}
     }
 
-    public ArrayList<MediaItem> getGooglePhotosMediaItems(PrimaryAccountInfo.Tokens tokens){
-        int pageSize = 100;
-        final String[] nextPageToken = {null};
-        String accessToken = tokens.getAccessToken();
-        String refreshToken = tokens.getRefreshToken();
-        ArrayList<MediaItem> MediaItems = new ArrayList<>();
-        final JSONObject[] responseJson = new JSONObject[1];
-        ArrayList<MediaItem> finalMediaItems = MediaItems;
+    public static class GetGooglePhotosMediaItemsAsyncTask extends AsyncTask<PrimaryAccountInfo.Tokens, Void, ArrayList<MediaItem>> {
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        do{
-            Callable<ArrayList<MediaItem>> backgroundTask = () -> {
+        public GetGooglePhotosMediaItemsAsyncTask() {
+        }
+
+        @Override
+        protected ArrayList<MediaItem> doInBackground(PrimaryAccountInfo.Tokens... tokens) {
+            if (tokens == null || tokens.length == 0) {
+                return new ArrayList<>();
+            }
+
+            PrimaryAccountInfo.Tokens token = tokens[0];
+
+            int pageSize = 100;
+            String accessToken = token.getAccessToken();
+            ArrayList<MediaItem> mediaItems = new ArrayList<>();
+
+            String nextPageToken = null;
+            JSONObject responseJson = null;
+
+            do {
                 try {
-                    System.out.println("hello there photos!");
-                    System.out.println(Thread.getAllStackTraces().keySet().toString());
                     URL url;
-                    if(nextPageToken[0] == null) {
+                    if (nextPageToken == null) {
                         url = new URL("https://photoslibrary.googleapis.com/v1/mediaItems");
-                    }else {
-                        url = new URL("https://photoslibrary.googleapis.com/v1/mediaItems?pageToken=" +
-                                        nextPageToken[0]);
+                    } else {
+                        url = new URL("https://photoslibrary.googleapis.com/v1/mediaItems?pageToken=" + nextPageToken);
                     }
-                    System.out.println("the url "  +url);
 
-                    System.out.println("Starting the executor");
                     HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                     httpURLConnection.setRequestMethod("GET");
                     httpURLConnection.setRequestProperty("Content-type", "application/json");
-                    System.out.println("Access token is: " + accessToken);
                     httpURLConnection.setRequestProperty("Authorization", "Bearer " + accessToken);
 
                     int responseCode = httpURLConnection.getResponseCode();
-                    System.out.println(responseCode);
-                    InputStreamReader inputStreamReader = new InputStreamReader(httpURLConnection.getInputStream());
-                    BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-                    StringBuilder responseStringBuilder = new StringBuilder();
-                    String line;
-                    while ((line = bufferedReader.readLine()) != null) {
-                        responseStringBuilder.append(line);
-                    }
-                    bufferedReader.close();
-                    String response = responseStringBuilder.toString();
-                    System.out.println(response);
                     if (responseCode == HttpURLConnection.HTTP_OK) {
-//                        InputStreamReader inputStreamReader = new InputStreamReader(httpURLConnection.getInputStream());
-//                        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-//                        StringBuilder responseStringBuilder = new StringBuilder();
-//                        String line;
-//                        while ((line = bufferedReader.readLine()) != null) {
-//                            responseStringBuilder.append(line);
-//                        }
-//                        bufferedReader.close();
-//                        String response = responseStringBuilder.toString();
-//                        System.out.println(response);
-                        responseJson[0] = new JSONObject(response);
-                        JSONArray MediaItemsResponse = responseJson[0].getJSONArray("mediaItems");
-                        for (int i = 0; i < MediaItemsResponse.length(); i++) {
-                            JSONObject MediaItemJsonObject = MediaItemsResponse.getJSONObject(i);
-                            String filename = MediaItemJsonObject.getString("filename");
-                            String baseUrl = MediaItemJsonObject.getString("baseUrl");
-                            String id = MediaItemJsonObject.getString("id");
-                            MediaItem MediaItem = new MediaItem(id, baseUrl, "2-2-2", filename, null);
-                            finalMediaItems.add(MediaItem);
-                            //MediaItem.getString()
+                        InputStreamReader inputStreamReader = new InputStreamReader(httpURLConnection.getInputStream());
+                        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                        StringBuilder responseStringBuilder = new StringBuilder();
+                        String line;
+                        while ((line = bufferedReader.readLine()) != null) {
+                            responseStringBuilder.append(line);
                         }
-                        nextPageToken[0] = responseJson[0].optString("nextPageToken", null);
+                        bufferedReader.close();
+                        String response = responseStringBuilder.toString();
+                        responseJson = new JSONObject(response);
+
+                        JSONArray mediaItemsResponse = responseJson.getJSONArray("mediaItems");
+                        for (int i = 0; i < mediaItemsResponse.length(); i++) {
+                            JSONObject mediaItemJsonObject = mediaItemsResponse.getJSONObject(i);
+                            String filename = mediaItemJsonObject.getString("filename");
+                            String baseUrl = mediaItemJsonObject.getString("baseUrl");
+                            String id = mediaItemJsonObject.getString("id");
+                            MediaItem mediaItem = new MediaItem(id, baseUrl, "2-2-2", filename, null);
+                            mediaItems.add(mediaItem);
+                        }
+                        nextPageToken = responseJson.optString("nextPageToken", null);
                     }
-                }catch (Exception e){
-                    System.out.println(e.getLocalizedMessage());
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                //Future<ArrayList<MediaItem>> future = executor.submit(backgroundTask);
-                //storage[0] = future.get();
-                return finalMediaItems;
-            };
+            } while (responseJson != null && responseJson.has("nextPageToken") && responseJson.has("mediaItems"));
 
-            Future<ArrayList<MediaItem>> future = executor.submit(backgroundTask);
-
-            ArrayList<MediaItem> batchMediaItems = null;
-            try {
-                batchMediaItems = future.get();
-                //wait(1);
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            MediaItems.addAll(batchMediaItems);
-            System.out.println("done with the executor");
-            executor.shutdown();
-
-            System.out.println("next page token: "  + nextPageToken[0]);
-
-        }while(responseJson[0].has("nextPageToken") && nextPageToken != null
-                && responseJson[0].has("mediaItems"));
-
-        System.out.println("Number of your media items in photos equals to: " + finalMediaItems.size() + " or" + MediaItems.size());
-        return MediaItems;
+            return mediaItems;
+        }
     }
-
     byte[] inputStreamToByteArray(InputStream inputStream) {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         int nRead;
@@ -290,7 +255,7 @@ public class GooglePhotos {
             currentTime = null;
         }
         System.out.println("start of photos: " + currentTime.toString());
-        //final int[] test = {5};
+        //final int[] test = {2};
         final File[] file = new File[1];
 
         ArrayList<String> baseUrls = new ArrayList<>();
@@ -574,7 +539,7 @@ public class GooglePhotos {
                             wait();
                         }
                         uploadFileIds.add(uploadFileId);
-                            //test[0]--;
+                          //  test[0]--;
                         //}
                         } catch (Exception e) {
                             System.out.println("Uploading android error: " + e.getMessage());

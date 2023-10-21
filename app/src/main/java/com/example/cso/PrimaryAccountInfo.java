@@ -11,12 +11,20 @@ public class PrimaryAccountInfo {
     private ArrayList<GooglePhotos.MediaItem> mediaItems;
 
     public static class Tokens {
-        private final String refreshToken;
-        private final String accessToken;
+        private String refreshToken;
+        private String accessToken;
 
         public Tokens(String accessToken, String refreshToken) {
             this.accessToken = accessToken;
             this.refreshToken = refreshToken;
+        }
+
+        public void setAccessToken(String accessToken) {
+            this.accessToken = accessToken;
+        }
+
+        public void setRefreshToken(String refreshToken) {
+            this.refreshToken= refreshToken;
         }
 
         public String getAccessToken() {
