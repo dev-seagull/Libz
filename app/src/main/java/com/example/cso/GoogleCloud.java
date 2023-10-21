@@ -5,6 +5,9 @@
     import android.content.res.ColorStateList;
     import android.graphics.Color;
     import android.graphics.drawable.Drawable;
+    import android.os.AsyncTask;
+    import android.os.Build;
+    import android.os.Handler;
     import android.util.TypedValue;
     import android.view.View;
     import android.view.ViewGroup;
@@ -44,6 +47,7 @@
     import java.util.ArrayList;
     import java.util.List;
     import java.util.concurrent.Callable;
+    import java.util.concurrent.CompletableFuture;
     import java.util.concurrent.ExecutionException;
     import java.util.concurrent.ExecutorService;
     import java.util.concurrent.Executors;
@@ -97,7 +101,7 @@
         }
 
 
-        public PrimaryAccountInfo handleSignInToPrimaryResult(Intent data, Activity activity,LinearLayout linearLayout){
+        public PrimaryAccountInfo handleSignInToPrimaryResult(Intent data){
             String userEmail = "";
             String authCode = "";
             PrimaryAccountInfo.Tokens tokens = null;
@@ -116,22 +120,22 @@
                 System.out.println("the user email is: " + userEmail);
 
                 authCode = account.getServerAuthCode();
-                //here you should get the tokens, storage and display it then using chart, gphotos files,
-                // and also drive files?
-                // you should add more background tasks to do that
-                tokens = getTokens(authCode);
+                GetTokensAsyncTask getTokensAsyncTask = new GetTokensAsyncTask();
+                tokens = getTokensAsyncTask.execute(authCode).get();
                 storage = getStorage(tokens);
                 System.out.println("usages :" + storage.getTotalStorage() + " and "+  storage.getUsedStorage() +" and "+ storage.getUsedInDriveStorage() +" and "+ storage.getUsedInGmailAndPhotosStorage());
-                //LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
-//                runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        createPrimaryLoginButton(linearLayout);
-//                    }
-//                });
 
-                GooglePhotos googlePhotos = new GooglePhotos(activity);
-                mediaItems = googlePhotos.getGooglePhotosMediaItems(tokens);
+                GooglePhotos.GetGooglePhotosMediaItemsAsyncTask task = new GooglePhotos.
+                        GetGooglePhotosMediaItemsAsyncTask();
+                mediaItems = task.execute(tokens).get();;
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
+                        createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
+                    }
+                });
                 System.out.println("m size: " + mediaItems.size());
                 System.out.println("Number of your media items equals to: " + mediaItems.size());
             }catch (Exception e){
@@ -144,11 +148,10 @@
         }
 
 
-        public BackUpAccountInfo handleSignInToBackupResult(Intent data, Activity activity,LinearLayout linearLayout){
+        public BackUpAccountInfo handleSignInToBackupResult(Intent data){
             String userEmail = "";
             String authCode = "";
             PrimaryAccountInfo.Tokens tokens = null;
-            Button finalLoginButton = null;
             PrimaryAccountInfo.Storage storage = null;
             ArrayList<BackUpAccountInfo.MediaItem> mediaItems  = null;
             try{
@@ -166,12 +169,18 @@
                 //here you should get the tokens, storage and display it then using chart, gphotos files,
                 // and also drive files?
                 // you should add more background tasks to do that
-                tokens = getTokens(authCode);
+                GetTokensAsyncTask getTokensAsyncTask = new GetTokensAsyncTask();
+                tokens = getTokensAsyncTask.execute(authCode).get();
                 storage = getStorage(tokens);
                 mediaItems = getMediaItems(tokens);
 
-                //LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
-                createBackUpLoginButton(linearLayout);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+                        createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
+                    }
+                });
             }catch (Exception e){
                 //Toast.makeText(activity,"Login failed: " + e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
             }
@@ -248,78 +257,64 @@
 
 
 
-        public PrimaryAccountInfo.Tokens getTokens(String authCode){
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            final PrimaryAccountInfo.Tokens[] tokens = new PrimaryAccountInfo.Tokens[1];
-            final int[] responseCode = new int[1];
-            final String[] response = new String[1];
-            final JSONObject[] responseJSONObject = new JSONObject[1];
-            final String[] accessToken = new String[1];
-            final String[] refreshToken = new String[1];
-
-            try{
-                Callable<PrimaryAccountInfo.Tokens> backgroundTask = () -> {
-
-                    try{
-                        URL googleAPITokenUrl = new URL("https://oauth2.googleapis.com/token");
-                        HttpURLConnection httpURLConnection = (HttpURLConnection) googleAPITokenUrl.openConnection();
-
-                        String clientId = activity.getResources().getString(R.string.client_id);
-                        String clientSecret = activity.getString(R.string.client_secret);
-                        String requestBody = "code=" + authCode +
-                                "&client_id=" + clientId +
-                                "&client_secret=" + clientSecret +
-                                "&grant_type=authorization_code";
-
-                        byte[] postData = requestBody.getBytes(StandardCharsets.UTF_8);
-                        httpURLConnection.setRequestMethod("POST");
-                        httpURLConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
-                        httpURLConnection.setRequestProperty("Host", "oauth2.googleapis.com");
-                        httpURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                        httpURLConnection.setDoInput(true);
-                        httpURLConnection.setDoOutput(true);
-
-                        OutputStream outputStream = httpURLConnection.getOutputStream();
-                        outputStream.write(postData);
-                        outputStream.flush();
-                        responseCode[0] = httpURLConnection.getResponseCode();
-
-                        if(responseCode[0] == HttpURLConnection.HTTP_OK){
-                            StringBuilder responseBuilder = new StringBuilder();
-                            BufferedReader bufferedReader = new BufferedReader(
-                                    new InputStreamReader(httpURLConnection.getInputStream())
-                            );
-                            String line;
-                            while ((line = bufferedReader.readLine()) != null){
-                                responseBuilder.append(line);
-                            }
-
-                            response[0] = responseBuilder.toString();
-                            responseJSONObject[0] =  new JSONObject(response[0]);
-                            accessToken[0] = responseJSONObject[0].getString("access_token");
-                            refreshToken[0] = responseJSONObject[0].getString("refresh_token");
-
-                        }
-                        else{
-                          //  Toast.makeText(activity,"Login failed", Toast.LENGTH_LONG).show();
-                        }
-
-                    } catch (Exception e) {
-                        //Toast.makeText(activity,"Login failed:" + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-                    }
-
-                    tokens[0] = new PrimaryAccountInfo.Tokens(accessToken[0], refreshToken[0]);
-                    return tokens[0];
-                };
-
-                Future<PrimaryAccountInfo.Tokens> future = executor.submit(backgroundTask);
-                tokens[0] = future.get();
-            }catch (Exception e){
-              //  Toast.makeText(activity,"Login failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+        public class GetTokensAsyncTask extends AsyncTask<String, Void, PrimaryAccountInfo.Tokens> {
+            public GetTokensAsyncTask() {
             }
-            executor.shutdown();
 
-            return tokens[0];
+            @Override
+            protected PrimaryAccountInfo.Tokens doInBackground(String... params) {
+                if (params.length == 0) {
+                    return null;
+                }
+
+                String authCode = params[0];
+
+                try {
+                    URL googleAPITokenUrl = new URL("https://oauth2.googleapis.com/token");
+                    HttpURLConnection httpURLConnection = (HttpURLConnection) googleAPITokenUrl.openConnection();
+                    String clientId = activity.getResources().getString(R.string.client_id);
+                    String clientSecret = activity.getString(R.string.client_secret);
+                    String requestBody = "code=" + authCode +
+                            "&client_id=" + clientId +
+                            "&client_secret=" + clientSecret +
+                            "&grant_type=authorization_code";
+                    byte[] postData = requestBody.getBytes(StandardCharsets.UTF_8);
+                    httpURLConnection.setRequestMethod("POST");
+                    httpURLConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+                    httpURLConnection.setRequestProperty("Host", "oauth2.googleapis.com");
+                    httpURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                    httpURLConnection.setDoInput(true);
+                    httpURLConnection.setDoOutput(true);
+                    OutputStream outputStream = httpURLConnection.getOutputStream();
+                    outputStream.write(postData);
+                    outputStream.flush();
+
+                    int responseCode = httpURLConnection.getResponseCode();
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        StringBuilder responseBuilder = new StringBuilder();
+                        BufferedReader bufferedReader = new BufferedReader(
+                                new InputStreamReader(httpURLConnection.getInputStream())
+                        );
+                        String line;
+                        while ((line = bufferedReader.readLine()) != null) {
+                            responseBuilder.append(line);
+                        }
+                        String response = responseBuilder.toString();
+                        JSONObject responseJSONObject = new JSONObject(response);
+                        String accessToken = responseJSONObject.getString("access_token");
+                        String refreshToken = responseJSONObject.getString("refresh_token");
+
+                        return new PrimaryAccountInfo.Tokens(accessToken, refreshToken);
+                    } else {
+                        // Handle the case where the HTTP response is not OK.
+                        // You can return null or throw an exception as needed.
+                        return null;
+                    }
+                } catch (Exception e) {
+                    // Handle exceptions here (e.g., log or show a message).
+                    return null;
+                }
+            }
         }
 
         public static String getMemeType(String fileName){
