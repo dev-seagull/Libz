@@ -286,8 +286,8 @@ public class MainActivity extends AppCompatActivity {
                 ArrayList<BackUpAccountInfo.MediaItem> backupMediaItems = firstBackUpAccountInfo.getMediaItems();
 
                 GoogleDrive.deleteDuplicatedMediaItems(backupMediaItems,backupTokens);
-//                uploadPhotosToDriveAccounts(backUpAccessToken);
-//                uploadAndroidToDriveAccounts(backUpAccessToken);
+                uploadPhotosToDriveAccounts(backUpAccessToken);
+                uploadAndroidToDriveAccounts(backUpAccessToken);
                 runOnUiThread(() ->{
                     NotificationHandler.sendNotification("1","syncingAlert", MainActivity.this,
                             "Syncing is finished","You're files are backed-up!");
