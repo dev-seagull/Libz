@@ -466,6 +466,8 @@ public class GooglePhotos {
             mediaItemsInPhotosNames.add(primaryMediaItem.getFileName());
         }
 
+        HashSet<String> mediaItemsInAndroidNames = new HashSet<>();
+
         System.out.println("start of android: " + currentTime.toString());
 
         //final int[] test = {3};
@@ -475,15 +477,19 @@ public class GooglePhotos {
             try {
                 int i = 0;
                 for (Android.MediaItem mediaItem : mediaItems) {
-                    if(hashSet.contains(mediaItem.getFileHash()) | mediaItemsInPhotosNames.contains(mediaItem.getFileName())){
+                    if(hashSet.contains(mediaItem.getFileHash()) |
+                            mediaItemsInPhotosNames.contains(mediaItem.getFileName()) | mediaItemsInAndroidNames.contains(mediaItem.getFileName())){
                         if(hashSet.contains(mediaItem.getFileHash())){
                             System.out.println("this file is considered duplicated in android device " + mediaItem.getFileName());
+                        }else if(mediaItemsInAndroidNames.contains(mediaItem.getFileName())){
+                            System.out.println("this file is duplicated by its name in android device");
                         }else{
                             System.out.println("this file is considered duplicated for its name" +
                                     "in android and primary account " + mediaItem.getFileName());
                         }
                         continue;
                     }else{
+                        mediaItemsInAndroidNames.add(mediaItem.getFileName());
                         File file = new File(mediaItem.getFilePath());
                         if (isDuplicatedInBackup(backUpMediaItems, file, activity) == false &&
                                 isDuplicatedInPrimary(primaryMediaItems, file, activity) == false) {
