@@ -177,8 +177,8 @@
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-                        createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
+                        LinearLayout backupAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+                        createBackUpLoginButton(backupAccountsButtonsLinearLayout);
                     }
                 });
             }catch (Exception e){
@@ -343,7 +343,6 @@
                     FileList result = driveService.files().list()
                             .setFields("files(id, name, sha256Checksum)")
                             .execute();
-
                     List<File> files = result.getFiles();
                     if (files != null && !files.isEmpty()) {
                         for (File file : files) {
