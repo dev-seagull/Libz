@@ -558,12 +558,6 @@ public class GooglePhotos {
             ArrayList<String> uploadFileIdsFuture = future.get();
             System.out.println("Finished with " + uploadFileIdsFuture.size() + " uploads at " + currentTime.toString());
             System.out.println("-----end of second ----->");
-            activity.runOnUiThread(() ->{
-                NotificationHandler.sendNotification("1","syncingAlert", activity,
-                        "Syncing is finished","You're files are backed-up!");
-                TextView syncToBackUpAccountTextView = activity.findViewById(R.id.syncToBackUpAccountTextView);
-                syncToBackUpAccountTextView.setText("Uploading process is finished");
-            });
         }catch (Exception e){
             System.out.println(e.getLocalizedMessage());
         }

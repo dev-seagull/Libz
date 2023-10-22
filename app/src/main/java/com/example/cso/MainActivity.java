@@ -281,10 +281,20 @@ public class MainActivity extends AppCompatActivity {
                 });
 
                 BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
+                PrimaryAccountInfo.Tokens backupTokens = firstBackUpAccountInfo.getTokens();
                 String backUpAccessToken = firstBackUpAccountInfo.getTokens().getAccessToken();
+                ArrayList<BackUpAccountInfo.MediaItem> backupMediaItems = firstBackUpAccountInfo.getMediaItems();
 
-                uploadPhotosToDriveAccounts(backUpAccessToken);
-                uploadAndroidToDriveAccounts(backUpAccessToken);
+                GoogleDrive.deleteDuplicatedMediaItems(backupMediaItems,backupTokens);
+//                uploadPhotosToDriveAccounts(backUpAccessToken);
+//                uploadAndroidToDriveAccounts(backUpAccessToken);
+                runOnUiThread(() ->{
+                    NotificationHandler.sendNotification("1","syncingAlert", MainActivity.this,
+                            "Syncing is finished","You're files are backed-up!");
+                    TextView syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
+                    syncToBackUpAccountTextView.setText("Uploading process is finished");
+                });
+
             }
         });
     }
