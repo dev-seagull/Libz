@@ -37,6 +37,7 @@ import java.security.GeneralSecurityException;
 import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -460,90 +461,107 @@ public class GooglePhotos {
         } else {
             currentTime = null;
         }
+        ArrayList<String> mediaItemsInPhotosNames = new ArrayList<>();
+        for(MediaItem primaryMediaItem: primaryMediaItems){
+            mediaItemsInPhotosNames.add(primaryMediaItem.getFileName());
+        }
+
         System.out.println("start of android: " + currentTime.toString());
 
         //final int[] test = {3};
         ExecutorService executor = Executors.newSingleThreadExecutor();
+        HashSet<String> hashSet = new HashSet<>();
         Callable<ArrayList<String>> uploadTask = () -> {
             try {
                 int i = 0;
                 for (Android.MediaItem mediaItem : mediaItems) {
-                    File file = new File(mediaItem.getFilePath());
-                    if (isDuplicatedInBackup(backUpMediaItems, file, activity) == false &&
-                     isDuplicatedInPrimary(primaryMediaItems, file, activity) == false) {
-                        System.out.println("start to upload at: " + currentTime.toString());
-                        try {
-                            NetHttpTransport HTTP_TRANSPORT = null;
-                            try {
-                                HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-                            } catch (GeneralSecurityException e) {
-                                //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-                            } catch (IOException e) {
-                                //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-                            }
-                            final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-
-                            HttpRequestInitializer requestInitializer = request -> {
-                                request.getHeaders().setAuthorization("Bearer " + accessToken);
-                                request.getHeaders().setContentType("application/json");
-                            };
-
-                            Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                                    .setApplicationName("cso")
-                                    .build();
-
-                            com.google.api.services.drive.model.File fileMetadata =
-                                    new com.google.api.services.drive.model.File();
-                            fileMetadata.setName(mediaItem.getFileName());
-                            String memeType = getMemeType(new File(mediaItem.getFilePath()));
-
-                            FileContent mediaContent = null;
-                            if (isImage(memeType)) {
-                                String mediaItemPath = mediaItem.getFilePath();
-                                if(new File(mediaItemPath).exists()){
-                                    //System.out.println("the android file exists");
-                                }else{
-                                System.out.println("the android file doesn't exist");
-                                }
-
-                                if (memeType.toLowerCase().endsWith("jpg")) {
-                                    mediaContent = new FileContent("image/jpeg",
-                                            new File(mediaItemPath));
-                                } else {
-                                    mediaContent = new FileContent("image/" + memeType.toLowerCase(),
-                                            new File(mediaItemPath));
-                                }
-                                //String hash = MainActivity.calculateHash(new File(mediaItem.getFilePath()), activity);
-                            } else if (isVideo(memeType)) {
-                                String mediaItemPath = mediaItem.getFilePath();
-                                if(new File(mediaItemPath).exists()){
-                                    //System.out.println("the android file exists");
-                                }else{
-                                    System.out.println("the android file doesn't exist");
-                                }
-
-                                if (memeType.toLowerCase().endsWith("mkv")) {
-                                    mediaContent = new FileContent("video/x-matroska",
-                                            new File(mediaItemPath));
-                                } else {
-                                    mediaContent = new FileContent("video/" + memeType.toLowerCase(),
-                                            new File(mediaItemPath));
-                                }
-                            }
-
-                        //if (test[0] >0 && !isVideo(memeType)){
-                        com.google.api.services.drive.model.File uploadFile =
-                            service.files().create(fileMetadata, mediaContent).setFields("id").execute();
-                        String uploadFileId = uploadFile.getId();
-                        while(uploadFileId == null){
-                            wait();
+                    if(hashSet.contains(mediaItem.getFileHash()) | mediaItemsInPhotosNames.contains(mediaItem.getFileName())){
+                        if(hashSet.contains(mediaItem.getFileHash())){
+                            System.out.println("this file is considered duplicated in android device " + mediaItem.getFileName());
+                        }else{
+                            System.out.println("this file is considered duplicated for its name" +
+                                    "in android and primary account " + mediaItem.getFileName());
                         }
-                        uploadFileIds.add(uploadFileId);
-                          //  test[0]--;
-                        //}
-                        } catch (Exception e) {
-                            System.out.println("Uploading android error: " + e.getMessage());
-                            //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                        continue;
+                    }else{
+                        File file = new File(mediaItem.getFilePath());
+                        if (isDuplicatedInBackup(backUpMediaItems, file, activity) == false &&
+                                isDuplicatedInPrimary(primaryMediaItems, file, activity) == false) {
+
+                            System.out.println("start to upload at: " + currentTime.toString());
+                            try {
+                                NetHttpTransport HTTP_TRANSPORT = null;
+                                try {
+                                    HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+                                } catch (GeneralSecurityException e) {
+                                    //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                                } catch (IOException e) {
+                                    //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                                }
+                                final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+
+                                HttpRequestInitializer requestInitializer = request -> {
+                                    request.getHeaders().setAuthorization("Bearer " + accessToken);
+                                    request.getHeaders().setContentType("application/json");
+                                };
+
+                                Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
+                                        .setApplicationName("cso")
+                                        .build();
+
+                                com.google.api.services.drive.model.File fileMetadata =
+                                        new com.google.api.services.drive.model.File();
+                                fileMetadata.setName(mediaItem.getFileName());
+                                String memeType = getMemeType(new File(mediaItem.getFilePath()));
+
+                                FileContent mediaContent = null;
+                                if (isImage(memeType)) {
+                                    String mediaItemPath = mediaItem.getFilePath();
+                                    if(new File(mediaItemPath).exists()){
+                                        //System.out.println("the android file exists");
+                                    }else{
+                                        System.out.println("the android file doesn't exist");
+                                    }
+
+                                    if (memeType.toLowerCase().endsWith("jpg")) {
+                                        mediaContent = new FileContent("image/jpeg",
+                                                new File(mediaItemPath));
+                                    } else {
+                                        mediaContent = new FileContent("image/" + memeType.toLowerCase(),
+                                                new File(mediaItemPath));
+                                    }
+                                    //String hash = MainActivity.calculateHash(new File(mediaItem.getFilePath()), activity);
+                                } else if (isVideo(memeType)) {
+                                    String mediaItemPath = mediaItem.getFilePath();
+                                    if(new File(mediaItemPath).exists()){
+                                        //System.out.println("the android file exists");
+                                    }else{
+                                        System.out.println("the android file doesn't exist");
+                                    }
+
+                                    if (memeType.toLowerCase().endsWith("mkv")) {
+                                        mediaContent = new FileContent("video/x-matroska",
+                                                new File(mediaItemPath));
+                                    } else {
+                                        mediaContent = new FileContent("video/" + memeType.toLowerCase(),
+                                                new File(mediaItemPath));
+                                    }
+                                }
+
+                                //if (test[0] >0 && !isVideo(memeType)){
+                                com.google.api.services.drive.model.File uploadFile =
+                                        service.files().create(fileMetadata, mediaContent).setFields("id").execute();
+                                String uploadFileId = uploadFile.getId();
+                                while(uploadFileId == null){
+                                    wait();
+                                }
+                                uploadFileIds.add(uploadFileId);
+                                //  test[0]--;
+                                //}
+                            } catch (Exception e) {
+                                System.out.println("Uploading android error: " + e.getMessage());
+                                //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                            }
                         }
                     }
                 }
