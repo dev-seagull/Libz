@@ -8,6 +8,7 @@ import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.app.ActivityCompat;
@@ -32,7 +33,18 @@ public class NotificationHandler {
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
         Intent intent = new Intent(activity, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(activity, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        int androidVersion = android.os.Build.VERSION.SDK_INT;
+        String androidVersionName = android.os.Build.VERSION.RELEASE;
+
+        Log.d("Android Version", "SDK Version: " + androidVersion);
+        Log.d("Android Version", "Release Version: " + androidVersionName);
+        PendingIntent pendingIntent ;
+        System.out.println("Build.VERSION.SDK_INT < Build.VERSION_CODES.M " + Build.VERSION.SDK_INT  + "   " +   Build.VERSION_CODES.M);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            pendingIntent = PendingIntent.getActivity(activity, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        }else{
+            pendingIntent = PendingIntent.getActivity(activity, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        }
         builder.setContentIntent(pendingIntent);
 
 
