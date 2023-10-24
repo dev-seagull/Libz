@@ -24,6 +24,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
@@ -127,6 +128,15 @@ public class MainActivity extends AppCompatActivity {
         MenuItem menuItem1 = navigationView.getMenu().findItem(R.id.navMenuItem1);
         String appVersion = BuildConfig.VERSION_NAME;
         menuItem1.setTitle(appVersion);
+
+        AppCompatButton infoButton = findViewById(R.id.infoButton);
+        infoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent infoIntent  = new Intent(MainActivity.this, AndroidMediaItems.class);
+                startActivity(infoIntent);
+            }
+        });
 
         //SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs",Context.MODE_PRIVATE);
         //String json = sharedPreferences.getString("AndroidImageAndVideoPaths",null);
