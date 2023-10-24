@@ -8,7 +8,8 @@
     <include
         layout="@layout/header"/>
 
-    <androidx.drawerlayout.widget.DrawerLayout android:id="@+id/drawer_layout"
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         xmlns:android="http://schemas.android.com/apk/res/android"
@@ -18,7 +19,7 @@
             android:id="@+id/navigationView"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_gravity="start"
+            android:layout_gravity="end"
             app:headerLayout="@layout/nav_header"
             app:menu="@menu/nav_menu" />
 

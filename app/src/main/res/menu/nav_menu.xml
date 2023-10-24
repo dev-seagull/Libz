@@ -2,5 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/navMenuItem1"
-        android:title="" />
+        android:title=""
+        />
 </menu>

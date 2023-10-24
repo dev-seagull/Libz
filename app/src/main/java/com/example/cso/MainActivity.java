@@ -7,6 +7,10 @@ import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Layout;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.AlignmentSpan;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
@@ -127,14 +131,15 @@ public class MainActivity extends AppCompatActivity {
 
         MenuItem menuItem1 = navigationView.getMenu().findItem(R.id.navMenuItem1);
         String appVersion = BuildConfig.VERSION_NAME;
-        menuItem1.setTitle(appVersion);
+        SpannableString centeredText = new SpannableString("Version: " + appVersion);
+        centeredText.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER), 0, appVersion.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+        menuItem1.setTitle(centeredText);
 
         AppCompatButton infoButton = findViewById(R.id.infoButton);
         infoButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent infoIntent  = new Intent(MainActivity.this, AndroidMediaItems.class);
-                startActivity(infoIntent);
+                drawerLayout.openDrawer(GravityCompat.END);
             }
         });
 
