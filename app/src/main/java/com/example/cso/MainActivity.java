@@ -61,13 +61,10 @@ public class MainActivity extends AppCompatActivity {
     private NavigationView navigationView;
     ArrayList<String> androidImageAndVideoPaths;
     Button mediaItemsLayoutButton;
-    Button androidMediaItemsButton;
     Button syncAndroidButton;
     Button syncToBackUpAccountButton;
     TextView syncToBackUpAccountTextView;
-    TextView androidTextView;
     TextView textviewGooglePhotosMediaItemsCount;
-    ProgressBar androidProgressBar;
     GoogleCloud googleCloud;
     ActivityResultLauncher<Intent> signInToPrimaryLauncher;
     ActivityResultLauncher<Intent> signInToBackUpLauncher;
@@ -147,15 +144,12 @@ public class MainActivity extends AppCompatActivity {
         //String json = sharedPreferences.getString("AndroidImageAndVideoPaths",null);
         //if(json == null){
 
-        androidMediaItemsButton = findViewById(R.id.androidMediaItemsButton);
         syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
 
         mediaItemsLayoutButton = findViewById(R.id.mediaItemsLayout);
         syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
         textviewGooglePhotosMediaItemsCount = findViewById(R.id.googlePhotosMediaItemsCount);
         TextView textViewAndroidDeviceName = findViewById(R.id.androidDeviceTextView);
-        androidProgressBar = findViewById(R.id.androidImageProgressBar);
-        androidTextView = findViewById(R.id.androidTextView);
 
         String androidDeviceName = DeviceName.getDeviceName();
         textViewAndroidDeviceName.setText(androidDeviceName);

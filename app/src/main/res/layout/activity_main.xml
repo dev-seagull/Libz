@@ -1,8 +1,10 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/sky_blue"
     android:orientation="vertical">
 
     <include
@@ -11,9 +13,7 @@
     <androidx.drawerlayout.widget.DrawerLayout
         android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto">
+        android:layout_height="match_parent">
 
         <com.google.android.material.navigation.NavigationView
             android:id="@+id/navigationView"
@@ -24,9 +24,6 @@
             app:menu="@menu/nav_menu" />
 
         <ScrollView
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:app="http://schemas.android.com/apk/res-auto"
-            xmlns:tools="http://schemas.android.com/tools"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -57,6 +54,7 @@
                     android:id="@+id/loginButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
                     android:layout_marginBottom="16dp"
                     android:backgroundTint="#0D47A1"
                     android:drawableLeft="@drawable/googlephotosicon_resized"
@@ -71,14 +69,6 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:gravity="center"> </LinearLayout>
-
-
-                <com.github.mikephil.charting.charts.HorizontalBarChart
-                    android:id="@+id/StorageHorizontalBarChart"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="50dp"></com.github.mikephil.charting.charts.HorizontalBarChart>
-
 
                 <TextView
                     android:id="@+id/googlePhotosMediaItemsCount"
@@ -110,56 +100,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="3dp"
-                    android:layout_marginTop="16dp"
-                    android:text="Android device"
+                    android:layout_marginTop="50dp"
+                    android:layout_marginBottom="50dp"
                     android:gravity="left"
+                    android:text="Android device"
                     android:textSize="24sp" />
-
-                <com.github.mikephil.charting.charts.HorizontalBarChart
-                    android:id="@+id/androidStorageBarChart"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"></com.github.mikephil.charting.charts.HorizontalBarChart>
-
-                <ProgressBar
-                    android:id="@+id/androidImageProgressBar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
-                    android:visibility="gone"
-                    style="@android:style/Widget.ProgressBar.Horizontal"> </ProgressBar>
-
-
-                <TextView
-                    android:id="@+id/androidTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="20sp"
-                    android:layout_marginTop="5dp" />
-
-                <Button
-                    android:id="@+id/androidMediaItemsButton"
-                    android:text="Detail of android items"
-                    android:clickable="true"
-                    android:backgroundTint="#0D47A1"
-                    android:visibility="gone"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    > </Button>
-
-                <Button
-                    android:id="@+id/duplicatedbutton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:backgroundTint="#0D47A1"
-                    android:text="find duplicated images and videos"
-                    ></Button>
-                <TextView
-                    android:id="@+id/duplicatedTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="20sp"
-                    android:text=""
-                    android:layout_marginTop="5dp" />
 
                 <View
                     android:layout_width="match_parent"
@@ -174,6 +119,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:backgroundTint="#42A5F5"
+                    android:layout_marginTop="20dp"
                     android:layout_marginBottom="16dp"
                     android:drawableLeft="@drawable/googledriveimage_resized"
                     android:text="Add a back up account"
@@ -195,6 +141,7 @@
                     android:layout_height="wrap_content"
                     android:backgroundTint="#42A5F5"
                     android:text="Sync"
+                    android:layout_marginTop="20dp"
                     android:textSize="16sp" />
 
                 <TextView

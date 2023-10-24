@@ -191,14 +191,16 @@
 
         public void createPrimaryLoginButton(LinearLayout linearLayout){
             Button newLoginButton = new Button(activity);
+            Button loginButton = activity.findViewById(R.id.loginButton);
+
             newLoginButton.setText("Add a primary account");
             newLoginButton.setVisibility(View.VISIBLE);
 
             newLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
             newLoginButton.setPadding(0,0,70,0);
             newLoginButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP,18);
+            newLoginButton.setTextColor(loginButton.getCurrentTextColor());
 
-            Button loginButton = activity.findViewById(R.id.loginButton);
             Drawable loginButtonLeftDrawable = loginButton.getCompoundDrawables()[0];
             newLoginButton.setCompoundDrawablesWithIntrinsicBounds(loginButtonLeftDrawable, null, null, null);
             //int drawablePadding = 7; // Adjust the value as needed
@@ -224,14 +226,16 @@
 
         public void createBackUpLoginButton(LinearLayout linearLayout){
             Button newLoginButton = new Button(activity);
+            Button backUpLoginButton = activity.findViewById(R.id.backUpLoginButton);
+
             newLoginButton.setText("Add a back up account");
             newLoginButton.setVisibility(View.VISIBLE);
 
             newLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#42A5F5")));
             newLoginButton.setPadding(0,0,70,0);
             newLoginButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP,18);
+            newLoginButton.setTextColor(backUpLoginButton.getCurrentTextColor());
 
-            Button backUpLoginButton = activity.findViewById(R.id.backUpLoginButton);
             Drawable loginButtonLeftDrawable = backUpLoginButton.getCompoundDrawables()[0];
             newLoginButton.setCompoundDrawablesWithIntrinsicBounds(loginButtonLeftDrawable, null, null, null);
             //int drawablePadding = 7; // Adjust the value as needed
