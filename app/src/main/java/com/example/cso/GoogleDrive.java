@@ -68,6 +68,7 @@ public class GoogleDrive {
                         Drive driveService = new Drive.Builder(netHttpTransport, jsonFactory, httpRequestInitializer)
                                 .setApplicationName("cso").build();
                         driveService.files().delete(fileId).execute();
+                        LogHandler.SaveLog("Deleting Duplicate file in backup drive :" + mediaItem.getFileName());
                     }catch (Exception e){
                         System.out.println("error in deleting duplicated media items in drive " + e.getLocalizedMessage());
                     }

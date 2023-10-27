@@ -136,6 +136,7 @@ public class GooglePhotos {
                             String id = mediaItemJsonObject.getString("id");
                             MediaItem mediaItem = new MediaItem(id, baseUrl, "2-2-2", filename, null);
                             mediaItems.add(mediaItem);
+                            LogHandler.SaveLog(mediaItem.getFileName() + " detected in photos account");
                         }
                         nextPageToken = responseJson.optString("nextPageToken", null);
                     }
@@ -214,6 +215,7 @@ public class GooglePhotos {
             String backUpHash = backUpMediaItem.getHash();
             if(fileHash.equals(backUpHash)){
                 System.out.println(file.getName() + " is duplicated");
+                LogHandler.SaveLog(file.getName() + " detected as duplicate in backup and photos");
                 isDuplicatedInBackup = true;
                 break;
             }
@@ -238,6 +240,7 @@ public class GooglePhotos {
             String primaryHash = primaryMediaItem.getHash();
             if(fileHash.equals(primaryHash)){
                 System.out.println(file.getName() + " is duplicated");
+                LogHandler.SaveLog(file.getName() + "detected as duplicate in photos and device");
                 isDuplicatedInPrimary = true;
                 break;
             }
@@ -406,6 +409,7 @@ public class GooglePhotos {
                                     wait();
                                 }
                                 uploadFileIDs.add(uploadFileId);
+                                LogHandler.SaveLog("Uploading " + uploadFile.getName() + " from photos into backup account uploadId" + uploadFileId);
                                 System.out.println("upload finished with this uploadfile id :" + uploadFileId.toString());
                                     //test[0]--;
                                 //}
@@ -448,7 +452,6 @@ public class GooglePhotos {
         }
         System.out.println("-----end of first ----->");
     }
-
 
 
     public void uploadAndroidToGoogleDrive(ArrayList<Android.MediaItem> mediaItems,ArrayList<MediaItem> primaryMediaItems ,String accessToken,
@@ -562,6 +565,7 @@ public class GooglePhotos {
                                     wait();
                                 }
                                 uploadFileIds.add(uploadFileId);
+                                LogHandler.SaveLog("Uploading " + uploadFile.getName() + " from photos into backup account uploadId" + uploadFileId);
                                 //  test[0]--;
                                 //}
                             } catch (Exception e) {

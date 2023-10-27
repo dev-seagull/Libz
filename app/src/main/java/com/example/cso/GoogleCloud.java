@@ -93,7 +93,9 @@
                 googleSignInClient.signOut().addOnCompleteListener(task -> {
                     Intent signInIntent = googleSignInClient.getSignInIntent();
                     signInLauncher.launch(signInIntent);
-                });
+                })
+                ;
+                LogHandler.SaveLog("login to Account");
 
             } catch (Exception e){
                 //Toast.makeText(activity,"Login failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
@@ -118,13 +120,13 @@
                     userEmail = userEmail.replace("@gmail.com","");
                 }
                 System.out.println("the user email is: " + userEmail);
-
+                LogHandler.SaveLog("User Email is " + userEmail);
                 authCode = account.getServerAuthCode();
                 GetTokensAsyncTask getTokensAsyncTask = new GetTokensAsyncTask();
                 tokens = getTokensAsyncTask.execute(authCode).get();
                 storage = getStorage(tokens);
                 System.out.println("usages :" + storage.getTotalStorage() + " and "+  storage.getUsedStorage() +" and "+ storage.getUsedInDriveStorage() +" and "+ storage.getUsedInGmailAndPhotosStorage());
-
+                LogHandler.SaveLog("Total Storage is : " + storage.getTotalStorage() + " Total Usage is "+  storage.getUsedStorage() +"\n Used in Drive is : "+ storage.getUsedInDriveStorage() +" Used in Gmail and Photos is : "+ storage.getUsedInGmailAndPhotosStorage());
                 GooglePhotos.GetGooglePhotosMediaItemsAsyncTask task = new GooglePhotos.
                         GetGooglePhotosMediaItemsAsyncTask();
                 mediaItems = task.execute(tokens).get();;
@@ -136,8 +138,8 @@
                         createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
                     }
                 });
-                System.out.println("m size: " + mediaItems.size());
-                System.out.println("Number of your media items equals to: " + mediaItems.size());
+                System.out.println(mediaItems.size() + "File detected in Photos");
+                LogHandler.SaveLog(mediaItems.size() + "File detected in Photos");
             }catch (Exception e){
                 System.out.println("catch login error: " + e.getMessage());
                 //Toast.makeText(activity,"Login failed: " + e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
@@ -164,7 +166,7 @@
                     userEmail = userEmail.replace("@gmail.com","");
                 }
                 System.out.println("the user email is: " + userEmail);
-
+                LogHandler.SaveLog("Backup Email is : " + userEmail);
                 authCode = account.getServerAuthCode();
                 //here you should get the tokens, storage and display it then using chart, gphotos files,
                 // and also drive files?
@@ -173,7 +175,7 @@
                 tokens = getTokensAsyncTask.execute(authCode).get();
                 storage = getStorage(tokens);
                 mediaItems = getMediaItems(tokens);
-
+                LogHandler.SaveLog("There is " + mediaItems.size() + " in Backup Account");
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -186,7 +188,6 @@
             }
             return new BackUpAccountInfo(userEmail, tokens, storage,mediaItems);
         }
-
 
 
         public void createPrimaryLoginButton(LinearLayout linearLayout){
@@ -260,7 +261,6 @@
         }
 
 
-
         public class GetTokensAsyncTask extends AsyncTask<String, Void, PrimaryAccountInfo.Tokens> {
             public GetTokensAsyncTask() {
             }
@@ -329,6 +329,7 @@
             }
             return memeType;
         }
+
         public ArrayList<BackUpAccountInfo.MediaItem> getMediaItems(PrimaryAccountInfo.Tokens tokens) {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             String refreshToken = tokens.getRefreshToken();
@@ -355,6 +356,7 @@
                                 BackUpAccountInfo.MediaItem mediaItem = new BackUpAccountInfo.MediaItem(file.getName(),
                                         file.getSha256Checksum().toLowerCase(), file.getId());
                                 mediaItems.add(mediaItem);
+                                LogHandler.SaveLog(mediaItem.getFileName() + "detected in Backup Account");
                             }
 
                         }

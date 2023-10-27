@@ -110,8 +110,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -131,7 +129,6 @@ public class MainActivity extends AppCompatActivity {
         SpannableString centeredText = new SpannableString("Version: " + appVersion);
         centeredText.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER), 0, appVersion.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
         menuItem1.setTitle(centeredText);
-
         AppCompatButton infoButton = findViewById(R.id.infoButton);
         infoButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -174,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(),e.getLocalizedMessage(),Toast.LENGTH_LONG).show();;
             }});
         }
-
+        LogHandler.CreateLogFile();
         System.out.println("Starting android executor");
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<ArrayList<Android.MediaItem>> androidBackgroundTask = () -> {
@@ -230,7 +227,6 @@ public class MainActivity extends AppCompatActivity {
             }
         );
         System.out.println("is it true :"+androidMediaItems.size());
-
 
         signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -295,8 +291,12 @@ public class MainActivity extends AppCompatActivity {
                 ArrayList<BackUpAccountInfo.MediaItem> backupMediaItems = firstBackUpAccountInfo.getMediaItems();
 
                 GoogleDrive.deleteDuplicatedMediaItems(backupMediaItems,backupTokens);
+                LogHandler.SaveLog("Duplicate Media Deleted in Backup Google Drive");
                 uploadPhotosToDriveAccounts(backUpAccessToken);
+                LogHandler.SaveLog("Photos Media Uploaded into Backup Google Drive");
                 uploadAndroidToDriveAccounts(backUpAccessToken);
+                LogHandler.SaveLog("Android Media Uploaded into Backup Google Drive");
+                LogHandler.BackupLogFile(firstBackUpAccountInfo.getTokens());
                 runOnUiThread(() ->{
                     NotificationHandler.sendNotification("1","syncingAlert", MainActivity.this,
                             "Syncing is finished","You're files are backed-up!");
