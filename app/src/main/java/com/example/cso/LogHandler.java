@@ -24,8 +24,31 @@ public class LogHandler {
     private static final String LOG_FILE_NAME = "Log.txt";
     private static final String LOG_DIR = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/CSO/";
 
-    public static void CreateLogFile(){
-        
+    public static void CreateLogFile() {
+        try {
+            File logDir = new File(LOG_DIR);
+            if (!logDir.exists()) {
+                if (logDir.mkdirs()) {
+                    System.out.println("Log directory created");
+                } else {
+                    System.err.println("Failed to create the log directory");
+                }
+            } else {
+                System.out.println("Directory for log is exists");
+            }
+
+            File logFile = new File(logDir, LOG_FILE_NAME);
+            if (logFile.exists()) {
+                System.out.println("can create " + logFile.getPath());
+            } else {
+                System.out.println("cant create " + logFile.getPath());
+                File newLogFile = new File(logFile.getPath());
+            }
+
+
+        } catch (Exception e) {
+            System.out.println("error in hereee" + e.getLocalizedMessage());
+        }
     }
 
     public static void SaveLog(String text) {
