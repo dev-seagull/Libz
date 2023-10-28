@@ -321,12 +321,12 @@ public class MainActivity extends AppCompatActivity {
                 ArrayList<BackUpAccountInfo.MediaItem> backupMediaItems = firstBackUpAccountInfo.getMediaItems();
 
                 GoogleDrive.deleteDuplicatedMediaItems(backupMediaItems,backupTokens);
-                LogHandler.SaveLog("Duplicate Media Deleted in Backup Google Drive");
+//                LogHandler.SaveLog("Duplicate Media Deleted in Backup Google Drive");
                 uploadPhotosToDriveAccounts(backUpAccessToken);
-                LogHandler.SaveLog("Photos Media Uploaded into Backup Google Drive");
+//                LogHandler.SaveLog("Photos Media Uploaded into Backup Google Drive");
                 uploadAndroidToDriveAccounts(backUpAccessToken);
-                LogHandler.SaveLog("Android Media Uploaded into Backup Google Drive");
-                LogHandler.BackupLogFile(firstBackUpAccountInfo.getTokens());
+//                LogHandler.SaveLog("Android Media Uploaded into Backup Google Drive");
+//                LogHandler.BackupLogFile(firstBackUpAccountInfo.getTokens());
                 runOnUiThread(() ->{
                     NotificationHandler.sendNotification("1","syncingAlert", MainActivity.this,
                             "Syncing is finished","You're files are backed-up!");
