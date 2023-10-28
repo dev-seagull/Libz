@@ -25,7 +25,7 @@ public class LogHandler {
     private static final String LOG_DIR = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/CSO/";
 
     public static void CreateLogFile(){
-        
+
     }
 
     public static void SaveLog(String text) {

@@ -2,9 +2,12 @@ package com.example.cso;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Layout;
@@ -136,6 +139,33 @@ public class MainActivity extends AppCompatActivity {
                 drawerLayout.openDrawer(GravityCompat.END);
             }
         });
+
+        DBHelper dbHelper = new DBHelper(this);
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("name", "John");
+        values.put("age", 30);
+        long newRowId = db.insert("YourTable", null, values);
+        db.close();
+
+        db = dbHelper.getReadableDatabase();
+        String[] projection = {"name", "age"};
+        String selection = null; // You can specify a selection if needed.
+        String[] selectionArgs = null; // You can specify selection arguments if needed.
+        String sortOrder = null; // You can specify a sort order if needed.
+
+        Cursor cursor = db.query("YourTable", projection, selection, selectionArgs, null, null, sortOrder);
+
+        while (cursor.moveToNext()) {
+            String name = cursor.getString(cursor.getColumnIndex("name"));
+            int age = cursor.getInt(cursor.getColumnIndex("age"));
+            // Process retrieved data (in this case, 'name' and 'age').
+            System.out.println("database: " + name + " " + age);
+        }
+
+        cursor.close(); // Close the cursor when you're done.
+        db.close();
+
 
         //SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs",Context.MODE_PRIVATE);
         //String json = sharedPreferences.getString("AndroidImageAndVideoPaths",null);

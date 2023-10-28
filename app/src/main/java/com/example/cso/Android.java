@@ -83,7 +83,7 @@ public class Android {
                    if(androidFile.exists()){
                        androidMediaItems.add(androidMediaItem);
                    }
-                   LogHandler.SaveLog( androidFile.getName() + "detected in " + androidFile.getPath());
+                   //LogHandler.SaveLog( androidFile.getName() + "detected in " + androidFile.getPath());
                }
                cursor.close();
            }
@@ -140,7 +140,7 @@ public class Android {
                                 if(mediaItemFile.exists()){
                                     androidMediaItems.add(androidMediaItem);
                                 }
-                                LogHandler.SaveLog(mediaItemName + " detected in " + mediaItemPath);
+                                //LogHandler.SaveLog(mediaItemName + " detected in " + mediaItemPath);
                             }
                         }
                     } else if(currentFile.isDirectory()){
