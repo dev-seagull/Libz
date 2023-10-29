@@ -150,12 +150,10 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp" />
 
-                <ProgressBar
-                    android:id="@+id/syncProgressBar"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
+                <Button
+                    android:id="@+id/restoreButton"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
-
 
             </LinearLayout>
 
