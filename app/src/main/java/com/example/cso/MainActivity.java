@@ -139,7 +139,8 @@ public class MainActivity extends AppCompatActivity {
                 drawerLayout.openDrawer(GravityCompat.END);
             }
         });
-
+        LogHandler.CreateLogFile();
+        System.out.println("log file created #  ## ##3 3#333");
         DBHelper dbHelper = new DBHelper(this);
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -201,7 +202,6 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(),e.getLocalizedMessage(),Toast.LENGTH_LONG).show();;
             }});
         }
-        LogHandler.CreateLogFile();
         System.out.println("Starting android executor");
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<ArrayList<Android.MediaItem>> androidBackgroundTask = () -> {
@@ -387,16 +387,27 @@ public class MainActivity extends AppCompatActivity {
                         });
                     }
                 });
+                Thread backupLogFileThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        synchronized (androidUploadThread){
+                            try{
+                                androidUploadThread.join();
+                            }catch (Exception e){
+
+                            }
+                        }
+                        System.out.println("now go for backup from log file");
+                        LogHandler.BackupLogFile(firstBackUpAccountInfo.getTokens());
+                        System.out.println("log file backup successfully");
+                    }
+                    });
 
                 driveBackUpThread.start();
                 photosUploadThread.start();
                 androidUploadThread.start();
                 updateUIThread.start();
-
-                //LogHandler.SaveLog("Photos Media Uploaded into Backup Google Drive");
-
-                //LogHandler.SaveLog("Android Media Uploaded into Backup Google Drive");
-                //LogHandler.BackupLogFile(firstBackUpAccountInfo.getTokens());
+                backupLogFileThread.start();
 
             }
         });

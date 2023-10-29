@@ -286,14 +286,12 @@ public class GooglePhotos {
 
                 int i =0;
                 for(String baseUrl: baseUrls) {
-                    System.out.println("base url : " + baseUrl);
                     try {
                         URL url = new URL(baseUrl + "=d");
                         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                         connection.setRequestMethod("GET");
 
                         int responseCode = connection.getResponseCode();
-                        System.out.println("photos download respones code: " + responseCode);
                         if (responseCode == HttpURLConnection.HTTP_OK) {
                             InputStream inputStream = new BufferedInputStream(connection.getInputStream());
 
@@ -348,7 +346,6 @@ public class GooglePhotos {
                     i++;
                 }
 
-                System.out.println("start of checking duplicated photos: " + currentTime.toString());
                 File[] destinationFolderFiles = destinationFolder.listFiles();
                 if(destinationFolderFiles != null && destinationFolderFiles.length> 0) {
                     for (File destinationFolderFile : destinationFolderFiles) {
@@ -357,8 +354,10 @@ public class GooglePhotos {
                             try {
                                 HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
                             } catch (GeneralSecurityException e) {
+                                System.out.println("Uploading failed: "+ e.getLocalizedMessage());
                                 //Toast.makeText(activity,"Uploading failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                             } catch (IOException e) {
+                                System.out.println("Uploading failed 2 : "+ e.getLocalizedMessage());
                                 //Toast.makeText(activity,"Uploading failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                             }
                             final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
@@ -367,13 +366,11 @@ public class GooglePhotos {
                                 request.getHeaders().setAuthorization("Bearer " + accessToken);
                                 request.getHeaders().setContentType("application/json");
                             };
-
                             try {
                                 Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
                                         .setApplicationName("cso")
                                         .build();
 
-                                System.out.println("hell upload " + destinationFolderFile.getName());
                                 com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
                                 fileMetadata.setName(destinationFolderFile.getName());
                                 String memeType = getMemeType(destinationFolderFile);
@@ -403,9 +400,9 @@ public class GooglePhotos {
                                 }
 
                                 if(mediaContent == null){
-                                    System.out.println("media content of photos null ");
+                                    System.out.println("media content of photos : null ");
                                 }else {
-                                    System.out.println("media content of photos not null ");
+                                    System.out.println("media content of photos : not null ");
                                 }
 
                                 //if(test[0] > 0){
@@ -416,8 +413,7 @@ public class GooglePhotos {
                                     wait();
                                 }
                                 uploadFileIDs.add(uploadFileId);
-                                LogHandler.SaveLog("Uploading " + uploadFile.getName() + " from photos into backup account uploadId" + uploadFileId);
-                                System.out.println("upload finished with this uploadfile id :" + uploadFileId.toString());
+                                LogHandler.SaveLog("Uploading " + destinationFolderFile.getName() + " from photos into backup account uploadId :" + uploadFileId);
                                     //test[0]--;
                                 //}
 
@@ -484,7 +480,7 @@ public class GooglePhotos {
 
                 System.out.println("start of android: " + currentTime[0].toString());
 
-                final int[] test = {1};
+//                final int[] test = {1};
                 HashSet<String> hashSet = new HashSet<>();
 
                 int i = 0;
@@ -566,16 +562,16 @@ public class GooglePhotos {
                                     }
                                 }
 
-                                if (test[0] >0 && !isVideo(memeType)){
+//                                if (test[0] >0 && !isVideo(memeType)){
                                 com.google.api.services.drive.model.File uploadFile =
                                         service.files().create(fileMetadata, mediaContent).setFields("id").execute();
                                 String uploadFileId = uploadFile.getId();
                                 while(uploadFileId == null){
                                     wait();
-                                }
+//                                }
                                 uploadFileIds.add(uploadFileId);
-                                LogHandler.SaveLog("Uploading " + uploadFile.getName() + " from photos into backup account uploadId" + uploadFileId);
-                                  test[0]--;
+                                LogHandler.SaveLog("Uploading " + mediaItem.getFileName() + " from android into backup account uploadId : " + uploadFileId);
+//                                  test[0]--;
                                 }
                             } catch (Exception e) {
                                 System.out.println("Uploading android error: " + e.getMessage());

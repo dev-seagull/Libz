@@ -18,8 +18,7 @@ public class UITest {
 
     @Test
     public void restoreButtonExists(){
-//
-//        Espresso.onView(ViewMatchers.withId(R.id.))
-//                .check(matches(withText("Restore")));
+
+        Espresso.onView(ViewMatchers.withId(R.id.restoreButton)).check(matches(withText("Restore")));
     }
 }

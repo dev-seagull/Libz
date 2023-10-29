@@ -21,8 +21,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class LogHandler {
-    private static final String LOG_FILE_NAME = "Log.txt";
-    private static final String LOG_DIR = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/CSO/";
+    private static final String LOG_FILE_NAME = "cso_log.txt";
+    private static final String LOG_DIR = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
 
     public static void CreateLogFile() {
         try {
@@ -36,7 +36,11 @@ public class LogHandler {
             } else {
                 System.out.println("Directory for log is exists");
             }
-
+            System.out.println("log dir is @@@@@@@ " + logDir.getPath());
+//        } catch (Exception e) {
+//            System.out.println("error in creating log directory " + e.getLocalizedMessage());
+//        }
+//        try{
             File logFile = new File(logDir, LOG_FILE_NAME);
             if (logFile.exists()) {
                 System.out.println("can create " + logFile.getPath());
@@ -44,22 +48,15 @@ public class LogHandler {
                 System.out.println("cant create " + logFile.getPath());
                 File newLogFile = new File(logFile.getPath());
             }
-
-
+            System.out.println("log file is @@@@@@ " + logFile.getPath());
         } catch (Exception e) {
-            System.out.println("error in hereee" + e.getLocalizedMessage());
+            System.out.println("error in creating log file in existing directory" + e.getLocalizedMessage());
         }
     }
 
     public static void SaveLog(String text) {
         File logDir = new File(LOG_DIR);
-        if (!logDir.exists() && !logDir.mkdirs()) {
-            System.err.println("Failed to create the log directory");
-            return; // Stop if directory creation fails
-        }
-
         File logFile = new File(logDir, LOG_FILE_NAME);
-
         try (FileWriter fileWriter = new FileWriter(logFile, true);
              BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -81,9 +78,9 @@ public class LogHandler {
             try {
                 HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
             } catch (GeneralSecurityException e) {
-                //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                System.out.println("error in uploading log file " + e.getLocalizedMessage());
             } catch (IOException e) {
-                //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                System.out.println("error in uploading 2 log file " + e.getLocalizedMessage());
             }
             final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
@@ -94,17 +91,22 @@ public class LogHandler {
             Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
                     .setApplicationName("cso")
                     .build();
-            File file = new File(LOG_DIR);
+//            SaveLog("Uploading log file to backup drive");
+            System.out.println("save last log into log file");
+            String filePath = LOG_DIR + "/" +LOG_FILE_NAME;
+            File file = new File(filePath);
             com.google.api.services.drive.model.File fileMetadata =
                     new com.google.api.services.drive.model.File();
             fileMetadata.setName(file.getName());
+            System.out.println("fileMetadata created");
             FileContent mediaContent = new FileContent("text/plain", file);
             service.files().create(fileMetadata, mediaContent)
                     .setFields("id")
                     .execute();
-
+            System.out.println("log file uploaded (last of backup function)");
         } catch (Exception e) {
             System.out.println("error in uploading log file " + e.getLocalizedMessage());
         }
+        System.out.println("lets delete log file");
     }
 }
