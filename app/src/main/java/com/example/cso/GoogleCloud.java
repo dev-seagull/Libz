@@ -127,9 +127,7 @@
                 storage = getStorage(tokens);
                 System.out.println("usages :" + storage.getTotalStorage() + " and "+  storage.getUsedStorage() +" and "+ storage.getUsedInDriveStorage() +" and "+ storage.getUsedInGmailAndPhotosStorage());
                 LogHandler.SaveLog("Total Storage is : " + storage.getTotalStorage() + " Total Usage is "+  storage.getUsedStorage() +"\n Used in Drive is : "+ storage.getUsedInDriveStorage() +" Used in Gmail and Photos is : "+ storage.getUsedInGmailAndPhotosStorage());
-                GooglePhotos.GetGooglePhotosMediaItemsAsyncTask task = new GooglePhotos.
-                        GetGooglePhotosMediaItemsAsyncTask();
-                mediaItems = task.execute(tokens).get();;
+                mediaItems = GooglePhotos.getGooglePhotosMediaItems(tokens);;
 
                 runOnUiThread(new Runnable() {
                     @Override

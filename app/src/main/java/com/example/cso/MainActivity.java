@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<Android.MediaItem> androidMediaItems = new ArrayList<>();
     Android android;
 
-    public static String calculateHash(File file, Activity activity) throws IOException {
+    public static String calculateHash(File file) throws IOException {
         final int BUFFER_SIZE = 8192;
         StringBuilder hexString = new StringBuilder();
 
@@ -320,42 +320,88 @@ public class MainActivity extends AppCompatActivity {
                 String backUpAccessToken = firstBackUpAccountInfo.getTokens().getAccessToken();
                 ArrayList<BackUpAccountInfo.MediaItem> backupMediaItems = firstBackUpAccountInfo.getMediaItems();
 
-                GoogleDrive.deleteDuplicatedMediaItems(backupMediaItems,backupTokens);
-//                LogHandler.SaveLog("Duplicate Media Deleted in Backup Google Drive");
-                uploadPhotosToDriveAccounts(backUpAccessToken);
-//                LogHandler.SaveLog("Photos Media Uploaded into Backup Google Drive");
-                uploadAndroidToDriveAccounts(backUpAccessToken);
-//                LogHandler.SaveLog("Android Media Uploaded into Backup Google Drive");
-//                LogHandler.BackupLogFile(firstBackUpAccountInfo.getTokens());
-                runOnUiThread(() ->{
-                    NotificationHandler.sendNotification("1","syncingAlert", MainActivity.this,
-                            "Syncing is finished","You're files are backed-up!");
-                    TextView syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
-                    syncToBackUpAccountTextView.setText("Uploading process is finished");
+                //LogHandler.SaveLog("Duplicate Media Deleted in Backup Google Drive");
+
+                Thread driveBackUpThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        GoogleDrive.deleteDuplicatedMediaItems(backupMediaItems,backupTokens);
+                        synchronized (this){
+                            notify();
+                        }
+                    }
                 });
+
+                Thread photosUploadThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        synchronized (driveBackUpThread){
+                            try{
+                                driveBackUpThread.join();
+                            }catch (Exception e){
+
+                            }
+                        }
+
+                        for (PrimaryAccountInfo primaryAccountInfo : primaryAccountHashMap.values()) {
+                            ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems = firstBackUpAccountInfo.getMediaItems();
+                            ArrayList<GooglePhotos.MediaItem> mediaItems = primaryAccountInfo.getMediaItems();
+                            googlePhotos.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken
+                                    ,backUpMediaItems);
+                        }
+                    }
+                });
+
+                Thread androidUploadThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        synchronized (photosUploadThread){
+                            try{
+                                photosUploadThread.join();
+                            }catch (Exception e){
+
+                            }
+                        }
+                        uploadAndroidToDriveAccounts(backUpAccessToken);
+                    }
+                });
+
+                Thread updateUIThread =  new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        synchronized (androidUploadThread){
+                            try{
+                                androidUploadThread.join();
+                            }catch (Exception e){
+
+                            }
+                        }
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                NotificationHandler.sendNotification("1","syncingAlert", MainActivity.this,
+                                        "Syncing is finished","You're files are backed-up!");
+                                TextView syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
+                                syncToBackUpAccountTextView.setText("Uploading process is finished");
+                            }
+                        });
+                    }
+                });
+
+                driveBackUpThread.start();
+                photosUploadThread.start();
+                androidUploadThread.start();
+                updateUIThread.start();
+
+                //LogHandler.SaveLog("Photos Media Uploaded into Backup Google Drive");
+
+                //LogHandler.SaveLog("Android Media Uploaded into Backup Google Drive");
+                //LogHandler.BackupLogFile(firstBackUpAccountInfo.getTokens());
 
             }
         });
     }
 
-    void uploadPhotosToDriveAccounts(String backUpAccessToken){
-        try{
-            Executor uploadExecutor = Executors.newSingleThreadExecutor();
-            Runnable backgroundTask = () -> {
-                for (PrimaryAccountInfo primaryAccountInfo : primaryAccountHashMap.values()) {
-                    BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
-                    ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems = firstBackUpAccountInfo.getMediaItems();
-                    ArrayList<GooglePhotos.MediaItem> mediaItems = primaryAccountInfo.getMediaItems();
-                    googlePhotos.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken
-                            ,backUpMediaItems, this);
-                }
-            };
-            uploadExecutor.execute(backgroundTask);
-        }catch (Exception e){
-            runOnUiThread(()-> {Toast.makeText(this,"Upload photos to drive error: "  +
-                    e.getLocalizedMessage(), Toast.LENGTH_LONG);});
-        }
-    }
 
     void uploadAndroidToDriveAccounts(String backUpAccessToken){
         try{
@@ -372,8 +418,6 @@ public class MainActivity extends AppCompatActivity {
             };
             uploadExecutor.execute(backgroundTask);
         }catch (Exception e){
-            runOnUiThread(()-> {Toast.makeText(this,"Upload android to drive error: "  +
-                    e.getLocalizedMessage(), Toast.LENGTH_LONG);});
         }
     }
 

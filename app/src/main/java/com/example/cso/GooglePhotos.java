@@ -81,21 +81,15 @@ public class GooglePhotos {
         public String getFileName() {return fileName;}
     }
 
-    public static class GetGooglePhotosMediaItemsAsyncTask extends AsyncTask<PrimaryAccountInfo.Tokens, Void, ArrayList<MediaItem>> {
-
-        public GetGooglePhotosMediaItemsAsyncTask() {
-        }
-
-        @Override
-        protected ArrayList<MediaItem> doInBackground(PrimaryAccountInfo.Tokens... tokens) {
-            if (tokens == null || tokens.length == 0) {
+    public static ArrayList<MediaItem> getGooglePhotosMediaItems(PrimaryAccountInfo.Tokens tokens){
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Callable<ArrayList<MediaItem>> backgroundTask = () -> {
+            if (tokens == null) {
                 return new ArrayList<>();
             }
 
-            PrimaryAccountInfo.Tokens token = tokens[0];
-
             int pageSize = 100;
-            String accessToken = token.getAccessToken();
+            String accessToken = tokens.getAccessToken();
             ArrayList<MediaItem> mediaItems = new ArrayList<>();
 
             String nextPageToken = null;
@@ -146,8 +140,21 @@ public class GooglePhotos {
             } while (responseJson != null && responseJson.has("nextPageToken") && responseJson.has("mediaItems"));
 
             return mediaItems;
+        };
+
+        Future<ArrayList<MediaItem>> future = executor.submit(backgroundTask);
+        ArrayList<MediaItem> mediaItems = new ArrayList<>();
+        try{
+            mediaItems = future.get();
+            System.out.println("media items in primary size: " + mediaItems.size());
+        }catch (Exception e ){
+            System.out.println("Exception :" + e.getLocalizedMessage());
+        }finally {
+            executor.shutdown();
         }
+        return mediaItems;
     }
+
     byte[] inputStreamToByteArray(InputStream inputStream) {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         int nRead;
@@ -201,12 +208,12 @@ public class GooglePhotos {
         }
     }
     public boolean isDuplicatedInBackup(ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems
-            ,File file, Activity activity){
+            ,File file){
         boolean isDuplicatedInBackup = false;
         String fileHash;
 
         try {
-            fileHash = MainActivity.calculateHash(file,activity).toLowerCase();
+            fileHash = MainActivity.calculateHash(file).toLowerCase();
         } catch (IOException e) {
             System.out.println(e.getLocalizedMessage());
             throw new RuntimeException(e);
@@ -226,12 +233,12 @@ public class GooglePhotos {
 
 
     public boolean isDuplicatedInPrimary(ArrayList<GooglePhotos.MediaItem> primaryMediaItems
-            ,File file, Activity activity){
+            ,File file){
         boolean isDuplicatedInPrimary = false;
         String fileHash;
 
         try {
-            fileHash = MainActivity.calculateHash(file,activity).toLowerCase();
+            fileHash = MainActivity.calculateHash(file).toLowerCase();
         } catch (IOException e) {
             System.out.println(e.getLocalizedMessage());
             throw new RuntimeException(e);
@@ -249,8 +256,8 @@ public class GooglePhotos {
         return isDuplicatedInPrimary;
     }
 
-    public void uploadPhotosToGoogleDrive(ArrayList<MediaItem> mediaItems, String accessToken,
-                                          ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems, Activity activity) {
+    public ArrayList<String> uploadPhotosToGoogleDrive(ArrayList<MediaItem> mediaItems, String accessToken,
+                                          ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems) {
         System.out.println("-------first----->");
         LocalTime currentTime;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -335,7 +342,7 @@ public class GooglePhotos {
                     } catch (IOException e) {
                         //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                     }
-                    String hash = MainActivity.calculateHash(file[0],activity).toLowerCase();
+                    String hash = MainActivity.calculateHash(file[0]).toLowerCase();
                     System.out.println("try to set hash : " + hash);
                     mediaItems.get(i).setHash(hash);
                     i++;
@@ -345,7 +352,7 @@ public class GooglePhotos {
                 File[] destinationFolderFiles = destinationFolder.listFiles();
                 if(destinationFolderFiles != null && destinationFolderFiles.length> 0) {
                     for (File destinationFolderFile : destinationFolderFiles) {
-                        if (isDuplicatedInBackup(backUpMediaItems, destinationFolderFile, activity) == false) {
+                        if (isDuplicatedInBackup(backUpMediaItems, destinationFolderFile) == false) {
                             NetHttpTransport HTTP_TRANSPORT = null;
                             try {
                                 HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
@@ -437,10 +444,10 @@ public class GooglePhotos {
             return uploadFileIDs;
         };
         Future<ArrayList<String>> future = executor.submit(uploadTask);
+        ArrayList<String> uploadFileIDs_fromFuture = new ArrayList<>();
         try {
             // Wait for the task to complete and get the result
-            ArrayList<String> uploadFileIDs_fromFuture = future.get();
-            uploadFileIDs_fromFuture.size();
+            uploadFileIDs_fromFuture = future.get();
             System.out.println("future is completed ");
             for(String str : uploadFileIDs_fromFuture){
                 System.out.println("ids :" + str);
@@ -451,33 +458,35 @@ public class GooglePhotos {
             executor.shutdown();
         }
         System.out.println("-----end of first ----->");
+        return uploadFileIDs_fromFuture;
     }
 
 
-    public void uploadAndroidToGoogleDrive(ArrayList<Android.MediaItem> mediaItems,ArrayList<MediaItem> primaryMediaItems ,String accessToken,
-                                           ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems, Activity activity) {
+    public ArrayList<String> uploadAndroidToGoogleDrive(ArrayList<Android.MediaItem> mediaItems,ArrayList<MediaItem> primaryMediaItems ,String accessToken,
+                                                        ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems, Activity activity) {
         System.out.println("-------second----->");
         ArrayList<String> uploadFileIds = new ArrayList<>();
-        LocalTime currentTime;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            currentTime = LocalTime.now();
-        } else {
-            currentTime = null;
-        }
-        ArrayList<String> mediaItemsInPhotosNames = new ArrayList<>();
-        for(MediaItem primaryMediaItem: primaryMediaItems){
-            mediaItemsInPhotosNames.add(primaryMediaItem.getFileName());
-        }
-
-        HashSet<String> mediaItemsInAndroidNames = new HashSet<>();
-
-        System.out.println("start of android: " + currentTime.toString());
-
-        //final int[] test = {3};
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        HashSet<String> hashSet = new HashSet<>();
+        final LocalTime[] currentTime = new LocalTime[1];
         Callable<ArrayList<String>> uploadTask = () -> {
             try {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    currentTime[0] = LocalTime.now();
+                } else {
+                    currentTime[0] = null;
+                }
+                ArrayList<String> mediaItemsInPhotosNames = new ArrayList<>();
+                for(MediaItem primaryMediaItem: primaryMediaItems){
+                    mediaItemsInPhotosNames.add(primaryMediaItem.getFileName());
+                }
+
+                HashSet<String> mediaItemsInAndroidNames = new HashSet<>();
+
+                System.out.println("start of android: " + currentTime[0].toString());
+
+                final int[] test = {1};
+                HashSet<String> hashSet = new HashSet<>();
+
                 int i = 0;
                 for (Android.MediaItem mediaItem : mediaItems) {
                     if(hashSet.contains(mediaItem.getFileHash()) |
@@ -494,10 +503,10 @@ public class GooglePhotos {
                     }else{
                         mediaItemsInAndroidNames.add(mediaItem.getFileName());
                         File file = new File(mediaItem.getFilePath());
-                        if (isDuplicatedInBackup(backUpMediaItems, file, activity) == false &&
-                                isDuplicatedInPrimary(primaryMediaItems, file, activity) == false) {
+                        if (isDuplicatedInBackup(backUpMediaItems, file) == false &&
+                                isDuplicatedInPrimary(primaryMediaItems, file) == false) {
 
-                            System.out.println("start to upload at: " + currentTime.toString());
+                            System.out.println("start to upload at: " + currentTime[0].toString());
                             try {
                                 NetHttpTransport HTTP_TRANSPORT = null;
                                 try {
@@ -557,7 +566,7 @@ public class GooglePhotos {
                                     }
                                 }
 
-                                //if (test[0] >0 && !isVideo(memeType)){
+                                if (test[0] >0 && !isVideo(memeType)){
                                 com.google.api.services.drive.model.File uploadFile =
                                         service.files().create(fileMetadata, mediaContent).setFields("id").execute();
                                 String uploadFileId = uploadFile.getId();
@@ -566,8 +575,8 @@ public class GooglePhotos {
                                 }
                                 uploadFileIds.add(uploadFileId);
                                 LogHandler.SaveLog("Uploading " + uploadFile.getName() + " from photos into backup account uploadId" + uploadFileId);
-                                //  test[0]--;
-                                //}
+                                  test[0]--;
+                                }
                             } catch (Exception e) {
                                 System.out.println("Uploading android error: " + e.getMessage());
                                 //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
@@ -582,14 +591,15 @@ public class GooglePhotos {
             return uploadFileIds;
         };
         Future<ArrayList<String>> future = executor.submit(uploadTask);
+        ArrayList<String> uploadFileIdsFuture = new ArrayList<>();
         try{
-            ArrayList<String> uploadFileIdsFuture = future.get();
-            System.out.println("Finished with " + uploadFileIdsFuture.size() + " uploads at " + currentTime.toString());
+            uploadFileIdsFuture = future.get();
+            System.out.println("Finished with " + uploadFileIdsFuture.size() + " uploads at " + currentTime[0].toString());
             System.out.println("-----end of second ----->");
         }catch (Exception e){
             System.out.println(e.getLocalizedMessage());
         }
-
+        return  uploadFileIdsFuture;
     }
 
 }
