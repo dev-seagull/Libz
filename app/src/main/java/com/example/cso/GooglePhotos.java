@@ -1,23 +1,17 @@
 package com.example.cso;
 
 import android.app.Activity;
-import android.os.AsyncTask;
 import android.os.Environment;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.FileContent;
 import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 
-import org.checkerframework.checker.units.qual.A;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
@@ -34,7 +28,7 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
-import java.sql.Time;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -43,8 +37,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.time.LocalTime;
-import java.util.concurrent.TimeUnit;
 
 public class GooglePhotos {
     public static boolean is_first_task_finish = false;

@@ -153,7 +153,8 @@
                 <Button
                     android:id="@+id/restoreButton"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:text="Restore"/>
 
             </LinearLayout>
 

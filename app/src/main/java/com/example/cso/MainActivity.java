@@ -1,14 +1,9 @@
     package com.example.cso;
 
-    import android.Manifest;
-    import android.app.Activity;
     import android.content.ContentValues;
     import android.content.Intent;
-    import android.content.pm.PackageManager;
-    import android.content.res.ColorStateList;
     import android.database.Cursor;
     import android.database.sqlite.SQLiteDatabase;
-    import android.os.Build;
     import android.os.Bundle;
     import android.text.Layout;
     import android.text.Spannable;
@@ -16,31 +11,21 @@
     import android.text.style.AlignmentSpan;
     import android.view.MenuItem;
     import android.view.View;
-    import android.view.Window;
     import android.widget.Button;
     import android.widget.LinearLayout;
-    import android.widget.ProgressBar;
     import android.widget.TextView;
     import android.widget.Toast;
-    import android.os.Handler;
-    import android.os.Looper;
-    import android.widget.Toolbar;
 
     import androidx.activity.result.ActivityResultLauncher;
     import androidx.activity.result.contract.ActivityResultContracts;
-    import androidx.annotation.NonNull;
     import androidx.appcompat.app.ActionBarDrawerToggle;
     import androidx.appcompat.app.AppCompatActivity;
     import androidx.appcompat.widget.AppCompatButton;
-    import androidx.core.app.ActivityCompat;
-    import androidx.core.content.ContextCompat;
     import androidx.core.view.GravityCompat;
     import androidx.drawerlayout.widget.DrawerLayout;
 
     import com.google.android.material.navigation.NavigationView;
     import com.jaredrummler.android.device.DeviceName;
-
-    import org.checkerframework.checker.units.qual.A;
 
     import java.io.BufferedInputStream;
     import java.io.File;
@@ -62,12 +47,7 @@
 
         private DrawerLayout drawerLayout;
         private NavigationView navigationView;
-        ArrayList<String> androidImageAndVideoPaths;
-        Button mediaItemsLayoutButton;
-        Button syncAndroidButton;
         Button syncToBackUpAccountButton;
-        TextView syncToBackUpAccountTextView;
-        TextView textviewGooglePhotosMediaItemsCount;
         GoogleCloud googleCloud;
         ActivityResultLauncher<Intent> signInToPrimaryLauncher;
         ActivityResultLauncher<Intent> signInToBackUpLauncher;
@@ -77,6 +57,8 @@
         ArrayList<Android.MediaItem> androidMediaItems = new ArrayList<>();
         Android android;
 
+
+
         public static String calculateHash(File file) throws IOException {
             final int BUFFER_SIZE = 8192;
             StringBuilder hexString = new StringBuilder();
@@ -85,9 +67,8 @@
             try {
                 digest = MessageDigest.getInstance("SHA-256");
             } catch (NoSuchAlgorithmException e) {
-                System.out.println("no such algorithm for hash calculating " + e.getLocalizedMessage());
-                // Toast.makeText(activity,"Calculating hash failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-                throw new RuntimeException("SHA-256 algorithm not available", e);
+                LogHandler.SaveLog("SHA-256 algorithm not available " + e.getLocalizedMessage());
+                throw new RuntimeException("SHA-256 algorithm not available ", e);
             }
 
             try(BufferedInputStream bufferedInputStream = new BufferedInputStream(
@@ -106,9 +87,9 @@
                     hexString.append(String.format("%02X", b));
                 }
             }catch (Exception e){
-                System.out.println("error in calculate hash :" + e.getLocalizedMessage());
-    //            Toast.makeText(activity,"Calculating hash failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                LogHandler.SaveLog("error in calculating hash " + e.getLocalizedMessage());
             }
+
             return hexString.toString();
         }
 
@@ -172,10 +153,6 @@
             //if(json == null){
 
             syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
-
-            mediaItemsLayoutButton = findViewById(R.id.mediaItemsLayout);
-            syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
-            textviewGooglePhotosMediaItemsCount = findViewById(R.id.googlePhotosMediaItemsCount);
             TextView textViewAndroidDeviceName = findViewById(R.id.androidDeviceTextView);
 
             String androidDeviceName = DeviceName.getDeviceName();
@@ -198,7 +175,7 @@
                 android = new Android(androidMediaItems);
             }catch (Exception e){
                 runOnUiThread(new Runnable() {@Override public void run() {
-                    Toast.makeText(getApplicationContext(),e.getLocalizedMessage(),Toast.LENGTH_LONG).show();;
+                    Toast.makeText(getApplicationContext(),e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
                 }});
             }
             LogHandler.CreateLogFile();
