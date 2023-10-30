@@ -151,9 +151,11 @@
 
                 <Button
                     android:id="@+id/restoreButton"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Restore"/>
+                    android:text="Restore"
+                    android:textSize="16sp"
+                    android:backgroundTint="#42A5F5" />
 
             </LinearLayout>
 
