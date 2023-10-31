@@ -8,6 +8,7 @@
     import android.os.AsyncTask;
     import android.os.Build;
     import android.os.Handler;
+    import android.provider.CalendarContract;
     import android.util.TypedValue;
     import android.view.Gravity;
     import android.view.View;
@@ -193,7 +194,7 @@
         public void createPrimaryLoginButton(LinearLayout linearLayout){
             Button newLoginButton = new Button(activity);
             Drawable loginButtonLeftDrawable = activity.getApplicationContext().getResources()
-                    .getDrawable(R.drawable.googlephotosicon_resized);
+                    .getDrawable(R.drawable.googlephotosimage);
             newLoginButton.setCompoundDrawablesWithIntrinsicBounds
                     (loginButtonLeftDrawable, null, null, null);
 
@@ -203,6 +204,7 @@
             newLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
             newLoginButton.setPadding(40,0,150,0);
             newLoginButton.setTextSize(18);
+            newLoginButton.setTextColor(Color.WHITE);
             newLoginButton.setId(View.generateViewId());
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -221,7 +223,7 @@
         public void createBackUpLoginButton(LinearLayout linearLayout){
             Button newLoginButton = new Button(activity);
             Drawable loginButtonLeftDrawable = activity.getApplicationContext().getResources()
-                    .getDrawable(R.drawable.googledriveimage_resized);
+                    .getDrawable(R.drawable.googledriveimage);
             newLoginButton.setCompoundDrawablesWithIntrinsicBounds
                     (loginButtonLeftDrawable, null, null, null);
             newLoginButton.setText("Add a back up account");
@@ -231,6 +233,7 @@
             newLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#42A5F5")));
             newLoginButton.setPadding(40,0,150,0);
             newLoginButton.setTextSize(18);
+            newLoginButton.setTextColor(Color.WHITE);
             newLoginButton.setId(View.generateViewId());
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
