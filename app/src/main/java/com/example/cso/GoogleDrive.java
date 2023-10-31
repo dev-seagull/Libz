@@ -69,7 +69,7 @@ public class GoogleDrive {
                                 .setApplicationName("cso").build();
                         driveService.files().delete(fileId).execute();
                         System.out.println("response of deleting from derive: ");
-                        LogHandler.SaveLog("Deleting Duplicate file in backup drive :" + mediaItem.getFileName());
+                        LogHandler.saveLog("Deleting Duplicate file in backup drive :" + mediaItem.getFileName());
                     }catch (Exception e){
                         System.out.println("error in deleting duplicated media items in drive " + e.getLocalizedMessage());
                     }

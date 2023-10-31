@@ -54,7 +54,7 @@ public class LogHandler {
         }
     }
 
-    public static void SaveLog(String text) {
+    public static void saveLog(String text) {
         File logDir = new File(LOG_DIR);
         File logFile = new File(logDir, LOG_FILE_NAME);
         try (FileWriter fileWriter = new FileWriter(logFile, true);

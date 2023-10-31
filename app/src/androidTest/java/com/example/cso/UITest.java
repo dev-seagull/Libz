@@ -20,27 +20,4 @@ public class UITest {
         ActivityScenario.launch(MainActivity.class);
     }
 
-    @Test
-    public void restoreButtonExists(){
-        Espresso.onView(ViewMatchers.withId(R.id.restoreButton))
-                .check(matches(withText("Restore")));
-    }
-
-    @Test
-    public void headerExists(){
-        Espresso.onView(ViewMatchers.withId(R.id.headerTextView)).
-                check(ViewAssertions.matches(ViewMatchers.withText("CSO")));
-
-        Espresso.onView(ViewMatchers.withId(R.id.infoButton))
-                .check(matches(withText("i")));
-    }
-
-    @Test
-    public void drawerLayoutExists(){
-        Espresso.onView(ViewMatchers.withId(R.id.drawer_layout))
-                .check(ViewAssertions.doesNotExist());
-
-        Espresso.onView(ViewMatchers.withId(R.id.navigationView))
-                .check(ViewAssertions.doesNotExist());
-    }
 }

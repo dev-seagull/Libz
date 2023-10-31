@@ -9,6 +9,7 @@
     import android.os.Build;
     import android.os.Handler;
     import android.util.TypedValue;
+    import android.view.Gravity;
     import android.view.View;
     import android.view.ViewGroup;
     import android.widget.Button;
@@ -55,7 +56,7 @@
 
 
     public class GoogleCloud extends AppCompatActivity {
-        private final Activity activity;
+        private Activity activity;
         private GoogleSignInClient googleSignInClient;
 
 
@@ -96,7 +97,7 @@
                     signInLauncher.launch(signInIntent);
                 })
                 ;
-                LogHandler.SaveLog("login to Account");
+                LogHandler.saveLog("login to Account");
 
             } catch (Exception e){
                 //Toast.makeText(activity,"Login failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
@@ -121,13 +122,13 @@
                     userEmail = userEmail.replace("@gmail.com","");
                 }
                 System.out.println("the user email is: " + userEmail);
-                LogHandler.SaveLog("User Email is " + userEmail);
+                LogHandler.saveLog("User Email is " + userEmail);
                 authCode = account.getServerAuthCode();
                 GetTokensAsyncTask getTokensAsyncTask = new GetTokensAsyncTask();
                 tokens = getTokensAsyncTask.execute(authCode).get();
                 storage = getStorage(tokens);
                 System.out.println("usages :" + storage.getTotalStorage() + " and "+  storage.getUsedStorage() +" and "+ storage.getUsedInDriveStorage() +" and "+ storage.getUsedInGmailAndPhotosStorage());
-                LogHandler.SaveLog("Total Storage is : " + storage.getTotalStorage() + " Total Usage is "+  storage.getUsedStorage() +"\n Used in Drive is : "+ storage.getUsedInDriveStorage() +" Used in Gmail and Photos is : "+ storage.getUsedInGmailAndPhotosStorage());
+                LogHandler.saveLog("Total Storage is : " + storage.getTotalStorage() + " Total Usage is "+  storage.getUsedStorage() +"\n Used in Drive is : "+ storage.getUsedInDriveStorage() +" Used in Gmail and Photos is : "+ storage.getUsedInGmailAndPhotosStorage());
                 mediaItems = GooglePhotos.getGooglePhotosMediaItems(tokens);;
 
                 runOnUiThread(new Runnable() {
@@ -138,7 +139,7 @@
                     }
                 });
                 System.out.println(mediaItems.size() + "File detected in Photos");
-                LogHandler.SaveLog(mediaItems.size() + "File detected in Photos");
+                LogHandler.saveLog(mediaItems.size() + "File detected in Photos");
             }catch (Exception e){
                 System.out.println("catch login error: " + e.getMessage());
                 //Toast.makeText(activity,"Login failed: " + e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
@@ -165,7 +166,7 @@
                     userEmail = userEmail.replace("@gmail.com","");
                 }
                 System.out.println("the user email is: " + userEmail);
-                LogHandler.SaveLog("Backup Email is : " + userEmail);
+                LogHandler.saveLog("Backup Email is : " + userEmail);
                 authCode = account.getServerAuthCode();
                 //here you should get the tokens, storage and display it then using chart, gphotos files,
                 // and also drive files?
@@ -174,7 +175,7 @@
                 tokens = getTokensAsyncTask.execute(authCode).get();
                 storage = getStorage(tokens);
                 mediaItems = getMediaItems(tokens);
-                LogHandler.SaveLog("There is " + mediaItems.size() + " in Backup Account");
+                LogHandler.saveLog("There is " + mediaItems.size() + " in Backup Account");
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -191,71 +192,57 @@
 
         public void createPrimaryLoginButton(LinearLayout linearLayout){
             Button newLoginButton = new Button(activity);
-            Button loginButton = activity.findViewById(R.id.loginButton);
+            Drawable loginButtonLeftDrawable = activity.getApplicationContext().getResources()
+                    .getDrawable(R.drawable.googlephotosicon_resized);
+            newLoginButton.setCompoundDrawablesWithIntrinsicBounds
+                    (loginButtonLeftDrawable, null, null, null);
 
             newLoginButton.setText("Add a primary account");
+            newLoginButton.setGravity(Gravity.CENTER);
             newLoginButton.setVisibility(View.VISIBLE);
-
             newLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
-            newLoginButton.setPadding(0,0,70,0);
-            newLoginButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP,18);
-            newLoginButton.setTextColor(loginButton.getCurrentTextColor());
-
-            Drawable loginButtonLeftDrawable = loginButton.getCompoundDrawables()[0];
-            newLoginButton.setCompoundDrawablesWithIntrinsicBounds(loginButtonLeftDrawable, null, null, null);
-            //int drawablePadding = 7; // Adjust the value as needed
-            //newLoginButton.setCompoundDrawablePadding(drawablePadding);
-
-
-            int loginButtonWidth = loginButton.getWidth();
-            int loginButtonHeight = loginButton.getHeight();
+            newLoginButton.setPadding(40,0,150,0);
+            newLoginButton.setTextSize(18);
+            newLoginButton.setId(View.generateViewId());
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    loginButtonHeight
+                    200
             );
-            layoutParams.setMargins(16,0,0,0);
+            layoutParams.setMargins(0,20,0,16);
             newLoginButton.setLayoutParams(layoutParams);
 
             if(linearLayout != null){
                 linearLayout.addView(newLoginButton);
             }else{
-               // Toast.makeText(activity,"Creating a new login button failed",
-               //         Toast.LENGTH_LONG).show();
+                LogHandler.saveLog("Creating a new login button failed");
             }
         }
 
         public void createBackUpLoginButton(LinearLayout linearLayout){
             Button newLoginButton = new Button(activity);
-            Button backUpLoginButton = activity.findViewById(R.id.backUpLoginButton);
-
+            Drawable loginButtonLeftDrawable = activity.getApplicationContext().getResources()
+                    .getDrawable(R.drawable.googledriveimage_resized);
+            newLoginButton.setCompoundDrawablesWithIntrinsicBounds
+                    (loginButtonLeftDrawable, null, null, null);
             newLoginButton.setText("Add a back up account");
+            newLoginButton.setGravity(Gravity.CENTER);
+            newLoginButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             newLoginButton.setVisibility(View.VISIBLE);
-
             newLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#42A5F5")));
-            newLoginButton.setPadding(0,0,70,0);
-            newLoginButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP,18);
-            newLoginButton.setTextColor(backUpLoginButton.getCurrentTextColor());
-
-            Drawable loginButtonLeftDrawable = backUpLoginButton.getCompoundDrawables()[0];
-            newLoginButton.setCompoundDrawablesWithIntrinsicBounds(loginButtonLeftDrawable, null, null, null);
-            //int drawablePadding = 7; // Adjust the value as needed
-            //newLoginButton.setCompoundDrawablePadding(drawablePadding);
-
-
-            int backUpLoginButtonWidth = backUpLoginButton.getWidth();
-            int backUpLoginButtonHeight = backUpLoginButton.getHeight();
+            newLoginButton.setPadding(40,0,150,0);
+            newLoginButton.setTextSize(18);
+            newLoginButton.setId(View.generateViewId());
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    backUpLoginButtonHeight
+                    200
             );
-            layoutParams.setMargins(16,0,0,0);
+            layoutParams.setMargins(0,20,0,16);
             newLoginButton.setLayoutParams(layoutParams);
 
             if(linearLayout != null){
                 linearLayout.addView(newLoginButton);
             }else{
-              //  Toast.makeText(activity,"Creating a new login button failed",
-               //         Toast.LENGTH_LONG).show();
+                LogHandler.saveLog("Creating a new login button failed");
             }
         }
 
@@ -355,7 +342,7 @@
                                 BackUpAccountInfo.MediaItem mediaItem = new BackUpAccountInfo.MediaItem(file.getName(),
                                         file.getSha256Checksum().toLowerCase(), file.getId());
                                 mediaItems.add(mediaItem);
-                                LogHandler.SaveLog(mediaItem.getFileName() + "detected in Backup Account");
+                                LogHandler.saveLog(mediaItem.getFileName() + "detected in Backup Account");
                             }
 
                         }

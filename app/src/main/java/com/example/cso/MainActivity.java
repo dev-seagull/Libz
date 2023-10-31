@@ -1,9 +1,6 @@
     package com.example.cso;
 
-    import android.content.ContentValues;
     import android.content.Intent;
-    import android.database.Cursor;
-    import android.database.sqlite.SQLiteDatabase;
     import android.os.Bundle;
     import android.text.Layout;
     import android.text.Spannable;
@@ -27,12 +24,6 @@
     import com.google.android.material.navigation.NavigationView;
     import com.jaredrummler.android.device.DeviceName;
 
-    import java.io.BufferedInputStream;
-    import java.io.File;
-    import java.io.FileInputStream;
-    import java.io.IOException;
-    import java.security.MessageDigest;
-    import java.security.NoSuchAlgorithmException;
     import java.util.ArrayList;
     import java.util.HashMap;
     import java.util.concurrent.Callable;
@@ -56,42 +47,7 @@
         HashMap<String, BackUpAccountInfo> backUpAccountHashMap = new HashMap<String, BackUpAccountInfo>();
         ArrayList<Android.MediaItem> androidMediaItems = new ArrayList<>();
         Android android;
-
-
-
-        public static String calculateHash(File file) throws IOException {
-            final int BUFFER_SIZE = 8192;
-            StringBuilder hexString = new StringBuilder();
-
-            MessageDigest digest = null;
-            try {
-                digest = MessageDigest.getInstance("SHA-256");
-            } catch (NoSuchAlgorithmException e) {
-                LogHandler.SaveLog("SHA-256 algorithm not available " + e.getLocalizedMessage());
-                throw new RuntimeException("SHA-256 algorithm not available ", e);
-            }
-
-            try(BufferedInputStream bufferedInputStream = new BufferedInputStream(
-                    new FileInputStream(file))){
-
-                byte[] buffer = new byte[BUFFER_SIZE];
-                int bytesRead;
-
-                while ((bytesRead = bufferedInputStream.read(buffer)) > 0) {
-                    digest.update(buffer, 0, bytesRead);
-                }
-                bufferedInputStream.close();
-
-                byte[] hash = digest.digest();
-                for (byte b : hash) {
-                    hexString.append(String.format("%02X", b));
-                }
-            }catch (Exception e){
-                LogHandler.SaveLog("error in calculating hash " + e.getLocalizedMessage());
-            }
-
-            return hexString.toString();
-        }
+        String androidDeviceName;
 
 
         @Override
@@ -101,13 +57,11 @@
 
             drawerLayout = findViewById(R.id.drawer_layout);
             navigationView = findViewById(R.id.navigationView);
-
             ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
                     this, drawerLayout, R.string.navigation_drawer_open,
                     R.string.navigation_drawer_close);
             drawerLayout.addDrawerListener(actionBarDrawerToggle);
             actionBarDrawerToggle.syncState();
-
             MenuItem menuItem1 = navigationView.getMenu().findItem(R.id.navMenuItem1);
             String appVersion = BuildConfig.VERSION_NAME;
             SpannableString centeredText = new SpannableString("Version: " + appVersion);
@@ -121,51 +75,22 @@
                 }
             });
 
-            DBHelper dbHelper = new DBHelper(this);
-            SQLiteDatabase db = dbHelper.getWritableDatabase();
-            ContentValues values = new ContentValues();
-            values.put("name", "John");
-            values.put("age", 30);
-            long newRowId = db.insert("YourTable", null, values);
-            db.close();
-
-            db = dbHelper.getReadableDatabase();
-            String[] projection = {"name", "age"};
-            String selection = null; // You can specify a selection if needed.
-            String[] selectionArgs = null; // You can specify selection arguments if needed.
-            String sortOrder = null; // You can specify a sort order if needed.
-
-            Cursor cursor = db.query("YourTable", projection, selection, selectionArgs, null, null, sortOrder);
-
-            while (cursor.moveToNext()) {
-                String name = cursor.getString(cursor.getColumnIndex("name"));
-                int age = cursor.getInt(cursor.getColumnIndex("age"));
-                // Process retrieved data (in this case, 'name' and 'age').
-                System.out.println("database: " + name + " " + age);
-            }
-
-            cursor.close(); // Close the cursor when you're done.
-            db.close();
-
-
-            //SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs",Context.MODE_PRIVATE);
-            //String json = sharedPreferences.getString("AndroidImageAndVideoPaths",null);
-            //if(json == null){
-
             syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
-            TextView textViewAndroidDeviceName = findViewById(R.id.androidDeviceTextView);
+            TextView androidDeviceNameTextView = findViewById(R.id.androidDeviceTextView);
+            androidDeviceName = DeviceName.getDeviceName();
+            androidDeviceNameTextView.setText(androidDeviceName);
 
-            String androidDeviceName = DeviceName.getDeviceName();
-            textViewAndroidDeviceName.setText(androidDeviceName);
+            LinearLayout primaryAccountsButtonsLayout= findViewById(R.id.primaryAccountsButtons);
+            LinearLayout backupAccountsButtonsLayout= findViewById(R.id.backUpAccountsButtons);
+            googleCloud = new GoogleCloud(this);
+            googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
+            googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
         }
 
 
         @Override
         protected void onStart(){
             super.onStart();
-
-            NotificationHandler.sendNotification("1","syncingAlert", this,
-                    "CSO","Welcome");
 
             runOnUiThread(new Runnable() {@Override public void run() {updateButtonsListeners();}});
 
@@ -211,8 +136,8 @@
                                         System.out.println(userEmail);
                                         LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
                                         if(primaryAccountsButtonsLinearLayout.getChildCount() == 1){
-                                            Button bt = findViewById(R.id.loginButton);
-                                            bt.setText(userEmail);
+//                                            Button bt = findViewById(R.id.loginButton);
+//                                            bt.setText(userEmail);
                                         }else{
                                             View childview = primaryAccountsButtonsLinearLayout.getChildAt(
                                                     primaryAccountsButtonsLinearLayout.getChildCount() - 2);
@@ -251,8 +176,8 @@
                                         System.out.println(userEmail);
                                         LinearLayout backupAccountsButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
                                         if(backupAccountsButtonsLinearLayout.getChildCount() == 1){
-                                            Button bt = findViewById(R.id.backUpLoginButton);
-                                            bt.setText(userEmail);
+//                                            Button bt = findViewById(R.id.backUpLoginButton);
+//                                            bt.setText(userEmail);
                                         }else{
                                             View childview = backupAccountsButtonsLinearLayout.getChildAt(
                                                     backupAccountsButtonsLinearLayout.getChildCount() - 2);
@@ -400,19 +325,6 @@
 
         private void updateButtonsListeners() {
             LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
-
-            Button loginButton = findViewById(R.id.loginButton);
-            loginButton.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            runOnUiThread( ()-> {
-                                loginButton.setText("Wait");
-                            });
-                            googleCloud.signInToGoogleCloud(signInToPrimaryLauncher);
-                        }
-                    }
-            );
-
             for (int i = 0; i < primaryAccountsButtonsLinearLayout.getChildCount(); i++) {
                 View childView = primaryAccountsButtonsLinearLayout.getChildAt(i);
                 if (childView instanceof Button) {
@@ -421,9 +333,7 @@
                             new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-                                    runOnUiThread( ()-> {
-                                        button.setText("Wait");
-                                    });
+                                    button.setText("Wait");
                                     googleCloud.signInToGoogleCloud(signInToPrimaryLauncher);
                                 }
                             }
@@ -431,34 +341,16 @@
                 }
             }
 
-
             LinearLayout backUpAccountsButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
-
-            Button backUpLoginButton = findViewById(R.id.backUpLoginButton);
-            backUpLoginButton.setOnClickListener(
-                    new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            runOnUiThread( ()-> {
-                                backUpLoginButton.setText("Wait");
-                            });
-                            googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
-                        }
-                    }
-            );
-
             for (int i = 0; i < backUpAccountsButtonsLinearLayout.getChildCount(); i++) {
                 View childView = backUpAccountsButtonsLinearLayout.getChildAt(i);
-
                 if (childView instanceof Button) {
                     Button button = (Button) childView;
                     button.setOnClickListener(
                             new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-                                    runOnUiThread( ()-> {
-                                        button.setText("Wait");
-                                    });
+                                    button.setText("Wait");
                                     googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
                                 }
                             }

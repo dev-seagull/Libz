@@ -49,25 +49,15 @@
                     android:alpha="1"
                     android:background="#050505" />
 
-                <Button
-                    android:id="@+id/loginButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:layout_marginBottom="16dp"
-                    android:backgroundTint="#0D47A1"
-                    android:drawableLeft="@drawable/googlephotosicon_resized"
-                    android:gravity="center"
-                    android:paddingRight="70dp"
-                    android:text="Add a primary account"
-                    android:textSize="18dp" />
+
 
                 <LinearLayout
                     android:id="@+id/primaryAccountsButtons"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:gravity="center"> </LinearLayout>
+                    android:gravity="center"></LinearLayout>
+
 
                 <TextView
                     android:id="@+id/googlePhotosMediaItemsCount"
@@ -83,7 +73,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     > </Button>
-
 
                 <View
                     android:layout_width="match_parent"
@@ -112,19 +101,6 @@
                     android:layout_marginBottom="5dp"
                     android:alpha="1"
                     android:background="#050505" />
-
-                <Button
-                    android:id="@+id/backUpLoginButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:backgroundTint="#42A5F5"
-                    android:layout_marginTop="20dp"
-                    android:layout_marginBottom="16dp"
-                    android:drawableLeft="@drawable/googledriveimage_resized"
-                    android:text="Add a back up account"
-                    android:gravity="center"
-                    android:paddingRight="70dp"
-                    android:textSize="18dp" />
 
                 <LinearLayout
                     android:id="@+id/backUpAccountsButtons"

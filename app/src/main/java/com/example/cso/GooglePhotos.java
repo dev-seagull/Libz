@@ -18,6 +18,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +29,8 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -122,7 +125,7 @@ public class GooglePhotos {
                             String id = mediaItemJsonObject.getString("id");
                             MediaItem mediaItem = new MediaItem(id, baseUrl, "2-2-2", filename, null);
                             mediaItems.add(mediaItem);
-                            LogHandler.SaveLog(mediaItem.getFileName() + " detected in photos account");
+                            LogHandler.saveLog(mediaItem.getFileName() + " detected in photos account");
                         }
                         nextPageToken = responseJson.optString("nextPageToken", null);
                     }
@@ -205,7 +208,7 @@ public class GooglePhotos {
         String fileHash;
 
         try {
-            fileHash = MainActivity.calculateHash(file).toLowerCase();
+            fileHash = calculateHash(file).toLowerCase();
         } catch (IOException e) {
             System.out.println(e.getLocalizedMessage());
             throw new RuntimeException(e);
@@ -214,7 +217,7 @@ public class GooglePhotos {
             String backUpHash = backUpMediaItem.getHash();
             if(fileHash.equals(backUpHash)){
                 System.out.println(file.getName() + " is duplicated");
-                LogHandler.SaveLog(file.getName() + " detected as duplicate in backup and photos");
+                LogHandler.saveLog(file.getName() + " detected as duplicate in backup and photos");
                 isDuplicatedInBackup = true;
                 break;
             }
@@ -230,7 +233,7 @@ public class GooglePhotos {
         String fileHash;
 
         try {
-            fileHash = MainActivity.calculateHash(file).toLowerCase();
+            fileHash = calculateHash(file).toLowerCase();
         } catch (IOException e) {
             System.out.println(e.getLocalizedMessage());
             throw new RuntimeException(e);
@@ -239,7 +242,7 @@ public class GooglePhotos {
             String primaryHash = primaryMediaItem.getHash();
             if(fileHash.equals(primaryHash)){
                 System.out.println(file.getName() + " is duplicated");
-                LogHandler.SaveLog(file.getName() + "detected as duplicate in photos and device");
+                LogHandler.saveLog(file.getName() + "detected as duplicate in photos and device");
                 isDuplicatedInPrimary = true;
                 break;
             }
@@ -332,7 +335,7 @@ public class GooglePhotos {
                     } catch (IOException e) {
                         //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                     }
-                    String hash = MainActivity.calculateHash(file[0]).toLowerCase();
+                    String hash = calculateHash(file[0]).toLowerCase();
                     System.out.println("try to set hash : " + hash);
                     mediaItems.get(i).setHash(hash);
                     i++;
@@ -405,7 +408,7 @@ public class GooglePhotos {
                                     wait();
                                 }
                                 uploadFileIDs.add(uploadFileId);
-                                LogHandler.SaveLog("Uploading " + destinationFolderFile.getName() + " from photos into backup account uploadId :" + uploadFileId);
+                                LogHandler.saveLog("Uploading " + destinationFolderFile.getName() + " from photos into backup account uploadId :" + uploadFileId);
                                     //test[0]--;
                                 //}
 
@@ -562,7 +565,7 @@ public class GooglePhotos {
                                     wait();
 //                                }
                                 uploadFileIds.add(uploadFileId);
-                                LogHandler.SaveLog("Uploading " + mediaItem.getFileName() + " from android into backup account uploadId : " + uploadFileId);
+                                LogHandler.saveLog("Uploading " + mediaItem.getFileName() + " from android into backup account uploadId : " + uploadFileId);
 //                                  test[0]--;
                                 }
                             } catch (Exception e) {
@@ -588,6 +591,41 @@ public class GooglePhotos {
             System.out.println(e.getLocalizedMessage());
         }
         return  uploadFileIdsFuture;
+    }
+
+
+    public static String calculateHash(File file) throws IOException {
+        final int BUFFER_SIZE = 8192;
+        StringBuilder hexString = new StringBuilder();
+
+        MessageDigest digest = null;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            LogHandler.saveLog("SHA-256 algorithm not available " + e.getLocalizedMessage());
+            throw new RuntimeException("SHA-256 algorithm not available ", e);
+        }
+
+        try(BufferedInputStream bufferedInputStream = new BufferedInputStream(
+                new FileInputStream(file))){
+
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int bytesRead;
+
+            while ((bytesRead = bufferedInputStream.read(buffer)) > 0) {
+                digest.update(buffer, 0, bytesRead);
+            }
+            bufferedInputStream.close();
+
+            byte[] hash = digest.digest();
+            for (byte b : hash) {
+                hexString.append(String.format("%02X", b));
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("error in calculating hash " + e.getLocalizedMessage());
+        }
+
+        return hexString.toString();
     }
 
 }
