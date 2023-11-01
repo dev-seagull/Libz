@@ -65,15 +65,6 @@
                     android:layout_height="wrap_content"
                     > </TextView>
 
-                <Button
-                    android:id="@+id/mediaItemsLayout"
-                    android:text="Detail of items"
-                    android:backgroundTint="#0D47A1"
-                    android:visibility="gone"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    > </Button>
-
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="5dp"

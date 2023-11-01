@@ -8,8 +8,11 @@
     import android.text.style.AlignmentSpan;
     import android.view.MenuItem;
     import android.view.View;
+    import android.view.ViewGroup;
+    import android.view.ViewParent;
     import android.widget.Button;
     import android.widget.LinearLayout;
+    import android.widget.PopupMenu;
     import android.widget.TextView;
     import android.widget.Toast;
 
@@ -333,8 +336,27 @@
                             new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-                                    button.setText("Wait");
-                                    googleCloud.signInToGoogleCloud(signInToPrimaryLauncher);
+                                    String buttonText = button.getText().toString().toLowerCase();
+                                    if (buttonText.equals("add a primary account")){
+                                        button.setText("Wait");
+                                        googleCloud.signInToGoogleCloud(signInToPrimaryLauncher);
+                                    }else {
+                                        PopupMenu popupMenu = new PopupMenu(MainActivity.this,button);
+                                        popupMenu.getMenuInflater().inflate(R.menu.account_button_menu,popupMenu.getMenu());
+                                        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                                            @Override
+                                            public boolean onMenuItemClick(MenuItem item) {
+                                                switch (item.getItemId()) {
+                                                    case R.id.sign_out:
+                                                        googleCloud.signOut();
+                                                        ViewGroup parentView = (ViewGroup) button.getParent();
+                                                        parentView.removeView(button);
+                                                }
+                                                return true;
+                                            }
+                                        });
+                                        popupMenu.show();
+                                    }
                                 }
                             }
                     );
@@ -350,14 +372,34 @@
                             new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-                                    button.setText("Wait");
-                                    googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
+                                    String buttonText = button.getText().toString().toLowerCase();
+                                    if (buttonText.equals("add a back up account")) {
+                                        button.setText("Wait");
+                                        googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
+                                    } else {
+                                        PopupMenu popupMenu = new PopupMenu(MainActivity.this, button);
+                                        popupMenu.getMenuInflater().inflate(R.menu.account_button_menu, popupMenu.getMenu());
+                                        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                                            @Override
+                                            public boolean onMenuItemClick(MenuItem item) {
+                                                switch (item.getItemId()) {
+                                                    case R.id.sign_out:
+                                                        googleCloud.signOut();
+                                                        ViewGroup parentView = (ViewGroup) button.getParent();
+                                                        parentView.removeView(button);
+                                                }
+                                                return true;
+                                            }
+                                        });
+                                        popupMenu.show();
+                                    }
                                 }
-                            }
-                    );
+                            });
+                        }
+                    }
                 }
-            }
-        }
+
+
 
 
 

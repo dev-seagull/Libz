@@ -106,6 +106,29 @@
         }
 
 
+        public void signOut() {
+            boolean forceCodeForRefreshToken = true;
+            try {
+                GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestScopes(new Scope("https://www.googleapis.com/auth/photoslibrary.readonly"),
+                                new Scope("https://www.googleapis.com/auth/drive"),
+                                new Scope("https://www.googleapis.com/auth/drive.file"),
+                                new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly")
+                        )
+                        .requestServerAuthCode(activity.getResources().getString(R.string.web_client_id), forceCodeForRefreshToken)
+                        .requestEmail()
+                        .build();
+
+                googleSignInClient = GoogleSignIn.getClient(activity, googleSignInOptions);
+
+                googleSignInClient.signOut();
+                System.out.println("successfully logout");
+
+            } catch (Exception e) {
+                LogHandler.saveLog("sign out from account failed");
+            }
+        }
+
         public PrimaryAccountInfo handleSignInToPrimaryResult(Intent data){
             String userEmail = "";
             String authCode = "";
