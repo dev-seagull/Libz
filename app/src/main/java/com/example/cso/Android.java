@@ -2,19 +2,16 @@ package com.example.cso;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -25,8 +22,6 @@ public class Android {
 
     public ArrayList<MediaItem> getGalleryMediaItems(Activity activity) {
         ArrayList<MediaItem> androidMediaItems = new ArrayList<>();
-
-
         int requestCode =1;
         while (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
                 ContextCompat.checkSelfPermission(activity.getApplicationContext(),
@@ -49,7 +44,6 @@ public class Android {
            String[] selectionArgs = {String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE),
                    String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO)};
            String sortOrder = MediaStore.Images.Media.DATE_MODIFIED + " DESC";
-
            Cursor cursor = activity.getContentResolver().query(
                    MediaStore.Files.getContentUri("external"),
                    projection,
@@ -68,17 +62,13 @@ public class Android {
                while (cursor.moveToNext()) {
                    String mediaItemPath = cursor.getString(columnIndexPath);
                    File mediaItemFile = new File(mediaItemPath);
-                   //String mediaItemFileHash = MainActivity.calculateHash(mediaItemFile, activity);
                    String mediaItemName = mediaItemFile.getName();
                    String mediaItemDateAdded = cursor.getString(columnIndexDateAdded);
                    String mediaItemDateModified = cursor.getString(columnIndexDateModified);
-                  // System.out.println(" first one "+ Double.valueOf(cursor.getString(columnIndexSize)));
                    Double mediaItemSize = Double.valueOf(cursor.getString(columnIndexSize))  / Double.valueOf(1073741824) ;
-                  // System.out.println(" second one "+ mediaItemSize);
                    String mediaItemMemeType = cursor.getString(columnIndexMemeType);
                    MediaItem androidMediaItem = new MediaItem(mediaItemName, mediaItemPath, mediaItemDateAdded,
                            mediaItemDateModified, "", mediaItemSize, mediaItemMemeType);
-
                    File androidFile = new File(mediaItemPath);
                    if(androidFile.exists()){
                        androidMediaItems.add(androidMediaItem);
@@ -88,30 +78,28 @@ public class Android {
                cursor.close();
            }
        }catch (Exception e){
-            System.out.println("for divide :"+e.getLocalizedMessage());
-            //Toast.makeText(activity, "Getting device files failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-        }
-         
+            LogHandler.saveLog("failed to get gallery files: " + e.getLocalizedMessage());
+       }
 
         try{
             if(androidMediaItems.isEmpty()){
-                androidMediaItems = getFileManagerMediaItems(activity);
+                LogHandler.saveLog("The Gallery was not found, " +
+                        "So it's starting to get the files from the file manager");
+                androidMediaItems = getFileManagerMediaItems();
             }else{
                 System.out.println("it's not empty");
             }
         }catch (Exception e){
-            System.out.println("error: "  +e.getLocalizedMessage());
-            Toast.makeText(activity, "Getting device files failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+            LogHandler.saveLog("Getting device files failed: " + e.getLocalizedMessage());
         }
-
+        LogHandler.saveLog(androidMediaItems.size() + " files were found in your device");
         return androidMediaItems;
     }
 
 
-    public ArrayList<MediaItem> getFileManagerMediaItems(Activity activity){
+    public ArrayList<MediaItem> getFileManagerMediaItems(){
         String[] extensions = {".jpg", ".jpeg", ".png", ".webp",
                 ".gif", ".mp4", ".mkv", ".webm"};
-
         ArrayList<MediaItem> androidMediaItems = new ArrayList<>();
 
         File rootDirectory = Environment.getExternalStorageDirectory();
@@ -119,24 +107,24 @@ public class Android {
         queue.add(rootDirectory);
         while (!queue.isEmpty()){
             File currentDirectory = queue.poll();
-            File[] currentFiles = currentDirectory.listFiles();
+            File[] currentFiles = new File[0];
+            if (currentDirectory != null) {
+                currentFiles = currentDirectory.listFiles();
+            }else{
+                LogHandler.saveLog("Current directory is null");
+            }
             if(currentFiles != null){
                 for(File currentFile: currentFiles){
                     if(currentFile.isFile()){
                         for(String extension: extensions){
                             if(currentFile.getName().toLowerCase().endsWith(extension)){
-
                                 String mediaItemPath = currentFile.getPath();
                                 File mediaItemFile = new File(mediaItemPath);
-                                //String mediaItemFileHash = MainActivity.calculateHash(mediaItemFile, activity);
                                 String mediaItemName = currentFile.getName();
-                                //String mediaItemDateAdded = cursor.getString(columnIndexDateAdded);
-                                //String mediaItemDateModified = cursor.getString(columnIndexDateModified);
                                 Double mediaItemSize = Double.valueOf(currentFile.length());
                                 String mediaItemMemeType = GooglePhotos.getMemeType(mediaItemFile);
                                 MediaItem androidMediaItem = new MediaItem(mediaItemName, mediaItemPath, null,
                                         null, "", mediaItemSize, mediaItemMemeType);
-
                                 if(mediaItemFile.exists()){
                                     androidMediaItems.add(androidMediaItem);
                                 }
@@ -149,7 +137,6 @@ public class Android {
                 }
             }
         }
-        System.out.println("len of android media items through file manager: " +  androidMediaItems.size());
         return androidMediaItems;
     }
 
