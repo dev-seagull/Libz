@@ -4,7 +4,6 @@ package com.example.cso;
 import java.util.ArrayList;
 
 public class PrimaryAccountInfo {
-    //private AndroidFiles androidFiles;
     private String userEmail;
     private Tokens tokens;
     private Storage storage;

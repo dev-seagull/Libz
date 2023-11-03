@@ -13,30 +13,15 @@ public class BackUpAccountInfo {
         private String hash;
         private String fileId;
 
-        public MediaItem(String fileName, String hash, String fileid) {
+        public MediaItem(String fileName, String hash, String fileId) {
             this.fileName = fileName;
             this.hash = hash;
-            this.fileId = fileid;
+            this.fileId = fileId;
         }
         public String getFileName() {return fileName;}
         public String getHash() {return hash;}
         public String getId() {return fileId;}
     }
-
-    public static class Storage{
-        private Double totalStorage;
-        private Double usedStorage;
-        //private Double usedInDriveStorage;
-
-        public Storage(Double totalStorage, Double usedStorage){
-            this.totalStorage = totalStorage;
-            this.usedStorage = usedStorage;
-        }
-
-        public Double getTotalStorage() {return totalStorage;}
-        public Double getUsedStorage() {return usedStorage;}
-    }
-
 
     public BackUpAccountInfo(String userEmail, PrimaryAccountInfo.Tokens tokens,
                              PrimaryAccountInfo.Storage storage, ArrayList<MediaItem> mediaItems) {

@@ -14,15 +14,12 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        String createTableQuery = "CREATE TABLE IF NOT EXISTS YourTable ("
-                + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + "name TEXT, "
-                + "age INTEGER)";
-        sqLiteDatabase.execSQL(createTableQuery);
+        String userProfile = "CREATE TABLE IF NOT EXISTS UserProfile("
+                + "AccountName TEXT)";
+        sqLiteDatabase.execSQL(userProfile);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
-
     }
 }
