@@ -47,7 +47,6 @@ public class NotificationHandler {
         }
         builder.setContentIntent(pendingIntent);
 
-
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(activity);
         if (ActivityCompat.checkSelfPermission(activity,
                 android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -56,5 +55,4 @@ public class NotificationHandler {
         }
         notificationManager.notify(Integer.valueOf(channelId), builder.build());
     }
-
 }
