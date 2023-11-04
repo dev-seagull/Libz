@@ -5,17 +5,11 @@
     import android.content.res.ColorStateList;
     import android.graphics.Color;
     import android.graphics.drawable.Drawable;
-    import android.os.AsyncTask;
-    import android.os.Build;
-    import android.os.Handler;
-    import android.provider.CalendarContract;
-    import android.util.TypedValue;
     import android.view.Gravity;
     import android.view.View;
     import android.view.ViewGroup;
     import android.widget.Button;
     import android.widget.LinearLayout;
-    import android.widget.Toast;
 
     import androidx.activity.result.ActivityResultLauncher;
     import androidx.appcompat.app.AppCompatActivity;
@@ -49,7 +43,6 @@
     import java.util.ArrayList;
     import java.util.List;
     import java.util.concurrent.Callable;
-    import java.util.concurrent.CompletableFuture;
     import java.util.concurrent.ExecutionException;
     import java.util.concurrent.ExecutorService;
     import java.util.concurrent.Executors;
@@ -118,7 +111,6 @@
 
                 googleSignInClient = GoogleSignIn.getClient(activity, googleSignInOptions);
                 googleSignInClient.signOut();
-                LogHandler.saveLog("successfully logout from " + " ");
             } catch (Exception e) {
                 LogHandler.saveLog("sign out from account failed");
             }
@@ -126,52 +118,40 @@
 
         public PrimaryAccountInfo handleSignInToPrimaryResult(Intent data){
             String userEmail = "";
-            String authCode = "";
+            String authCode;
             PrimaryAccountInfo.Tokens tokens = null;
             PrimaryAccountInfo.Storage storage = null;
             ArrayList<GooglePhotos.MediaItem> mediaItems = null;
-
             try{
                 Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
                 GoogleSignInAccount account = googleSignInTask.getResult(ApiException.class);
 
                 userEmail = account.getEmail();
-                if(userEmail.toLowerCase().endsWith("@gmail.com")){
+                if (userEmail != null && userEmail.toLowerCase().endsWith("@gmail.com")) {
                     userEmail = account.getEmail();
-                    userEmail = userEmail.replace("@gmail.com","");
+                    userEmail = userEmail.replace("@gmail.com", "");
                 }
-                System.out.println("the user email is: " + userEmail);
-                LogHandler.saveLog("User Email is " + userEmail);
                 authCode = account.getServerAuthCode();
-                GetTokensAsyncTask getTokensAsyncTask = new GetTokensAsyncTask();
-                tokens = getTokensAsyncTask.execute(authCode).get();
+                tokens = getTokens(authCode);
                 storage = getStorage(tokens);
-                System.out.println("usages :" + storage.getTotalStorage() + " and "+  storage.getUsedStorage() +" and "+ storage.getUsedInDriveStorage() +" and "+ storage.getUsedInGmailAndPhotosStorage());
                 LogHandler.saveLog("Total Storage is : " + storage.getTotalStorage() + " Total Usage is "+  storage.getUsedStorage() +"\n Used in Drive is : "+ storage.getUsedInDriveStorage() +" Used in Gmail and Photos is : "+ storage.getUsedInGmailAndPhotosStorage());
-                mediaItems = GooglePhotos.getGooglePhotosMediaItems(tokens);;
+                mediaItems = GooglePhotos.getGooglePhotosMediaItems(tokens);
 
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
-                        createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
-                    }
+                runOnUiThread(() -> {
+                    LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
+                    createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
                 });
-                System.out.println(mediaItems.size() + "File detected in Photos");
-                LogHandler.saveLog(mediaItems.size() + "File detected in Photos");
+                LogHandler.saveLog(mediaItems.size() + " files detected in Photos");
             }catch (Exception e){
-                System.out.println("catch login error: " + e.getMessage());
-                //Toast.makeText(activity,"Login failed: " + e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
+                LogHandler.saveLog("handle primary sign in result failed: " + e.getLocalizedMessage());
             }
-
-            System.out.println("done with login");
             return new PrimaryAccountInfo(userEmail, tokens, storage, mediaItems);
         }
 
 
         public BackUpAccountInfo handleSignInToBackupResult(Intent data){
             String userEmail = "";
-            String authCode = "";
+            String authCode;
             PrimaryAccountInfo.Tokens tokens = null;
             PrimaryAccountInfo.Storage storage = null;
             ArrayList<BackUpAccountInfo.MediaItem> mediaItems  = null;
@@ -180,30 +160,21 @@
                 GoogleSignInAccount account = googleSignInTask.getResult(ApiException.class);
 
                 userEmail = account.getEmail();
-                if(userEmail.toLowerCase().endsWith("@gmail.com")){
+                if (userEmail != null && userEmail.toLowerCase().endsWith("@gmail.com")) {
                     userEmail = account.getEmail();
-                    userEmail = userEmail.replace("@gmail.com","");
+                    userEmail = userEmail.replace("@gmail.com", "");
                 }
-                System.out.println("the user email is: " + userEmail);
-                LogHandler.saveLog("Backup Email is : " + userEmail);
                 authCode = account.getServerAuthCode();
-                //here you should get the tokens, storage and display it then using chart, gphotos files,
-                // and also drive files?
-                // you should add more background tasks to do that
-                GetTokensAsyncTask getTokensAsyncTask = new GetTokensAsyncTask();
-                tokens = getTokensAsyncTask.execute(authCode).get();
+                tokens = getTokens(authCode);
                 storage = getStorage(tokens);
                 mediaItems = getMediaItems(tokens);
-                LogHandler.saveLog("There is " + mediaItems.size() + " in Backup Account");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        LinearLayout backupAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-                        createBackUpLoginButton(backupAccountsButtonsLinearLayout);
-                    }
+                LogHandler.saveLog( mediaItems.size() + " files detected in Backup Account");
+                runOnUiThread(() -> {
+                    LinearLayout backupAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+                    createBackUpLoginButton(backupAccountsButtonsLinearLayout);
                 });
             }catch (Exception e){
-                //Toast.makeText(activity,"Login failed: " + e.getLocalizedMessage(),Toast.LENGTH_LONG).show();
+                LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage());
             }
             return new BackUpAccountInfo(userEmail, tokens, storage,mediaItems);
         }
@@ -267,19 +238,11 @@
             }
         }
 
-
-        public class GetTokensAsyncTask extends AsyncTask<String, Void, PrimaryAccountInfo.Tokens> {
-            public GetTokensAsyncTask() {
-            }
-
-            @Override
-            protected PrimaryAccountInfo.Tokens doInBackground(String... params) {
-                if (params.length == 0) {
-                    return null;
-                }
-
-                String authCode = params[0];
-
+        private PrimaryAccountInfo.Tokens getTokens(String authCode){
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Callable<PrimaryAccountInfo.Tokens> backgroundTokensTask = () -> {
+                String accessToken = null;
+                String refreshToken = null;
                 try {
                     URL googleAPITokenUrl = new URL("https://oauth2.googleapis.com/token");
                     HttpURLConnection httpURLConnection = (HttpURLConnection) googleAPITokenUrl.openConnection();
@@ -312,20 +275,24 @@
                         }
                         String response = responseBuilder.toString();
                         JSONObject responseJSONObject = new JSONObject(response);
-                        String accessToken = responseJSONObject.getString("access_token");
-                        String refreshToken = responseJSONObject.getString("refresh_token");
-
-                        return new PrimaryAccountInfo.Tokens(accessToken, refreshToken);
-                    } else {
-                        // Handle the case where the HTTP response is not OK.
-                        // You can return null or throw an exception as needed.
-                        return null;
+                        accessToken = responseJSONObject.getString("access_token");
+                        refreshToken = responseJSONObject.getString("refresh_token");
+                    }else {
+                        LogHandler.saveLog("Getting tokens failed");
                     }
                 } catch (Exception e) {
-                    // Handle exceptions here (e.g., log or show a message).
-                    return null;
+                    LogHandler.saveLog("Getting tokens failed: " + e.getLocalizedMessage());
                 }
+                return new PrimaryAccountInfo.Tokens(accessToken, refreshToken);
+            };
+            Future<PrimaryAccountInfo.Tokens> future = executor.submit(backgroundTokensTask);
+            PrimaryAccountInfo.Tokens tokens_fromFuture = null;
+            try {
+                tokens_fromFuture = future.get();
+            }catch (Exception e){
+                LogHandler.saveLog("failed to get tokens from the future: " + e.getLocalizedMessage());
             }
+            return tokens_fromFuture;
         }
 
         public static String getMemeType(String fileName){
@@ -428,18 +395,15 @@
 
 
                     storage[0] = new PrimaryAccountInfo.Storage(totalStorage[0], usedStorage[0],usedInDriveStorage[0]);
-
-
                     return storage[0];
                 };
-
                 Future<PrimaryAccountInfo.Storage> future = executor.submit(backgroundTask);
                 storage[0] = future.get();
             }catch (Exception e){
-               // Toast.makeText(activity,"Login failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                LogHandler.saveLog("Failed to get the storage: " + e.getLocalizedMessage());
             }
             executor.shutdown();
-            return  storage[0];
+            return storage[0];
         }
     }
 
