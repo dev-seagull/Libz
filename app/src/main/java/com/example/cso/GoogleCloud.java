@@ -82,8 +82,8 @@
 
             try {
                         GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .requestScopes(new Scope("https://www.googleapis.com/auth/photoslibrary.readonly"),
-                                new Scope("https://www.googleapis.com/auth/drive"),
+                        .requestScopes(new Scope("https://www.googleapis.com/auth/drive"),
+                                new Scope("https://www.googleapis.com/auth/photoslibrary.readonly"),
                                 new Scope("https://www.googleapis.com/auth/drive.file"),
                                 new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly")
                                 )
@@ -96,17 +96,14 @@
                 googleSignInClient.signOut().addOnCompleteListener(task -> {
                     Intent signInIntent = googleSignInClient.getSignInIntent();
                     signInLauncher.launch(signInIntent);
-                })
-                ;
-                LogHandler.saveLog("login to Account");
-
+                });
             } catch (Exception e){
-                //Toast.makeText(activity,"Login failed: "+ e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                LogHandler.saveLog("login failed in signInGoogleCloud : "+e.getLocalizedMessage());
             }
         }
 
 
-        public void signOut() {
+        public void signOut(){
             boolean forceCodeForRefreshToken = true;
             try {
                 GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -120,10 +117,8 @@
                         .build();
 
                 googleSignInClient = GoogleSignIn.getClient(activity, googleSignInOptions);
-
                 googleSignInClient.signOut();
-                System.out.println("successfully logout");
-
+                LogHandler.saveLog("successfully logout from " + " ");
             } catch (Exception e) {
                 LogHandler.saveLog("sign out from account failed");
             }

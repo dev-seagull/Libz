@@ -114,60 +114,98 @@
                 LogHandler.saveLog("failed to get android files: " + e.getLocalizedMessage());
             }
             executor.shutdown();
-            LogHandler.saveLog("finished and found " + androidMediaItems.size() + " files");
             android = new Android(androidMediaItems);
 
             signInToPrimaryLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if(result.getResultCode() == RESULT_OK){
+                        LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
+                        final View[] childview = {primaryAccountsButtonsLinearLayout.getChildAt(
+                                primaryAccountsButtonsLinearLayout.getChildCount() - 1)};
+                        runOnUiThread(() -> {
+                            childview[0].setClickable(false);
+                        });
+
                         Executor signInExecutor = Executors.newSingleThreadExecutor();
                         try {
                             Runnable backgroundTask = () -> {
                                 PrimaryAccountInfo primaryAccountInfo = googleCloud.handleSignInToPrimaryResult(result.getData());
                                 String userEmail = primaryAccountInfo.getUserEmail();
                                 primaryAccountHashMap.put(primaryAccountInfo.getUserEmail(), primaryAccountInfo);
+                                LogHandler.saveLog("Number of primary accounts :" + primaryAccountHashMap.size());
+
+
                                 runOnUiThread(() -> {
-                                    LogHandler.saveLog(userEmail +  " has logged in to the account");
-                                    LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
-                                    View childview = primaryAccountsButtonsLinearLayout.getChildAt(
-                                                primaryAccountsButtonsLinearLayout.getChildCount() - 2);
-                                    if(childview instanceof Button){
-                                            Button bt = (Button) childview;
+                                    childview[0] = primaryAccountsButtonsLinearLayout.getChildAt(
+                                            primaryAccountsButtonsLinearLayout.getChildCount() - 2);
+
+                                    LogHandler.saveLog(userEmail +  " has logged in to the primary account");
+                                     if(childview[0] instanceof Button){
+                                            Button bt = (Button) childview[0];
                                             bt.setText(userEmail);
                                     }
                                     updateButtonsListeners();
                                 });
                             };
                             signInExecutor.execute(backgroundTask);
+                            runOnUiThread(() -> {
+                                childview[0].setClickable(true);
+                            });
                         }catch (Exception e){
-                            LogHandler.saveLog("Failed to sign in: "  + e.getLocalizedMessage());
+                            LogHandler.saveLog("Failed to sign in to primary : "  + e.getLocalizedMessage());
                         }
-                   }
+                   }else{
+                        runOnUiThread(() -> {
+                            LogHandler.saveLog("login with launcher failed");
+                            LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
+                            View childview = primaryAccountsButtonsLinearLayout.getChildAt(
+                                    primaryAccountsButtonsLinearLayout.getChildCount() - 1);
+                            if(childview instanceof Button){
+                                Button bt = (Button) childview;
+                                bt.setText("ADD A PRIMARY ACCOUNT");
+                            }
+                            updateButtonsListeners();
+                        });
+
+
+                    }
                 }
             );
             signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if(result.getResultCode() == RESULT_OK){
+                        LinearLayout backupAccountsButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
+                        final View[] childview = {backupAccountsButtonsLinearLayout.getChildAt(
+                                backupAccountsButtonsLinearLayout.getChildCount() - 1)};
+                        runOnUiThread(() -> {
+                            childview[0].setClickable(false);
+                        });
+
+
                         Executor signInToBackupExecutor = Executors.newSingleThreadExecutor();
                         try{
                             Runnable backgroundTask = () -> {
                                 BackUpAccountInfo backUpAccountInfo = googleCloud.handleSignInToBackupResult(result.getData());
                                 String userEmail = backUpAccountInfo.getUserEmail();
+                                backUpAccountHashMap.put(backUpAccountInfo.getUserEmail(),backUpAccountInfo);
+                                LogHandler.saveLog("Number of backup accounts :" + backUpAccountHashMap.size());
                                 runOnUiThread(() -> {
-                                    LogHandler.saveLog(userEmail +  " has logged in to the account");
-                                    LinearLayout backupAccountsButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
-                                    View childview = backupAccountsButtonsLinearLayout.getChildAt(
+                                    LogHandler.saveLog(userEmail +  " has logged in to the backup account");
+                                    childview[0] = backupAccountsButtonsLinearLayout.getChildAt(
                                                 backupAccountsButtonsLinearLayout.getChildCount() - 2);
-                                    if(childview instanceof Button){
-                                        Button bt = (Button) childview;
+                                    if(childview[0] instanceof Button){
+                                        Button bt = (Button) childview[0];
                                         bt.setText(userEmail);
                                     }
                                     updateButtonsListeners();
                                 });
                             };
                             signInToBackupExecutor.execute(backgroundTask);
+                            runOnUiThread(() -> {
+                                childview[0].setClickable(true);
+                            });
                         }catch (Exception e){
-                            LogHandler.saveLog("Failed to sign in: "  + e.getLocalizedMessage());
+                            LogHandler.saveLog("Failed to sign in to backup : "  + e.getLocalizedMessage());
                         }
                     }
                 });
@@ -279,7 +317,10 @@
                                 if (buttonText.equals("add a primary account")){
                                     button.setText("Wait");
                                     googleCloud.signInToGoogleCloud(signInToPrimaryLauncher);
-                                }else {
+                                }else if (buttonText.equals("wait")){
+                                    button.setText("Add a primary account");
+                                }
+                                else {
                                     PopupMenu popupMenu = new PopupMenu(MainActivity.this,button, Gravity.CENTER);
                                     popupMenu.getMenuInflater().inflate(R.menu.account_button_menu,popupMenu.getMenu());
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -293,8 +334,12 @@
                                             for (Map.Entry<String, PrimaryAccountInfo> primaryAccountEntrySet :
                                                     primaryAccountHashMap.entrySet()) {
                                                 if (primaryAccountEntrySet.getKey().equals(buttonText)) {
+                                                    String entry = primaryAccountEntrySet.getKey();
                                                     primaryAccountHashMap.remove(
                                                             primaryAccountEntrySet.getKey());
+                                                    LogHandler.saveLog("successfully logged out from "+
+                                                            entry);
+                                                    break;
                                                 }
                                             }
 
@@ -335,8 +380,12 @@
                                             for (Map.Entry<String, BackUpAccountInfo> backUpAccountEntrySet :
                                                     backUpAccountHashMap.entrySet()) {
                                                 if (backUpAccountEntrySet.getKey().equals(buttonText)) {
+                                                    String entry = backUpAccountEntrySet.getKey();
                                                     backUpAccountHashMap.remove(
                                                             backUpAccountEntrySet.getKey());
+                                                    LogHandler.saveLog("successfully logged out from "+
+                                                            entry);
+                                                    break;
                                                 }
                                             }
 
