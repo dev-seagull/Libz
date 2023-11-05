@@ -58,7 +58,7 @@ public class Upload {
         ArrayList<String> finalUploadFileIDs = uploadFileIDs;
         Callable<ArrayList<String>> uploadTask = () -> {
             try {
-                String destinationFolderPath = Environment.getExternalStorageDirectory().getPath()
+                String destinationFolderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()
                         + File.separator + "cso";
                 File destinationFolder = new File(destinationFolderPath);
 

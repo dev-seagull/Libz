@@ -1,5 +1,7 @@
 package com.example.cso;
 
+import android.app.Activity;
+import android.app.Application;
 import android.os.Environment;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -18,13 +20,13 @@ import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class LogHandler {
-    private static final String LOG_FILE_NAME = "cso_log.txt";
-    private static final String LOG_DIR = Environment.getExternalStorageDirectory().getPath() + File.separator + "cso";
 
-    public static void CreateLogFile() {
+public class LogHandler extends Application {
+    static String LOG_DIR_PATH = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator + "cso";
+
+    public static void CreateLogFile(Activity activity) {
         try {
-            File logDir = new File(LOG_DIR);
+            File logDir = new File(LOG_DIR_PATH);
             if (!logDir.exists()) {
                 if (logDir.mkdirs()) {
                     System.out.println("Log directory created");
@@ -34,7 +36,7 @@ public class LogHandler {
             } else {
                 System.out.println("Directory for log is exists");
             }
-            File logFile = new File(logDir, LOG_FILE_NAME);
+            File logFile = new File(logDir + "log.txt");
             if (logFile.exists()) {
                 System.out.println("Log directory was created with the path of " + logFile.getPath());
             } else {
@@ -47,8 +49,8 @@ public class LogHandler {
     }
 
     public static void saveLog(String text) {
-        File logDir = new File(LOG_DIR);
-        File logFile = new File(logDir, LOG_FILE_NAME);
+        File logDir = new File(LOG_DIR_PATH);
+        File logFile = new File(logDir, "LOG_FILE_NAME.TXT");
         try (FileWriter fileWriter = new FileWriter(logFile, true);
              BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -85,7 +87,7 @@ public class LogHandler {
                     .build();
 //            SaveLog("Uploading log file to backup drive");
             System.out.println("save last log into log file");
-            String filePath = LOG_DIR + "/" +LOG_FILE_NAME;
+            String filePath = LOG_DIR_PATH + "/" +"LOG_FILE_NAME";
             File file = new File(filePath);
             com.google.api.services.drive.model.File fileMetadata =
                     new com.google.api.services.drive.model.File();
