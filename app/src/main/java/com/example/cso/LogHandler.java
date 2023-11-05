@@ -2,9 +2,6 @@ package com.example.cso;
 
 import android.os.Environment;
 
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.FileContent;
 import com.google.api.client.http.HttpRequestInitializer;
@@ -12,17 +9,18 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
+
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.BufferedWriter;
 import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class LogHandler {
     private static final String LOG_FILE_NAME = "cso_log.txt";
-    private static final String LOG_DIR = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
+    private static final String LOG_DIR = Environment.getExternalStorageDirectory().getPath() + File.separator + "cso";
 
     public static void CreateLogFile() {
         try {
@@ -36,19 +34,13 @@ public class LogHandler {
             } else {
                 System.out.println("Directory for log is exists");
             }
-            System.out.println("log dir is @@@@@@@ " + logDir.getPath());
-//        } catch (Exception e) {
-//            System.out.println("error in creating log directory " + e.getLocalizedMessage());
-//        }
-//        try{
             File logFile = new File(logDir, LOG_FILE_NAME);
             if (logFile.exists()) {
-                System.out.println("can create " + logFile.getPath());
+                System.out.println("Log directory was created with the path of " + logFile.getPath());
             } else {
-                System.out.println("cant create " + logFile.getPath());
                 File newLogFile = new File(logFile.getPath());
+                System.out.println("Created log file with the path of: " + newLogFile.getPath());;
             }
-            System.out.println("log file is @@@@@@ " + logFile.getPath());
         } catch (Exception e) {
             System.out.println("error in creating log file in existing directory" + e.getLocalizedMessage());
         }

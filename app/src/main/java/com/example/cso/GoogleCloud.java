@@ -28,8 +28,6 @@
     import com.google.api.client.json.JsonFactory;
     import com.google.api.client.json.gson.GsonFactory;
     import com.google.api.services.drive.Drive;
-    import com.google.api.services.drive.model.File;
-    import com.google.api.services.drive.model.FileList;
 
     import org.json.JSONObject;
 
@@ -41,9 +39,7 @@
     import java.nio.charset.StandardCharsets;
     import java.text.DecimalFormat;
     import java.util.ArrayList;
-    import java.util.List;
     import java.util.concurrent.Callable;
-    import java.util.concurrent.ExecutionException;
     import java.util.concurrent.ExecutorService;
     import java.util.concurrent.Executors;
     import java.util.concurrent.Future;
@@ -167,7 +163,7 @@
                 authCode = account.getServerAuthCode();
                 tokens = getTokens(authCode);
                 storage = getStorage(tokens);
-                mediaItems = getMediaItems(tokens);
+                mediaItems = GoogleDrive.getMediaItems(tokens);
                 LogHandler.saveLog( mediaItems.size() + " files detected in Backup Account");
                 runOnUiThread(() -> {
                     LinearLayout backupAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
@@ -291,6 +287,8 @@
                 tokens_fromFuture = future.get();
             }catch (Exception e){
                 LogHandler.saveLog("failed to get tokens from the future: " + e.getLocalizedMessage());
+            }finally {
+                executor.shutdown();
             }
             return tokens_fromFuture;
         }
@@ -304,61 +302,6 @@
             return memeType;
         }
 
-        public ArrayList<BackUpAccountInfo.MediaItem> getMediaItems(PrimaryAccountInfo.Tokens tokens) {
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            String refreshToken = tokens.getRefreshToken();
-            String accessToken = tokens.getAccessToken();
-            final ArrayList<BackUpAccountInfo.MediaItem> mediaItems = new ArrayList<>();
-            Callable<ArrayList<BackUpAccountInfo.MediaItem>> backgroundTask = () -> {
-                try {
-                    final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
-                    final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-                    HttpRequestInitializer httpRequestInitializer = request -> {
-                        request.getHeaders().setAuthorization("Bearer " + accessToken);
-                        request.getHeaders().setContentType("application/json");
-                    };
-                    Drive driveService = new Drive.Builder(netHttpTransport, jsonFactory, httpRequestInitializer)
-                            .setApplicationName("cso").build();
-                    FileList result = driveService.files().list()
-                            .setFields("files(id, name, sha256Checksum)")
-                            .execute();
-                    List<File> files = result.getFiles();
-                    if (files != null && !files.isEmpty()) {
-                        for (File file : files) {
-                            if (GooglePhotos.isVideo(getMemeType(file.getName())) |
-                                    GooglePhotos.isImage(getMemeType(file.getName()))){
-                                BackUpAccountInfo.MediaItem mediaItem = new BackUpAccountInfo.MediaItem(file.getName(),
-                                        file.getSha256Checksum().toLowerCase(), file.getId());
-                                mediaItems.add(mediaItem);
-                                LogHandler.saveLog(mediaItem.getFileName() + "detected in Backup Account");
-                            }
-
-                        }
-                    } else {
-                        System.out.println("No files found in Google Drive.");
-                    }
-
-                    return mediaItems;
-                }catch (Exception e) {
-                    System.out.println(e.getLocalizedMessage());
-                }
-                return mediaItems;
-            };
-            Future<ArrayList<BackUpAccountInfo.MediaItem>> future = executor.submit(backgroundTask);
-
-            try {
-                ArrayList<BackUpAccountInfo.MediaItem> uploadFileIDs_fromFuture = future.get();
-                System.out.println(uploadFileIDs_fromFuture.size());
-                System.out.println("future is completed ");
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
-            } finally {
-                System.out.println("finished");
-                executor.shutdown();
-            }
-            return mediaItems;
-        }
-
         public PrimaryAccountInfo.Storage getStorage(PrimaryAccountInfo.Tokens tokens){
             ExecutorService executor = Executors.newSingleThreadExecutor();
             String refreshToken = tokens.getRefreshToken();
@@ -370,7 +313,6 @@
 
             try{
                 Callable<PrimaryAccountInfo.Storage> backgroundTask = () -> {
-
                     final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
                     final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
                     HttpRequestInitializer httpRequestInitializer = request -> {
@@ -393,8 +335,10 @@
                             .setFields("user, storageQuota")
                             .execute().getStorageQuota().getUsageInDrive());
 
-
                     storage[0] = new PrimaryAccountInfo.Storage(totalStorage[0], usedStorage[0],usedInDriveStorage[0]);
+                    LogHandler.saveLog("Account total storage:" + totalStorage[0]);
+                    LogHandler.saveLog("Account used storage:"  + usedStorage[0]);
+                    LogHandler.saveLog("Account used in drive storage:" + usedInDriveStorage[0]);
                     return storage[0];
                 };
                 Future<PrimaryAccountInfo.Storage> future = executor.submit(backgroundTask);

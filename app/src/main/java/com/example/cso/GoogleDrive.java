@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,6 +47,59 @@ public class GoogleDrive {
         public Long getVideoDuration() {return videoDuration;}
         public String getMediaItemHash() {return mediaItemHash;}
     }
+
+
+    public static ArrayList<BackUpAccountInfo.MediaItem> getMediaItems(PrimaryAccountInfo.Tokens tokens) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        String refreshToken = tokens.getRefreshToken();
+        String accessToken = tokens.getAccessToken();
+        final ArrayList<BackUpAccountInfo.MediaItem> mediaItems = new ArrayList<>();
+        Callable<ArrayList<BackUpAccountInfo.MediaItem>> backgroundTask = () -> {
+            try {
+                final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
+                final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+                HttpRequestInitializer httpRequestInitializer = request -> {
+                    request.getHeaders().setAuthorization("Bearer " + accessToken);
+                    request.getHeaders().setContentType("application/json");
+                };
+                Drive driveService = new Drive.Builder(netHttpTransport, jsonFactory, httpRequestInitializer)
+                        .setApplicationName("cso").build();
+                FileList result = driveService.files().list()
+                        .setFields("files(id, name, sha256Checksum)")
+                        .execute();
+                List<File> files = result.getFiles();
+                if (files != null && !files.isEmpty()) {
+                    for (File file : files) {
+                        if (GooglePhotos.isVideo(GoogleCloud.getMemeType(file.getName())) |
+                                GooglePhotos.isImage(GoogleCloud.getMemeType(file.getName()))){
+                            BackUpAccountInfo.MediaItem mediaItem = new BackUpAccountInfo.MediaItem(file.getName(),
+                                    file.getSha256Checksum().toLowerCase(), file.getId());
+                            mediaItems.add(mediaItem);
+                        }
+                    }
+                    LogHandler.saveLog( mediaItems.size() + " files were found in Google Drive back up account");
+                } else {
+                    LogHandler.saveLog("No file was found in Google Drive back up account");
+                }
+                return mediaItems;
+            }catch (Exception e) {
+                System.out.println(e.getLocalizedMessage());
+                LogHandler.saveLog("Error when trying to get files from google drive: " + e.getLocalizedMessage());
+            }
+            return mediaItems;
+        };
+        Future<ArrayList<BackUpAccountInfo.MediaItem>> future = executor.submit(backgroundTask);
+        ArrayList<BackUpAccountInfo.MediaItem> uploadFileIDs_fromFuture = null;
+        try {
+            uploadFileIDs_fromFuture = future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            LogHandler.saveLog("Error when trying to get drive files from future: " + e.getLocalizedMessage());
+        } finally {
+            executor.shutdown();
+        }
+        return uploadFileIDs_fromFuture;
+    }
+
 
     public static void deleteDuplicatedMediaItems (ArrayList<BackUpAccountInfo.MediaItem> mediaItems, PrimaryAccountInfo.Tokens tokens){
         HashSet<String> mediaItemsHash = new HashSet<>();

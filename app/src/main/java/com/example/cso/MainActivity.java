@@ -58,6 +58,8 @@
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
 
+            LogHandler.CreateLogFile();
+
             drawerLayout = findViewById(R.id.drawer_layout);
             NavigationView navigationView = findViewById(R.id.navigationView);
             ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
@@ -95,11 +97,9 @@
             try{
                 googleCloud = new GoogleCloud(this);
                 googlePhotos = new GooglePhotos();
-                android = new Android(androidMediaItems);
             }catch (Exception e){
                 LogHandler.saveLog("failed to initialize the classes: " + e.getLocalizedMessage());
             }
-            LogHandler.CreateLogFile();
 
             LogHandler.saveLog("Starting to get files from you android device");
             ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -114,7 +114,6 @@
                 LogHandler.saveLog("failed to get android files: " + e.getLocalizedMessage());
             }
             executor.shutdown();
-            android = new Android(androidMediaItems);
 
             signInToPrimaryLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -122,9 +121,7 @@
                         LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
                         final View[] childview = {primaryAccountsButtonsLinearLayout.getChildAt(
                                 primaryAccountsButtonsLinearLayout.getChildCount() - 1)};
-                        runOnUiThread(() -> {
-                            childview[0].setClickable(false);
-                        });
+                        runOnUiThread(() -> childview[0].setClickable(false));
 
                         Executor signInExecutor = Executors.newSingleThreadExecutor();
                         try {
@@ -148,9 +145,7 @@
                                 });
                             };
                             signInExecutor.execute(backgroundTask);
-                            runOnUiThread(() -> {
-                                childview[0].setClickable(true);
-                            });
+                            runOnUiThread(() -> childview[0].setClickable(true));
                         }catch (Exception e){
                             LogHandler.saveLog("Failed to sign in to primary : "  + e.getLocalizedMessage());
                         }
@@ -177,9 +172,7 @@
                         LinearLayout backupAccountsButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
                         final View[] childview = {backupAccountsButtonsLinearLayout.getChildAt(
                                 backupAccountsButtonsLinearLayout.getChildCount() - 1)};
-                        runOnUiThread(() -> {
-                            childview[0].setClickable(false);
-                        });
+                        runOnUiThread(() -> childview[0].setClickable(false));
 
 
                         Executor signInToBackupExecutor = Executors.newSingleThreadExecutor();
@@ -201,9 +194,7 @@
                                 });
                             };
                             signInToBackupExecutor.execute(backgroundTask);
-                            runOnUiThread(() -> {
-                                childview[0].setClickable(true);
-                            });
+                            runOnUiThread(() -> childview[0].setClickable(true));
                         }catch (Exception e){
                             LogHandler.saveLog("Failed to sign in to backup : "  + e.getLocalizedMessage());
                         }
@@ -243,7 +234,8 @@
                         for (PrimaryAccountInfo primaryAccountInfo : primaryAccountHashMap.values()) {
                             ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems = firstBackUpAccountInfo.getMediaItems();
                             ArrayList<GooglePhotos.MediaItem> mediaItems = primaryAccountInfo.getMediaItems();
-                            googlePhotos.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken
+                            Upload upload = new Upload();
+                            upload.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken
                                     ,backUpMediaItems);
                         }
                     });

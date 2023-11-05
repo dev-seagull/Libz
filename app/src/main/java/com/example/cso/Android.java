@@ -72,13 +72,13 @@ public class Android {
                    File androidFile = new File(mediaItemPath);
                    if(androidFile.exists()){
                        androidMediaItems.add(androidMediaItem);
+                       LogHandler.saveLog("File was detected in android device: " + androidFile.getName());
                    }
-                   //LogHandler.SaveLog( androidFile.getName() + "detected in " + androidFile.getPath());
                }
                cursor.close();
            }
        }catch (Exception e){
-            LogHandler.saveLog("failed to get gallery files: " + e.getLocalizedMessage());
+            LogHandler.saveLog("Failed to get gallery files: " + e.getLocalizedMessage());
        }
 
         try{
@@ -127,8 +127,8 @@ public class Android {
                                         null, "", mediaItemSize, mediaItemMemeType);
                                 if(mediaItemFile.exists()){
                                     androidMediaItems.add(androidMediaItem);
+                                    LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName());
                                 }
-                                //LogHandler.SaveLog(mediaItemName + " detected in " + mediaItemPath);
                             }
                         }
                     } else if(currentFile.isDirectory()){
@@ -140,7 +140,7 @@ public class Android {
         return androidMediaItems;
     }
 
-    public Android(ArrayList<MediaItem> mediaItems){
+    public Android(){
         this.mediaItems = mediaItems;
     }
 
