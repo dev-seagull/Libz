@@ -223,6 +223,10 @@ public class Upload {
                                     mediaContent = new FileContent("video/" + memeType.toLowerCase() ,
                                             new File(destinationFolderFilePath));
                                 }
+                            }else if(destinationFolderFile.getName().equals("log.txt")){
+                                String destinationFolderFilePath = destinationFolderFile.getPath();
+                                mediaContent = new FileContent("text/plain" ,
+                                        new File(destinationFolderFilePath));
                             }
                             if(mediaContent == null){
                                 LogHandler.saveLog("You're trying to upload mediaContent of null for "
