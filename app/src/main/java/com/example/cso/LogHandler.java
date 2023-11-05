@@ -24,7 +24,7 @@ import java.util.Date;
 public class LogHandler extends Application {
     static String LOG_DIR_PATH = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator + "cso";
 
-    public static void CreateLogFile(Activity activity) {
+    public static void CreateLogFile() {
         try {
             File logDir = new File(LOG_DIR_PATH);
             if (!logDir.exists()) {

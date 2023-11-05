@@ -58,7 +58,7 @@
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
 
-            LogHandler.CreateLogFile(this);
+            LogHandler.CreateLogFile();
 
             drawerLayout = findViewById(R.id.drawer_layout);
             NavigationView navigationView = findViewById(R.id.navigationView);
