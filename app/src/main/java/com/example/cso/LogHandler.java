@@ -1,6 +1,5 @@
 package com.example.cso;
 
-import android.app.Activity;
 import android.app.Application;
 import android.os.Environment;
 
@@ -14,8 +13,10 @@ import com.google.api.services.drive.Drive;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -28,21 +29,46 @@ public class LogHandler extends Application {
         try {
             File logDir = new File(LOG_DIR_PATH);
             if (!logDir.exists()) {
-                if (logDir.mkdirs()) {
-                    System.out.println("Log directory created");
-                } else {
-                    System.err.println("Failed to create the log directory");
-                }
+                boolean isCreated = logDir.mkdir();
+                System.out.println("Log directory status : " + isCreated);
             } else {
                 System.out.println("Directory for log is exists");
             }
-            File logFile = new File(logDir + "log.txt");
-            if (logFile.exists()) {
-                System.out.println("Log directory was created with the path of " + logFile.getPath());
-            } else {
-                File newLogFile = new File(logFile.getPath());
-                System.out.println("Created log file with the path of: " + newLogFile.getPath());;
+
+
+            File logFile = new File(logDir,"log.txt");
+            logFile.createNewFile();
+            byte[] data1={1,1,0,0};
+            if(logFile.exists())
+            {
+                OutputStream fo = new FileOutputStream(logFile);
+                fo.write(data1);
+                fo.close();
+                System.out.println("file created: "+ logFile + " and path is " + logFile.getPath());
             }
+            else
+            {
+                System.out.println("file not created");
+            }
+
+//            File logFile = new File(logDir,"log.txt");
+//            File logFile = new File(logDir, "log.txt");
+//            File logFile = new File(logDir, "log.txt");
+//            File logFile = new File(logDir, "log.txt");
+//            boolean isCreatedLogFile = logFile.createNewFile();
+//            System.out.println("Log file status : " + isCreatedLogFile);
+//            if (logFile.exists()) {
+//                System.out.println("Log directory was created with the path of " + logFile.getPath());
+//            } else {
+//                File newLogFile = new File(logFile.getPath());
+//                try{
+//                    System.out.println("Creating log file in new directory in try block");
+//                    newLogFile.createNewFile();
+//                } catch (IOException e) {
+//                    System.out.println("error in creating log file in new directory (createnewfile func)" + e.getLocalizedMessage());
+//                }
+//                System.out.println("Created log file with the path of: " + newLogFile.getPath());
+//            }
         } catch (Exception e) {
             System.out.println("error in creating log file in existing directory" + e.getLocalizedMessage());
         }
@@ -50,7 +76,7 @@ public class LogHandler extends Application {
 
     public static void saveLog(String text) {
         File logDir = new File(LOG_DIR_PATH);
-        File logFile = new File(logDir, "LOG_FILE_NAME.TXT");
+        File logFile = new File(logDir + File.separator + "log.txt");
         try (FileWriter fileWriter = new FileWriter(logFile, true);
              BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -103,4 +129,6 @@ public class LogHandler extends Application {
         }
         System.out.println("lets delete log file");
     }
+
+
 }

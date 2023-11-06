@@ -1,6 +1,8 @@
     package com.example.cso;
 
+    import android.Manifest;
     import android.content.Intent;
+    import android.content.pm.PackageManager;
     import android.os.Build;
     import android.os.Bundle;
     import android.text.Layout;
@@ -21,6 +23,8 @@
     import androidx.appcompat.app.ActionBarDrawerToggle;
     import androidx.appcompat.app.AppCompatActivity;
     import androidx.appcompat.widget.AppCompatButton;
+    import androidx.core.app.ActivityCompat;
+    import androidx.core.content.ContextCompat;
     import androidx.core.view.GravityCompat;
     import androidx.drawerlayout.widget.DrawerLayout;
 
@@ -49,7 +53,6 @@
         HashMap<String, PrimaryAccountInfo> primaryAccountHashMap = new HashMap<>();
         HashMap<String, BackUpAccountInfo> backUpAccountHashMap = new HashMap<>();
         ArrayList<Android.MediaItem> androidMediaItems = new ArrayList<>();
-        Android android;
         String androidDeviceName;
 
 
@@ -57,7 +60,6 @@
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
-
             LogHandler.CreateLogFile();
 
             drawerLayout = findViewById(R.id.drawer_layout);
@@ -104,6 +106,7 @@
             LogHandler.saveLog("Starting to get files from you android device");
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<ArrayList<Android.MediaItem>> androidBackgroundTask = () -> {
+                Android android = new Android();
                 androidMediaItems = android.getGalleryMediaItems(MainActivity.this);
                 return androidMediaItems;
             };
