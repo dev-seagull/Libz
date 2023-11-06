@@ -115,7 +115,6 @@ public class Upload {
                         }
                         String fileName = fileNames.get(i);
                         String filePath = destinationFolder + File.separator + fileName;
-                        System.out.println("file name : "+ fileName + " file path :" + filePath);
                         OutputStream outputStream = null;
                         try {
                             file[0] = new File(filePath);
