@@ -5,6 +5,7 @@
     import android.content.pm.PackageManager;
     import android.os.Build;
     import android.os.Bundle;
+    import android.os.Environment;
     import android.text.Layout;
     import android.text.Spannable;
     import android.text.SpannableString;
@@ -31,6 +32,7 @@
     import com.google.android.material.navigation.NavigationView;
     import com.jaredrummler.android.device.DeviceName;
 
+    import java.io.File;
     import java.util.ArrayList;
     import java.util.HashMap;
     import java.util.Map;
@@ -54,14 +56,13 @@
         HashMap<String, BackUpAccountInfo> backUpAccountHashMap = new HashMap<>();
         ArrayList<Android.MediaItem> androidMediaItems = new ArrayList<>();
         String androidDeviceName;
+        public static String logFileName ;
 
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
-            LogHandler.CreateLogFile();
-
             drawerLayout = findViewById(R.id.drawer_layout);
             NavigationView navigationView = findViewById(R.id.navigationView);
             ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
@@ -87,6 +88,7 @@
             googleCloud = new GoogleCloud(this);
             googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
             googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
+            logFileName = LogHandler.CreateLogFile(this);
         }
 
 
@@ -95,7 +97,6 @@
             super.onStart();
 
             runOnUiThread(this::updateButtonsListeners);
-
             try{
                 googleCloud = new GoogleCloud(this);
                 googlePhotos = new GooglePhotos();
@@ -395,6 +396,35 @@
                 }
             }
         }
+
+    @Override
+    protected void onDestroy() {
+        System.out.println("on destroy");
+        super.onDestroy();
+        System.out.println("on destroy 1 ");
+        String destinationFolderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()
+                + File.separator + "cso";
+        System.out.println("on destroy 2 ");
+        File destinationFolder = new File(destinationFolderPath);
+        System.out.println("on destroy  2.5 ");
+        if (destinationFolder.exists()) {
+            System.out.println("on destroy 2.6 ");
+            File[] destinationFolderFiles = destinationFolder.listFiles();
+            System.out.println("on destroy 2.7 ");
+            if (destinationFolderFiles != null) {
+                System.out.println("on destroy 2.8 ");
+                for (File destinationFolderFile : destinationFolderFiles) {
+                    System.out.println("on destroy 2.9 ");
+                    destinationFolderFile.delete();
+                }
+            }
+        }
+        System.out.println("on destroy 3 ");
+        destinationFolder.delete();
+        System.out.println("deleted the folder");
+    }
+
+
     }
 
 

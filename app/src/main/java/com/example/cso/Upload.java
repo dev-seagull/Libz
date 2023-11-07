@@ -159,18 +159,15 @@ public class Upload {
         File[] destinationFolderFiles = destinationFolder.listFiles();
         if (destinationFolderFiles != null) {
             for (File destinationFolderFile: destinationFolderFiles) {
-                destinationFolderFile.delete();
+                if (!destinationFolderFile.getName().equals(MainActivity.logFileName)){
+                    destinationFolderFile.delete();
+                }
             }
         }else{
             LogHandler.saveLog("Destination folder is null when trying to delete its content");
         }
-        if(destinationFolder.exists()){
-            destinationFolder.delete();
-            LogHandler.saveLog("Destination folder was deleted after the uploading process is finished");
-        }else{
-            LogHandler.saveLog("The destination folder doesn't exist to delete");
-        }
     }
+
 
     public ArrayList<String> uploadToDrive(File[] destinationFolderFiles, ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems,
                               String accessToken, ArrayList<String> uploadFileIds){
