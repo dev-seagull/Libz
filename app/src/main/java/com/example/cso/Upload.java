@@ -31,19 +31,8 @@ import java.util.concurrent.Future;
 
 public class Upload {
     public ArrayList<String> uploadPhotosToGoogleDrive(ArrayList<GooglePhotos.MediaItem> mediaItems, String accessToken,
-                                                       ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems) {
-        LogHandler.saveLog("Starting to upload from Photos to Drive");
-        LocalTime currentTime;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            currentTime = LocalTime.now();
-        } else {
-            currentTime = null;
-        }
-        if (currentTime != null) {
-            LogHandler.saveLog("Uploading from Photos to Drive started in " + currentTime);
-        }else{
-            LogHandler.saveLog("Current time is null");
-        }
+                                                       ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems,String primaryUserEmail,String backupUserEmail) {
+        LogHandler.saveLog("Starting to upload from Photos("+primaryUserEmail+ ") to Drive("+backupUserEmail+")",false);
 
         final File[] file = new File[1];
         ArrayList<String> baseUrls = new ArrayList<>();
@@ -67,18 +56,18 @@ public class Upload {
                 File[] destinationFolderFiles = destinationFolder.listFiles();
 
                 int i = 0;
-                LogHandler.saveLog("Stated to calculate hash before uploading from Photos to Drive at " + currentTime);
+                LogHandler.saveLog("Started to calculate hash before uploading from Photos to Drive " ,false);
                 for(File destinationFolderFile: destinationFolderFiles) {
                     String hash = calculateHash(destinationFolderFile).toLowerCase();
                     mediaItems.get(i).setHash(hash);
                     i++;
                 }
-                LogHandler.saveLog("Finished calculating hash before uploading from Photos to Drive at " + currentTime);
+                LogHandler.saveLog("Finished calculating hash before uploading from Photos to Drive " ,false);
 
                 uploadToDrive(destinationFolderFiles, backUpMediaItems, accessToken, finalUploadFileIDs);
 
                 deleteDestinationFolder(destinationFolder);
-                LogHandler.saveLog("End of uploading from Photos to Drive: " + currentTime);
+                LogHandler.saveLog("End of uploading from Photos to Drive " ,false);
             }catch (Exception e) {
                 LogHandler.saveLog("Failed to upload from Photos to Drive: " + e.getLocalizedMessage());
             }
@@ -98,6 +87,7 @@ public class Upload {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final boolean[] isFinished = {false};
         Callable<Boolean> backgroundDownloadTask = () -> {
+            System.out.println("number of base urls" +baseUrls.size() +"number of filenames :" +fileNames.size());
             int i = 0;
             for(String baseUrl: baseUrls){
                 try {
@@ -107,6 +97,7 @@ public class Upload {
                     int responseCode = connection.getResponseCode();
                     if (responseCode == HttpURLConnection.HTTP_OK) {
                         InputStream inputStream = new BufferedInputStream(connection.getInputStream());
+                        LogHandler.saveLog( "downloaded to CSO folder : " + fileNames.get(i),false);
                         if (!destinationFolder.exists()) {
                             boolean isFolderCreated = destinationFolder.mkdirs();
                             if (!isFolderCreated) {
@@ -143,6 +134,7 @@ public class Upload {
                 } catch (IOException e) {
                     LogHandler.saveLog("Downloading from Photos failed: " + e.getLocalizedMessage());
                 }
+                i++;
             }
             return isFinished[0];
         };
@@ -161,6 +153,7 @@ public class Upload {
             for (File destinationFolderFile: destinationFolderFiles) {
                 if (!destinationFolderFile.getName().equals(MainActivity.logFileName)){
                     destinationFolderFile.delete();
+                    LogHandler.saveLog(destinationFolderFile.getName() + " deleted from CSO folder",false);
                 }
             }
         }else{
@@ -173,6 +166,7 @@ public class Upload {
                               String accessToken, ArrayList<String> uploadFileIds){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         ArrayList<String> finalUploadFileIds = uploadFileIds;
+        final FileContent[] mediaContent = {null};
         Callable<ArrayList<String>> backgroundTaskUpload = () -> {
             if(destinationFolderFiles != null) {
                 for (File destinationFolderFile : destinationFolderFiles) {
@@ -200,31 +194,28 @@ public class Upload {
                             com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
                             fileMetadata.setName(destinationFolderFile.getName());
                             String memeType = GooglePhotos.getMemeType(destinationFolderFile);
-                            FileContent mediaContent = null;
                             if(GooglePhotos.isImage(memeType)){
                                 String destinationFolderFilePath = destinationFolderFile.getPath();
                                 if(memeType.toLowerCase().endsWith("jpg")){
-                                    mediaContent = new FileContent("image/jpeg" ,
+                                    mediaContent[0] = new FileContent("image/jpeg" ,
                                             new File(destinationFolderFilePath));
                                 }else{
-                                    mediaContent = new FileContent("image/" + memeType.toLowerCase() ,
+                                    mediaContent[0] = new FileContent("image/" + memeType.toLowerCase() ,
                                             new File(destinationFolderFilePath));
                                 }
                             }else if(GooglePhotos.isVideo(memeType)){
                                 String destinationFolderFilePath = destinationFolderFile.getPath();
                                 if(memeType.toLowerCase().endsWith("mkv")){
-                                    mediaContent = new FileContent("video/x-matroska" ,
+                                    mediaContent[0] = new FileContent("video/x-matroska" ,
                                             new File(destinationFolderFilePath));
                                 }else{
-                                    mediaContent = new FileContent("video/" + memeType.toLowerCase() ,
+                                    mediaContent[0] = new FileContent("video/" + memeType.toLowerCase() ,
                                             new File(destinationFolderFilePath));
                                 }
-                            }else if(destinationFolderFile.getName().equals("log.txt")){
-                                String destinationFolderFilePath = destinationFolderFile.getPath();
-                                mediaContent = new FileContent("text/plain" ,
-                                        new File(destinationFolderFilePath));
+                            }else{
+                                continue;
                             }
-                            if(mediaContent == null){
+                            if(mediaContent[0] == null){
                                 LogHandler.saveLog("You're trying to upload mediaContent of null for "
                                         + destinationFolderFile.getName());
                             }
@@ -234,7 +225,7 @@ public class Upload {
                             com.google.api.services.drive.model.File uploadFile =
                                     null;
                             if (service != null) {
-                                uploadFile = service.files().create(fileMetadata, mediaContent).setFields("id").execute();
+                                uploadFile = service.files().create(fileMetadata, mediaContent[0]).setFields("id").execute();
                             }else{
                                 LogHandler.saveLog("Drive service is null");
                             }
@@ -244,7 +235,7 @@ public class Upload {
                             }
                             finalUploadFileIds.add(uploadFileId);
                             LogHandler.saveLog("Uploading " + destinationFolderFile.getName()
-                                    + " to Drive backup account uploadId finished with FileId: " + uploadFileId);
+                                    + " to backup account finished with uploadFileId: " + uploadFileId,false);
                             //test[0]--;
                             //}
                         }catch (Exception e) {

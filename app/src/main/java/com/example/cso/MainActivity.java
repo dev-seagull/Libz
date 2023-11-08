@@ -88,7 +88,7 @@
             googleCloud = new GoogleCloud(this);
             googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
             googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
-            logFileName = LogHandler.CreateLogFile(this);
+            logFileName = LogHandler.CreateLogFile();
         }
 
 
@@ -104,7 +104,7 @@
                 LogHandler.saveLog("failed to initialize the classes: " + e.getLocalizedMessage());
             }
 
-            LogHandler.saveLog("Starting to get files from you android device");
+            LogHandler.saveLog("Starting to get files from you android device",false);
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<ArrayList<Android.MediaItem>> androidBackgroundTask = () -> {
                 Android android = new Android();
@@ -133,14 +133,14 @@
                                 PrimaryAccountInfo primaryAccountInfo = googleCloud.handleSignInToPrimaryResult(result.getData());
                                 String userEmail = primaryAccountInfo.getUserEmail();
                                 primaryAccountHashMap.put(primaryAccountInfo.getUserEmail(), primaryAccountInfo);
-                                LogHandler.saveLog("Number of primary accounts :" + primaryAccountHashMap.size());
+                                LogHandler.saveLog("Number of primary accounts : " + primaryAccountHashMap.size(),false);
 
 
                                 runOnUiThread(() -> {
                                     childview[0] = primaryAccountsButtonsLinearLayout.getChildAt(
                                             primaryAccountsButtonsLinearLayout.getChildCount() - 2);
 
-                                    LogHandler.saveLog(userEmail +  " has logged in to the primary account");
+                                    LogHandler.saveLog(userEmail +  " has logged in to the primary account",false);
                                      if(childview[0] instanceof Button){
                                             Button bt = (Button) childview[0];
                                             bt.setText(userEmail);
@@ -185,9 +185,9 @@
                                 BackUpAccountInfo backUpAccountInfo = googleCloud.handleSignInToBackupResult(result.getData());
                                 String userEmail = backUpAccountInfo.getUserEmail();
                                 backUpAccountHashMap.put(backUpAccountInfo.getUserEmail(),backUpAccountInfo);
-                                LogHandler.saveLog("Number of backup accounts :" + backUpAccountHashMap.size());
+                                LogHandler.saveLog("Number of backup accounts : " + backUpAccountHashMap.size(),false);
                                 runOnUiThread(() -> {
-                                    LogHandler.saveLog(userEmail +  " has logged in to the backup account");
+                                    LogHandler.saveLog(userEmail +  " has logged in to the backup account",false);
                                     childview[0] = backupAccountsButtonsLinearLayout.getChildAt(
                                                 backupAccountsButtonsLinearLayout.getChildCount() - 2);
                                     if(childview[0] instanceof Button){
@@ -239,8 +239,9 @@
                             ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems = firstBackUpAccountInfo.getMediaItems();
                             ArrayList<GooglePhotos.MediaItem> mediaItems = primaryAccountInfo.getMediaItems();
                             Upload upload = new Upload();
+
                             upload.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken
-                                    ,backUpMediaItems);
+                                    ,backUpMediaItems,primaryAccountInfo.getUserEmail(),firstBackUpAccountInfo.getUserEmail());
                         }
                     });
 
@@ -270,6 +271,7 @@
                             syncToBackUpAccountTextView.setText("Uploading process is finished");
                         });
                     });
+
                     driveBackUpThread.start();
                     photosUploadThread.start();
                     androidUploadThread.start();
@@ -334,7 +336,8 @@
                                                     primaryAccountHashMap.remove(
                                                             primaryAccountEntrySet.getKey());
                                                     LogHandler.saveLog("successfully logged out from "+
-                                                            entry);
+                                                            entry + " in primary accounts",false);
+                                                    LogHandler.saveLog("Number of primary accounts : " + primaryAccountHashMap.size(),false);
                                                     break;
                                                 }
                                             }
@@ -380,7 +383,8 @@
                                                     backUpAccountHashMap.remove(
                                                             backUpAccountEntrySet.getKey());
                                                     LogHandler.saveLog("successfully logged out from "+
-                                                            entry);
+                                                            entry + " in backup accounts",false);
+                                                    LogHandler.saveLog("Number of backup accounts : " + backUpAccountHashMap.size(),false);
                                                     break;
                                                 }
                                             }
@@ -396,35 +400,6 @@
                 }
             }
         }
-
-    @Override
-    protected void onDestroy() {
-        System.out.println("on destroy");
-        super.onDestroy();
-        System.out.println("on destroy 1 ");
-        String destinationFolderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()
-                + File.separator + "cso";
-        System.out.println("on destroy 2 ");
-        File destinationFolder = new File(destinationFolderPath);
-        System.out.println("on destroy  2.5 ");
-        if (destinationFolder.exists()) {
-            System.out.println("on destroy 2.6 ");
-            File[] destinationFolderFiles = destinationFolder.listFiles();
-            System.out.println("on destroy 2.7 ");
-            if (destinationFolderFiles != null) {
-                System.out.println("on destroy 2.8 ");
-                for (File destinationFolderFile : destinationFolderFiles) {
-                    System.out.println("on destroy 2.9 ");
-                    destinationFolderFile.delete();
-                }
-            }
-        }
-        System.out.println("on destroy 3 ");
-        destinationFolder.delete();
-        System.out.println("deleted the folder");
-    }
-
-
     }
 
 
