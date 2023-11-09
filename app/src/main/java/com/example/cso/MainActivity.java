@@ -91,7 +91,6 @@
             logFileName = LogHandler.CreateLogFile();
             LogHandler.saveLog("Attention : Don't remove this file - this file makes sure that CSO app is working well.",false);
             LogHandler.saveLog("if you have any questions or problems, please contact us by : ",false);
-
         }
 
 
@@ -223,13 +222,13 @@
                     Thread driveBackUpThread = new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            runOnUiThread(() -> {
-                                while (ActivityCompat.checkSelfPermission(MainActivity.this,
-                                        android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                                    int REQUEST_CODE = 1;
-                                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE);
-                                }
-                            });
+//                            runOnUiThread(() -> {
+//                                while (ActivityCompat.checkSelfPermission(MainActivity.this,
+//                                        android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+//                                    int REQUEST_CODE = 1;
+//                                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE);
+//                                }
+//                            });
 
                             GoogleDrive.deleteDuplicatedMediaItems(backupMediaItems,backupTokens);
                             synchronized (this){

@@ -119,6 +119,8 @@ public class GoogleDrive {
                 if (mediaItemsHash.contains(hash)) {
                     try{
                         String fileId = mediaItem.getId();
+
+
 //                        final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
 //                        final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
 //                        HttpRequestInitializer httpRequestInitializer = request -> {
@@ -128,7 +130,7 @@ public class GoogleDrive {
 //                        Drive driveService = new Drive.Builder(netHttpTransport, jsonFactory, httpRequestInitializer)
 //                                .setApplicationName("cso").build();
 //                        driveService.files().delete(fileId).execute();
-                        URL url = new URL("https://www.googleapis.com/drive/v3/files/" + "sdmdlmfaslmfsv");
+                        URL url = new URL("https://www.googleapis.com/drive/v3/files/" + fileId);
                         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                         connection.setRequestMethod("DELETE");
                         connection.setRequestProperty("Content-type", "application/json");
@@ -145,7 +147,7 @@ public class GoogleDrive {
                         }
                         bufferedReader.close();
                         String response = responseStringBuilder.toString();
-                        System.out.println(response);
+                        System.out.println("response : " +response);
 
                         LogHandler.saveLog("Deleting Duplicate file in backup drive :" + mediaItem.getFileName(),false);
                     }catch (Exception e){
