@@ -52,14 +52,23 @@ public class Upload {
                 downloadFromPhotos(baseUrls, fileNames, destinationFolder);
 
                 File[] destinationFolderFiles = destinationFolder.listFiles();
+                ArrayList<File> filesToUpload = new ArrayList<>();
+                for(File destinationFolderFile: destinationFolderFiles){
+                    if(fileNames.contains(destinationFolderFile.getName())){
+                        filesToUpload.add(destinationFolderFile);
+                    }
+                }
 
-                int i = 0;
                 LogHandler.saveLog("Started to calculate hash before uploading from Photos to Drive " ,false);
-                for(File destinationFolderFile: destinationFolderFiles) {
-                    String hash = calculateHash(destinationFolderFile).toLowerCase();
+                LogHandler.saveLog("Size of filesToUpload: " + filesToUpload.size() +
+                        " " + " media items size: " + mediaItems.size(), false);
+                for(int i=0; i < mediaItems.size(); i++){
+                    File fileToUpload = filesToUpload.get(i);
+                    String hash = calculateHash(fileToUpload).toLowerCase();
                     mediaItems.get(i).setHash(hash);
                     i++;
                 }
+
                 LogHandler.saveLog("Finished calculating hash before uploading from Photos to Drive " ,false);
 
                 uploadToDrive(destinationFolderFiles, backUpMediaItems, accessToken, finalUploadFileIDs);
