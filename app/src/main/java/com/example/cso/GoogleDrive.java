@@ -12,7 +12,13 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import com.google.auth.oauth2.AccessToken;
 
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -113,19 +119,37 @@ public class GoogleDrive {
                 if (mediaItemsHash.contains(hash)) {
                     try{
                         String fileId = mediaItem.getId();
-                        final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
-                        final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-                        HttpRequestInitializer httpRequestInitializer = request -> {
-                            request.getHeaders().setAuthorization("Bearer " + accessToken);
-                            request.getHeaders().setContentType("application/json");
-                        };
-                        Drive driveService = new Drive.Builder(netHttpTransport, jsonFactory, httpRequestInitializer)
-                                .setApplicationName("cso").build();
-                        driveService.files().delete(fileId).execute();
-                        System.out.println("response of deleting from derive: ");
+//                        final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
+//                        final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+//                        HttpRequestInitializer httpRequestInitializer = request -> {
+//                            request.getHeaders().setAuthorization("Bearer " + accessToken);
+//                            request.getHeaders().setContentType("application/json");
+//                        };
+//                        Drive driveService = new Drive.Builder(netHttpTransport, jsonFactory, httpRequestInitializer)
+//                                .setApplicationName("cso").build();
+//                        driveService.files().delete(fileId).execute();
+                        URL url = new URL("https://www.googleapis.com/drive/v3/files/" + "sdmdlmfaslmfsv");
+                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                        connection.setRequestMethod("DELETE");
+                        connection.setRequestProperty("Content-type", "application/json");
+                        connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+                        int responseCode = connection.getResponseCode();
+                        System.out.println("response code of deleting: "+ responseCode);
+
+                        InputStreamReader inputStreamReader = new InputStreamReader(connection.getInputStream());
+                        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                        StringBuilder responseStringBuilder = new StringBuilder();
+                        String line;
+                        while ((line = bufferedReader.readLine()) != null) {
+                            responseStringBuilder.append(line);
+                        }
+                        bufferedReader.close();
+                        String response = responseStringBuilder.toString();
+                        System.out.println(response);
+
                         LogHandler.saveLog("Deleting Duplicate file in backup drive :" + mediaItem.getFileName(),false);
                     }catch (Exception e){
-                        System.out.println("error in deleting duplicated media items in drive " + e.getLocalizedMessage());
+                        LogHandler.saveLog("error in deleting duplicated media items in drive: " + e.getLocalizedMessage());
                     }
                 }else{
                     mediaItemsHash.add(hash);
@@ -137,9 +161,8 @@ public class GoogleDrive {
         Future<Boolean> future = executor.submit(backgroundTask);
         try{
             Boolean isDeletedFuture = future.get();
-            System.out.println("isDeletedFuture" + isDeletedFuture);
         }catch (Exception e ){
-            System.out.println("EXception :" + e.getLocalizedMessage());
+            LogHandler.saveLog("Exception when trying to delete file from drive back up: " + e.getLocalizedMessage());
         }
     }
 }
