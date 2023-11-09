@@ -47,11 +47,6 @@ public class NotificationHandler {
         builder.setContentIntent(pendingIntent);
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(activity);
-        while (ActivityCompat.checkSelfPermission(activity,
-                android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            int REQUEST_CODE = 1;
-            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE);
-        }
         notificationManager.notify(Integer.valueOf(channelId), builder.build());
     }
 }

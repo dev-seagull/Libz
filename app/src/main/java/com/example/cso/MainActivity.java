@@ -223,6 +223,14 @@
                     Thread driveBackUpThread = new Thread(new Runnable() {
                         @Override
                         public void run() {
+                            runOnUiThread(() -> {
+                                while (ActivityCompat.checkSelfPermission(MainActivity.this,
+                                        android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                                    int REQUEST_CODE = 1;
+                                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE);
+                                }
+                            });
+
                             GoogleDrive.deleteDuplicatedMediaItems(backupMediaItems,backupTokens);
                             synchronized (this){
                                 notify();
