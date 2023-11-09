@@ -89,6 +89,9 @@
             googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
             googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
             logFileName = LogHandler.CreateLogFile();
+            LogHandler.saveLog("Attention : Don't remove this file - this file makes sure that CSO app is working well.",false);
+            LogHandler.saveLog("if you have any questions or problems, please contact us by : ",false);
+
         }
 
 
