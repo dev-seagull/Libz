@@ -1,7 +1,5 @@
 package com.example.cso;
 
-import android.widget.Toast;
-
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -10,22 +8,14 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
-import com.google.auth.oauth2.AccessToken;
 
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -119,37 +109,24 @@ public class GoogleDrive {
                 if (mediaItemsHash.contains(hash)) {
                     try{
                         String fileId = mediaItem.getId();
-
-
-//                        final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
-//                        final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-//                        HttpRequestInitializer httpRequestInitializer = request -> {
-//                            request.getHeaders().setAuthorization("Bearer " + accessToken);
-//                            request.getHeaders().setContentType("application/json");
-//                        };
-//                        Drive driveService = new Drive.Builder(netHttpTransport, jsonFactory, httpRequestInitializer)
-//                                .setApplicationName("cso").build();
-//                        driveService.files().delete(fileId).execute();
                         URL url = new URL("https://www.googleapis.com/drive/v3/files/" + fileId);
-                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                        connection.setRequestMethod("DELETE");
-                        connection.setRequestProperty("Content-type", "application/json");
-                        connection.setRequestProperty("Authorization", "Bearer " + accessToken);
-                        int responseCode = connection.getResponseCode();
-                        System.out.println("response code of deleting: "+ responseCode);
 
-                        InputStreamReader inputStreamReader = new InputStreamReader(connection.getInputStream());
-                        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-                        StringBuilder responseStringBuilder = new StringBuilder();
-                        String line;
-                        while ((line = bufferedReader.readLine()) != null) {
-                            responseStringBuilder.append(line);
+                        for(int i=0; i<3; i++){
+                            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                            connection.setRequestMethod("DELETE");
+                            connection.setRequestProperty("Content-type", "application/json");
+                            connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+                            int responseCode = connection.getResponseCode();
+                            if(responseCode == HttpURLConnection.HTTP_NO_CONTENT){
+                                LogHandler.saveLog("Deleting Duplicated file in backup drive :" +
+                                        mediaItem.getFileName(),false);
+                                break;
+                            }else{
+                                LogHandler.saveLog("Retrying to delete duplicated file " + mediaItem.getFileName() +
+                                        "from Drive back up account" +
+                                        " with response code of " + responseCode);
+                            }
                         }
-                        bufferedReader.close();
-                        String response = responseStringBuilder.toString();
-                        System.out.println("response : " +response);
-
-                        LogHandler.saveLog("Deleting Duplicate file in backup drive :" + mediaItem.getFileName(),false);
                     }catch (Exception e){
                         LogHandler.saveLog("error in deleting duplicated media items in drive: " + e.getLocalizedMessage());
                     }

@@ -18,6 +18,15 @@ public class NotificationHandler {
 
     public static void sendNotification(String channelId, String channelName, Activity activity,
                                         String contentTitle, String contentText) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            while (ActivityCompat.checkSelfPermission(activity,
+                    Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                int REQUEST_CODE = 1;
+                ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE);
+            }
+        }
+
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel notificationChannel = new NotificationChannel(channelId, channelName,
                     NotificationManager.IMPORTANCE_DEFAULT);
@@ -32,8 +41,8 @@ public class NotificationHandler {
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
         Intent intent = new Intent(activity, MainActivity.class);
-        int androidVersion = android.os.Build.VERSION.SDK_INT;
-        String androidVersionName = android.os.Build.VERSION.RELEASE;
+        int androidVersion = Build.VERSION.SDK_INT;
+        String androidVersionName = Build.VERSION.RELEASE;
 
         Log.d("Android Version", "SDK Version: " + androidVersion);
         Log.d("Android Version", "Release Version: " + androidVersionName);
