@@ -22,7 +22,6 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -34,7 +33,6 @@ public class Upload {
                                                        ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems,String primaryUserEmail,String backupUserEmail) {
         LogHandler.saveLog("Starting to upload from Photos("+primaryUserEmail+ ") to Drive("+backupUserEmail+")",false);
 
-        final File[] file = new File[1];
         ArrayList<String> baseUrls = new ArrayList<>();
         ArrayList<String> uploadFileIDs = new ArrayList<>();
         ArrayList<String> fileNames = new ArrayList<>();
@@ -51,7 +49,7 @@ public class Upload {
                         + File.separator + "cso";
                 File destinationFolder = new File(destinationFolderPath);
 
-                downloadFromPhotos(baseUrls, fileNames, destinationFolder, file);
+                downloadFromPhotos(baseUrls, fileNames, destinationFolder);
 
                 File[] destinationFolderFiles = destinationFolder.listFiles();
 
@@ -83,7 +81,7 @@ public class Upload {
     }
 
     private Boolean downloadFromPhotos(ArrayList<String> baseUrls, ArrayList<String> fileNames,
-                                    File destinationFolder, File[] file){
+                                    File destinationFolder){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final boolean[] isFinished = {false};
         Callable<Boolean> backgroundDownloadTask = () -> {
@@ -108,9 +106,9 @@ public class Upload {
                         String filePath = destinationFolder + File.separator + fileName;
                         OutputStream outputStream = null;
                         try {
-                            file[0] = new File(filePath);
-                            file[0].createNewFile();
-                            outputStream = new FileOutputStream(file[0]);
+                            File downloadFile = new File(filePath);
+                            downloadFile.createNewFile();
+                            outputStream = new FileOutputStream(downloadFile);
                             byte[] buffer = new byte[1024];
                             int bytesRead;
                             while ((bytesRead = inputStream.read(buffer)) != -1) {
