@@ -5,6 +5,7 @@
     import android.content.pm.PackageManager;
     import android.os.Build;
     import android.os.Bundle;
+    import android.os.Environment;
     import android.text.Layout;
     import android.text.Spannable;
     import android.text.SpannableString;
@@ -31,6 +32,7 @@
     import com.google.android.material.navigation.NavigationView;
     import com.jaredrummler.android.device.DeviceName;
 
+    import java.io.File;
     import java.util.ArrayList;
     import java.util.HashMap;
     import java.util.Map;
@@ -54,14 +56,13 @@
         HashMap<String, BackUpAccountInfo> backUpAccountHashMap = new HashMap<>();
         ArrayList<Android.MediaItem> androidMediaItems = new ArrayList<>();
         String androidDeviceName;
+        public static String logFileName ;
 
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
-            LogHandler.CreateLogFile();
-
             drawerLayout = findViewById(R.id.drawer_layout);
             NavigationView navigationView = findViewById(R.id.navigationView);
             ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
@@ -87,6 +88,7 @@
             googleCloud = new GoogleCloud(this);
             googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
             googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
+            logFileName = LogHandler.CreateLogFile();
         }
 
 
@@ -95,7 +97,6 @@
             super.onStart();
 
             runOnUiThread(this::updateButtonsListeners);
-
             try{
                 googleCloud = new GoogleCloud(this);
                 googlePhotos = new GooglePhotos();
@@ -103,7 +104,7 @@
                 LogHandler.saveLog("failed to initialize the classes: " + e.getLocalizedMessage());
             }
 
-            LogHandler.saveLog("Starting to get files from you android device");
+            LogHandler.saveLog("Starting to get files from you android device",false);
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<ArrayList<Android.MediaItem>> androidBackgroundTask = () -> {
                 Android android = new Android();
@@ -132,14 +133,14 @@
                                 PrimaryAccountInfo primaryAccountInfo = googleCloud.handleSignInToPrimaryResult(result.getData());
                                 String userEmail = primaryAccountInfo.getUserEmail();
                                 primaryAccountHashMap.put(primaryAccountInfo.getUserEmail(), primaryAccountInfo);
-                                LogHandler.saveLog("Number of primary accounts :" + primaryAccountHashMap.size());
+                                LogHandler.saveLog("Number of primary accounts : " + primaryAccountHashMap.size(),false);
 
 
                                 runOnUiThread(() -> {
                                     childview[0] = primaryAccountsButtonsLinearLayout.getChildAt(
                                             primaryAccountsButtonsLinearLayout.getChildCount() - 2);
 
-                                    LogHandler.saveLog(userEmail +  " has logged in to the primary account");
+                                    LogHandler.saveLog(userEmail +  " has logged in to the primary account",false);
                                      if(childview[0] instanceof Button){
                                             Button bt = (Button) childview[0];
                                             bt.setText(userEmail);
@@ -184,9 +185,9 @@
                                 BackUpAccountInfo backUpAccountInfo = googleCloud.handleSignInToBackupResult(result.getData());
                                 String userEmail = backUpAccountInfo.getUserEmail();
                                 backUpAccountHashMap.put(backUpAccountInfo.getUserEmail(),backUpAccountInfo);
-                                LogHandler.saveLog("Number of backup accounts :" + backUpAccountHashMap.size());
+                                LogHandler.saveLog("Number of backup accounts : " + backUpAccountHashMap.size(),false);
                                 runOnUiThread(() -> {
-                                    LogHandler.saveLog(userEmail +  " has logged in to the backup account");
+                                    LogHandler.saveLog(userEmail +  " has logged in to the backup account",false);
                                     childview[0] = backupAccountsButtonsLinearLayout.getChildAt(
                                                 backupAccountsButtonsLinearLayout.getChildCount() - 2);
                                     if(childview[0] instanceof Button){
@@ -238,8 +239,9 @@
                             ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems = firstBackUpAccountInfo.getMediaItems();
                             ArrayList<GooglePhotos.MediaItem> mediaItems = primaryAccountInfo.getMediaItems();
                             Upload upload = new Upload();
+
                             upload.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken
-                                    ,backUpMediaItems);
+                                    ,backUpMediaItems,primaryAccountInfo.getUserEmail(),firstBackUpAccountInfo.getUserEmail());
                         }
                     });
 
@@ -269,6 +271,7 @@
                             syncToBackUpAccountTextView.setText("Uploading process is finished");
                         });
                     });
+
                     driveBackUpThread.start();
                     photosUploadThread.start();
                     androidUploadThread.start();
@@ -333,7 +336,8 @@
                                                     primaryAccountHashMap.remove(
                                                             primaryAccountEntrySet.getKey());
                                                     LogHandler.saveLog("successfully logged out from "+
-                                                            entry);
+                                                            entry + " in primary accounts",false);
+                                                    LogHandler.saveLog("Number of primary accounts : " + primaryAccountHashMap.size(),false);
                                                     break;
                                                 }
                                             }
@@ -379,7 +383,8 @@
                                                     backUpAccountHashMap.remove(
                                                             backUpAccountEntrySet.getKey());
                                                     LogHandler.saveLog("successfully logged out from "+
-                                                            entry);
+                                                            entry + " in backup accounts",false);
+                                                    LogHandler.saveLog("Number of backup accounts : " + backUpAccountHashMap.size(),false);
                                                     break;
                                                 }
                                             }

@@ -105,7 +105,7 @@ public class GooglePhotos {
                             String id = mediaItemJsonObject.getString("id");
                             MediaItem mediaItem = new MediaItem(id, baseUrl, "2-2-2", filename, null);
                             mediaItems.add(mediaItem);
-                            LogHandler.saveLog("File was detected in Photos account : " + mediaItem.getFileName());
+                            LogHandler.saveLog("File was detected in Photos account : " + mediaItem.getFileName(),false);
                         }
                         nextPageToken = responseJson.optString("nextPageToken", null);
                     }
@@ -119,7 +119,7 @@ public class GooglePhotos {
         ArrayList<MediaItem> mediaItems = new ArrayList<>();
         try{
             mediaItems = future.get();
-            LogHandler.saveLog( mediaItems.size() + " files were found in Photos account");
+            LogHandler.saveLog( mediaItems.size() + " files were found in Photos account",false);
         }catch (Exception e ){
             LogHandler.saveLog("Failed when trying to get Photos files from future: " + e.getLocalizedMessage());
         }finally {
@@ -234,7 +234,6 @@ public class GooglePhotos {
                                 if (isImage(memeType)) {
                                     String mediaItemPath = mediaItem.getFilePath();
                                     if(new File(mediaItemPath).exists()){
-                                        //System.out.println("the android file exists");
                                     }else{
                                         System.out.println("the android file doesn't exist");
                                     }
@@ -246,11 +245,9 @@ public class GooglePhotos {
                                         mediaContent = new FileContent("image/" + memeType.toLowerCase(),
                                                 new File(mediaItemPath));
                                     }
-                                    //String hash = MainActivity.calculateHash(new File(mediaItem.getFilePath()), activity);
                                 } else if (isVideo(memeType)) {
                                     String mediaItemPath = mediaItem.getFilePath();
                                     if(new File(mediaItemPath).exists()){
-                                        //System.out.println("the android file exists");
                                     }else{
                                         System.out.println("the android file doesn't exist");
                                     }
@@ -272,19 +269,18 @@ public class GooglePhotos {
                                     wait();
 //                                }
                                 uploadFileIds.add(uploadFileId);
-                                LogHandler.saveLog("Uploading " + mediaItem.getFileName() + " from android into backup account uploadId : " + uploadFileId);
+                                LogHandler.saveLog("Uploading " + mediaItem.getFileName() +
+                                        " from android into backup account uploadId : " + uploadFileId,false);
 //                                  test[0]--;
                                 }
                             } catch (Exception e) {
                                 System.out.println("Uploading android error: " + e.getMessage());
-                                //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                             }
                         }
                     }
                 }
             } catch (Exception e){
                 System.out.println("Uploading android error: " + e.getMessage());
-               // Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             }
             return uploadFileIds;
         };
@@ -299,4 +295,5 @@ public class GooglePhotos {
         }
         return  uploadFileIdsFuture;
     }
+
 }

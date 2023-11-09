@@ -23,11 +23,13 @@ public class Android {
     public ArrayList<MediaItem> getGalleryMediaItems(Activity activity) {
         ArrayList<MediaItem> androidMediaItems = new ArrayList<>();
         int requestCode =1;
+        String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE};
         while (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
                 ContextCompat.checkSelfPermission(activity.getApplicationContext(),
                         android.Manifest.permission.READ_EXTERNAL_STORAGE) !=
                         PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, requestCode);
+            ActivityCompat.requestPermissions(activity, permissions, requestCode);
         }
 
         try{
@@ -72,7 +74,7 @@ public class Android {
                    File androidFile = new File(mediaItemPath);
                    if(androidFile.exists()){
                        androidMediaItems.add(androidMediaItem);
-                       LogHandler.saveLog("File was detected in android device: " + androidFile.getName());
+                       LogHandler.saveLog("File was detected in android device: " + androidFile.getName(),false);
                    }
                }
                cursor.close();
@@ -84,7 +86,7 @@ public class Android {
         try{
             if(androidMediaItems.isEmpty()){
                 LogHandler.saveLog("The Gallery was not found, " +
-                        "So it's starting to get the files from the file manager");
+                        "So it's starting to get the files from the file manager",false);
                 androidMediaItems = getFileManagerMediaItems();
             }else{
                 System.out.println("it's not empty");
@@ -92,7 +94,7 @@ public class Android {
         }catch (Exception e){
             LogHandler.saveLog("Getting device files failed: " + e.getLocalizedMessage());
         }
-        LogHandler.saveLog(androidMediaItems.size() + " files were found in your device");
+        LogHandler.saveLog(androidMediaItems.size() + " files were found in your device",false);
         return androidMediaItems;
     }
 
@@ -111,7 +113,7 @@ public class Android {
             if (currentDirectory != null) {
                 currentFiles = currentDirectory.listFiles();
             }else{
-                LogHandler.saveLog("Current directory is null");
+                LogHandler.saveLog("Current directory is null",false);
             }
             if(currentFiles != null){
                 for(File currentFile: currentFiles){
@@ -127,7 +129,7 @@ public class Android {
                                         null, "", mediaItemSize, mediaItemMemeType);
                                 if(mediaItemFile.exists()){
                                     androidMediaItems.add(androidMediaItem);
-                                    LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName());
+                                    LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
                                 }
                             }
                         }

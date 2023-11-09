@@ -130,14 +130,12 @@
                 authCode = account.getServerAuthCode();
                 tokens = getTokens(authCode);
                 storage = getStorage(tokens);
-                LogHandler.saveLog("Total Storage is : " + storage.getTotalStorage() + " Total Usage is "+  storage.getUsedStorage() +"\n Used in Drive is : "+ storage.getUsedInDriveStorage() +" Used in Gmail and Photos is : "+ storage.getUsedInGmailAndPhotosStorage());
                 mediaItems = GooglePhotos.getGooglePhotosMediaItems(tokens);
 
                 runOnUiThread(() -> {
                     LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
                     createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
                 });
-                LogHandler.saveLog(mediaItems.size() + " files detected in Photos");
             }catch (Exception e){
                 LogHandler.saveLog("handle primary sign in result failed: " + e.getLocalizedMessage());
             }
@@ -164,7 +162,6 @@
                 tokens = getTokens(authCode);
                 storage = getStorage(tokens);
                 mediaItems = GoogleDrive.getMediaItems(tokens);
-                LogHandler.saveLog( mediaItems.size() + " files detected in Backup Account");
                 runOnUiThread(() -> {
                     LinearLayout backupAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
                     createBackUpLoginButton(backupAccountsButtonsLinearLayout);
@@ -336,9 +333,11 @@
                             .execute().getStorageQuota().getUsageInDrive());
 
                     storage[0] = new PrimaryAccountInfo.Storage(totalStorage[0], usedStorage[0],usedInDriveStorage[0]);
-                    LogHandler.saveLog("Account total storage:" + totalStorage[0]);
-                    LogHandler.saveLog("Account used storage:"  + usedStorage[0]);
-                    LogHandler.saveLog("Account used in drive storage:" + usedInDriveStorage[0]);
+                    LogHandler.saveLog("Account total storage: " + totalStorage[0],false);
+                    LogHandler.saveLog("Account used storage: "  + usedStorage[0],false);
+                    LogHandler.saveLog("Account used in drive storage: " + usedInDriveStorage[0],false);
+                    LogHandler.saveLog("Used in Gmail and Photos is : " + (usedStorage[0] - usedInDriveStorage[0]),false);
+
                     return storage[0];
                 };
                 Future<PrimaryAccountInfo.Storage> future = executor.submit(backgroundTask);

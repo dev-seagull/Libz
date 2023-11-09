@@ -77,9 +77,9 @@ public class GoogleDrive {
                             mediaItems.add(mediaItem);
                         }
                     }
-                    LogHandler.saveLog( mediaItems.size() + " files were found in Google Drive back up account");
+                    LogHandler.saveLog( mediaItems.size() + " files were found in Google Drive back up account",false);
                 } else {
-                    LogHandler.saveLog("No file was found in Google Drive back up account");
+                    LogHandler.saveLog("No file was found in Google Drive back up account",false);
                 }
                 return mediaItems;
             }catch (Exception e) {
@@ -123,7 +123,7 @@ public class GoogleDrive {
                                 .setApplicationName("cso").build();
                         driveService.files().delete(fileId).execute();
                         System.out.println("response of deleting from derive: ");
-                        LogHandler.saveLog("Deleting Duplicate file in backup drive :" + mediaItem.getFileName());
+                        LogHandler.saveLog("Deleting Duplicate file in backup drive :" + mediaItem.getFileName(),false);
                     }catch (Exception e){
                         System.out.println("error in deleting duplicated media items in drive " + e.getLocalizedMessage());
                     }

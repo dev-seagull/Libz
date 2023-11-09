@@ -17,7 +17,7 @@ public class Duplicate {
         for(BackUpAccountInfo.MediaItem backUpMediaItem: backUpMediaItems){
             String backUpHash = backUpMediaItem.getHash();
             if(fileHash.equals(backUpHash)){
-                LogHandler.saveLog("duplicate of " + file.getName() + " was found in back up drive account.");
+                LogHandler.saveLog("duplicate of " + file.getName() + " was found in back up drive account.",false);
                 isDuplicatedInBackup = true;
                 break;
             }
@@ -32,14 +32,14 @@ public class Duplicate {
         try {
             fileHash = Upload.calculateHash(file).toLowerCase();
             LogHandler.saveLog("File hash for " + file.getName() +
-                    ": " + fileHash);
+                    ": " + fileHash,false);
         } catch (IOException e) {
             LogHandler.saveLog("Failed to calculate hash in isDuplicatedInPrimary");
         }
         for(GooglePhotos.MediaItem primaryMediaItem: primaryMediaItems){
             String primaryHash = primaryMediaItem.getHash();
             if(fileHash.equals(primaryHash)){
-                LogHandler.saveLog(file.getName() + "detected as duplicate in photos and device");
+                LogHandler.saveLog(file.getName() + "detected as duplicate in photos and device",false);
                 isDuplicatedInPrimary = true;
                 break;
             }
