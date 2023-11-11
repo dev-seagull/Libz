@@ -159,8 +159,13 @@ public class Upload {
         if (destinationFolderFiles != null) {
             for (File destinationFolderFile: destinationFolderFiles) {
                 if (!destinationFolderFile.getName().equals(MainActivity.logFileName)){
-                    destinationFolderFile.delete();
-                    LogHandler.saveLog(destinationFolderFile.getName() + " deleted from CSO folder",false);
+                    boolean isDeleted = destinationFolderFile.delete();
+                    if (isDeleted){
+                        LogHandler.saveLog(destinationFolderFile.getName() + " deleted from CSO folder",false);
+                    }else {
+                        LogHandler.saveLog(destinationFolderFile.getName() + " was not deleted from CSO folder");
+                    }
+
                 }
             }
         }else{
