@@ -1,5 +1,6 @@
 package com.example.cso;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -17,9 +18,20 @@ public class DBHelper extends SQLiteOpenHelper {
         String userProfile = "CREATE TABLE IF NOT EXISTS UserProfile("
                 + "AccountName TEXT)";
         sqLiteDatabase.execSQL(userProfile);
+
+        String test = "CREATE TABLE IF NOT EXISTS Test(" +
+                "test TEXT)";
+        sqLiteDatabase.execSQL(test);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
+//        public void insertTestData(String testData) {
+//            SQLiteDatabase db = getWritableDatabase();
+//            ContentValues values = new ContentValues();
+//            values.put("test", testData);
+//            db.insert("Test", null, values);
+//            db.close();
+//        }
     }
 }

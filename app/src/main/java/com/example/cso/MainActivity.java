@@ -1,8 +1,11 @@
     package com.example.cso;
 
     import android.Manifest;
+    import android.content.Context;
     import android.content.Intent;
+    import android.content.SharedPreferences;
     import android.content.pm.PackageManager;
+    import android.database.sqlite.SQLiteDatabase;
     import android.os.Build;
     import android.os.Bundle;
     import android.os.Environment;
@@ -42,6 +45,8 @@
     import java.util.concurrent.ExecutorService;
     import java.util.concurrent.Executors;
     import java.util.concurrent.Future;
+    import java.util.regex.Matcher;
+    import java.util.regex.Pattern;
 
 
     public class MainActivity extends AppCompatActivity {
@@ -57,12 +62,30 @@
         ArrayList<Android.MediaItem> androidMediaItems = new ArrayList<>();
         String androidDeviceName;
         public static String logFileName ;
+        SharedPreferences preferences;
+
+
+        private Boolean isFirstTime(SharedPreferences preferences){
+            Boolean isFirstTime = preferences.getBoolean("isFirstTime", true);
+            if(isFirstTime == true){
+                System.out.println("Welcome the app");
+            }else{
+                System.out.println("The app has missed you");
+            }
+            return isFirstTime;
+        }
 
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
+
+            preferences = getPreferences(Context.MODE_PRIVATE);
+//            DBHelper dbHelper = new DBHelper(this);
+//            dbHelper.insertTestData("SampleData");
+//            dbHelper.
+
             drawerLayout = findViewById(R.id.drawer_layout);
             NavigationView navigationView = findViewById(R.id.navigationView);
             ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
@@ -146,7 +169,7 @@
                                      if(childview[0] instanceof Button){
                                             Button bt = (Button) childview[0];
                                             bt.setText(userEmail);
-                                    }
+                                     }
                                     updateButtonsListeners();
                                 });
                             };
