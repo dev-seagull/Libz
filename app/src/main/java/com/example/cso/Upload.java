@@ -103,8 +103,8 @@ public class Upload {
                     connection.setRequestMethod("GET");
                     int responseCode = connection.getResponseCode();
                     if (responseCode == HttpURLConnection.HTTP_OK) {
+                        int contentLength = connection.getContentLength();
                         InputStream inputStream = new BufferedInputStream(connection.getInputStream());
-                        LogHandler.saveLog( "downloaded to CSO folder : " + fileNames.get(i),false);
                         if (!destinationFolder.exists()) {
                             boolean isFolderCreated = destinationFolder.mkdirs();
                             if (!isFolderCreated) {
@@ -117,12 +117,21 @@ public class Upload {
                         try {
                             File downloadFile = new File(filePath);
                             downloadFile.createNewFile();
-                            outputStream = new FileOutputStream(downloadFile);
-                            byte[] buffer = new byte[1024];
-                            int bytesRead;
-                            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                                outputStream.write(buffer, 0, bytesRead);
+                            for (int k = 0; k <3; k++){
+                                outputStream = new FileOutputStream(downloadFile);
+                                byte[] buffer = new byte[1024];
+                                int bytesRead;
+                                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                                    outputStream.write(buffer, 0, bytesRead);
+                                }
+                                if (downloadFile.length() == (long) contentLength) {
+                                    LogHandler.saveLog("downloaded to CSO folder : " + fileNames.get(i), false);
+                                    break;
+                                } else {
+                                    LogHandler.saveLog("Failed to download " + downloadFile.length() + "!=" + contentLength);
+                                }
                             }
+
                         } catch (IOException e) {
                             LogHandler.saveLog("Error in file output stream handling: " + e.getLocalizedMessage());
                         } finally {
@@ -137,6 +146,8 @@ public class Upload {
                         inputStream.close();
                         connection.disconnect();
                         isFinished[0] = true;
+                    }else {
+                        LogHandler.saveLog("Failed to download "+fileNames.get(i)+"with response code : "  + responseCode);
                     }
                 } catch (IOException e) {
                     LogHandler.saveLog("Downloading from Photos failed: " + e.getLocalizedMessage());
@@ -245,9 +256,14 @@ public class Upload {
                             while(uploadFileId.isEmpty() | uploadFileId == null){
                                 wait();
                             }
-                            finalUploadFileIds.add(uploadFileId);
-                            LogHandler.saveLog("Uploading " + destinationFolderFile.getName()
-                                    + " to backup account finished with uploadFileId: " + uploadFileId,false);
+                            if (uploadFileId == null | uploadFileId.isEmpty()){
+                                LogHandler.saveLog("UploadFileId for " + destinationFolderFile.getName() + " is null");
+                            }
+                            else {
+                                finalUploadFileIds.add(uploadFileId);
+                                LogHandler.saveLog("Uploading " + destinationFolderFile.getName()
+                                        + " to backup account finished with uploadFileId: " + uploadFileId,false);
+                            }
                             //test[0]--;
                             //}
                         }catch (Exception e) {

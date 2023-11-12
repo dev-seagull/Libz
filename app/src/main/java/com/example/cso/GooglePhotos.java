@@ -163,7 +163,7 @@ public class GooglePhotos {
 
     public ArrayList<String> uploadAndroidToGoogleDrive(ArrayList<Android.MediaItem> mediaItems,ArrayList<MediaItem> primaryMediaItems ,String accessToken,
                                                         ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems, Activity activity) {
-        System.out.println("-------second----->");
+        LogHandler.saveLog("Start of Syncing Android to backup");
         ArrayList<String> uploadFileIds = new ArrayList<>();
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final LocalTime[] currentTime = new LocalTime[1];
@@ -180,39 +180,32 @@ public class GooglePhotos {
                 }
 
                 HashSet<String> mediaItemsInAndroidNames = new HashSet<>();
-
-                System.out.println("start of android: " + currentTime[0].toString());
-
 //                final int[] test = {1};
                 HashSet<String> hashSet = new HashSet<>();
 
-                int i = 0;
                 for (Android.MediaItem mediaItem : mediaItems) {
                     if(hashSet.contains(mediaItem.getFileHash()) |
                             mediaItemsInPhotosNames.contains(mediaItem.getFileName()) | mediaItemsInAndroidNames.contains(mediaItem.getFileName())){
                         if(hashSet.contains(mediaItem.getFileHash())){
-                            System.out.println("this file is considered duplicated in android device " + mediaItem.getFileName());
+                            LogHandler.saveLog("this file is considered duplicated in android device " + mediaItem.getFileName() , false);
                         }else if(mediaItemsInAndroidNames.contains(mediaItem.getFileName())){
-                            System.out.println("this file is duplicated by its name in android device");
+                            LogHandler.saveLog("this file is duplicated by its name in android device" + mediaItem.getFileName(),false);
                         }else{
-                            System.out.println("this file is considered duplicated for its name" +
-                                    "in android and primary account " + mediaItem.getFileName());
+                            LogHandler.saveLog("this file is considered duplicated for its name" +
+                                    "in android and primary account " + mediaItem.getFileName(),false);
                         }
-                        continue;
                     }else{
                         mediaItemsInAndroidNames.add(mediaItem.getFileName());
                         File file = new File(mediaItem.getFilePath());
                         if (Duplicate.isDuplicatedInBackup(backUpMediaItems, file) == false &&
                                 Duplicate.isDuplicatedInPrimary(primaryMediaItems, file) == false) {
-                            System.out.println("start to upload at: " + currentTime[0].toString());
                             try {
                                 NetHttpTransport HTTP_TRANSPORT = null;
                                 try {
                                     HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
                                 } catch (GeneralSecurityException e) {
-                                    //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                                    LogHandler.saveLog("Failed to http_transport " + e.getLocalizedMessage());
                                 } catch (IOException e) {
-                                    //Toast.makeText(activity, "Uploading failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                                 }
                                 final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
@@ -267,12 +260,15 @@ public class GooglePhotos {
                                 String uploadFileId = uploadFile.getId();
                                 while(uploadFileId == null){
                                     wait();
-//                                }
-                                uploadFileIds.add(uploadFileId);
-                                LogHandler.saveLog("Uploading " + mediaItem.getFileName() +
-                                        " from android into backup account uploadId : " + uploadFileId,false);
-//                                  test[0]--;
                                 }
+                                if (uploadFileId == null | uploadFileId.isEmpty()){
+                                    LogHandler.saveLog("Failed to upload " + file.getName() + " from Android to backup because it's null");
+                                }else{
+                                    uploadFileIds.add(uploadFileId);
+                                    LogHandler.saveLog("Uploading " + mediaItem.getFileName() +
+                                            " from android into backup account uploadId : " + uploadFileId,false);
+                                }
+//                                  test[0]--;
                             } catch (Exception e) {
                                 System.out.println("Uploading android error: " + e.getMessage());
                             }
