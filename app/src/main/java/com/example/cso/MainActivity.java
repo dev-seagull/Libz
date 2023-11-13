@@ -84,7 +84,7 @@
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
-            dbHelper.getTestValues("test");
+            System.out.println("test value is 00000000-> "+dbHelper.getTestValues("test"));
 
             drawerLayout = findViewById(R.id.drawer_layout);
             NavigationView navigationView = findViewById(R.id.navigationView);

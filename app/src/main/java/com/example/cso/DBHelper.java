@@ -52,6 +52,7 @@ public class DBHelper extends SQLiteOpenHelper {
         Cursor cursor = db.rawQuery(sqlQuery, null);
         if(cursor.moveToFirst()){
             int columnIndex = cursor.getColumnIndex("test");
+            result = "";
             if(columnIndex >= 0){
                 do{
                     result += cursor.getString(columnIndex) + "\n";
