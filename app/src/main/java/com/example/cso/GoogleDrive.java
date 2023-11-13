@@ -37,7 +37,6 @@ public class GoogleDrive {
             this.mediaItemHash = mediaItemHash;
             this.videoDuration = videoDuration;
         }
-
         public String getMediaItemId() {return mediaItemId;}
         public String getMediaItemName() {return mediaItemName;}
         public Long getVideoDuration() {return videoDuration;}
@@ -95,7 +94,6 @@ public class GoogleDrive {
         }
         return uploadFileIDs_fromFuture;
     }
-
 
     public static void deleteDuplicatedMediaItems (ArrayList<BackUpAccountInfo.MediaItem> mediaItems, PrimaryAccountInfo.Tokens tokens){
         HashSet<String> mediaItemsHash = new HashSet<>();

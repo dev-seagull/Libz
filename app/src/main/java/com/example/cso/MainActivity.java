@@ -63,6 +63,7 @@
         String androidDeviceName;
         public static String logFileName ;
         SharedPreferences preferences;
+        DBHelper dbHelper;
 
 
         private Boolean isFirstTime(SharedPreferences preferences){
@@ -82,9 +83,8 @@
             setContentView(R.layout.activity_main);
 
             preferences = getPreferences(Context.MODE_PRIVATE);
-//            DBHelper dbHelper = new DBHelper(this);
-//            dbHelper.insertTestData("SampleData");
-//            dbHelper.
+            dbHelper = new DBHelper(this);
+            dbHelper.getTestValues("test");
 
             drawerLayout = findViewById(R.id.drawer_layout);
             NavigationView navigationView = findViewById(R.id.navigationView);
@@ -157,9 +157,9 @@
                             Runnable backgroundTask = () -> {
                                 PrimaryAccountInfo primaryAccountInfo = googleCloud.handleSignInToPrimaryResult(result.getData());
                                 String userEmail = primaryAccountInfo.getUserEmail();
+                                dbHelper.insertTestData(userEmail, "test");
                                 primaryAccountHashMap.put(primaryAccountInfo.getUserEmail(), primaryAccountInfo);
                                 LogHandler.saveLog("Number of primary accounts : " + primaryAccountHashMap.size(),false);
-
 
                                 runOnUiThread(() -> {
                                     childview[0] = primaryAccountsButtonsLinearLayout.getChildAt(
