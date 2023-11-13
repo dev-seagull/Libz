@@ -63,7 +63,7 @@
         String androidDeviceName;
         public static String logFileName ;
         SharedPreferences preferences;
-        DBHelper dbHelper;
+        public DBHelper dbHelper;
 
 
         private Boolean isFirstTime(SharedPreferences preferences){
@@ -84,7 +84,6 @@
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
-            System.out.println("test value is 00000000-> "+dbHelper.getTestValues("test"));
 
             drawerLayout = findViewById(R.id.drawer_layout);
             NavigationView navigationView = findViewById(R.id.navigationView);

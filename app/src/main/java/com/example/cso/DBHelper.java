@@ -16,13 +16,52 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        String userProfile = "CREATE TABLE IF NOT EXISTS UserProfile("
-                + "AccountName TEXT)";
-        sqLiteDatabase.execSQL(userProfile);
+        String USERPROFILE = "CREATE TABLE IF NOT EXISTS USERPROFILE("
+                + "userEmail TEXT PRIMARY KEY," +
+                "type TEXT CHECK (type IN ('primary','backup')), " +
+                "refreshToken TEXT, " +
+                "accessToken TEXT, " +
+                "totalStorage REAL," +
+                "usedStorage REAL," +
+                "usedInDriveStorage REAL,"+
+                "UsedInGmailAndPhotosStorage REAL)";
+        sqLiteDatabase.execSQL(USERPROFILE);
 
-        String test = "CREATE TABLE IF NOT EXISTS Test(" +
-                "test TEXT)";
-        sqLiteDatabase.execSQL(test);
+        String DRIVE = "CREATE TABLE IF NOT EXISTS DRIVE("
+                +"id INTERGER PRIMARY KEY AUTOINCREMENT,"+
+                "fildId TEXT," +
+                "fileName TEXT," +
+                "userEmail TEXT REFERENCES USERPROFILE(userEmail) ON UPDATE CASCADE ON DELETE CASCADE, " +
+                "fileHash TEXT, " +
+                "source TEXT)";
+        sqLiteDatabase.execSQL(DRIVE);
+
+        String ANDROID = "CREATE TABLE IF NOT EXISTS ANDROID("
+                +"id INTERGER PRIMARY KEY AUTOINCREMENT,"+
+                "fileName TEXT," +
+                "filePath TEXT," +
+                "fileSize REAL," +
+                "fileHash TEXT," +
+                "dateAdded TEXT,"+
+                "dateModified TEXT,"+
+                "memeType TEXT)";
+        sqLiteDatabase.execSQL(ANDROID);
+
+        String ERRORS = "CREATE TABLE IF NOT EXISTS ERRORS(" +
+                "descriptionError TEXT," +
+                "error TEXT," +
+                "date TEXT)";
+        sqLiteDatabase.execSQL(ERRORS);
+
+        String TRANSACTIONS = "CREATE TABLE IF NOT EXISTS TRANSACTIONS(" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT,"+
+                "source TEXT,"+
+                "fileName TEXT," +
+                "destination TEXT,"+
+                "operation TEXT CHECK (operation IN ('duplicated','sync')),"+
+                "hash TEXT,"+
+                "date TEXT)";
+        sqLiteDatabase.execSQL(TRANSACTIONS);
     }
 
     @Override

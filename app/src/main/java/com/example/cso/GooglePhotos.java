@@ -30,7 +30,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class GooglePhotos {
-    public static boolean is_first_task_finish = false;
     public GooglePhotos(){
     }
 
