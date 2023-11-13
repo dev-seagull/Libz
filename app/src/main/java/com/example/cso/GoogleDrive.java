@@ -117,6 +117,7 @@ public class GoogleDrive {
                             connection.setRequestProperty("Content-type", "application/json");
                             connection.setRequestProperty("Authorization", "Bearer " + accessToken);
                             int responseCode = connection.getResponseCode();
+                            LogHandler.saveLog("responseCode of deleting duplicate drive : " + responseCode,false);
                             if(responseCode == HttpURLConnection.HTTP_NO_CONTENT){
                                 LogHandler.saveLog("Deleting Duplicated file in backup drive :" +
                                         mediaItem.getFileName(),false);

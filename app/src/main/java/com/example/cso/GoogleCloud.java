@@ -333,7 +333,7 @@
                             .execute().getStorageQuota().getUsageInDrive());
 
                     storage[0] = new PrimaryAccountInfo.Storage(totalStorage[0], usedStorage[0],usedInDriveStorage[0]);
-                    LogHandler.saveLog("Account total storage: " + totalStorage[0],false);
+                    LogHandler.saveLog("kAccount total storage: " + totalStorage[0],false);
                     LogHandler.saveLog("Account used storage: "  + usedStorage[0],false);
                     LogHandler.saveLog("Account used in drive storage: " + usedInDriveStorage[0],false);
                     LogHandler.saveLog("Used in Gmail and Photos is : " + (usedStorage[0] - usedInDriveStorage[0]),false);
