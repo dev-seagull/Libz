@@ -102,7 +102,10 @@ public class GooglePhotos {
                             String filename = mediaItemJsonObject.getString("filename");
                             String baseUrl = mediaItemJsonObject.getString("baseUrl");
                             String id = mediaItemJsonObject.getString("id");
-                            MediaItem mediaItem = new MediaItem(id, baseUrl, "2-2-2", filename, null);
+                            JSONObject mediaMetaDataObject = mediaItemJsonObject.getJSONObject("mediaMetadata");
+                            String creationTime = mediaMetaDataObject.getString("creationTime");
+                            System.out.println("creation time is: " + creationTime);
+                            MediaItem mediaItem = new MediaItem(id, baseUrl, creationTime, filename, null);
                             mediaItems.add(mediaItem);
                             LogHandler.saveLog("File was detected in Photos account : " + mediaItem.getFileName(),false);
                         }

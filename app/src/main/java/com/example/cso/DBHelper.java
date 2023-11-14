@@ -40,12 +40,23 @@ public class DBHelper extends SQLiteOpenHelper {
                 +"id INTERGER PRIMARY KEY AUTOINCREMENT,"+
                 "fileName TEXT," +
                 "filePath TEXT," +
+                "device TEXT," +
                 "fileSize REAL," +
                 "fileHash TEXT," +
                 "dateAdded TEXT,"+
                 "dateModified TEXT,"+
                 "memeType TEXT)";
         sqLiteDatabase.execSQL(ANDROID);
+
+        String PHOTOS = "CREATE TABLE IF NOT EXISTS PHOTOS("
+                +"id INTERGER PRIMARY KEY AUTOINCREMENT,"+
+                "fileId TEXT," +
+                "fileName TEXT," +
+                "userEmail TEXT REFERENCES USERPROFILE(userEmail) ON UPDATE CASCADE ON DELETE CASCADE,"+
+                "creationTime TEXT," +
+                "fileHash TEXT," +
+                "baseUrl TEXT)";
+        sqLiteDatabase.execSQL(PHOTOS);
 
         String ERRORS = "CREATE TABLE IF NOT EXISTS ERRORS(" +
                 "descriptionError TEXT," +
@@ -58,7 +69,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "source TEXT,"+
                 "fileName TEXT," +
                 "destination TEXT,"+
-                "operation TEXT CHECK (operation IN ('duplicated','sync')),"+
+                "operation TEXT CHECK (operation IN ('duplicated','sync','download')),"+
                 "hash TEXT,"+
                 "date TEXT)";
         sqLiteDatabase.execSQL(TRANSACTIONS);

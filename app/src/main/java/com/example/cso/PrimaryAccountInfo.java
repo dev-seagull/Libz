@@ -45,11 +45,10 @@ public class PrimaryAccountInfo {
 
         public Storage(Double totalStorage, Double usedStorage,
                        Double usedInDriveStorage){
-            this.totalStorage = totalStorage;
-            this.usedStorage = usedStorage;
-            this.usedInDriveStorage = usedInDriveStorage;
+            this.totalStorage = totalStorage * 1000;
+            this.usedStorage = usedStorage * 1000;
+            this.usedInDriveStorage = usedInDriveStorage * 1000;
             this.UsedInGmailAndPhotosStorage = usedStorage - usedInDriveStorage;
-
         }
         public Double getUsedInDriveStorage() {return usedInDriveStorage;}
         public Double getUsedInGmailAndPhotosStorage() {return UsedInGmailAndPhotosStorage;}

@@ -12,7 +12,9 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -55,8 +57,6 @@ public class Android {
 
            if (cursor != null) {
                int columnIndexPath = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA);
-               int columnIndexDateAdded = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATE_ADDED);
-               int columnIndexDateModified = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATE_MODIFIED);
                int columnIndexSize = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.SIZE);
                int columnIndexMemeType = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MIME_TYPE);
 
@@ -64,12 +64,12 @@ public class Android {
                    String mediaItemPath = cursor.getString(columnIndexPath);
                    File mediaItemFile = new File(mediaItemPath);
                    String mediaItemName = mediaItemFile.getName();
-                   String mediaItemDateAdded = cursor.getString(columnIndexDateAdded);
-                   String mediaItemDateModified = cursor.getString(columnIndexDateModified);
-                   Double mediaItemSize = Double.valueOf(cursor.getString(columnIndexSize))  / Double.valueOf(1073741824) ;
+                   SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy");
+                   String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));
+                   Double mediaItemSize = Double.valueOf(cursor.getString(columnIndexSize)) / (Math.pow(10, 6));
                    String mediaItemMemeType = cursor.getString(columnIndexMemeType);
-                   MediaItem androidMediaItem = new MediaItem(mediaItemName, mediaItemPath, mediaItemDateAdded,
-                           mediaItemDateModified, "", mediaItemSize, mediaItemMemeType);
+                   MediaItem androidMediaItem = new MediaItem(mediaItemName, mediaItemPath, mediaItemDateModified,
+                           "", mediaItemSize, mediaItemMemeType);
                    File androidFile = new File(mediaItemPath);
                    if(androidFile.exists()){
                        androidMediaItems.add(androidMediaItem);
@@ -87,8 +87,6 @@ public class Android {
                 LogHandler.saveLog("The Gallery was not found, " +
                         "So it's starting to get the files from the file manager",false);
                 androidMediaItems = getFileManagerMediaItems();
-            }else{
-                System.out.println("it's not empty");
             }
         }catch (Exception e){
             LogHandler.saveLog("Getting device files failed: " + e.getLocalizedMessage());
@@ -122,10 +120,12 @@ public class Android {
                                 String mediaItemPath = currentFile.getPath();
                                 File mediaItemFile = new File(mediaItemPath);
                                 String mediaItemName = currentFile.getName();
-                                Double mediaItemSize = Double.valueOf(currentFile.length());
+                                Double mediaItemSize = Double.valueOf(currentFile.length() / (Math.pow(10,6)));
+                                SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy");
+                                String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));
                                 String mediaItemMemeType = GooglePhotos.getMemeType(mediaItemFile);
-                                MediaItem androidMediaItem = new MediaItem(mediaItemName, mediaItemPath, null,
-                                        null, "", mediaItemSize, mediaItemMemeType);
+                                MediaItem androidMediaItem = new MediaItem(mediaItemName, mediaItemPath, mediaItemDateModified
+                                        , "", mediaItemSize, mediaItemMemeType);
                                 if(mediaItemFile.exists()){
                                     androidMediaItems.add(androidMediaItem);
                                     LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
@@ -155,13 +155,12 @@ public class Android {
         private String meme_type;
 
 
-        public MediaItem(String fileName, String filePath, String date_added, String date_modified,
+        public MediaItem(String fileName, String filePath, String date_modified,
                          String fileHash, double fileSize, String meme_type) {
             this.fileName = fileName;
             this.filePath = filePath;
             this.fileHash = fileHash;
             this.fileSize = fileSize;
-            this.date_added = date_added;
             this.date_modified = date_modified;
             this.meme_type = meme_type;
         }
