@@ -229,7 +229,7 @@ public class GooglePhotos {
                                     String mediaItemPath = mediaItem.getFilePath();
                                     if(new File(mediaItemPath).exists()){
                                     }else{
-                                        System.out.println("the android file doesn't exist");
+                                        System.out.println("the android file doesn't exist in memetype condition");
                                     }
 
                                     if (memeType.toLowerCase().endsWith("jpg")) {
@@ -243,7 +243,7 @@ public class GooglePhotos {
                                     String mediaItemPath = mediaItem.getFilePath();
                                     if(new File(mediaItemPath).exists()){
                                     }else{
-                                        System.out.println("the android file doesn't exist");
+                                        System.out.println("the android file doesn't exist in is video condition");
                                     }
 
                                     if (memeType.toLowerCase().endsWith("mkv")) {
@@ -272,12 +272,14 @@ public class GooglePhotos {
 //                                  test[0]--;
                             } catch (Exception e) {
                                 System.out.println("Uploading android error: " + e.getMessage());
+                                LogHandler.saveLog("Uploading android error: " + e.getMessage());
                             }
                         }
                     }
                 }
             } catch (Exception e){
                 System.out.println("Uploading android error: " + e.getMessage());
+                LogHandler.saveLog("Uploading android error: " + e.getMessage());
             }
             return uploadFileIds;
         };
@@ -286,6 +288,7 @@ public class GooglePhotos {
         try{
             uploadFileIdsFuture = future.get();
             System.out.println("Finished with " + uploadFileIdsFuture.size() + " uploads at " + currentTime[0].toString());
+            LogHandler.saveLog("Finished with " + uploadFileIdsFuture.size() + " uploads at " + currentTime[0].toString());
             System.out.println("-----end of second ----->");
         }catch (Exception e){
             System.out.println(e.getLocalizedMessage());
