@@ -37,7 +37,10 @@
 
     import java.io.File;
     import java.util.ArrayList;
+    import java.util.Arrays;
+    import java.util.Collections;
     import java.util.HashMap;
+    import java.util.List;
     import java.util.Map;
     import java.util.concurrent.Callable;
     import java.util.concurrent.ExecutionException;
@@ -84,7 +87,8 @@
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
-
+            String[] columnsList = {"userEmail"};
+            dbHelper.getUserProfile(columnsList);
             drawerLayout = findViewById(R.id.drawer_layout);
             NavigationView navigationView = findViewById(R.id.navigationView);
             ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(

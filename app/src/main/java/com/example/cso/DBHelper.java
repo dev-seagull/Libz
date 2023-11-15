@@ -1,10 +1,12 @@
 package com.example.cso;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DBHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "CSODatabase";
@@ -121,24 +123,64 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public String getTestValues(String columnName){
-        SQLiteDatabase db = getReadableDatabase();
-        String result = "No values in the 'Test' table.";
 
-        String sqlQuery = "SELECT test FROM " + columnName;
+    public List<String []> getUserProfile(String[] columns){
+        List<String[]> resultList = new ArrayList<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+        String result = "No values in the 'UserProfile' table.";
+
+        String sqlQuery = "SELECT ";
+        for (String column:columns){
+            sqlQuery += column + ", ";
+        }
+        sqlQuery = sqlQuery.substring(0, sqlQuery.length() - 2);
+        sqlQuery += " FROM USERPROFILE" ;
         Cursor cursor = db.rawQuery(sqlQuery, null);
-        if(cursor.moveToFirst()){
-            int columnIndex = cursor.getColumnIndex("test");
-            result = "";
-            if(columnIndex >= 0){
-                do{
-                    result += cursor.getString(columnIndex) + "\n";
-                } while (cursor.moveToNext());
-            }
+        if (cursor.moveToFirst()) {
+            do {
+                String[] row = new String[columns.length];
+                for (int i = 0; i < columns.length; i++) {
+                    int columnIndex = cursor.getColumnIndex(columns[i]);
+                    if (columnIndex >= 0) {
+                        row[i] = cursor.getString(columnIndex);
+                        System.out.println("get values ---db > " + row[i]);
+                    }
+                }
+                resultList.add(row);
+            } while (cursor.moveToNext());
         }
         cursor.close();
         db.close();
+        return resultList;
+    }
 
-        return result;
+
+    public void updateUserProfileData(String userEmail, String type, String refreshToken, String accessToken,
+                                      Double totalStorage, Double usedStorage, Double usedInDriveStorage, Double usedInGmailAndPhotosStorage) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            String sqlQuery = "UPDATE USERPROFILE SET " +
+                    "type = ?, " +
+                    "refreshToken = ?, " +
+                    "accessToken = ?, " +
+                    "totalStorage = ?, " +
+                    "usedStorage = ?, " +
+                    "usedInDriveStorage = ?, " +
+                    "UsedInGmailAndPhotosStorage = ? " +
+                    "WHERE userEmail = ?";
+
+            Object[] values = new Object[]{type, refreshToken, accessToken,
+                    totalStorage, usedStorage, usedInDriveStorage, usedInGmailAndPhotosStorage, userEmail};
+
+            db.execSQL(sqlQuery, values);
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to update the database in updateUserProfileData method. " + e.getLocalizedMessage());
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
     }
 }

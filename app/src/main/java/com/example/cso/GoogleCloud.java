@@ -39,6 +39,7 @@
     import java.nio.charset.StandardCharsets;
     import java.text.DecimalFormat;
     import java.util.ArrayList;
+    import java.util.List;
     import java.util.concurrent.Callable;
     import java.util.concurrent.ExecutorService;
     import java.util.concurrent.Executors;
@@ -131,12 +132,24 @@
                 tokens = getTokens(authCode);
                 storage = getStorage(tokens);
                 mediaItems = GooglePhotos.getGooglePhotosMediaItems(tokens);
-                MainActivity.dbHelper.insertUserProfileData(userEmail,"primary",tokens.getRefreshToken(),tokens.getAccessToken(),
-                        storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
-                runOnUiThread(() -> {
-                    LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
-                    createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
-                });
+                String[] columnsList = new String[]{"userEmail"};
+                List<String[]> userProfileData = MainActivity.dbHelper.getUserProfile(columnsList);
+                boolean isInUserProfileData = false;
+                for (String[] row : userProfileData) {
+                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
+                        MainActivity.dbHelper.updateUserProfileData(userEmail,"primary",tokens.getRefreshToken(),tokens.getAccessToken(),
+                                storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
+                        isInUserProfileData = true;
+                    }
+                }
+                if (!isInUserProfileData){
+                    MainActivity.dbHelper.insertUserProfileData(userEmail,"primary",tokens.getRefreshToken(),tokens.getAccessToken(),
+                            storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
+                    runOnUiThread(() -> {
+                        LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
+                        createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
+                    });
+                }
             }catch (Exception e){
                 LogHandler.saveLog("handle primary sign in result failed: " + e.getLocalizedMessage());
             }
