@@ -131,7 +131,8 @@
                 tokens = getTokens(authCode);
                 storage = getStorage(tokens);
                 mediaItems = GooglePhotos.getGooglePhotosMediaItems(tokens);
-
+                MainActivity.dbHelper.insertUserProfileData(userEmail,"primary",tokens.getRefreshToken(),tokens.getAccessToken(),
+                        storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
                 runOnUiThread(() -> {
                     LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
                     createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
@@ -162,6 +163,8 @@
                 tokens = getTokens(authCode);
                 storage = getStorage(tokens);
                 mediaItems = GoogleDrive.getMediaItems(tokens);
+                MainActivity.dbHelper.insertUserProfileData(userEmail,"backup",tokens.getRefreshToken(),tokens.getAccessToken(),
+                        storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
                 runOnUiThread(() -> {
                     LinearLayout backupAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
                     createBackUpLoginButton(backupAccountsButtonsLinearLayout);

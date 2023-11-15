@@ -63,7 +63,7 @@
         String androidDeviceName;
         public static String logFileName ;
         SharedPreferences preferences;
-        public DBHelper dbHelper;
+        public static DBHelper dbHelper;
 
 
         private Boolean isFirstTime(SharedPreferences preferences){
@@ -156,7 +156,6 @@
                             Runnable backgroundTask = () -> {
                                 PrimaryAccountInfo primaryAccountInfo = googleCloud.handleSignInToPrimaryResult(result.getData());
                                 String userEmail = primaryAccountInfo.getUserEmail();
-                                dbHelper.insertTestData(userEmail, "test");
                                 primaryAccountHashMap.put(primaryAccountInfo.getUserEmail(), primaryAccountInfo);
                                 LogHandler.saveLog("Number of primary accounts : " + primaryAccountHashMap.size(),false);
 

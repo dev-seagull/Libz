@@ -12,6 +12,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        onCreate(getWritableDatabase());
     }
 
     @Override
@@ -28,7 +29,7 @@ public class DBHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(USERPROFILE);
 
         String DRIVE = "CREATE TABLE IF NOT EXISTS DRIVE("
-                +"id INTERGER PRIMARY KEY AUTOINCREMENT,"+
+                +"id INTEGER PRIMARY KEY AUTOINCREMENT,"+
                 "fildId TEXT," +
                 "fileName TEXT," +
                 "userEmail TEXT REFERENCES USERPROFILE(userEmail) ON UPDATE CASCADE ON DELETE CASCADE, " +
@@ -37,7 +38,7 @@ public class DBHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(DRIVE);
 
         String ANDROID = "CREATE TABLE IF NOT EXISTS ANDROID("
-                +"id INTERGER PRIMARY KEY AUTOINCREMENT,"+
+                +"id INTEGER PRIMARY KEY AUTOINCREMENT,"+
                 "fileName TEXT," +
                 "filePath TEXT," +
                 "device TEXT," +
@@ -49,7 +50,7 @@ public class DBHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(ANDROID);
 
         String PHOTOS = "CREATE TABLE IF NOT EXISTS PHOTOS("
-                +"id INTERGER PRIMARY KEY AUTOINCREMENT,"+
+                +"id INTEGER PRIMARY KEY AUTOINCREMENT,"+
                 "fileId TEXT," +
                 "fileName TEXT," +
                 "userEmail TEXT REFERENCES USERPROFILE(userEmail) ON UPDATE CASCADE ON DELETE CASCADE,"+
@@ -88,6 +89,32 @@ public class DBHelper extends SQLiteOpenHelper {
             db.setTransactionSuccessful();
         }catch (Exception e){
             LogHandler.saveLog("Failed to save " + testData + " into the database.");
+        }finally {
+            db.endTransaction();
+            db.close();
+        }
+    }
+
+    public void insertUserProfileData(String userEmail,String type,String refreshToken ,String accessToken,
+                            Double totalStorage , Double usedStorage , Double usedInDriveStorage , Double UsedInGmailAndPhotosStorage) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try{
+            String sqlQuery = "INSERT INTO USERPROFILE (" +
+                    "userEmail," +
+                    "type, " +
+                    "refreshToken, " +
+                    "accessToken, " +
+                    "totalStorage," +
+                    "usedStorage," +
+                    "usedInDriveStorage,"+
+                    "UsedInGmailAndPhotosStorage) VALUES (?,?,?,?,?,?,?,?)";
+            Object[] values = new Object[]{userEmail,type,refreshToken ,accessToken,
+                    totalStorage ,usedStorage ,usedInDriveStorage ,UsedInGmailAndPhotosStorage};
+            db.execSQL(sqlQuery, values);
+            db.setTransactionSuccessful();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to save into the database.in insertUserProfileData method. "+e.getLocalizedMessage());
         }finally {
             db.endTransaction();
             db.close();
