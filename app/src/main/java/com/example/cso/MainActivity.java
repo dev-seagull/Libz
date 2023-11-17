@@ -84,11 +84,10 @@
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
+            googleCloud = new GoogleCloud(this);
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
-            String[] columnsList = {"userEmail"};
-            dbHelper.getUserProfile(columnsList);
             drawerLayout = findViewById(R.id.drawer_layout);
             NavigationView navigationView = findViewById(R.id.navigationView);
             ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
@@ -104,6 +103,8 @@
             AppCompatButton infoButton = findViewById(R.id.infoButton);
             infoButton.setOnClickListener(view -> drawerLayout.openDrawer(GravityCompat.END));
 
+            initializeButtons();
+
             syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
             TextView androidDeviceNameTextView = findViewById(R.id.androidDeviceTextView);
             androidDeviceName = DeviceName.getDeviceName();
@@ -111,7 +112,7 @@
 
             LinearLayout primaryAccountsButtonsLayout= findViewById(R.id.primaryAccountsButtons);
             LinearLayout backupAccountsButtonsLayout= findViewById(R.id.backUpAccountsButtons);
-            googleCloud = new GoogleCloud(this);
+
             googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
             googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
             logFileName = LogHandler.CreateLogFile();
@@ -154,7 +155,6 @@
                         final View[] childview = {primaryAccountsButtonsLinearLayout.getChildAt(
                                 primaryAccountsButtonsLinearLayout.getChildCount() - 1)};
                         runOnUiThread(() -> childview[0].setClickable(false));
-
                         Executor signInExecutor = Executors.newSingleThreadExecutor();
                         try {
                             Runnable backgroundTask = () -> {
@@ -166,7 +166,6 @@
                                 runOnUiThread(() -> {
                                     childview[0] = primaryAccountsButtonsLinearLayout.getChildAt(
                                             primaryAccountsButtonsLinearLayout.getChildCount() - 2);
-
                                     LogHandler.saveLog(userEmail +  " has logged in to the primary account",false);
                                      if(childview[0] instanceof Button){
                                             Button bt = (Button) childview[0];
@@ -354,6 +353,7 @@
                                     popupMenu.setOnMenuItemClickListener(item -> {
                                         if (item.getItemId() == R.id.sign_out) {
                                             googleCloud.signOut();
+                                            dbHelper.deleteUserProfileData(buttonText);
                                             ViewGroup parentView = (ViewGroup) button.getParent();
 
                                             for (Map.Entry<String, PrimaryAccountInfo> primaryAccountEntrySet :
@@ -392,7 +392,9 @@
                                 if (buttonText.equals("add a back up account")) {
                                     button.setText("Wait");
                                     googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
-                                } else {
+                                } else if (buttonText.equals("wait")){
+                                    button.setText("Add a primary account");
+                                }else {
                                     PopupMenu popupMenu = new PopupMenu(MainActivity.this, button, Gravity.CENTER);
                                     popupMenu.getMenuInflater().inflate(R.menu.account_button_menu, popupMenu.getMenu());
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -401,6 +403,7 @@
                                     popupMenu.setOnMenuItemClickListener(item -> {
                                         if (item.getItemId() == R.id.sign_out) {
                                             googleCloud.signOut();
+                                            dbHelper.deleteUserProfileData(buttonText);
                                             ViewGroup parentView = (ViewGroup) button.getParent();
 
                                             for (Map.Entry<String, BackUpAccountInfo> backUpAccountEntrySet :
@@ -424,6 +427,25 @@
                                 }
                             }
                     );
+                }
+            }
+        }
+
+
+        private void initializeButtons(){
+            String[] columnsList = {"userEmail", "type"};
+            List<String[]> userProfiles = dbHelper.getUserProfile(columnsList);
+            for (String[] userProfile : userProfiles) {
+                String userEmail = userProfile[0];
+                String type = userProfile[1];
+                if (type.equals("primary")) {
+                    LinearLayout primaryLinearLayout = findViewById(R.id.primaryAccountsButtons);
+                    Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
+                    newGoogleLoginButton.setText(userEmail);
+                }else if (type.equals("backup")){
+                    LinearLayout backupLinearLayout = findViewById(R.id.backUpAccountsButtons);
+                    Button newGoogleLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
+                    newGoogleLoginButton.setText(userEmail);
                 }
             }
         }

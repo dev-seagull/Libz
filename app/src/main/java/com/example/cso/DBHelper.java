@@ -183,4 +183,20 @@ public class DBHelper extends SQLiteOpenHelper {
             db.close();
         }
     }
+
+
+    public void deleteUserProfileData(String userEmail) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            String sqlQuery = "DELETE FROM USERPROFILE WHERE userEmail = ?";
+            db.execSQL(sqlQuery, new Object[]{userEmail});
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to delete the database in deleteUserProfileData method. " + e.getLocalizedMessage());
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
+    }
 }

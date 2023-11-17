@@ -176,12 +176,26 @@
                 tokens = getTokens(authCode);
                 storage = getStorage(tokens);
                 mediaItems = GoogleDrive.getMediaItems(tokens);
-                MainActivity.dbHelper.insertUserProfileData(userEmail,"backup",tokens.getRefreshToken(),tokens.getAccessToken(),
-                        storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
-                runOnUiThread(() -> {
-                    LinearLayout backupAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-                    createBackUpLoginButton(backupAccountsButtonsLinearLayout);
-                });
+
+                String[] columnsList = new String[]{"userEmail"};
+                List<String[]> userProfileData = MainActivity.dbHelper.getUserProfile(columnsList);
+                boolean isInUserProfileData = false;
+
+                for (String[] row : userProfileData) {
+                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
+                        MainActivity.dbHelper.updateUserProfileData(userEmail,"backup",tokens.getRefreshToken(),tokens.getAccessToken(),
+                                storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
+                        isInUserProfileData = true;
+                    }
+                }
+                if (!isInUserProfileData){
+                    MainActivity.dbHelper.insertUserProfileData(userEmail,"backup",tokens.getRefreshToken(),tokens.getAccessToken(),
+                            storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
+                    runOnUiThread(() -> {
+                        LinearLayout backupAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+                        createBackUpLoginButton(backupAccountsButtonsLinearLayout);
+                    });
+                }
             }catch (Exception e){
                 LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage());
             }
@@ -189,7 +203,7 @@
         }
 
 
-        public void createPrimaryLoginButton(LinearLayout linearLayout){
+        public Button createPrimaryLoginButton(LinearLayout linearLayout){
             Button newLoginButton = new Button(activity);
             Drawable loginButtonLeftDrawable = activity.getApplicationContext().getResources()
                     .getDrawable(R.drawable.googlephotosimage);
@@ -216,9 +230,10 @@
             }else{
                 LogHandler.saveLog("Creating a new login button failed");
             }
+            return newLoginButton;
         }
 
-        public void createBackUpLoginButton(LinearLayout linearLayout){
+        public Button createBackUpLoginButton(LinearLayout linearLayout){
             Button newLoginButton = new Button(activity);
             Drawable loginButtonLeftDrawable = activity.getApplicationContext().getResources()
                     .getDrawable(R.drawable.googledriveimage);
@@ -245,6 +260,7 @@
             }else{
                 LogHandler.saveLog("Creating a new login button failed");
             }
+            return newLoginButton;
         }
 
         private PrimaryAccountInfo.Tokens getTokens(String authCode){
