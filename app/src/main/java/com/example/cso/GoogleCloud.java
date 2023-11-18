@@ -357,7 +357,7 @@
                     String clientSecret = activity.getString(R.string.client_secret);
                     String requestBody = "&client_id=" + clientId +
                             "&client_secret=" + clientSecret +
-                            "refresh_token= " + refreshToken +
+                            "&refresh_token= " + refreshToken +
                             "&grant_type=refresh_token";
                     byte[] postData = requestBody.getBytes(StandardCharsets.UTF_8);
                     httpURLConnection.setRequestMethod("POST");
@@ -369,7 +369,7 @@
 
                     int responseCode = httpURLConnection.getResponseCode();
                     if (responseCode == HttpURLConnection.HTTP_OK) {
-                        LogHandler.saveLog("Updating access token with response code of " + responseCode);
+                        LogHandler.saveLog("Updating access token with response code of " + responseCode,false);
                         StringBuilder responseBuilder = new StringBuilder();
                         BufferedReader bufferedReader = new BufferedReader(
                                 new InputStreamReader(httpURLConnection.getInputStream())
@@ -382,7 +382,7 @@
                         JSONObject responseJSONObject = new JSONObject(response);
                         accessToken = responseJSONObject.getString("access_token");
                     }else {
-                        LogHandler.saveLog("Getting access token failed with response code of " + responseCode );
+                        LogHandler.saveLog("Getting access token failed with response code of " + responseCode);
                     }
                 } catch (Exception e) {
                     LogHandler.saveLog("Getting access token failed: " + e.getLocalizedMessage());

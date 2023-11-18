@@ -47,7 +47,6 @@ public class DBHelper extends SQLiteOpenHelper {
                 "device TEXT," +
                 "fileSize REAL," +
                 "fileHash TEXT," +
-                "dateAdded TEXT,"+
                 "dateModified TEXT,"+
                 "memeType TEXT)";
         sqLiteDatabase.execSQL(ANDROID);
@@ -145,7 +144,6 @@ public class DBHelper extends SQLiteOpenHelper {
                     int columnIndex = cursor.getColumnIndex(columns[i]);
                     if (columnIndex >= 0) {
                         row[i] = cursor.getString(columnIndex);
-                        System.out.println("get values ---db > " + row[i]);
                     }
                 }
                 resultList.add(row);
@@ -204,4 +202,93 @@ public class DBHelper extends SQLiteOpenHelper {
             db.close();
         }
     }
+
+
+    public List<String []> getAndroidTable(String[] columns){
+        List<String[]> resultList = new ArrayList<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+        String result = "No values in the 'ANDROID' table.";
+
+        String sqlQuery = "SELECT ";
+        for (String column:columns){
+            sqlQuery += column + ", ";
+        }
+        sqlQuery = sqlQuery.substring(0, sqlQuery.length() - 2);
+        sqlQuery += " FROM ANDROID" ;
+        Cursor cursor = db.rawQuery(sqlQuery, null);
+        if (cursor.moveToFirst()) {
+            do {
+                String[] row = new String[columns.length];
+                for (int i = 0; i < columns.length; i++) {
+                    int columnIndex = cursor.getColumnIndex(columns[i]);
+                    if (columnIndex >= 0) {
+                        row[i] = cursor.getString(columnIndex);
+                    }
+                }
+                resultList.add(row);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+        return resultList;
+    }
+
+    public void insertIntoAndroidTable(String fileName,String filePath,String device,
+                                       Double fileSize,String fileHash,String dateModified,String memeType) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try{
+            String sqlQuery = "INSERT INTO ANDROID (" +
+                    "fileName," +
+                    "filePath, " +
+                    "device, " +
+                    "fileSize, " +
+                    "fileHash," +
+                    "dateModified," +
+                    "memeType) VALUES (?,?,?,?,?,?,?)";
+            Object[] values = new Object[]{fileName,filePath,device,
+                    fileSize,fileHash,dateModified,memeType};
+            db.execSQL(sqlQuery, values);
+            db.setTransactionSuccessful();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to save into the database.in insertIntoAndroidTable method. "+e.getLocalizedMessage());
+        }finally {
+            db.endTransaction();
+            db.close();
+        }
+    }
+
+
+    public void updateAndroid(String id, Map<String, Object> updateValues) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            StringBuilder sqlQueryBuilder = new StringBuilder("UPDATE ANDROID SET ");
+
+            List<Object> valuesList = new ArrayList<>();
+            for (Map.Entry<String, Object> entry : updateValues.entrySet()) {
+                String columnName = entry.getKey();
+                Object columnValue = entry.getValue();
+
+                sqlQueryBuilder.append(columnName).append(" = ?, ");
+                valuesList.add(columnValue);
+            }
+
+            sqlQueryBuilder.delete(sqlQueryBuilder.length() - 2, sqlQueryBuilder.length());
+            sqlQueryBuilder.append(" WHERE id = ?");
+            valuesList.add(id);
+
+            String sqlQuery = sqlQueryBuilder.toString();
+            Object[] values = valuesList.toArray(new Object[0]);
+            db.execSQL(sqlQuery, values);
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to update the database in updateAndroid method. " + e.getLocalizedMessage());
+        } finally {
+            db.endTransaction();
+            db.close();
+        }
+    }
+
 }

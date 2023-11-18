@@ -63,11 +63,10 @@
         HashMap<String, PrimaryAccountInfo> primaryAccountHashMap = new HashMap<>();
         HashMap<String, BackUpAccountInfo> backUpAccountHashMap = new HashMap<>();
         ArrayList<Android.MediaItem> androidMediaItems = new ArrayList<>();
-        String androidDeviceName;
+        public static String androidDeviceName;
         public static String logFileName ;
         SharedPreferences preferences;
         public static DBHelper dbHelper;
-
 
         private Boolean isFirstTime(SharedPreferences preferences){
             Boolean isFirstTime = preferences.getBoolean("isFirstTime", true);
@@ -85,6 +84,10 @@
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
             googleCloud = new GoogleCloud(this);
+            logFileName = LogHandler.CreateLogFile();
+            LogHandler.saveLog("Attention : Don't remove this file - this file makes sure that CSO app is working well.",false);
+            LogHandler.saveLog("if you have any questions or problems, please contact us by : ",false);
+
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
@@ -115,9 +118,6 @@
 
             googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
             googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
-            logFileName = LogHandler.CreateLogFile();
-            LogHandler.saveLog("Attention : Don't remove this file - this file makes sure that CSO app is working well.",false);
-            LogHandler.saveLog("if you have any questions or problems, please contact us by : ",false);
         }
 
 
@@ -137,7 +137,7 @@
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<ArrayList<Android.MediaItem>> androidBackgroundTask = () -> {
                 Android android = new Android();
-                androidMediaItems = android.getGalleryMediaItems(MainActivity.this);
+                androidMediaItems = Android.getGalleryMediaItems(MainActivity.this);
                 return androidMediaItems;
             };
             Future<ArrayList<Android.MediaItem>> future = executor.submit(androidBackgroundTask);

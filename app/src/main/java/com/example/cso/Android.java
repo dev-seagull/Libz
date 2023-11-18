@@ -20,10 +20,9 @@ import java.util.Queue;
 
 
 public class Android {
-    ArrayList<MediaItem> mediaItems;
 
-    public ArrayList<MediaItem> getGalleryMediaItems(Activity activity) {
-        ArrayList<MediaItem> androidMediaItems = new ArrayList<>();
+    public static void getGalleryMediaItems(Activity activity) {
+        int galleryItems = 0;
         int requestCode =1;
         String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE};
@@ -68,11 +67,12 @@ public class Android {
                    String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));
                    Double mediaItemSize = Double.valueOf(cursor.getString(columnIndexSize)) / (Math.pow(10, 6));
                    String mediaItemMemeType = cursor.getString(columnIndexMemeType);
-                   MediaItem androidMediaItem = new MediaItem(mediaItemName, mediaItemPath, mediaItemDateModified,
-                           "", mediaItemSize, mediaItemMemeType);
                    File androidFile = new File(mediaItemPath);
                    if(androidFile.exists()){
-                       androidMediaItems.add(androidMediaItem);
+                    galleryItems++;
+                       MainActivity.dbHelper.insertIntoAndroidTable(mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                                mediaItemSize, "",mediaItemDateModified,mediaItemMemeType);
+
                        LogHandler.saveLog("File was detected in android device: " + androidFile.getName(),false);
                    }
                }
@@ -83,23 +83,23 @@ public class Android {
        }
 
         try{
-            if(androidMediaItems.isEmpty()){
+            if(galleryItems == 0){
                 LogHandler.saveLog("The Gallery was not found, " +
                         "So it's starting to get the files from the file manager",false);
-                androidMediaItems = getFileManagerMediaItems();
+                galleryItems = getFileManagerMediaItems();
             }
         }catch (Exception e){
             LogHandler.saveLog("Getting device files failed: " + e.getLocalizedMessage());
         }
-        LogHandler.saveLog(androidMediaItems.size() + " files were found in your device",false);
-        return androidMediaItems;
+        LogHandler.saveLog(String.valueOf(galleryItems)
+                + " files were found in your device",false);
     }
 
 
-    public ArrayList<MediaItem> getFileManagerMediaItems(){
+    public int getFileManagerMediaItems(){
         String[] extensions = {".jpg", ".jpeg", ".png", ".webp",
                 ".gif", ".mp4", ".mkv", ".webm"};
-        ArrayList<MediaItem> androidMediaItems = new ArrayList<>();
+        int fileManagerItems = 0;
 
         File rootDirectory = Environment.getExternalStorageDirectory();
         Queue<File> queue = new LinkedList<>();
@@ -124,10 +124,10 @@ public class Android {
                                 SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy");
                                 String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));
                                 String mediaItemMemeType = GooglePhotos.getMemeType(mediaItemFile);
-                                MediaItem androidMediaItem = new MediaItem(mediaItemName, mediaItemPath, mediaItemDateModified
-                                        , "", mediaItemSize, mediaItemMemeType);
                                 if(mediaItemFile.exists()){
-                                    androidMediaItems.add(androidMediaItem);
+                                    fileManagerItems++;
+                                    MainActivity.dbHelper.insertIntoAndroidTable(mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                                            mediaItemSize, "",mediaItemDateModified,mediaItemMemeType);
                                     LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
                                 }
                             }
@@ -138,45 +138,10 @@ public class Android {
                 }
             }
         }
-        return androidMediaItems;
+        return fileManagerItems;
     }
 
     public Android(){
-        this.mediaItems = mediaItems;
-    }
-
-    public static class MediaItem{
-        private String fileName;
-        private String filePath;
-        private String fileHash;
-        private double fileSize;
-        private  String date_added;
-        private String date_modified;
-        private String meme_type;
-
-
-        public MediaItem(String fileName, String filePath, String date_modified,
-                         String fileHash, double fileSize, String meme_type) {
-            this.fileName = fileName;
-            this.filePath = filePath;
-            this.fileHash = fileHash;
-            this.fileSize = fileSize;
-            this.date_modified = date_modified;
-            this.meme_type = meme_type;
-        }
-
-        public String getFileName() {return fileName;}
-
-        public String getFilePath() {return filePath;}
-
-        public String getFileHash() {return fileHash;}
-
-        public double getFileSize() {return fileSize;}
-        public String getDate_added() {return date_added;}
-
-        public String getMeme_type() {return meme_type;}
-
-        public String getDate_modified() {return date_modified;}
 
     }
 }
