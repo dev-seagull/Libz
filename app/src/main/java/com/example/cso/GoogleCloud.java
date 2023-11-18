@@ -39,7 +39,9 @@
     import java.nio.charset.StandardCharsets;
     import java.text.DecimalFormat;
     import java.util.ArrayList;
+    import java.util.HashMap;
     import java.util.List;
+    import java.util.Map;
     import java.util.concurrent.Callable;
     import java.util.concurrent.ExecutorService;
     import java.util.concurrent.Executors;
@@ -79,7 +81,7 @@
                                 )
                         .requestServerAuthCode(activity.getResources().getString(R.string.web_client_id), forceCodeForRefreshToken)
                         .requestEmail()
-                        .build();
+                         .build();
 
                 googleSignInClient = GoogleSignIn.getClient(activity, googleSignInOptions);
 
@@ -137,8 +139,19 @@
                 boolean isInUserProfileData = false;
                 for (String[] row : userProfileData) {
                     if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
-                        MainActivity.dbHelper.updateUserProfileData(userEmail,"primary",tokens.getRefreshToken(),tokens.getAccessToken(),
-                                storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
+                        PrimaryAccountInfo.Tokens finalTokens = tokens;
+                        PrimaryAccountInfo.Storage finalStorage = storage;
+                        Map<String, Object> updatedValues = new HashMap<String, Object>(){{
+                            put("type", "primary");
+                            put("refreshToken", finalTokens.getRefreshToken());
+                            put("accessToken", finalTokens.getRefreshToken());
+                            put("totalStorage", finalStorage.getTotalStorage());
+                            put("usedStorage", finalStorage.getUsedStorage());
+                            put("usedInDriveStorage", finalStorage.getUsedInDriveStorage());
+                            put("usedInGmailAndPhotosStorage", finalStorage.getUsedInGmailAndPhotosStorage());
+                            put("accessToken", finalTokens.getAccessToken());
+                        }};
+                        MainActivity.dbHelper.updateUserProfileData(userEmail, updatedValues);
                         isInUserProfileData = true;
                     }
                 }
@@ -183,8 +196,19 @@
 
                 for (String[] row : userProfileData) {
                     if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
-                        MainActivity.dbHelper.updateUserProfileData(userEmail,"backup",tokens.getRefreshToken(),tokens.getAccessToken(),
-                                storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
+                        PrimaryAccountInfo.Tokens finalTokens = tokens;
+                        PrimaryAccountInfo.Storage finalStorage = storage;
+                        Map<String, Object> updatedValues = new HashMap<String, Object>(){{
+                            put("type", "backup");
+                            put("refreshToken", finalTokens.getRefreshToken());
+                            put("accessToken", finalTokens.getRefreshToken());
+                            put("totalStorage", finalStorage.getTotalStorage());
+                            put("usedStorage", finalStorage.getUsedStorage());
+                            put("usedInDriveStorage", finalStorage.getUsedInDriveStorage());
+                            put("usedInGmailAndPhotosStorage", finalStorage.getUsedInGmailAndPhotosStorage());
+                            put("accessToken", finalTokens.getAccessToken());
+                        }};
+                        MainActivity.dbHelper.updateUserProfileData(userEmail,updatedValues);
                         isInUserProfileData = true;
                     }
                 }
@@ -316,6 +340,61 @@
                 tokens_fromFuture = future.get();
             }catch (Exception e){
                 LogHandler.saveLog("failed to get tokens from the future: " + e.getLocalizedMessage());
+            }finally {
+                executor.shutdown();
+            }
+            return tokens_fromFuture;
+        }
+
+        protected PrimaryAccountInfo.Tokens requestAccessToken(final String refreshToken){
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Callable<PrimaryAccountInfo.Tokens> backgroundTokensTask = () -> {
+                String accessToken = null;
+                try {
+                    URL googleAPITokenUrl = new URL("https://www.googleapis.com/oauth2/v4/token");
+                    HttpURLConnection httpURLConnection = (HttpURLConnection) googleAPITokenUrl.openConnection();
+                    String clientId = activity.getResources().getString(R.string.client_id);
+                    String clientSecret = activity.getString(R.string.client_secret);
+                    String requestBody = "&client_id=" + clientId +
+                            "&client_secret=" + clientSecret +
+                            "refresh_token= " + refreshToken +
+                            "&grant_type=refresh_token";
+                    byte[] postData = requestBody.getBytes(StandardCharsets.UTF_8);
+                    httpURLConnection.setRequestMethod("POST");
+                    httpURLConnection.setDoInput(true);
+                    httpURLConnection.setDoOutput(true);
+                    OutputStream outputStream = httpURLConnection.getOutputStream();
+                    outputStream.write(postData);
+                    outputStream.flush();
+
+                    int responseCode = httpURLConnection.getResponseCode();
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        LogHandler.saveLog("Updating access token with response code of " + responseCode);
+                        StringBuilder responseBuilder = new StringBuilder();
+                        BufferedReader bufferedReader = new BufferedReader(
+                                new InputStreamReader(httpURLConnection.getInputStream())
+                        );
+                        String line;
+                        while ((line = bufferedReader.readLine()) != null) {
+                            responseBuilder.append(line);
+                        }
+                        String response = responseBuilder.toString();
+                        JSONObject responseJSONObject = new JSONObject(response);
+                        accessToken = responseJSONObject.getString("access_token");
+                    }else {
+                        LogHandler.saveLog("Getting access token failed with response code of " + responseCode );
+                    }
+                } catch (Exception e) {
+                    LogHandler.saveLog("Getting access token failed: " + e.getLocalizedMessage());
+                }
+                return new PrimaryAccountInfo.Tokens(accessToken, refreshToken);
+            };
+            Future<PrimaryAccountInfo.Tokens> future = executor.submit(backgroundTokensTask);
+            PrimaryAccountInfo.Tokens tokens_fromFuture = null;
+            try {
+                tokens_fromFuture = future.get();
+            }catch (Exception e){
+                LogHandler.saveLog("failed to get access token from the future: " + e.getLocalizedMessage());
             }finally {
                 executor.shutdown();
             }

@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class DBHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "CSODatabase";
@@ -156,24 +157,27 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-    public void updateUserProfileData(String userEmail, String type, String refreshToken, String accessToken,
-                                      Double totalStorage, Double usedStorage, Double usedInDriveStorage, Double usedInGmailAndPhotosStorage) {
+    public void updateUserProfileData(String userEmail, Map<String, Object> updateValues) {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
-            String sqlQuery = "UPDATE USERPROFILE SET " +
-                    "type = ?, " +
-                    "refreshToken = ?, " +
-                    "accessToken = ?, " +
-                    "totalStorage = ?, " +
-                    "usedStorage = ?, " +
-                    "usedInDriveStorage = ?, " +
-                    "UsedInGmailAndPhotosStorage = ? " +
-                    "WHERE userEmail = ?";
+            StringBuilder sqlQueryBuilder = new StringBuilder("UPDATE USERPROFILE SET ");
 
-            Object[] values = new Object[]{type, refreshToken, accessToken,
-                    totalStorage, usedStorage, usedInDriveStorage, usedInGmailAndPhotosStorage, userEmail};
+            List<Object> valuesList = new ArrayList<>();
+            for (Map.Entry<String, Object> entry : updateValues.entrySet()) {
+                String columnName = entry.getKey();
+                Object columnValue = entry.getValue();
 
+                sqlQueryBuilder.append(columnName).append(" = ?, ");
+                valuesList.add(columnValue);
+            }
+
+            sqlQueryBuilder.delete(sqlQueryBuilder.length() - 2, sqlQueryBuilder.length());
+            sqlQueryBuilder.append(" WHERE userEmail = ?");
+            valuesList.add(userEmail);
+
+            String sqlQuery = sqlQueryBuilder.toString();
+            Object[] values = valuesList.toArray(new Object[0]);
             db.execSQL(sqlQuery, values);
             db.setTransactionSuccessful();
         } catch (Exception e) {
@@ -183,6 +187,7 @@ public class DBHelper extends SQLiteOpenHelper {
             db.close();
         }
     }
+
 
 
     public void deleteUserProfileData(String userEmail) {

@@ -261,14 +261,28 @@
                                 LogHandler.saveLog("failed to join drive back up thread: "  + e.getLocalizedMessage());
                             }
                         }
+                        String[] columns = {"userEmail", "type" ,"accessToken"};
+                        List<String[]> selectedRows = dbHelper.getUserProfile(columns);
+//
+//                        ArrayList
+//                        for(String[] selectedRow: selectedRows){
+//                            if(type.eq)
+//                        }
+                        for(String[] selectedRow: selectedRows){
+                        String userEmail = selectedRow[0];
+                        String type = selectedRow[1];
+                        String accessToken = selectedRow[3];
+//                        if(type.equals("primary")){
+//                            ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems = firstBackUpAccountInfo.getMediaItems();
+//                            ArrayList<GooglePhotos.MediaItem> mediaItems = primaryAccountInfo.getMediaItems();
+//                            Upload upload = new Upload();
+//
+//                            upload.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken
+//                                    ,backUpMediaItems,primaryAccountInfo.getUserEmail(),firstBackUpAccountInfo.getUserEmail());
+//                        }
+                    }
                         for (PrimaryAccountInfo primaryAccountInfo : primaryAccountHashMap.values()) {
-                            ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems = firstBackUpAccountInfo.getMediaItems();
-                            ArrayList<GooglePhotos.MediaItem> mediaItems = primaryAccountInfo.getMediaItems();
-                            Upload upload = new Upload();
-
-                            upload.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken
-                                    ,backUpMediaItems,primaryAccountInfo.getUserEmail(),firstBackUpAccountInfo.getUserEmail());
-                        }
+                             }
                     });
 
                     Thread androidUploadThread = new Thread(() -> {
@@ -433,11 +447,20 @@
 
 
         private void initializeButtons(){
-            String[] columnsList = {"userEmail", "type"};
+            String[] columnsList = {"userEmail", "type", "refreshToken"};
             List<String[]> userProfiles = dbHelper.getUserProfile(columnsList);
             for (String[] userProfile : userProfiles) {
                 String userEmail = userProfile[0];
                 String type = userProfile[1];
+                String refreshToken = userProfile[2];
+
+                PrimaryAccountInfo.Tokens tokens = googleCloud.requestAccessToken(refreshToken);
+                Map<String, Object> updatedValues = new HashMap<String, Object>(){{
+                    put("accessToken", tokens.getAccessToken());
+                }};
+
+                dbHelper.updateUserProfileData(userEmail, updatedValues);
+
                 if (type.equals("primary")) {
                     LinearLayout primaryLinearLayout = findViewById(R.id.primaryAccountsButtons);
                     Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
