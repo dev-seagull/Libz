@@ -62,7 +62,6 @@
         GooglePhotos googlePhotos;
         HashMap<String, PrimaryAccountInfo> primaryAccountHashMap = new HashMap<>();
         HashMap<String, BackUpAccountInfo> backUpAccountHashMap = new HashMap<>();
-        ArrayList<Android.MediaItem> androidMediaItems = new ArrayList<>();
         public static String androidDeviceName;
         public static String logFileName ;
         SharedPreferences preferences;
@@ -83,6 +82,14 @@
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
+            int requestCode =1;
+            String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE};
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                    (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED |
+                            ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)) {
+                ActivityCompat.requestPermissions(this, permissions, requestCode);
+            }
             googleCloud = new GoogleCloud(this);
             logFileName = LogHandler.CreateLogFile();
             LogHandler.saveLog("Attention : Don't remove this file - this file makes sure that CSO app is working well.",false);
@@ -124,7 +131,6 @@
         @Override
         protected void onStart(){
             super.onStart();
-
             runOnUiThread(this::updateButtonsListeners);
             try{
                 googleCloud = new GoogleCloud(this);
@@ -132,21 +138,6 @@
             }catch (Exception e){
                 LogHandler.saveLog("failed to initialize the classes: " + e.getLocalizedMessage());
             }
-
-            LogHandler.saveLog("Starting to get files from you android device",false);
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            Callable<ArrayList<Android.MediaItem>> androidBackgroundTask = () -> {
-                Android android = new Android();
-                androidMediaItems = Android.getGalleryMediaItems(MainActivity.this);
-                return androidMediaItems;
-            };
-            Future<ArrayList<Android.MediaItem>> future = executor.submit(androidBackgroundTask);
-            try {
-                androidMediaItems = future.get();
-            } catch (ExecutionException | InterruptedException e) {
-                LogHandler.saveLog("failed to get android files: " + e.getLocalizedMessage());
-            }
-            executor.shutdown();
 
             signInToPrimaryLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -238,40 +229,71 @@
                         TextView syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
                         syncToBackUpAccountTextView.setText("Wait until the uploading process is finished");
                     });
-
-                    BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
-                    PrimaryAccountInfo.Tokens backupTokens = firstBackUpAccountInfo.getTokens();
-                    String backUpAccessToken = firstBackUpAccountInfo.getTokens().getAccessToken();
-                    ArrayList<BackUpAccountInfo.MediaItem> backupMediaItems = firstBackUpAccountInfo.getMediaItems();
-                    Thread driveBackUpThread = new Thread(new Runnable() {
+//
+//                    BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
+//                    PrimaryAccountInfo.Tokens backupTokens = firstBackUpAccountInfo.getTokens();
+//                    String backUpAccessToken = firstBackUpAccountInfo.getTokens().getAccessToken();
+//                    ArrayList<BackUpAccountInfo.MediaItem> backupMediaItems = firstBackUpAccountInfo.getMediaItems();
+                    Thread deleteRedundantAndroidThread = new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            GoogleDrive.deleteDuplicatedMediaItems(backupMediaItems,backupTokens);
+                            LogHandler.saveLog("Starting to get files from you android device",false);
+                            String[] columns = {"id","fileName","filePath","fileSize","dateModified"};
+                            List<String[]> androidRows = dbHelper.getAndroidTable(columns);
+                            dbHelper.deleteRedundantAndroid(androidRows);
                             synchronized (this){
                                 notify();
                             }
                         }
                     });
 
-                    Thread photosUploadThread = new Thread(() -> {
-                        synchronized (driveBackUpThread){
+                    Thread updateAndroidFilesThread = new Thread(() -> {
+                        synchronized (deleteRedundantAndroidThread){
                             try{
-                                driveBackUpThread.join();
+                                deleteRedundantAndroidThread.join();
                             }catch (Exception e){
                                 LogHandler.saveLog("failed to join drive back up thread: "  + e.getLocalizedMessage());
                             }
                         }
-                        String[] columns = {"userEmail", "type" ,"accessToken"};
-                        List<String[]> selectedRows = dbHelper.getUserProfile(columns);
+                        Android.getGalleryMediaItems(MainActivity.this);
+                        LogHandler.saveLog("End of getting files from your android device",false);
+                    });
+
+
+//                    Thread driveBackUpThread = new Thread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            synchronized (updateAndroidFilesThread){
+//                                try{
+//                                    updateAndroidFilesThread.join();
+//                                }catch (Exception e){
+//                                    LogHandler.saveLog("failed to join drive back up thread: "  + e.getLocalizedMessage());
+//                                }
+//                            }
+//                            GoogleDrive.deleteDuplicatedMediaItems(backupMediaItems,backupTokens);
+//
+//                        }
+//                    });
+
+//                    Thread photosUploadThread = new Thread(() -> {
+//                        synchronized (driveBackUpThread){
+//                            try{
+//                                driveBackUpThread.join();
+//                            }catch (Exception e){
+//                                LogHandler.saveLog("failed to join drive back up thread: "  + e.getLocalizedMessage());
+//                            }
+//                        }
+//                        String[] columns = {"userEmail", "type" ,"accessToken"};
+//                        List<String[]> selectedRows = dbHelper.getUserProfile(columns);
 //
 //                        ArrayList
 //                        for(String[] selectedRow: selectedRows){
 //                            if(type.eq)
 //                        }
-                        for(String[] selectedRow: selectedRows){
-                        String userEmail = selectedRow[0];
-                        String type = selectedRow[1];
-                        String accessToken = selectedRow[3];
+//                        for(String[] selectedRow: selectedRows){
+//                        String userEmail = selectedRow[0];
+//                        String type = selectedRow[1];
+//                        String accessToken = selectedRow[3];
 //                        if(type.equals("primary")){
 //                            ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems = firstBackUpAccountInfo.getMediaItems();
 //                            ArrayList<GooglePhotos.MediaItem> mediaItems = primaryAccountInfo.getMediaItems();
@@ -280,64 +302,66 @@
 //                            upload.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken
 //                                    ,backUpMediaItems,primaryAccountInfo.getUserEmail(),firstBackUpAccountInfo.getUserEmail());
 //                        }
-                    }
-                        for (PrimaryAccountInfo primaryAccountInfo : primaryAccountHashMap.values()) {
-                             }
-                    });
-
-                    Thread androidUploadThread = new Thread(() -> {
-                        synchronized (photosUploadThread){
-                            try{
-                                photosUploadThread.join();
-                            }catch (Exception e){
-                                LogHandler.saveLog("failed to join android thread: "  + e.getLocalizedMessage());
-                            }
-                        }
-                        uploadAndroidToDriveAccounts(backUpAccessToken);
-                    });
-
+//                    }
+//                        for (PrimaryAccountInfo primaryAccountInfo : primaryAccountHashMap.values()) {
+//                             }
+//                    });
+//
+//                    Thread androidUploadThread = new Thread(() -> {
+//                        synchronized (photosUploadThread){
+//                            try{
+//                                photosUploadThread.join();
+//                            }catch (Exception e){
+//                                LogHandler.saveLog("failed to join android thread: "  + e.getLocalizedMessage());
+//                            }
+//                        }
+////                        uploadAndroidToDriveAccounts(backUpAccessToken);
+//                    });
+//
                     Thread updateUIThread =  new Thread(() -> {
-                        synchronized (androidUploadThread){
+                        synchronized (updateAndroidFilesThread){
                             try{
-                                androidUploadThread.join();
+                                updateAndroidFilesThread.join();
                             }catch (Exception e){
                                 LogHandler.saveLog("failed to join update ui thread: "  + e.getLocalizedMessage());
                             }
                         }
                         runOnUiThread(() -> {
                             NotificationHandler.sendNotification("1","syncingAlert", MainActivity.this,
-                                    "Syncing is finished","You're files are backed-up!");
+                                            "Syncing is finished","You're files are backed-up!");
                             TextView syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
                             syncToBackUpAccountTextView.setText("Uploading process is finished");
                         });
                     });
 
-                    driveBackUpThread.start();
-                    photosUploadThread.start();
-                    androidUploadThread.start();
+                    deleteRedundantAndroidThread.start();
+                    updateAndroidFilesThread.start();
+//                    driveBackUpThread.start();
+//                    photosUploadThread.start();
+//                    androidUploadThread.start();
                     updateUIThread.start();
                 }
             });
         }
 
-        void uploadAndroidToDriveAccounts(String backUpAccessToken){
-            try{
-                Executor uploadExecutor = Executors.newSingleThreadExecutor();
-                Runnable backgroundTask = () -> {
-                    BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
-                    ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems = firstBackUpAccountInfo.getMediaItems();
-                    for(PrimaryAccountInfo primaryAccountInfo: primaryAccountHashMap.values()){
-                        ArrayList<GooglePhotos.MediaItem> primaryMediaItems = primaryAccountInfo.getMediaItems();
-                        System.out.println("here to sync android!");
-                        googlePhotos.uploadAndroidToGoogleDrive(androidMediaItems, primaryMediaItems ,backUpAccessToken,
-                                backUpMediaItems, this);
-                    }
-                };
-                uploadExecutor.execute(backgroundTask);
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to upload from android to drive: " + e.getLocalizedMessage());
-            }
-        }
+//        void uploadAndroidToDriveAccounts(String backUpAccessToken){
+//            try{
+//                Executor uploadExecutor = Executors.newSingleThreadExecutor();
+//                Runnable backgroundTask = () -> {
+//                    BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
+//                    ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems = firstBackUpAccountInfo.getMediaItems();
+//                    for(PrimaryAccountInfo primaryAccountInfo: primaryAccountHashMap.values()){
+//                        ArrayList<GooglePhotos.MediaItem> primaryMediaItems = primaryAccountInfo.getMediaItems();
+//                        System.out.println("here to sync android!");
+//                        googlePhotos.uploadAndroidToGoogleDrive(androidMediaItems, primaryMediaItems ,backUpAccessToken,
+//                                backUpMediaItems, this);
+//                    }
+//                };
+//                uploadExecutor.execute(backgroundTask);
+//            }catch (Exception e){
+//                LogHandler.saveLog("Failed to upload from android to drive: " + e.getLocalizedMessage());
+//            }
+//        }
 
         private void updateButtonsListeners() {
             updatePrimaryButtonsListener();

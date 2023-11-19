@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 
@@ -23,14 +24,6 @@ public class Android {
 
     public static void getGalleryMediaItems(Activity activity) {
         int galleryItems = 0;
-        int requestCode =1;
-        String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE};
-        while (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                ContextCompat.checkSelfPermission(activity.getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED |
-                ContextCompat.checkSelfPermission(activity.getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(activity, permissions, requestCode);
-        }
 
         try{
            String[] projection = {
@@ -69,10 +62,9 @@ public class Android {
                    String mediaItemMemeType = cursor.getString(columnIndexMemeType);
                    File androidFile = new File(mediaItemPath);
                    if(androidFile.exists()){
-                    galleryItems++;
+                       galleryItems++;
                        MainActivity.dbHelper.insertIntoAndroidTable(mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
                                 mediaItemSize, "",mediaItemDateModified,mediaItemMemeType);
-
                        LogHandler.saveLog("File was detected in android device: " + androidFile.getName(),false);
                    }
                }
@@ -96,7 +88,7 @@ public class Android {
     }
 
 
-    public int getFileManagerMediaItems(){
+    public static int getFileManagerMediaItems(){
         String[] extensions = {".jpg", ".jpeg", ".png", ".webp",
                 ".gif", ".mp4", ".mkv", ".webm"};
         int fileManagerItems = 0;
@@ -140,10 +132,10 @@ public class Android {
         }
         return fileManagerItems;
     }
-
     public Android(){
-
     }
+
+
 }
 
 

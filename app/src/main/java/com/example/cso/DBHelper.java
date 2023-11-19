@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -238,24 +239,28 @@ public class DBHelper extends SQLiteOpenHelper {
                                        Double fileSize,String fileHash,String dateModified,String memeType) {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
-        try{
-            String sqlQuery = "INSERT INTO ANDROID (" +
-                    "fileName," +
-                    "filePath, " +
-                    "device, " +
-                    "fileSize, " +
-                    "fileHash," +
-                    "dateModified," +
-                    "memeType) VALUES (?,?,?,?,?,?,?)";
-            Object[] values = new Object[]{fileName,filePath,device,
-                    fileSize,fileHash,dateModified,memeType};
-            db.execSQL(sqlQuery, values);
-            db.setTransactionSuccessful();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to save into the database.in insertIntoAndroidTable method. "+e.getLocalizedMessage());
-        }finally {
-            db.endTransaction();
-            db.close();
+        String sqlQuery_2 = "SELECT * FROM ANDROID WHERE filePath = ? and fileSize = ? and dateModified = ?";
+        Cursor cursor = db.rawQuery(sqlQuery_2, new String[]{filePath,String.valueOf(fileSize),dateModified});
+        if (!cursor.moveToFirst()) {
+            try{
+                String sqlQuery = "INSERT INTO ANDROID (" +
+                        "fileName," +
+                        "filePath, " +
+                        "device, " +
+                        "fileSize, " +
+                        "fileHash," +
+                        "dateModified," +
+                        "memeType) VALUES (?,?,?,?,?,?,?)";
+                Object[] values = new Object[]{fileName,filePath,device,
+                        fileSize,fileHash,dateModified,memeType};
+                db.execSQL(sqlQuery, values);
+                db.setTransactionSuccessful();
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to save into the database.in insertIntoAndroidTable method. "+e.getLocalizedMessage());
+            }finally {
+                db.endTransaction();
+                db.close();
+            }
         }
     }
 
@@ -291,4 +296,27 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    public void deleteRedundantAndroid(List<String[]> androidRows){
+        String filePath;
+        for (String[] androidRow : androidRows){
+            filePath = androidRow[2];
+            String id = androidRow[0];
+            System.out.println("filePath :" + filePath);
+            File androidFile = new File(filePath);
+            if (!androidFile.exists()){
+                SQLiteDatabase db = getWritableDatabase();
+                db.beginTransaction();
+                try {
+                    String sqlQuery = "DELETE FROM ANDROID WHERE id = ? ";
+                    db.execSQL(sqlQuery, new Object[]{id});
+                    db.setTransactionSuccessful();
+                } catch (Exception e) {
+                    LogHandler.saveLog("Failed to delete the database in deleteRedundantAndroid method. " + e.getLocalizedMessage());
+                } finally {
+                    db.endTransaction();
+                    db.close();
+                }
+            }
+        }
+    }
 }

@@ -19,7 +19,7 @@ public class NotificationHandler {
     public static void sendNotification(String channelId, String channelName, Activity activity,
                                         String contentTitle, String contentText) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            while (ActivityCompat.checkSelfPermission(activity,
+            if (ActivityCompat.checkSelfPermission(activity,
                     Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 int REQUEST_CODE = 1;
                 ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE);
