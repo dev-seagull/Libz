@@ -65,7 +65,7 @@ public class Android {
                        galleryItems++;
                        long lastInsertedId =
                                MainActivity.dbHelper.insertAssetData(mediaItemName,"ANDROID" ,"");
-                       MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                       MainActivity.dbHelper.insertIntoAndroidTable((int)lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
                                 mediaItemSize, "",mediaItemDateModified,mediaItemMemeType);
                        LogHandler.saveLog("File was detected in android device: " + androidFile.getName(),false);
                    }

@@ -96,7 +96,7 @@ public class DBHelper extends SQLiteOpenHelper {
         long lastInsertedId = -1;
 
         try{
-            String sqlQuery = "INSERT INTO ASSET(fileName, type, fileHash) VALUES (?);";
+            String sqlQuery = "INSERT INTO ASSET(fileName, type, fileHash) VALUES (?,?,?);";
             db.execSQL(sqlQuery, new Object[]{fileName, type, hash});
 
             db.setTransactionSuccessful();
@@ -106,9 +106,12 @@ public class DBHelper extends SQLiteOpenHelper {
             db.endTransaction();
             db.close();
         }
-
-
+        if (getWritableDatabase().isDbLockedByCurrentThread()){
+            db.
+        }
+        db = getWritableDatabase();
         db.beginTransaction();
+
         try{
             String sqlQuery = "SELECT LAST_INSERT_ROWID() AS last_id;";
             Cursor cursor = db.rawQuery(sqlQuery, null);
@@ -279,14 +282,14 @@ public class DBHelper extends SQLiteOpenHelper {
         if (!cursor.moveToFirst()) {
             try{
                 String sqlQuery = "INSERT INTO ANDROID (" +
-                        "id" +
+                        "id," +
                         "fileName," +
                         "filePath, " +
                         "device, " +
                         "fileSize, " +
                         "fileHash," +
                         "dateModified," +
-                        "memeType) VALUES (?,?,?,?,?,?,?)";
+                        "memeType) VALUES (?,?,?,?,?,?,?,?)";
                 Object[] values = new Object[]{id,fileName,filePath,device,
                         fileSize,fileHash,dateModified,memeType};
                 db.execSQL(sqlQuery, values);
