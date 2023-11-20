@@ -63,7 +63,9 @@ public class Android {
                    File androidFile = new File(mediaItemPath);
                    if(androidFile.exists()){
                        galleryItems++;
-                       MainActivity.dbHelper.insertIntoAndroidTable(mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                       long lastInsertedId =
+                               MainActivity.dbHelper.insertAssetData(mediaItemName,"ANDROID" ,"");
+                       MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
                                 mediaItemSize, "",mediaItemDateModified,mediaItemMemeType);
                        LogHandler.saveLog("File was detected in android device: " + androidFile.getName(),false);
                    }
@@ -118,7 +120,9 @@ public class Android {
                                 String mediaItemMemeType = GooglePhotos.getMemeType(mediaItemFile);
                                 if(mediaItemFile.exists()){
                                     fileManagerItems++;
-                                    MainActivity.dbHelper.insertIntoAndroidTable(mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                                    long lastInsertedId =
+                                            MainActivity.dbHelper.insertAssetData(mediaItemName,"ANDROID" ,"");
+                                    MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
                                             mediaItemSize, "",mediaItemDateModified,mediaItemMemeType);
                                     LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
                                 }

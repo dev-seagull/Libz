@@ -32,8 +32,15 @@ public class DBHelper extends SQLiteOpenHelper {
                 "UsedInGmailAndPhotosStorage REAL)";
         sqLiteDatabase.execSQL(USERPROFILE);
 
-        String DRIVE = "CREATE TABLE IF NOT EXISTS DRIVE("
+        String ASSET = "CREATE TABLE IF NOT EXISTS ASSET("
                 +"id INTEGER PRIMARY KEY AUTOINCREMENT,"+
+                "fileName TEXT," +
+                "type TEXT CHECK (type IN ('PHOTOS','DRIVE','ANDROID')),"+
+                "fileHash TEXT);";
+        sqLiteDatabase.execSQL(ASSET);
+
+        String DRIVE = "CREATE TABLE IF NOT EXISTS DRIVE("
+                +"id INTEGER REFERENCES ASSET(id) ON UPDATE CASCADE ON DELETE CASCADE,"+
                 "fildId TEXT," +
                 "fileName TEXT," +
                 "userEmail TEXT REFERENCES USERPROFILE(userEmail) ON UPDATE CASCADE ON DELETE CASCADE, " +
@@ -42,7 +49,7 @@ public class DBHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(DRIVE);
 
         String ANDROID = "CREATE TABLE IF NOT EXISTS ANDROID("
-                +"id INTEGER PRIMARY KEY AUTOINCREMENT,"+
+                +"id INTEGER REFERENCES ASSET(id) ON UPDATE CASCADE ON DELETE CASCADE,"+
                 "fileName TEXT," +
                 "filePath TEXT," +
                 "device TEXT," +
@@ -53,7 +60,7 @@ public class DBHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(ANDROID);
 
         String PHOTOS = "CREATE TABLE IF NOT EXISTS PHOTOS("
-                +"id INTEGER PRIMARY KEY AUTOINCREMENT,"+
+                +"id INTEGER REFERENCES ASSET(id) ON UPDATE CASCADE ON DELETE CASCADE,"+
                 "fileId TEXT," +
                 "fileName TEXT," +
                 "userEmail TEXT REFERENCES USERPROFILE(userEmail) ON UPDATE CASCADE ON DELETE CASCADE,"+
@@ -82,20 +89,48 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
     }
-    public void insertTestData(String testData, String columnName) {
+    public long insertAssetData(String fileName, String type, String hash) {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
+
+        long lastInsertedId = -1;
+
         try{
-            String sqlQuery = "INSERT INTO Test ("+ columnName +") VALUES (?)";
-            db.execSQL(sqlQuery, new Object[]{testData});
+            String sqlQuery = "INSERT INTO ASSET(fileName, type, fileHash) VALUES (?);";
+            db.execSQL(sqlQuery, new Object[]{fileName, type, hash});
 
             db.setTransactionSuccessful();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to save " + testData + " into the database.");
+            LogHandler.saveLog("Failed to insert data into ASSET.");
         }finally {
             db.endTransaction();
             db.close();
         }
+
+
+        db.beginTransaction();
+        try{
+            String sqlQuery = "SELECT LAST_INSERT_ROWID() AS last_id;";
+            Cursor cursor = db.rawQuery(sqlQuery, null);
+
+            if (cursor.moveToFirst()) {
+                int columnIndex = cursor.getColumnIndex("last_id");
+                if (columnIndex != -1) {
+                    lastInsertedId = cursor.getLong(columnIndex);
+                } else {
+                    LogHandler.saveLog("Getting column index -1 inside insertAssetData method");
+                }
+            }
+
+            cursor.close();
+            db.setTransactionSuccessful();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to get last inserted id inside ASSET");
+        }finally {
+            db.endTransaction();
+            db.close();
+        }
+        return lastInsertedId;
     }
 
     public void insertUserProfileData(String userEmail,String type,String refreshToken ,String accessToken,
@@ -235,7 +270,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return resultList;
     }
 
-    public void insertIntoAndroidTable(String fileName,String filePath,String device,
+    public void insertIntoAndroidTable(long id,String fileName,String filePath,String device,
                                        Double fileSize,String fileHash,String dateModified,String memeType) {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
@@ -244,6 +279,7 @@ public class DBHelper extends SQLiteOpenHelper {
         if (!cursor.moveToFirst()) {
             try{
                 String sqlQuery = "INSERT INTO ANDROID (" +
+                        "id" +
                         "fileName," +
                         "filePath, " +
                         "device, " +
@@ -251,7 +287,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         "fileHash," +
                         "dateModified," +
                         "memeType) VALUES (?,?,?,?,?,?,?)";
-                Object[] values = new Object[]{fileName,filePath,device,
+                Object[] values = new Object[]{id,fileName,filePath,device,
                         fileSize,fileHash,dateModified,memeType};
                 db.execSQL(sqlQuery, values);
                 db.setTransactionSuccessful();
