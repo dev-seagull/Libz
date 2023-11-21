@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -90,49 +91,55 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
     }
     public long insertAssetData(String fileName, String type, String hash) {
-        SQLiteDatabase db = getWritableDatabase();
-        db.beginTransaction();
-
         long lastInsertedId = -1;
 
+        SQLiteDatabase dbChecker = getReadableDatabase();
         try{
-            String sqlQuery = "INSERT INTO ASSET(fileName, type, fileHash) VALUES (?,?,?);";
-            db.execSQL(sqlQuery, new Object[]{fileName, type, hash});
+            String sqlQuery = "SELECT * FROM ASSET WHERE fileHash = ? AND  type = ?;";
+            Cursor cursor = dbChecker.rawQuery(sqlQuery,new String[]{hash, type});
 
-            db.setTransactionSuccessful();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to insert data into ASSET.");
-        }finally {
-            db.endTransaction();
-            db.close();
-        }
-        if (getWritableDatabase().isDbLockedByCurrentThread()){
-            db.
-        }
-        db = getWritableDatabase();
-        db.beginTransaction();
+            if (!cursor.moveToFirst()) {
+                SQLiteDatabase dbWritable = getWritableDatabase();
+                dbWritable.beginTransaction();
 
-        try{
-            String sqlQuery = "SELECT LAST_INSERT_ROWID() AS last_id;";
-            Cursor cursor = db.rawQuery(sqlQuery, null);
+                try{
+                    sqlQuery = "INSERT INTO ASSET(fileName, type, fileHash) VALUES (?,?,?);";
+                    dbWritable.execSQL(sqlQuery, new Object[]{fileName, type, hash});
+                    dbWritable.setTransactionSuccessful();
+                }catch (Exception e){
+                    LogHandler.saveLog("Failed to insert data into ASSET.");
+                }finally {
+                    dbWritable.endTransaction();
+                    dbWritable.close();
+                }
 
-            if (cursor.moveToFirst()) {
-                int columnIndex = cursor.getColumnIndex("last_id");
-                if (columnIndex != -1) {
-                    lastInsertedId = cursor.getLong(columnIndex);
-                } else {
-                    LogHandler.saveLog("Getting column index -1 inside insertAssetData method");
+                SQLiteDatabase dbReadable = getReadableDatabase();
+                try{
+                    sqlQuery = "SELECT LAST_INSERT_ROWID() AS last_id;";
+                    cursor = dbReadable.rawQuery(sqlQuery, null);
+
+                    if (cursor.moveToFirst()) {
+                        int columnIndex = cursor.getColumnIndex("last_id");
+                        if (columnIndex != -1) {
+                            lastInsertedId = cursor.getLong(columnIndex);
+                        } else {
+                            LogHandler.saveLog("Getting column index -1 inside insertAssetData method");
+                        }
+                    }
+                    cursor.close();
+                }catch (Exception e){
+                    LogHandler.saveLog("Failed to get last inserted id inside ASSET");
+                }finally {
+                    dbReadable.close();
                 }
             }
-
             cursor.close();
-            db.setTransactionSuccessful();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to get last inserted id inside ASSET");
+            LogHandler.saveLog("Failed to run checker inside Asset table  " + e.getLocalizedMessage());
         }finally {
-            db.endTransaction();
-            db.close();
+            dbChecker.close();
         }
+
         return lastInsertedId;
     }
 
@@ -167,7 +174,6 @@ public class DBHelper extends SQLiteOpenHelper {
         List<String[]> resultList = new ArrayList<>();
 
         SQLiteDatabase db = getReadableDatabase();
-        String result = "No values in the 'UserProfile' table.";
 
         String sqlQuery = "SELECT ";
         for (String column:columns){
@@ -247,7 +253,6 @@ public class DBHelper extends SQLiteOpenHelper {
         List<String[]> resultList = new ArrayList<>();
 
         SQLiteDatabase db = getReadableDatabase();
-        String result = "No values in the 'ANDROID' table.";
 
         String sqlQuery = "SELECT ";
         for (String column:columns){
@@ -274,7 +279,8 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public void insertIntoAndroidTable(long id,String fileName,String filePath,String device,
-                                       Double fileSize,String fileHash,String dateModified,String memeType) {
+                                       String fileHash, Double fileSize,String dateModified,String memeType) {
+
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         String sqlQuery_2 = "SELECT * FROM ANDROID WHERE filePath = ? and fileSize = ? and dateModified = ?";
@@ -300,6 +306,9 @@ public class DBHelper extends SQLiteOpenHelper {
                 db.endTransaction();
                 db.close();
             }
+        }else{
+            String sqlQuery = "DELETE FROM ASSET WHERE id = id";
+
         }
     }
 

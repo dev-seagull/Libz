@@ -63,11 +63,21 @@ public class Android {
                    File androidFile = new File(mediaItemPath);
                    if(androidFile.exists()){
                        galleryItems++;
+
+                       String fileHash = "";
+                       try {
+                           fileHash = Upload.calculateHash(androidFile);
+                       } catch (Exception e) {
+                           LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
+                       }
+
                        long lastInsertedId =
-                               MainActivity.dbHelper.insertAssetData(mediaItemName,"ANDROID" ,"");
-                       MainActivity.dbHelper.insertIntoAndroidTable((int)lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
-                                mediaItemSize, "",mediaItemDateModified,mediaItemMemeType);
-                       LogHandler.saveLog("File was detected in android device: " + androidFile.getName(),false);
+                               MainActivity.dbHelper.insertAssetData(mediaItemName,"ANDROID" ,fileHash);
+                       if(lastInsertedId != -1){
+                           MainActivity.dbHelper.insertIntoAndroidTable((int)lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                                   fileHash,mediaItemSize,mediaItemDateModified,mediaItemMemeType);
+                           LogHandler.saveLog("File was detected in android device: " + androidFile.getName(),false);
+                       }
                    }
                }
                cursor.close();
@@ -120,11 +130,21 @@ public class Android {
                                 String mediaItemMemeType = GooglePhotos.getMemeType(mediaItemFile);
                                 if(mediaItemFile.exists()){
                                     fileManagerItems++;
+
+                                    String mediaItemHash = "";
+                                    try {
+                                        mediaItemHash = Upload.calculateHash(mediaItemFile);
+                                    } catch (Exception e) {
+                                        LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
+                                    }
+
                                     long lastInsertedId =
-                                            MainActivity.dbHelper.insertAssetData(mediaItemName,"ANDROID" ,"");
-                                    MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
-                                            mediaItemSize, "",mediaItemDateModified,mediaItemMemeType);
-                                    LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
+                                            MainActivity.dbHelper.insertAssetData(mediaItemName,"ANDROID" ,mediaItemHash);
+                                    if(lastInsertedId != -1){
+                                        MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                                                mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
+                                        LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
+                                    }
                                 }
                             }
                         }
