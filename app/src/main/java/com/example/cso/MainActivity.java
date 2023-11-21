@@ -307,21 +307,22 @@
 //                             }
 //                    });
 //
-//                    Thread androidUploadThread = new Thread(() -> {
-//                        synchronized (photosUploadThread){
-//                            try{
-//                                photosUploadThread.join();
-//                            }catch (Exception e){
-//                                LogHandler.saveLog("failed to join android thread: "  + e.getLocalizedMessage());
-//                            }
-//                        }
-////                        uploadAndroidToDriveAccounts(backUpAccessToken);
-//                    });
-//
-                    Thread updateUIThread =  new Thread(() -> {
+                    Thread androidUploadThread = new Thread(() -> {
                         synchronized (updateAndroidFilesThread){
                             try{
                                 updateAndroidFilesThread.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join android thread: "  + e.getLocalizedMessage());
+                            }
+                        }
+                        Upload upload = new Upload();
+                        upload.upload();
+                    });
+//
+                    Thread updateUIThread =  new Thread(() -> {
+                        synchronized (androidUploadThread){
+                            try{
+                                androidUploadThread.join();
                             }catch (Exception e){
                                 LogHandler.saveLog("failed to join update ui thread: "  + e.getLocalizedMessage());
                             }
@@ -338,7 +339,7 @@
                     updateAndroidFilesThread.start();
 //                    driveBackUpThread.start();
 //                    photosUploadThread.start();
-//                    androidUploadThread.start();
+                    androidUploadThread.start();
                     updateUIThread.start();
                 }
             });

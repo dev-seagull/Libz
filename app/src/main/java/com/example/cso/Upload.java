@@ -37,10 +37,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class Upload {
-    public ArrayList<String> uploadPhotosToGoogleDrive(ArrayList<GooglePhotos.MediaItem> mediaItems, String accessToken,
-                                                       ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems,String primaryUserEmail,String backupUserEmail) {
-        LogHandler.saveLog("Starting to upload from Photos("+primaryUserEmail+ ") to Drive("+backupUserEmail+")",false);
-
+    public ArrayList<String> upload() {
+//        LogHandler.saveLog("Starting to upload from Photos("+primaryUserEmail+ ") to Drive("+backupUserEmail+")",false);
         ExecutorService executor = Executors.newSingleThreadExecutor();
 //        ArrayList<String> finalUploadFileIDs = uploadFileIDs;
         Callable<ArrayList<String>> uploadTask = () -> {
@@ -84,6 +82,12 @@ public class Upload {
             }
             return new ArrayList<>();
         };
+        Future<ArrayList<String>> futureFileIds = executor.submit(uploadTask);
+        try{
+            ArrayList<String> uploadFileIds = futureFileIds.get();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to get file id from upload task future: " + e.getLocalizedMessage());
+        }
         return new ArrayList<>();
     }
 

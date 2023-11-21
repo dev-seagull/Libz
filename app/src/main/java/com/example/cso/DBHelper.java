@@ -115,18 +115,14 @@ public class DBHelper extends SQLiteOpenHelper {
 
                 SQLiteDatabase dbReadable = getReadableDatabase();
                 try{
-                    sqlQuery = "SELECT LAST_INSERT_ROWID() AS last_id;";
+                    sqlQuery = "SELECT MAX(id) FROM ASSET";
                     cursor = dbReadable.rawQuery(sqlQuery, null);
-
                     if (cursor.moveToFirst()) {
-                        int columnIndex = cursor.getColumnIndex("last_id");
-                        if (columnIndex != -1) {
-                            lastInsertedId = cursor.getLong(columnIndex);
-                        } else {
+                        lastInsertedId = Long.valueOf(cursor.getInt(0));
+                        System.out.println("lasinsertId : "+ lastInsertedId);
+                    }else{
                             LogHandler.saveLog("Getting column index -1 inside insertAssetData method");
                         }
-                    }
-                    cursor.close();
                 }catch (Exception e){
                     LogHandler.saveLog("Failed to get last inserted id inside ASSET");
                 }finally {
@@ -349,7 +345,6 @@ public class DBHelper extends SQLiteOpenHelper {
         for (String[] androidRow : androidRows){
             filePath = androidRow[2];
             String id = androidRow[0];
-            System.out.println("filePath :" + filePath);
             File androidFile = new File(filePath);
             if (!androidFile.exists()){
                 SQLiteDatabase db = getWritableDatabase();
