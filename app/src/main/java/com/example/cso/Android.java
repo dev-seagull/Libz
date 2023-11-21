@@ -76,7 +76,7 @@ public class Android {
                        if(lastInsertedId != -1){
                            MainActivity.dbHelper.insertIntoAndroidTable((int)lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
                                    fileHash,mediaItemSize,mediaItemDateModified,mediaItemMemeType);
-                           LogHandler.saveLog("File was detected in android device: " + androidFile.getName(),false);
+                           LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
                        }
                    }
                }
