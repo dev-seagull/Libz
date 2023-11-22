@@ -319,12 +319,12 @@ public class DBHelper extends SQLiteOpenHelper {
                 LogHandler.saveLog("Failed to save into the database.in insertIntoAndroidTable method. "+e.getLocalizedMessage());
             }finally {
                 db.endTransaction();
-                db.close();
             }
         }else{
-            String sqlQuery = "DELETE FROM ASSET WHERE id = id";
-
+            String sqlQuery = "DELETE FROM ASSET WHERE id = ?";
+            db.execSQL(sqlQuery, new Object[]{id});
         }
+        db.close();
     }
 
 
