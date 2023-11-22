@@ -82,7 +82,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "fileName TEXT," +
                 "destination TEXT,"+
                 "operation TEXT CHECK (operation IN ('duplicated','sync','download')),"+
-                "hash TEXT,"+
+                "fileHash TEXT,"+
                 "date TEXT)";
         sqLiteDatabase.execSQL(TRANSACTIONS);
     }
@@ -137,6 +137,25 @@ public class DBHelper extends SQLiteOpenHelper {
         }
 
         return lastInsertedId;
+    }
+
+
+
+    public void insertTransactionsData(String source, String fileName, String destination
+            , String operation, String fileHash, String date) {
+        SQLiteDatabase dbWritable = getWritableDatabase();
+        dbWritable.beginTransaction();
+       try{
+            String sqlQuery = "INSERT INTO TRANSACTIONS(source, fileName, destination, operation, fileHash, date)" +
+                    " VALUES (?,?,?,?,?,?);";
+            dbWritable.execSQL(sqlQuery, new Object[]{source,fileName, destination, operation, fileHash, date});
+            dbWritable.setTransactionSuccessful();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to insert data into ASSET.");
+        }finally {
+            dbWritable.endTransaction();
+            dbWritable.close();
+        }
     }
 
     public void insertUserProfileData(String userEmail,String type,String refreshToken ,String accessToken,

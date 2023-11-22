@@ -3,6 +3,7 @@ package com.example.cso;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Duplicate {
     public static boolean isDuplicatedInBackup(ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems
@@ -46,4 +47,5 @@ public class Duplicate {
         }
         return isDuplicatedInPrimary;
     }
+
 }
