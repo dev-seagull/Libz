@@ -7,7 +7,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -142,13 +144,15 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
     public void insertTransactionsData(String source, String fileName, String destination
-            , String operation, String fileHash, String date) {
+            , String operation, String fileHash) {
         SQLiteDatabase dbWritable = getWritableDatabase();
         dbWritable.beginTransaction();
        try{
             String sqlQuery = "INSERT INTO TRANSACTIONS(source, fileName, destination, operation, fileHash, date)" +
                     " VALUES (?,?,?,?,?,?);";
-            dbWritable.execSQL(sqlQuery, new Object[]{source,fileName, destination, operation, fileHash, date});
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String timestamp = dateFormat.format(new Date());
+            dbWritable.execSQL(sqlQuery, new Object[]{source,fileName, destination, operation, fileHash, timestamp});
             dbWritable.setTransactionSuccessful();
         }catch (Exception e){
             LogHandler.saveLog("Failed to insert data into ASSET.");
@@ -373,7 +377,18 @@ public class DBHelper extends SQLiteOpenHelper {
                     db.execSQL(sqlQuery, new Object[]{id});
                     db.setTransactionSuccessful();
                 } catch (Exception e) {
-                    LogHandler.saveLog("Failed to delete the database in deleteRedundantAndroid method. " + e.getLocalizedMessage());
+                    LogHandler.saveLog("Failed to delete the database in ANDROID , deleteRedundantAndroid method. " + e.getLocalizedMessage());
+                } finally {
+                    db.endTransaction();
+                }
+
+                db.beginTransaction();
+                try {
+                    String sqlQuery = "DELETE FROM ASSET WHERE id = ? ";
+                    db.execSQL(sqlQuery, new Object[]{id});
+                    db.setTransactionSuccessful();
+                } catch (Exception e) {
+                    LogHandler.saveLog("Failed to delete the database in ASSET , deleteRedundantAndroid method. " + e.getLocalizedMessage());
                 } finally {
                     db.endTransaction();
                     db.close();

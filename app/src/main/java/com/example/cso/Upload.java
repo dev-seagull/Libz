@@ -28,7 +28,9 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -318,14 +320,25 @@ public class Upload {
                 List<String[]> android_items = MainActivity.dbHelper.getAndroidTable(selected_columns);
 
                 ArrayList<String> androidItemsToUpload_hash = new ArrayList<>();
-                for (String[] android_item : android_items) {
-                    Long fileId = Long.valueOf(android_item[0]);
-                    String fileName = android_item[1];
-                    String filePath = android_item[2];
+                int duplicatedFilesCount = 0;
+                int duplicatedFileIndex = -1;
+                for (int j=0 ; j < android_items.size(); j++) {
+                    Long fileId = Long.valueOf(android_items.get(j)[0]);
+                    String fileName = android_items.get(j)[1];
+                    String filePath = android_items.get(j)[2];
                     File androidFile = new File(filePath);
-                    String fileHash = android_item[5];
-                    String memeType = android_item[7];
-                    if(!androidItemsToUpload_hash.contains(fileHash)){
+                    String fileHash = android_items.get(j)[5];
+                    String memeType = android_items.get(j)[7];
+
+                    boolean isDuplicated = false;
+                    for (int i=0; i < androidItemsToUpload_hash.size(); i++){
+                        if(androidItemsToUpload_hash.get(i).equals(fileHash)){
+                            isDuplicated = true;
+                            duplicatedFilesCount ++;
+                            duplicatedFileIndex = androidItemsToUpload_hash.size() - duplicatedFilesCount - 1 ;
+                        }
+                    }
+                    if(!isDuplicated){
                         androidItemsToUpload_hash.add(fileHash);
                         try {
                             NetHttpTransport HTTP_TRANSPORT = null;
@@ -394,8 +407,9 @@ public class Upload {
                                 LogHandler.saveLog("Uploading " + fileName +
                                         " from android into backup account uploadId : " + uploadFileId,false);
                                 //date //id
+
                                 MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
-                                        drive_backUp_accounts.get(0)[0], "sync" , fileHash, "");
+                                        drive_backUp_accounts.get(0)[0], "sync" , fileHash);
                             }
 //                                  test[0]--;
                         } catch (Exception e) {
@@ -406,6 +420,11 @@ public class Upload {
                     }
                     else{
                         LogHandler.saveLog("Duplicated file in android was found: " + fileName);
+                        String[] selectedColumns = {"fileHash"}
+                        MainActivity.dbHelper.getAndroidTable();
+
+                        MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
+                                drive_backUp_accounts.get(0)[0], "duplicated" , fileHash)
                     }
                 }
                 //}
