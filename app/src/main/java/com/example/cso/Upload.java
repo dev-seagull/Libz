@@ -320,7 +320,6 @@ public class Upload {
                 List<String[]> android_items = MainActivity.dbHelper.getAndroidTable(selected_columns);
 
                 ArrayList<String> androidItemsToUpload_hash = new ArrayList<>();
-                int duplicatedFilesCount = 0;
                 int duplicatedFileIndex = -1;
                 for (int j=0 ; j < android_items.size(); j++) {
                     Long fileId = Long.valueOf(android_items.get(j)[0]);
@@ -334,8 +333,7 @@ public class Upload {
                     for (int i=0; i < androidItemsToUpload_hash.size(); i++){
                         if(androidItemsToUpload_hash.get(i).equals(fileHash)){
                             isDuplicated = true;
-                            duplicatedFilesCount ++;
-                            duplicatedFileIndex = androidItemsToUpload_hash.size() - duplicatedFilesCount - 1 ;
+                            duplicatedFileIndex = i ;
                         }
                     }
                     if(!isDuplicated){
@@ -420,11 +418,9 @@ public class Upload {
                     }
                     else{
                         LogHandler.saveLog("Duplicated file in android was found: " + fileName);
-                        String[] selectedColumns = {"fileHash"}
-                        MainActivity.dbHelper.getAndroidTable();
-
                         MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
-                                drive_backUp_accounts.get(0)[0], "duplicated" , fileHash)
+                                String.valueOf(android_items.get(duplicatedFileIndex)[0]),
+                                "duplicated" , fileHash);
                     }
                 }
                 //}
@@ -438,7 +434,7 @@ public class Upload {
         ArrayList<String> uploadFileIdsFuture = new ArrayList<>();
         try{
             uploadFileIdsFuture = future.get();
-            LogHandler.saveLog("Finished with " + uploadFileIdsFuture.size() + " uploads");
+            LogHandler.saveLog("Finished with " + uploadFileIdsFuture.size() + " uploads",false);
             //System.out.println("-----end of second ----->");
         }catch (Exception e){
             System.out.println(e.getLocalizedMessage());

@@ -84,7 +84,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "fileName TEXT," +
                 "destination TEXT,"+
                 "operation TEXT CHECK (operation IN ('duplicated','sync','download')),"+
-                "fileHash TEXT,"+
+                "hash TEXT,"+
                 "date TEXT)";
         sqLiteDatabase.execSQL(TRANSACTIONS);
     }
@@ -94,50 +94,38 @@ public class DBHelper extends SQLiteOpenHelper {
     }
     public long insertAssetData(String fileName, String type, String hash) {
         long lastInsertedId = -1;
+        String sqlQuery;
+        SQLiteDatabase dbWritable = getWritableDatabase();
+        dbWritable.beginTransaction();
 
-        SQLiteDatabase dbChecker = getReadableDatabase();
         try{
-            String sqlQuery = "SELECT * FROM ASSET WHERE fileHash = ? AND  type = ?;";
-            Cursor cursor = dbChecker.rawQuery(sqlQuery,new String[]{hash, type});
-
-            if (!cursor.moveToFirst()) {
-                SQLiteDatabase dbWritable = getWritableDatabase();
-                dbWritable.beginTransaction();
-
-                try{
-                    sqlQuery = "INSERT INTO ASSET(fileName, type, fileHash) VALUES (?,?,?);";
-                    dbWritable.execSQL(sqlQuery, new Object[]{fileName, type, hash});
-                    dbWritable.setTransactionSuccessful();
-                }catch (Exception e){
-                    LogHandler.saveLog("Failed to insert data into ASSET.");
-                }finally {
-                    dbWritable.endTransaction();
-                    dbWritable.close();
-                }
-
-                SQLiteDatabase dbReadable = getReadableDatabase();
-                try{
-                    sqlQuery = "SELECT MAX(id) FROM ASSET";
-                    cursor = dbReadable.rawQuery(sqlQuery, null);
-                    if (cursor.moveToFirst()) {
-                        lastInsertedId = Long.valueOf(cursor.getInt(0));
-                        System.out.println("lasinsertId : "+ lastInsertedId);
-                    }else{
-                            LogHandler.saveLog("Getting column index -1 inside insertAssetData method");
-                        }
-                }catch (Exception e){
-                    LogHandler.saveLog("Failed to get last inserted id inside ASSET");
-                }finally {
-                    dbReadable.close();
-                }
-            }
-            cursor.close();
+            sqlQuery = "INSERT INTO ASSET(fileName, type, fileHash) VALUES (?,?,?);";
+            dbWritable.execSQL(sqlQuery, new Object[]{fileName, type, hash});
+            dbWritable.setTransactionSuccessful();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to run checker inside Asset table  " + e.getLocalizedMessage());
+            LogHandler.saveLog("Failed to insert data into ASSET.");
         }finally {
-            dbChecker.close();
+            dbWritable.endTransaction();
+            dbWritable.close();
         }
 
+        SQLiteDatabase dbReadable = getReadableDatabase();
+        Cursor cursor = null;
+        try{
+            sqlQuery = "SELECT MAX(id) FROM ASSET";
+            cursor = dbReadable.rawQuery(sqlQuery, null);
+            if (cursor.moveToFirst()) {
+                lastInsertedId = Long.valueOf(cursor.getInt(0));
+                System.out.println("lasinsertId : "+ lastInsertedId);
+            }else{
+                    LogHandler.saveLog("Getting column index -1 inside insertAssetData method");
+                }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to get last inserted id inside ASSET");
+        }finally {
+            cursor.close();
+            dbReadable.close();
+        }
         return lastInsertedId;
     }
 
@@ -148,7 +136,7 @@ public class DBHelper extends SQLiteOpenHelper {
         SQLiteDatabase dbWritable = getWritableDatabase();
         dbWritable.beginTransaction();
        try{
-            String sqlQuery = "INSERT INTO TRANSACTIONS(source, fileName, destination, operation, fileHash, date)" +
+            String sqlQuery = "INSERT INTO TRANSACTIONS(source, fileName, destination, operation, hash, date)" +
                     " VALUES (?,?,?,?,?,?);";
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String timestamp = dateFormat.format(new Date());
