@@ -70,13 +70,18 @@ public class Android {
                        } catch (Exception e) {
                            LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
                        }
-
-                       long lastInsertedId =
-                               MainActivity.dbHelper.insertAssetData(mediaItemName,"ANDROID" ,fileHash);
-                       if(lastInsertedId != -1){
-                           MainActivity.dbHelper.insertIntoAndroidTable((int)lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
-                                   fileHash,mediaItemSize,mediaItemDateModified,mediaItemMemeType);
-                           LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
+                       if (MainActivity.dbHelper.existsInAndroidTable(mediaItemName,mediaItemSize , mediaItemDateModified)){
+                           LogHandler.saveLog("File already exists in android table: " + mediaItemFile.getName(),false);
+                       }else{
+                           long lastInsertedId =
+                                   MainActivity.dbHelper.insertAssetData(mediaItemName,"ANDROID" ,fileHash);
+                           if(lastInsertedId != -1){
+                               MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                                       fileHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
+                               LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
+                           }else{
+                               LogHandler.saveLog("Failed to insert file into android table: " + mediaItemFile.getName());
+                           }
                        }
                    }
                }
@@ -137,13 +142,18 @@ public class Android {
                                     } catch (Exception e) {
                                         LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
                                     }
-
-                                    long lastInsertedId =
-                                            MainActivity.dbHelper.insertAssetData(mediaItemName,"ANDROID" ,mediaItemHash);
-                                    if(lastInsertedId != -1){
-                                        MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
-                                                mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
-                                        LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
+                                    if (MainActivity.dbHelper.existsInAndroidTable(mediaItemName,mediaItemSize , mediaItemDateModified)){
+                                        LogHandler.saveLog("File already exists in android table: " + mediaItemFile.getName(),false);
+                                    }else{
+                                        long lastInsertedId =
+                                                MainActivity.dbHelper.insertAssetData(mediaItemName,"ANDROID" ,mediaItemHash);
+                                        if(lastInsertedId != -1){
+                                            MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                                                    mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
+                                            LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
+                                        }else{
+                                            LogHandler.saveLog("Failed to insert file into android table: " + mediaItemFile.getName());
+                                        }
                                     }
                                 }
                             }

@@ -259,6 +259,22 @@
                         LogHandler.saveLog("End of getting files from your android device",false);
                     });
 
+                    Thread deleteRedundantDriveThread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            synchronized (updateAndroidFilesThread){
+                                try{
+                                    updateAndroidFilesThread.join();
+                                }catch (Exception e){
+                                    LogHandler.saveLog("failed to join updateAndroidFilesThread : "  + e.getLocalizedMessage());
+                                }
+                            }
+                            GoogleDrive.getMediaItems();
+                            String[] columns = {"fileId"};
+                            List<String[]> backupRows = dbHelper.getDriveTable(columns);
+                            dbHelper.deleteRedundantDrive(backupRows,);
+                        }
+                    });
 
 //                    Thread driveBackUpThread = new Thread(new Runnable() {
 //                        @Override
@@ -270,6 +286,8 @@
 //                                    LogHandler.saveLog("failed to join drive back up thread: "  + e.getLocalizedMessage());
 //                                }
 //                            }
+//
+//                            MainActivity.dbHelper.getDriveTable();
 //                            GoogleDrive.deleteDuplicatedMediaItems(backupMediaItems,backupTokens);
 //
 //                        }

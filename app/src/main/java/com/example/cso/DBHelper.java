@@ -117,7 +117,7 @@ public class DBHelper extends SQLiteOpenHelper {
             if (cursor.moveToFirst()) {
                 lastInsertedId = Long.valueOf(cursor.getInt(0));
                 System.out.println("lasinsertId : "+ lastInsertedId);
-            }else{
+            }else if (cursor.isNull(0)){
                     LogHandler.saveLog("Getting column index -1 inside insertAssetData method");
                 }
         }catch (Exception e){
@@ -317,38 +317,45 @@ public class DBHelper extends SQLiteOpenHelper {
         return resultList;
     }
 
+    public boolean existsInAndroidTable(String filePath, Double fileSize, String dateModified){
+        SQLiteDatabase db = getReadableDatabase();
+        String sqlQuery = "SELECT * FROM ANDROID WHERE filePath = ? and fileSize = ? and dateModified = ?";
+        Cursor cursor = db.rawQuery(sqlQuery, new String[]{filePath,String.valueOf(fileSize),dateModified});
+        if (cursor.moveToFirst()) {
+            cursor.close();
+            db.close();
+            return true;
+        }
+        cursor.close();
+        db.close();
+        return false;
+    }
+
+
     public void insertIntoAndroidTable(long id,String fileName,String filePath,String device,
                                        String fileHash, Double fileSize,String dateModified,String memeType) {
-
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
-        String sqlQuery_2 = "SELECT * FROM ANDROID WHERE filePath = ? and fileSize = ? and dateModified = ?";
-        Cursor cursor = db.rawQuery(sqlQuery_2, new String[]{filePath,String.valueOf(fileSize),dateModified});
-        if (!cursor.moveToFirst()) {
-            try{
-                String sqlQuery = "INSERT INTO ANDROID (" +
-                        "id," +
-                        "fileName," +
-                        "filePath, " +
-                        "device, " +
-                        "fileSize, " +
-                        "fileHash," +
-                        "dateModified," +
-                        "memeType) VALUES (?,?,?,?,?,?,?,?)";
-                Object[] values = new Object[]{id,fileName,filePath,device,
-                        fileSize,fileHash,dateModified,memeType};
-                db.execSQL(sqlQuery, values);
-                db.setTransactionSuccessful();
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to save into the database.in insertIntoAndroidTable method. "+e.getLocalizedMessage());
-            }finally {
-                db.endTransaction();
-            }
-        }else{
-            String sqlQuery = "DELETE FROM ASSET WHERE id = ?";
-            db.execSQL(sqlQuery, new Object[]{id});
+        try{
+            String sqlQuery = "INSERT INTO ANDROID (" +
+                    "id," +
+                    "fileName," +
+                    "filePath, " +
+                    "device, " +
+                    "fileSize, " +
+                    "fileHash," +
+                    "dateModified," +
+                    "memeType) VALUES (?,?,?,?,?,?,?,?)";
+            Object[] values = new Object[]{id,fileName,filePath,device,
+                    fileSize,fileHash,dateModified,memeType};
+            db.execSQL(sqlQuery, values);
+            db.setTransactionSuccessful();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to save into the database.in insertIntoAndroidTable method. "+e.getLocalizedMessage());
+        }finally {
+            db.endTransaction();
+            db.close();
         }
-        db.close();
     }
 
 
@@ -416,4 +423,140 @@ public class DBHelper extends SQLiteOpenHelper {
             }
         }
     }
+
+    public void deleteRedundantDrive(list<String[]> driveFileRows,ArrayList<String> driveFileIds){
+        String filePath;
+        for (String driveFileId : driveFileIds){
+            for (String[] row : driveFileRows){
+                if (row[1].equals(driveFileId)){
+                    filePath = row[2];
+                    String id = row[0];
+                    File driveFile = new File(filePath);
+                    if (!driveFile.exists()){
+                        SQLiteDatabase db = getWritableDatabase();
+                        db.beginTransaction();
+                        try {
+                            String sqlQuery = "DELETE FROM DRIVE WHERE id = ? ";
+                            db.execSQL(sqlQuery, new Object[]{id});
+                            db.setTransactionSuccessful();
+                        } catch (Exception e) {
+                            LogHandler.saveLog("Failed to delete the database in DRIVE , deleteRedundantDrive method. " + e.getLocalizedMessage());
+                        } finally {
+                            db.endTransaction();
+                        }
+
+                        db.beginTransaction();
+                        try {
+                            String sqlQuery = "DELETE FROM ASSET WHERE id = ? ";
+                            db.execSQL(sqlQuery, new Object[]{id});
+                            db.setTransactionSuccessful();
+                        } catch (Exception e) {
+                            LogHandler.saveLog("Failed to delete the database in ASSET , deleteRedundantDrive method. " + e.getLocalizedMessage());
+                        } finally {
+                            db.endTransaction();
+                            db.close();
+                        }
+                    }
+                }
+            }
+        }
+            filePath = androidRow[2];
+            String id = androidRow[0];
+            File androidFile = new File(filePath);
+            if (!androidFile.exists()){
+                SQLiteDatabase db = getWritableDatabase();
+                db.beginTransaction();
+                try {
+                    String sqlQuery = "DELETE FROM ANDROID WHERE id = ? ";
+                    db.execSQL(sqlQuery, new Object[]{id});
+                    db.setTransactionSuccessful();
+                } catch (Exception e) {
+                    LogHandler.saveLog("Failed to delete the database in ANDROID , deleteRedundantAndroid method. " + e.getLocalizedMessage());
+                } finally {
+                    db.endTransaction();
+                }
+
+                db.beginTransaction();
+                try {
+                    String sqlQuery = "DELETE FROM ASSET WHERE id = ? ";
+                    db.execSQL(sqlQuery, new Object[]{id});
+                    db.setTransactionSuccessful();
+                } catch (Exception e) {
+                    LogHandler.saveLog("Failed to delete the database in ASSET , deleteRedundantAndroid method. " + e.getLocalizedMessage());
+                } finally {
+                    db.endTransaction();
+                    db.close();
+                }
+            }
+        }
+
+
+    public void insertIntoDriveTable(long id,String fileId,String fileName,String userEmail,
+                                     String fileHash,String source) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try{
+            String sqlQuery = "INSERT INTO DRIVE (" +
+                    "id," +
+                    "fileId," +
+                    "fileName, " +
+                    "userEmail, " +
+                    "fileHash," +
+                    "source) VALUES (?,?,?,?,?,?)";
+            Object[] values = new Object[]{id,fileId,fileName,userEmail,fileHash,source};
+            db.execSQL(sqlQuery, values);
+            db.setTransactionSuccessful();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to save into the database.in insertIntoDriveTable method. "+e.getLocalizedMessage());
+        }finally {
+            db.endTransaction();
+            db.close();
+        }
+    }
+
+
+    public List<String[]> getDriveTable(String[] columns){
+        List<String[]> resultList = new ArrayList<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+
+        String sqlQuery = "SELECT ";
+        for (String column:columns){
+            sqlQuery += column + ", ";
+        }
+
+        sqlQuery = sqlQuery.substring(0, sqlQuery.length() - 2);
+        sqlQuery += " FROM DRIVE" ;
+        Cursor cursor = db.rawQuery(sqlQuery, null);
+        if (cursor.moveToFirst()) {
+            do {
+                String[] row = new String[columns.length];
+                for (int i = 0; i < columns.length; i++) {
+                    int columnIndex = cursor.getColumnIndex(columns[i]);
+                    if (columnIndex >= 0) {
+                        row[i] = cursor.getString(columnIndex);
+                    }
+                }
+                resultList.add(row);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+        return resultList;
+    }
+
+    public boolean existsInDriveTable(String fileId){
+        SQLiteDatabase db = getReadableDatabase();
+        String sqlQuery = "SELECT * FROM DRIVE WHERE fileId = ?";
+        Cursor cursor = db.rawQuery(sqlQuery, new String[]{fileId});
+        if (cursor.moveToFirst()) {
+            cursor.close();
+            db.close();
+            return true;
+        }
+        cursor.close();
+        db.close();
+        return false;
+    }
+
 }
