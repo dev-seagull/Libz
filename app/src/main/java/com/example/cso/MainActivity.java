@@ -269,10 +269,11 @@
                                     LogHandler.saveLog("failed to join updateAndroidFilesThread : "  + e.getLocalizedMessage());
                                 }
                             }
-                            GoogleDrive.getMediaItems();
-                            String[] columns = {"fileId"};
-                            List<String[]> backupRows = dbHelper.getDriveTable(columns);
-                            dbHelper.deleteRedundantDrive(backupRows,);
+//                            GoogleDrive.getMediaItems();
+//                            String[] columns = {"fileId"};
+//                            List<String[]> backupRows = dbHelper.getDriveTable(columns);
+//                            dbHelper.deleteRedundantDrive(backupRows,);
+//note
                         }
                     });
 

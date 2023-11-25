@@ -348,11 +348,20 @@ public class Upload {
                             }
                             final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
+                            String driveBackupAccessToken = "";
                             String[] drive_backup_selected_columns = {"userEmail","type","accessToken"};
                             List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getUserProfile(drive_backup_selected_columns);
+                            for (String[] drive_backUp_account : drive_backUp_accounts) {
+                                if (drive_backUp_account[1].equals("backup")) {
+                                    driveBackupAccessToken = drive_backUp_account[2];
+                                    break;
+                                }
+
+                            }
+                            String bearerToken = "Bearer " + driveBackupAccessToken;
+                            System.out.println("access token to upload is " + driveBackupAccessToken);
                             HttpRequestInitializer requestInitializer = request -> {
-                                System.out.println("access token to upload is " + drive_backUp_accounts.get(0)[2]);
-                                request.getHeaders().setAuthorization("Bearer " + drive_backUp_accounts.get(0)[2]);
+                                request.getHeaders().setAuthorization(bearerToken);
                                 request.getHeaders().setContentType("application/json");
                             };
 
@@ -417,7 +426,7 @@ public class Upload {
                         //}
                     }
                     else{
-                        LogHandler.saveLog("Duplicated file in android was found: " + fileName);
+                        LogHandler.saveLog("Duplicated file in android was found: " + fileName,false);
                         MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
                                 String.valueOf(android_items.get(duplicatedFileIndex)[0]),
                                 "duplicated" , fileHash);
