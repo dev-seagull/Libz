@@ -70,7 +70,7 @@ public class Android {
                        } catch (Exception e) {
                            LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
                        }
-                       if (MainActivity.dbHelper.existsInAndroidTable(mediaItemName,mediaItemSize , mediaItemDateModified)){
+                       if (MainActivity.dbHelper.existsInAndroidTable(mediaItemPath,mediaItemSize , mediaItemDateModified)){
                            LogHandler.saveLog("File already exists in android table: " + mediaItemFile.getName(),false);
                        }else{
                            long lastInsertedId =
@@ -135,14 +135,13 @@ public class Android {
                                 String mediaItemMemeType = GooglePhotos.getMemeType(mediaItemFile);
                                 if(mediaItemFile.exists()){
                                     fileManagerItems++;
-
                                     String mediaItemHash = "";
                                     try {
                                         mediaItemHash = Upload.calculateHash(mediaItemFile);
                                     } catch (Exception e) {
                                         LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
                                     }
-                                    if (MainActivity.dbHelper.existsInAndroidTable(mediaItemName,mediaItemSize , mediaItemDateModified)){
+                                    if (MainActivity.dbHelper.existsInAndroidTable(mediaItemPath,mediaItemSize , mediaItemDateModified)){
                                         LogHandler.saveLog("File already exists in android table: " + mediaItemFile.getName(),false);
                                     }else{
                                         long lastInsertedId =

@@ -319,13 +319,33 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public boolean existsInAndroidTable(String filePath, Double fileSize, String dateModified){
         SQLiteDatabase db = getReadableDatabase();
-        String sqlQuery = "SELECT * FROM ANDROID WHERE filePath = ? and fileSize = ? and dateModified = ?";
+        String sqlQuery = "SELECT * FROM ANDROID WHERE filePath = ? and fileSize = ? and dateModified = ? ;";
         Cursor cursor = db.rawQuery(sqlQuery, new String[]{filePath,String.valueOf(fileSize),dateModified});
+        String[] columns = new String[]{};
         if (cursor.moveToFirst()) {
+            String[] resultRow = null;;
+
+            if (cursor != null && cursor.moveToFirst()) {
+                resultRow = new String[columns.length];
+                for (int i = 0; i < columns.length; i++) {
+                    int columnIndex = cursor.getColumnIndex(columns[i]);
+                    if (columnIndex >= 0) {
+                        resultRow[i] = cursor.getString(columnIndex);
+                        if (resultRow != null) {
+                            for (String value : resultRow) {
+                                System.out.print(value + " ");
+                            }
+                            System.out.println(); // Move to the next line for a new row
+                        }
+                    }
+                }
+            }
+            System.out.println("there is exist in android table : "+filePath);
             cursor.close();
             db.close();
             return true;
         }
+        System.out.println("there is not exist in android table : "+filePath);
         cursor.close();
         db.close();
         return false;
