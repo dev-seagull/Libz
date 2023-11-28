@@ -16,28 +16,28 @@ public class Android {
 
     public static void getGalleryMediaItems(Activity activity) {
         int galleryItems = 0;
+        String[] projection = {
+                MediaStore.Files.FileColumns.DATA,
+                MediaStore.Files.FileColumns.DATE_ADDED,
+                MediaStore.Files.FileColumns.DATE_MODIFIED,
+                MediaStore.Files.FileColumns.SIZE,
+                MediaStore.Files.FileColumns.MIME_TYPE
+        };
+
+        String selection = MediaStore.Files.FileColumns.MEDIA_TYPE + "=? OR " +
+                MediaStore.Files.FileColumns.MEDIA_TYPE + "=?";
+        String[] selectionArgs = {String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE),
+                String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO)};
+        String sortOrder = MediaStore.Images.Media.DATE_MODIFIED + " DESC";
 
         try{
-           String[] projection = {
-                   MediaStore.Files.FileColumns.DATA,
-                   MediaStore.Files.FileColumns.DATE_ADDED,
-                   MediaStore.Files.FileColumns.DATE_MODIFIED,
-                   MediaStore.Files.FileColumns.SIZE,
-                   MediaStore.Files.FileColumns.MIME_TYPE
-           };
-
-           String selection = MediaStore.Files.FileColumns.MEDIA_TYPE + "=? OR " +
-                   MediaStore.Files.FileColumns.MEDIA_TYPE + "=?";
-           String[] selectionArgs = {String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE),
-                   String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO)};
-           String sortOrder = MediaStore.Images.Media.DATE_MODIFIED + " DESC";
-           Cursor cursor = activity.getContentResolver().query(
-                   MediaStore.Files.getContentUri("external"),
-                   projection,
-                   selection,
-                   selectionArgs,
-                   sortOrder
-           );
+            Cursor cursor = activity.getContentResolver().query(
+                    MediaStore.Files.getContentUri("external"),
+                    projection,
+                    selection,
+                    selectionArgs,
+                    sortOrder
+            );
 
            if (cursor != null) {
                int columnIndexPath = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA);
