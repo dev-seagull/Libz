@@ -45,7 +45,7 @@ public class Upload {
 //        ArrayList<String> finalUploadFileIDs = uploadFileIDs;
         Callable<ArrayList<String>> uploadTask = () -> {
             try {
-                uploadAndroidToPhotos();
+                uploadAndroidToDrive();
 
 //                downloadFromPhotos(baseUrls, fileNames, destinationFolder);
 //
@@ -311,12 +311,12 @@ public class Upload {
     }
 
 
-    private void uploadAndroidToPhotos(){
+    private void uploadAndroidToDrive(){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<ArrayList<String>> uploadTask = () -> {
             try {
                 String[] selected_columns = {"id", "fileName", "filePath", "device",
-                        "fileSize", "fileHash", "dateModified", "memeType"};
+                        "fileSize", "fileHash", "dateModified", "memeType","assetId"};
                 List<String[]> android_items = MainActivity.dbHelper.getAndroidTable(selected_columns);
 
                 ArrayList<String> androidItemsToUpload_hash = new ArrayList<>();

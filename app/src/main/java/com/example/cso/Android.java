@@ -1,22 +1,14 @@
 package com.example.cso;
 
-import android.Manifest;
 import android.app.Activity;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 
 
@@ -70,23 +62,19 @@ public class Android {
                        } catch (Exception e) {
                            LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
                        }
-                       if (MainActivity.dbHelper.existsInAndroidTable(mediaItemPath,mediaItemSize , mediaItemDateModified)){
-                           LogHandler.saveLog("File already exists in android table: " + mediaItemFile.getName(),false);
+                       long lastInsertedId =
+                               MainActivity.dbHelper.insertAssetData(mediaItemName,fileHash);
+                       if(lastInsertedId != -1){
+                           MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                                   fileHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
+                           LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
                        }else{
-                           long lastInsertedId =
-                                   MainActivity.dbHelper.insertAssetData(mediaItemName,"ANDROID" ,fileHash);
-                           if(lastInsertedId != -1){
-                               MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
-                                       fileHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
-                               LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
-                           }else{
-                               LogHandler.saveLog("Failed to insert file into android table: " + mediaItemFile.getName());
-                           }
+                           LogHandler.saveLog("Failed to insert file into android table: " + mediaItemFile.getName());
+                       }
                        }
                    }
                }
-               cursor.close();
-           }
+           cursor.close();
        }catch (Exception e){
             LogHandler.saveLog("Failed to get gallery files: " + e.getLocalizedMessage());
        }
@@ -141,18 +129,14 @@ public class Android {
                                     } catch (Exception e) {
                                         LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
                                     }
-                                    if (MainActivity.dbHelper.existsInAndroidTable(mediaItemPath,mediaItemSize , mediaItemDateModified)){
-                                        LogHandler.saveLog("File already exists in android table: " + mediaItemFile.getName(),false);
+                                    long lastInsertedId =
+                                            MainActivity.dbHelper.insertAssetData(mediaItemName,mediaItemHash);
+                                    if(lastInsertedId != -1){
+                                        MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                                                mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
+                                        LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
                                     }else{
-                                        long lastInsertedId =
-                                                MainActivity.dbHelper.insertAssetData(mediaItemName,"ANDROID" ,mediaItemHash);
-                                        if(lastInsertedId != -1){
-                                            MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
-                                                    mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
-                                            LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
-                                        }else{
-                                            LogHandler.saveLog("Failed to insert file into android table: " + mediaItemFile.getName());
-                                        }
+                                        LogHandler.saveLog("Failed to insert file into android table: " + mediaItemFile.getName());
                                     }
                                 }
                             }

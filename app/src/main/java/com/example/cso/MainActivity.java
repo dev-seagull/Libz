@@ -5,10 +5,8 @@
     import android.content.Intent;
     import android.content.SharedPreferences;
     import android.content.pm.PackageManager;
-    import android.database.sqlite.SQLiteDatabase;
     import android.os.Build;
     import android.os.Bundle;
-    import android.os.Environment;
     import android.text.Layout;
     import android.text.Spannable;
     import android.text.SpannableString;
@@ -35,21 +33,11 @@
     import com.google.android.material.navigation.NavigationView;
     import com.jaredrummler.android.device.DeviceName;
 
-    import java.io.File;
-    import java.util.ArrayList;
-    import java.util.Arrays;
-    import java.util.Collections;
     import java.util.HashMap;
     import java.util.List;
     import java.util.Map;
-    import java.util.concurrent.Callable;
-    import java.util.concurrent.ExecutionException;
     import java.util.concurrent.Executor;
-    import java.util.concurrent.ExecutorService;
     import java.util.concurrent.Executors;
-    import java.util.concurrent.Future;
-    import java.util.regex.Matcher;
-    import java.util.regex.Pattern;
 
 
     public class MainActivity extends AppCompatActivity {
@@ -238,9 +226,7 @@
                         @Override
                         public void run() {
                             LogHandler.saveLog("Starting to get files from you android device",false);
-                            String[] columns = {"id","fileName","filePath","fileSize","dateModified"};
-                            List<String[]> androidRows = dbHelper.getAndroidTable(columns);
-                            dbHelper.deleteRedundantAndroid(androidRows);
+                            dbHelper.deleteRedundantAndroid();
                             synchronized (this){
                                 notify();
                             }
