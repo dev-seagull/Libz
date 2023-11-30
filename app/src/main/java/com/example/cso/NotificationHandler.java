@@ -41,13 +41,7 @@ public class NotificationHandler {
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
         Intent intent = new Intent(activity, MainActivity.class);
-        int androidVersion = Build.VERSION.SDK_INT;
-        String androidVersionName = Build.VERSION.RELEASE;
-
-        Log.d("Android Version", "SDK Version: " + androidVersion);
-        Log.d("Android Version", "Release Version: " + androidVersionName);
         PendingIntent pendingIntent ;
-        System.out.println("Build.VERSION.SDK_INT < Build.VERSION_CODES.M " + Build.VERSION.SDK_INT  + "   " +   Build.VERSION_CODES.M);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
             pendingIntent = PendingIntent.getActivity(activity, 0, intent, PendingIntent.FLAG_IMMUTABLE);
         }else{
