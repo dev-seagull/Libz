@@ -44,10 +44,8 @@ public class GoogleDrive {
     }
 
 
-    public static ArrayList<BackUpAccountInfo.MediaItem> getMediaItems(PrimaryAccountInfo.Tokens tokens) {
+    public static ArrayList<BackUpAccountInfo.MediaItem> getMediaItems(String accessToken) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        String refreshToken = tokens.getRefreshToken();
-        String accessToken = tokens.getAccessToken();
         final ArrayList<BackUpAccountInfo.MediaItem> mediaItems = new ArrayList<>();
         Callable<ArrayList<BackUpAccountInfo.MediaItem>> backgroundTask = () -> {
             try {
@@ -96,7 +94,9 @@ public class GoogleDrive {
     }
 
     public static void deleteDuplicatedMediaItems (ArrayList<BackUpAccountInfo.MediaItem> mediaItems, PrimaryAccountInfo.Tokens tokens){
-        HashSet<String> mediaItemsHash = new HashSet<>();
+        String[] driveColumns = {"fileHash"};
+        List<String[]> drive_rows = MainActivity.dbHelper.getDriveTable(driveColumns);
+
         String accessToken = tokens.getAccessToken();
         String refreshToken = tokens.getRefreshToken();
         ExecutorService executor = Executors.newSingleThreadExecutor();

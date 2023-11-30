@@ -188,7 +188,7 @@
                 authCode = account.getServerAuthCode();
                 tokens = getTokens(authCode);
                 storage = getStorage(tokens);
-                mediaItems = GoogleDrive.getMediaItems(tokens);
+                mediaItems = GoogleDrive.getMediaItems(tokens.getAccessToken());
 
                 String[] columnsList = new String[]{"userEmail"};
                 List<String[]> userProfileData = MainActivity.dbHelper.getUserProfile(columnsList);
@@ -215,6 +215,13 @@
                 if (!isInUserProfileData){
                     MainActivity.dbHelper.insertUserProfileData(userEmail,"backup",tokens.getRefreshToken(),tokens.getAccessToken(),
                             storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
+
+                    for(BackUpAccountInfo.MediaItem mediaItem : mediaItems){
+                        Long last_insertId = MainActivity.dbHelper.insertAssetData(mediaItem.getFileName(), mediaItem.getHash());
+                        MainActivity.dbHelper.insertIntoDriveTable(last_insertId, mediaItem.getId(), mediaItem.getFileName(),
+                                mediaItem.getHash(), userEmail);
+                    }
+
                     runOnUiThread(() -> {
                         LinearLayout backupAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
                         createBackUpLoginButton(backupAccountsButtonsLinearLayout);

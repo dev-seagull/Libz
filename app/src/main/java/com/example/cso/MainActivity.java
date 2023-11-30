@@ -33,6 +33,9 @@
     import com.google.android.material.navigation.NavigationView;
     import com.jaredrummler.android.device.DeviceName;
 
+    import org.checkerframework.checker.units.qual.A;
+
+    import java.util.ArrayList;
     import java.util.HashMap;
     import java.util.List;
     import java.util.Map;
@@ -238,47 +241,68 @@
                             try{
                                 deleteRedundantAndroidThread.join();
                             }catch (Exception e){
-                                LogHandler.saveLog("failed to join drive back up thread: "  + e.getLocalizedMessage());
+                                LogHandler.saveLog("failed to join deleteRedundantAndroidThread thread: "  + e.getLocalizedMessage());
                             }
                         }
                         Android.getGalleryMediaItems(MainActivity.this);
                         LogHandler.saveLog("End of getting files from your android device",false);
                     });
 
-                    Thread deleteRedundantDriveThread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            synchronized (updateAndroidFilesThread){
-                                try{
-                                    updateAndroidFilesThread.join();
-                                }catch (Exception e){
-                                    LogHandler.saveLog("failed to join updateAndroidFilesThread : "  + e.getLocalizedMessage());
-                                }
+
+
+                    Thread deleteRedundantDriveThread = new Thread(() -> {
+                        synchronized (updateAndroidFilesThread){
+                            try{
+                                updateAndroidFilesThread.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join updateAndroidFilesThread : " + e.getLocalizedMessage());
                             }
-//                            GoogleDrive.getMediaItems();
-//                            String[] columns = {"fileId"};
-//                            List<String[]> backupRows = dbHelper.getDriveTable(columns);
-//                            dbHelper.deleteRedundantDrive(backupRows,);
-//note
+                        }
+
+                        String[] columns = {"accessToken"};
+                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+
+                        for(String[] userProfile_row : userProfile_rows) {
+                            String accessToken = userProfile_row[0];
+                            ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                            ArrayList<String> driveFileIds = new ArrayList<>();
+
+                            for (BackUpAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+                                String fileId = driveMediaItem.getId();
+                                driveFileIds.add(fileId);
+                            }
+
+                            dbHelper.deleteRedundantDrive(driveFileIds);
                         }
                     });
 
-//                    Thread driveBackUpThread = new Thread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            synchronized (updateAndroidFilesThread){
-//                                try{
-//                                    updateAndroidFilesThread.join();
-//                                }catch (Exception e){
-//                                    LogHandler.saveLog("failed to join drive back up thread: "  + e.getLocalizedMessage());
-//                                }
-//                            }
-//
-//                            MainActivity.dbHelper.getDriveTable();
-//                            GoogleDrive.deleteDuplicatedMediaItems(backupMediaItems,backupTokens);
-//
-//                        }
-//                    });
+                    Thread driveBackUpThread = new Thread(() -> {
+                        synchronized (deleteRedundantDriveThread){
+                            try {
+                                deleteRedundantDriveThread.join();
+                            } catch (Exception e) {
+                                LogHandler.saveLog("failed to join deleteRedundantDrive thread: " + e.getLocalizedMessage());
+                            }
+                        }
+
+                        String[] columns = {"accessToken", "userEmail"};
+                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+
+                        for(String[] userProfile_row : userProfile_rows){
+                            String accessToken = userProfile_row[0];
+                            String userEmail = userProfile_row[1];
+                            ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+
+                            for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
+                                Long last_insertId = dbHelper.insertAssetData
+                                        (driveMediaItem.getFileName(), driveMediaItem.getHash());
+
+                                dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(),
+                                        driveMediaItem.getFileName(), driveMediaItem.getHash(), userEmail);
+                            }
+                        }
+                    });
+
 
 //                    Thread photosUploadThread = new Thread(() -> {
 //                        synchronized (driveBackUpThread){
@@ -323,7 +347,7 @@
                         Upload upload = new Upload();
                         upload.upload();
                     });
-//
+
                     Thread updateUIThread =  new Thread(() -> {
                         synchronized (androidUploadThread){
                             try{
@@ -342,8 +366,8 @@
 
                     deleteRedundantAndroidThread.start();
                     updateAndroidFilesThread.start();
-//                    driveBackUpThread.start();
-//                    photosUploadThread.start();
+                    deleteRedundantDriveThread.start();
+                    driveBackUpThread.start();
                     androidUploadThread.start();
                     updateUIThread.start();
                 }
