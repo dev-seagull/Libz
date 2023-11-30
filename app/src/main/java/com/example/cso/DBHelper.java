@@ -121,7 +121,7 @@ public class DBHelper extends SQLiteOpenHelper {
             LogHandler.saveLog("Failed to select from ASSET in insertAssetData method: " + e.getLocalizedMessage());
         }
 
-        if(!existsInAsset){
+        if(existsInAsset == false){
             SQLiteDatabase dbWritable = getWritableDatabase();
             try{
                 dbWritable.beginTransaction();
@@ -170,7 +170,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
-        if(!existsInDrive){
+        if(existsInDrive == false){
             try{
 
                 sqlQuery = "INSERT INTO DRIVE (" +
@@ -370,7 +370,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }finally {
             dbReadable.close();
         }
-        if(!existsInAndroid){
+        if(existsInAndroid == false){
             SQLiteDatabase db = getWritableDatabase();
             db.beginTransaction();
             try{
@@ -392,6 +392,48 @@ public class DBHelper extends SQLiteOpenHelper {
             }finally {
                 db.endTransaction();
                 db.close();
+            }
+        }
+    }
+
+    public void deleteFileFromDriveTable(String fileHash, String id, String assetId, String fileId, String userEmail){
+        SQLiteDatabase dbWritable = getWritableDatabase();
+        String sqlQuery  = "DELETE FROM DRIVE WHERE fileHash = ? and id = ? and assetId = ? and fileId = ? and userEmail = ?";
+        dbWritable.execSQL(sqlQuery, new String[]{fileHash, id, assetId, fileId, userEmail});
+        dbWritable.close();
+
+        boolean existsInDatabase = false;
+        SQLiteDatabase dbReadable = getReadableDatabase();
+        try {
+            sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
+                    "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
+                    "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
+            Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId});
+            if (cursor != null && cursor.moveToFirst()) {
+                int result = cursor.getInt(0);
+                if (result == 1) {
+                    existsInDatabase = true;
+                }
+            }
+            cursor.close();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to check if the data exists in Database in deleteFileFromDriveTable");
+        } finally {
+            dbReadable.close();
+        }
+
+        if (existsInDatabase == false) {
+            dbWritable = getWritableDatabase();
+            dbWritable.beginTransaction();
+            try {
+                sqlQuery = "DELETE FROM ASSET WHERE id = ? ";
+                dbWritable.execSQL(sqlQuery, new Object[]{assetId});
+                dbWritable.setTransactionSuccessful();
+            } catch (Exception e) {
+                LogHandler.saveLog("Failed to delete the database in ASSET , deleteFileFromDriveTable method. " + e.getLocalizedMessage());
+            } finally {
+                dbWritable.endTransaction();
+                dbWritable.close();
             }
         }
     }
@@ -444,7 +486,7 @@ public class DBHelper extends SQLiteOpenHelper {
                             }
                         }
 
-                        if (!existsInDatabase) {
+                        if (existsInDatabase == false) {
                             dbWritable = getWritableDatabase();
                             dbWritable.beginTransaction();
                             try {
@@ -526,7 +568,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         dbReadable.close();
                     }
 
-                    if(!existsInDatabase){
+                    if(existsInDatabase == false){
                         dbWritable = getWritableDatabase();
                         dbWritable.beginTransaction();
                         try {

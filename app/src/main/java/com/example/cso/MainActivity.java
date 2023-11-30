@@ -258,37 +258,30 @@
                             }
                         }
 
-                        String[] columns = {"accessToken","userEmail"};
+                        String[] columns = {"accessToken","userEmail", "type"};
                         List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
 
                         for(String[] userProfile_row : userProfile_rows) {
-                            String userEmail = userProfile_row[1];
-                            String accessToken = userProfile_row[0];
-                            ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
-                            ArrayList<String> driveFileIds = new ArrayList<>();
+                            String type = userProfile_row[2];
+                            if(type.equals("backup")){
+                                String userEmail = userProfile_row[1];
+                                String accessToken = userProfile_row[0];
+                                ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                                ArrayList<String> driveFileIds = new ArrayList<>();
 
-                            for (BackUpAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
-                                String fileId = driveMediaItem.getId();
-                                driveFileIds.add(fileId);
-                            }
-                            dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
-                        }
-                    });
-
-                    Thread deleteDuplicatedInDrive = new Thread(() -> {
-                        synchronized (deleteRedundantDriveThread){
-                            try {
-                                deleteRedundantDriveThread.join();
-                            }catch (Exception e){
-                                LogHandler.saveLog("failed to join deleteRedundantDriveThread : " + e.getLocalizedMessage());
+                                for (BackUpAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+                                    String fileId = driveMediaItem.getId();
+                                    driveFileIds.add(fileId);
+                                }
+                                dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
                             }
                         }
                     });
 
                     Thread driveBackUpThread = new Thread(() -> {
-                        synchronized (deleteDuplicatedInDrive){
+                        synchronized (deleteRedundantDriveThread){
                             try {
-                                deleteDuplicatedInDrive.join();
+                                deleteRedundantDriveThread.join();
                             } catch (Exception e) {
                                 LogHandler.saveLog("failed to join deleteRedundantDrive thread: " + e.getLocalizedMessage());
                             }
@@ -308,6 +301,29 @@
 
                                 dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(),
                                         driveMediaItem.getFileName(), driveMediaItem.getHash(), userEmail);
+                            }
+                        }
+                    });
+
+                    Thread deleteDuplicatedInDrive = new Thread(() -> {
+                        synchronized (driveBackUpThread){
+                            try {
+                                driveBackUpThread.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join driveBackUpThread : " + e.getLocalizedMessage());
+                            }
+                        }
+
+
+                        String[] columns = {"accessToken","userEmail", "type"};
+                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+
+                        for(String[] userProfile_row : userProfile_rows) {
+                            String type = userProfile_row[2];
+                            if(type.equals("backup")){
+                                String userEmail = userProfile_row[1];
+                                String accessToken = userProfile_row[0];
+                                GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
                             }
                         }
                     });
@@ -346,11 +362,11 @@
 //                    });
 //
                     Thread androidUploadThread = new Thread(() -> {
-                        synchronized (driveBackUpThread){
+                        synchronized (deleteDuplicatedInDrive){
                             try{
-                                driveBackUpThread.join();
+                                deleteDuplicatedInDrive.join();
                             }catch (Exception e){
-                                LogHandler.saveLog("failed to join driveBackUpThread : "  + e.getLocalizedMessage());
+                                LogHandler.saveLog("failed to join deleteDuplicatedInDrive : "  + e.getLocalizedMessage());
                             }
                         }
                         Upload upload = new Upload();
@@ -376,8 +392,8 @@
                     deleteRedundantAndroidThread.start();
                     updateAndroidFilesThread.start();
                     deleteRedundantDriveThread.start();
-                    deleteDuplicatedInDrive.start();
                     driveBackUpThread.start();
+                    deleteDuplicatedInDrive.start();
                     androidUploadThread.start();
                     updateUIThread.start();
                 }
