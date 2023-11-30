@@ -249,7 +249,6 @@
                     });
 
 
-
                     Thread deleteRedundantDriveThread = new Thread(() -> {
                         synchronized (updateAndroidFilesThread){
                             try{
@@ -259,10 +258,11 @@
                             }
                         }
 
-                        String[] columns = {"accessToken"};
+                        String[] columns = {"accessToken","userEmail"};
                         List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
 
                         for(String[] userProfile_row : userProfile_rows) {
+                            String userEmail = userProfile_row[1];
                             String accessToken = userProfile_row[0];
                             ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
                             ArrayList<String> driveFileIds = new ArrayList<>();
@@ -271,15 +271,24 @@
                                 String fileId = driveMediaItem.getId();
                                 driveFileIds.add(fileId);
                             }
+                            dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
+                        }
+                    });
 
-                            dbHelper.deleteRedundantDrive(driveFileIds);
+                    Thread deleteDuplicatedInDrive = new Thread(() -> {
+                        synchronized (deleteRedundantDriveThread){
+                            try {
+                                deleteRedundantDriveThread.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join deleteRedundantDriveThread : " + e.getLocalizedMessage());
+                            }
                         }
                     });
 
                     Thread driveBackUpThread = new Thread(() -> {
-                        synchronized (deleteRedundantDriveThread){
+                        synchronized (deleteDuplicatedInDrive){
                             try {
-                                deleteRedundantDriveThread.join();
+                                deleteDuplicatedInDrive.join();
                             } catch (Exception e) {
                                 LogHandler.saveLog("failed to join deleteRedundantDrive thread: " + e.getLocalizedMessage());
                             }
@@ -337,11 +346,11 @@
 //                    });
 //
                     Thread androidUploadThread = new Thread(() -> {
-                        synchronized (updateAndroidFilesThread){
+                        synchronized (driveBackUpThread){
                             try{
-                                updateAndroidFilesThread.join();
+                                driveBackUpThread.join();
                             }catch (Exception e){
-                                LogHandler.saveLog("failed to join android thread: "  + e.getLocalizedMessage());
+                                LogHandler.saveLog("failed to join driveBackUpThread : "  + e.getLocalizedMessage());
                             }
                         }
                         Upload upload = new Upload();
@@ -353,7 +362,7 @@
                             try{
                                 androidUploadThread.join();
                             }catch (Exception e){
-                                LogHandler.saveLog("failed to join update ui thread: "  + e.getLocalizedMessage());
+                                LogHandler.saveLog("failed to join androidUploadThread : "  + e.getLocalizedMessage());
                             }
                         }
                         runOnUiThread(() -> {
@@ -367,6 +376,7 @@
                     deleteRedundantAndroidThread.start();
                     updateAndroidFilesThread.start();
                     deleteRedundantDriveThread.start();
+                    deleteDuplicatedInDrive.start();
                     driveBackUpThread.start();
                     androidUploadThread.start();
                     updateUIThread.start();

@@ -355,8 +355,9 @@ public class DBHelper extends SQLiteOpenHelper {
         Boolean existsInAndroid = false;
         SQLiteDatabase dbReadable = getReadableDatabase();
         try{
-            sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ? and fileHash = ? and fileSize =?)";
-            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), fileHash, String.valueOf(fileSize)});
+            sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ? and fileHash = ? and fileSize =? and device =?)";
+            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), fileHash,
+                    String.valueOf(fileSize), device});
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
                 if(result == 1){
@@ -369,9 +370,9 @@ public class DBHelper extends SQLiteOpenHelper {
         }finally {
             dbReadable.close();
         }
-        SQLiteDatabase db = getWritableDatabase();
-        db.beginTransaction();
         if(!existsInAndroid){
+            SQLiteDatabase db = getWritableDatabase();
+            db.beginTransaction();
             try{
                 sqlQuery = "INSERT INTO ANDROID (" +
                         "assetId," +
@@ -385,23 +386,20 @@ public class DBHelper extends SQLiteOpenHelper {
                 Object[] values = new Object[]{assetId,fileName,filePath,device,
                         fileSize,fileHash,dateModified,memeType};
                 db.execSQL(sqlQuery, values);
-                System.out.println("check for bug 5 ");
                 db.setTransactionSuccessful();
-                System.out.println("check for bug 6 ");
             }catch (Exception e){
                 LogHandler.saveLog("Failed to save into the database.in insertIntoAndroidTable method. "+e.getLocalizedMessage());
             }finally {
                 db.endTransaction();
                 db.close();
-                System.out.println("check for bug 7 ");
             }
         }
     }
 
-    public void deleteRedundantDrive(ArrayList<String> fileIds){
+    public void deleteRedundantDrive(ArrayList<String> fileIds, String userEmail){
         SQLiteDatabase dbReadable = getReadableDatabase();
 
-        String sqlQuery = "SELECT * FROM DRIVE";
+        String sqlQuery = "SELECT * FROM DRIVE where userEmail = ?";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
         if(cursor.moveToFirst()){
             do{
