@@ -475,6 +475,6 @@ public class Upload {
         }catch (Exception e){
             LogHandler.saveLog("error in calculating hash " + e.getLocalizedMessage());
         }
-        return hexString.toString();
+        return hexString.toString().toLowerCase();
     }
 }

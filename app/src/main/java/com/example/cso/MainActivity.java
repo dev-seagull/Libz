@@ -296,11 +296,13 @@
                             ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
 
                             for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
-                                Long last_insertId = dbHelper.insertAssetData
-                                        (driveMediaItem.getFileName(), driveMediaItem.getHash());
-
-                                dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(),
-                                        driveMediaItem.getFileName(), driveMediaItem.getHash(), userEmail);
+                                Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
+                                if (last_insertId != -1) {
+                                    MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
+                                            driveMediaItem.getHash(), userEmail);
+                                } else {
+                                    LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                                }
                             }
                         }
                     });

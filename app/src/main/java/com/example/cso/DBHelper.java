@@ -19,14 +19,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-        SQLiteDatabase db = getWritableDatabase();
-        Cursor cursor = db.rawQuery("PRAGMA journal_mode=DELETE;",null);
-        if (cursor.moveToFirst()) {
-            String result = cursor.getString(0);
-            System.out.println("Result : : : : : " + result);
-        }
-        cursor.close();
-        onCreate(db);
+        onCreate(getWritableDatabase());
     }
 
     @Override
@@ -44,14 +37,14 @@ public class DBHelper extends SQLiteOpenHelper {
 
         String ASSET = "CREATE TABLE IF NOT EXISTS ASSET("
                 +"id INTEGER PRIMARY KEY AUTOINCREMENT,"+
-                "fileName TEXT," +
+//                "fileName TEXT," +
                 "fileHash TEXT);";
         sqLiteDatabase.execSQL(ASSET);
 
         String DRIVE = "CREATE TABLE IF NOT EXISTS DRIVE("
-                +"id PRIMARY KEY AUTOINCREMENT,"+
+                +"id INTEGER PRIMARY KEY AUTOINCREMENT,"+
                 "assetId INTEGER REFERENCES ASSET(id),"+
-                "fildId TEXT," +
+                "fileId TEXT," +
                 "fileName TEXT," +
                 "userEmail TEXT REFERENCES USERPROFILE(userEmail) ON UPDATE CASCADE ON DELETE CASCADE, " +
                 "fileHash TEXT)";
@@ -101,7 +94,7 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
     }
-    public long insertAssetData(String fileName,String fileHash) {
+    public long insertAssetData(String fileHash) {
         long lastInsertedId = -1;
         String sqlQuery;
 
@@ -125,8 +118,8 @@ public class DBHelper extends SQLiteOpenHelper {
             SQLiteDatabase dbWritable = getWritableDatabase();
             try{
                 dbWritable.beginTransaction();
-                sqlQuery = "INSERT INTO ASSET(fileName,fileHash) VALUES (?,?);";
-                dbWritable.execSQL(sqlQuery, new Object[]{fileName,fileHash});
+                sqlQuery = "INSERT INTO ASSET(fileHash) VALUES (?);";
+                dbWritable.execSQL(sqlQuery, new Object[]{fileHash});
                 dbWritable.setTransactionSuccessful();
             }catch (Exception e){
                 LogHandler.saveLog("Failed to insert data into ASSET.");
@@ -135,7 +128,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 dbWritable.close();
             }
         }
-        sqlQuery = "SELECT id FROM ASSET WHERE fileHash = ?";
+        dbReadable = getReadableDatabase();
+        sqlQuery = "SELECT id FROM ASSET WHERE fileHash = ?;";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{fileHash});
         if(cursor != null && cursor.moveToFirst()){
             lastInsertedId = cursor.getInt(0);
@@ -144,8 +138,8 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         cursor.close();
         dbReadable.close();
-
         return lastInsertedId;
+
     }
 
 
@@ -168,9 +162,9 @@ public class DBHelper extends SQLiteOpenHelper {
         }finally {
             dbReadable.close();
         }
-        SQLiteDatabase db = getWritableDatabase();
-        db.beginTransaction();
         if(existsInDrive == false){
+            SQLiteDatabase db = getWritableDatabase();
+            db.beginTransaction();
             try{
 
                 sqlQuery = "INSERT INTO DRIVE (" +
@@ -351,6 +345,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public void insertIntoAndroidTable(long assetId,String fileName,String filePath,String device,
                                        String fileHash, Double fileSize,String dateModified,String memeType) {
+        fileHash = fileHash.toLowerCase();
         String sqlQuery = "";
         Boolean existsInAndroid = false;
         SQLiteDatabase dbReadable = getReadableDatabase();
@@ -360,6 +355,7 @@ public class DBHelper extends SQLiteOpenHelper {
                     String.valueOf(fileSize), device});
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
+                System.out.println("Result in inserting into android table method : " + result);
                 if(result == 1){
                     existsInAndroid = true;
                 }

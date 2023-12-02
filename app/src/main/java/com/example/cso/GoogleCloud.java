@@ -217,9 +217,13 @@
                             storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
 
                     for(BackUpAccountInfo.MediaItem mediaItem : mediaItems){
-                        Long last_insertId = MainActivity.dbHelper.insertAssetData(mediaItem.getFileName(), mediaItem.getHash());
-                        MainActivity.dbHelper.insertIntoDriveTable(last_insertId, mediaItem.getId(), mediaItem.getFileName(),
-                                mediaItem.getHash(), userEmail);
+                        Long last_insertId = MainActivity.dbHelper.insertAssetData(mediaItem.getHash());
+                        if (last_insertId != -1) {
+                            MainActivity.dbHelper.insertIntoDriveTable(last_insertId, mediaItem.getId(), mediaItem.getFileName(),
+                                    mediaItem.getHash(), userEmail);
+                        } else {
+                            LogHandler.saveLog("Failed to insert file into drive table: " + mediaItem.getFileName());
+                        }
                     }
 
                     runOnUiThread(() -> {

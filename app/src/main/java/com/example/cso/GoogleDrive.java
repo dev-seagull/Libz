@@ -113,7 +113,7 @@ public class GoogleDrive {
             if(fileHashChecker.contains(fileHash) && drive_row[5].equals(userEmail)){
                 ExecutorService executor = Executors.newSingleThreadExecutor();
                 Callable<Boolean> backgroundTask = () -> {
-                   Boolean[] isDeleted = new Boolean[0];
+                   Boolean[] isDeleted = new Boolean[1];
                     try{
                         System.out.println("for test the drive file id is:  " + fileId);
 
@@ -135,11 +135,13 @@ public class GoogleDrive {
                                 LogHandler.saveLog("Retrying to delete duplicated file " + fileName+
                                         "from Drive back up account" +
                                         " with response code of " + responseCode);
+                                isDeleted[0] = false;
                             }
                         }
                     }catch (Exception e){
                         LogHandler.saveLog("error in deleting duplicated media items in drive: " + e.getLocalizedMessage());
                     }
+                    System.out.println("is deleted for test check check: " + isDeleted[0]);
                     return isDeleted[0];
                 };
                 Future<Boolean> future = executor.submit(backgroundTask);
@@ -149,6 +151,7 @@ public class GoogleDrive {
                 }catch (Exception e ){
                     LogHandler.saveLog("Exception when trying to delete file from drive back up: " + e.getLocalizedMessage());
                 }
+                System.out.println("is deleted future for test check check: " + isDeletedFuture);
                 if(isDeletedFuture == true){
                     MainActivity.dbHelper.deleteFileFromDriveTable(fileHash, id, assetId, fileId , userEmail);
                 }

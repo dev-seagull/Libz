@@ -63,7 +63,7 @@ public class Android {
                            LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
                        }
                        long lastInsertedId =
-                               MainActivity.dbHelper.insertAssetData(mediaItemName,fileHash);
+                               MainActivity.dbHelper.insertAssetData(fileHash);
                        if(lastInsertedId != -1){
                            MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
                                    fileHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
@@ -130,7 +130,8 @@ public class Android {
                                         LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
                                     }
                                     long lastInsertedId =
-                                            MainActivity.dbHelper.insertAssetData(mediaItemName,mediaItemHash);
+                                            MainActivity.dbHelper.insertAssetData(mediaItemHash);
+                                    System.out.println("lastInsertedId: " + lastInsertedId);
                                     if(lastInsertedId != -1){
                                         MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
                                                 mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
