@@ -328,13 +328,15 @@ public class DBHelper extends SQLiteOpenHelper {
         fileHash = fileHash.toLowerCase();
         String sqlQuery = "";
         Boolean existsInAndroid = false;
+        System.out.println("assetId : " + assetId + " fileName : " + fileName + " filePath : " + filePath + " device : " + device + " fileHash : " + fileHash + " fileSize : " + fileSize + " dateModified : " + dateModified + " memeType : " + memeType);
         try{
-            sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ? and fileHash = ? and fileSize =? and device =?)";
+            sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ? and fileHash = ? and fileSize = ? and device = ?)";
             Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), fileHash,
                     String.valueOf(fileSize), device});
+            System.out.println("Result in inserting into android table method kkk: " + cursor.getCount() +" "+ fileName + " "+ assetId);
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
-                System.out.println("Result in inserting into android table method : " + result);
+                System.out.println("Result in inserting into android table method : " + result +" "+ fileName + " "+ assetId);
                 if(result == 1){
                     existsInAndroid = true;
                 }
@@ -345,6 +347,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
 
         if(existsInAndroid == false){
+            System.out.println("try to insert into android table method : " + fileName + " "+ assetId);
             dbWritable.beginTransaction();
             try{
                 sqlQuery = "INSERT INTO ANDROID (" +
@@ -360,6 +363,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         fileSize,fileHash,dateModified,memeType};
                 dbWritable.execSQL(sqlQuery, values);
                 dbWritable.setTransactionSuccessful();
+                System.out.println("Inserted into android table method : " + fileName + " "+ assetId);
             }catch (Exception e){
                 LogHandler.saveLog("Failed to save into the database.in insertIntoAndroidTable method. "+e.getLocalizedMessage());
             }finally {
@@ -377,7 +381,7 @@ public class DBHelper extends SQLiteOpenHelper {
             sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
                     "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
                     "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
-            Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId});
+            Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId,assetId,assetId});
             if (cursor != null && cursor.moveToFirst()) {
                 int result = cursor.getInt(0);
                 if (result == 1) {
@@ -406,7 +410,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public void deleteRedundantDrive(ArrayList<String> fileIds, String userEmail){
         String sqlQuery = "SELECT * FROM DRIVE where userEmail = ?";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
         if(cursor.moveToFirst()){
             do{
                 int fileIdColumnIndex = cursor.getColumnIndex("fileId");
@@ -434,7 +438,7 @@ public class DBHelper extends SQLiteOpenHelper {
                                 sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
                                         "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
                                         "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
-                                cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId});
+                                cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId, assetId, assetId});
                                 if (cursor != null && cursor.moveToFirst()) {
                                     int result = cursor.getInt(0);
                                     if (result == 1) {
@@ -508,7 +512,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
                                 "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
                                 "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
-                        cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId});
+                        cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId,assetId,assetId});
                         if(cursor != null && cursor.moveToFirst()){
                             int result = cursor.getInt(0);
                             if(result == 1){
@@ -604,7 +608,7 @@ public class DBHelper extends SQLiteOpenHelper {
 //            }
 //        }
 
-    public List<String[]> getDriveTable(String[] columns){
+    public List<String[]> getDriveTable(String[] columns, String userEmail){
         List<String[]> resultList = new ArrayList<>();
 
         String sqlQuery = "SELECT ";
@@ -613,8 +617,8 @@ public class DBHelper extends SQLiteOpenHelper {
         }
 
         sqlQuery = sqlQuery.substring(0, sqlQuery.length() - 2);
-        sqlQuery += " FROM DRIVE" ;
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
+        sqlQuery += " FROM DRIVE WHERE userEmail = ?" ;
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
         if (cursor.moveToFirst()) {
             do {
                 String[] row = new String[columns.length];

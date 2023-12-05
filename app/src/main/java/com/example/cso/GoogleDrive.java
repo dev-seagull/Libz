@@ -98,9 +98,9 @@ public class GoogleDrive {
         return uploadFileIDs_fromFuture;
     }
 
-    public static void deleteDuplicatedMediaItems (String accessToken, String userEmail){
+    public static void deleteDuplicatedMediaItems(String accessToken, String userEmail){
         String[] driveColumns = {"fileHash", "id","assetId", "fileId", "fileName", "userEmail"};
-        List<String[]> drive_rows = MainActivity.dbHelper.getDriveTable(driveColumns);
+        List<String[]> drive_rows = MainActivity.dbHelper.getDriveTable(driveColumns, userEmail);
 
         ArrayList<String> fileHashChecker = new ArrayList<>();
         for(String[] drive_row: drive_rows){
@@ -110,7 +110,7 @@ public class GoogleDrive {
             String fileId = drive_row[3];
             String fileName = drive_row[4];
             System.out.println("user email for test:" + drive_row[5]);
-            if(fileHashChecker.contains(fileHash) && drive_row[5].equals(userEmail)){
+            if(fileHashChecker.contains(fileHash)){
                 ExecutorService executor = Executors.newSingleThreadExecutor();
                 Callable<Boolean> backgroundTask = () -> {
                    Boolean[] isDeleted = new Boolean[1];
@@ -156,7 +156,7 @@ public class GoogleDrive {
                     MainActivity.dbHelper.deleteFileFromDriveTable(fileHash, id, assetId, fileId , userEmail);
                 }
 
-            }else if(!fileHashChecker.contains(fileHash) && drive_row[5].equals(userEmail)){
+            }else if(!fileHashChecker.contains(fileHash)){
                 fileHashChecker.add(fileHash);
             }
         }
