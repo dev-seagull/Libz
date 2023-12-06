@@ -406,7 +406,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public void deleteRedundantDrive(ArrayList<String> fileIds, String userEmail){
         String sqlQuery = "SELECT * FROM DRIVE where userEmail = ?";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, null );
         if(cursor.moveToFirst()){
             do{
                 int fileIdColumnIndex = cursor.getColumnIndex("fileId");
