@@ -14,8 +14,6 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 
-import org.checkerframework.checker.units.qual.A;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,11 +26,8 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -315,9 +310,13 @@ public class Upload {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<ArrayList<String>> uploadTask = () -> {
             try {
-                String[] selected_columns = {"id", "fileName", "filePath", "device",
+                String[] selected_android_columns = {"id", "fileName", "filePath", "device",
                         "fileSize", "fileHash", "dateModified", "memeType","assetId"};
-                List<String[]> android_items = MainActivity.dbHelper.getAndroidTable(selected_columns);
+                List<String[]> android_items = MainActivity.dbHelper.getAndroidTable(selected_android_columns);
+
+
+                String[] selected_userProfile_columns = {"userEmail" , "type"};
+                List<String[]> userProfile_items = MainActivity.dbHelper.getUserProfile(selected_userProfile_columns);
 
                 ArrayList<String> androidItemsToUpload_hash = new ArrayList<>();
                 int duplicatedFileIndex = -1;
@@ -328,6 +327,29 @@ public class Upload {
                     File androidFile = new File(filePath);
                     String fileHash = android_items.get(j)[5];
                     String memeType = android_items.get(j)[7];
+                    String assetId = android_items.get(j)[7];
+
+                    Boolean isInDrive = false;
+                    driveLoop:{
+                        for(String[] userProfile_item : userProfile_items){
+                            String userEmail = userProfile_item[0];
+                            String type = userProfile_item[1];
+                            if(type.equals("backup")){
+                                String[] selected_drive_columns = {"id", "assetId", "fileId", "fileName",
+                                        "userEmail","fileHash"};
+                                List<String[]> drive_items = MainActivity.dbHelper.getDriveTable(selected_drive_columns, userEmail);
+                                for(String[] drive_item : drive_items){
+                                    String driveFileHash = drive_item[5];
+                                    System.out.println("Drive file hash for test: " + driveFileHash);
+                                    if(driveFileHash.equals(fileHash)){
+                                        isInDrive = true;
+                                        break driveLoop;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
 
                     boolean isDuplicated = false;
                     for (int i=0; i < androidItemsToUpload_hash.size(); i++){
@@ -336,7 +358,7 @@ public class Upload {
                             duplicatedFileIndex = i ;
                         }
                     }
-                    if(!isDuplicated){
+                    if( (isDuplicated == false) && (isInDrive == false)){
                         androidItemsToUpload_hash.add(fileHash);
                         try {
                             NetHttpTransport HTTP_TRANSPORT = null;
@@ -427,9 +449,14 @@ public class Upload {
                     }
                     else{
                         LogHandler.saveLog("Duplicated file in android was found: " + fileName,false);
-                        MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
-                                String.valueOf(android_items.get(duplicatedFileIndex)[0]),
-                                "duplicated" , fileHash);
+                        if(isDuplicated == true){
+                            MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
+                                    String.valueOf(android_items.get(duplicatedFileIndex)[0]),
+                                    "duplicated" , fileHash);
+                        }
+                        if(isInDrive == true){
+
+                        }
                     }
                 }
                 //}
@@ -476,5 +503,10 @@ public class Upload {
             LogHandler.saveLog("error in calculating hash " + e.getLocalizedMessage());
         }
         return hexString.toString().toLowerCase();
+    }
+
+    public void restore(String accessToken){
+        String sqlQuery = "SELECT * FROM DRIVE ";
+        MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery , null);
     }
 }
