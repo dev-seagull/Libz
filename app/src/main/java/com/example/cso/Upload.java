@@ -453,9 +453,10 @@ public class Upload {
                             MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
                                     String.valueOf(android_items.get(duplicatedFileIndex)[0]),
                                     "duplicated" , fileHash);
+                            System.out.println("Duplicated file " + fileName + " in android was found with another android file." );
                         }
                         if(isInDrive == true){
-
+                            System.out.println("Duplicated file " + fileName + " in android was found with a drive file." );
                         }
                     }
                 }
