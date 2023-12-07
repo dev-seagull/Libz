@@ -89,6 +89,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "source TEXT,"+
                 "fileName TEXT," +
                 "destination TEXT,"+
+                "assetId TEXT,"+
                 "operation TEXT CHECK (operation IN ('duplicated','sync','download')),"+
                 "hash TEXT,"+
                 "date TEXT)";
@@ -181,14 +182,14 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
     public void insertTransactionsData(String source, String fileName, String destination
-            , String operation, String fileHash) {
+            ,String assetId, String operation, String fileHash) {
         dbWritable.beginTransaction();
        try{
-            String sqlQuery = "INSERT INTO TRANSACTIONS(source, fileName, destination, operation, hash, date)" +
-                    " VALUES (?,?,?,?,?,?);";
+            String sqlQuery = "INSERT INTO TRANSACTIONS(source, fileName, destination, assetId, operation, hash, date)" +
+                    " VALUES (?,?,?,?,?,?,?);";
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String timestamp = dateFormat.format(new Date());
-            dbWritable.execSQL(sqlQuery, new Object[]{source,fileName, destination, operation, fileHash, timestamp});
+            dbWritable.execSQL(sqlQuery, new Object[]{source,fileName, destination, assetId, operation, fileHash, timestamp});
             dbWritable.setTransactionSuccessful();
         }catch (Exception e){
             LogHandler.saveLog("Failed to insert data into ASSET.");

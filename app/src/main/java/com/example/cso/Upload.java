@@ -437,8 +437,9 @@ public class Upload {
                                         " from android into backup account uploadId : " + uploadFileId,false);
                                 //date //id
 
+                                System.out.println("assetId for " + fileName + " is : " + assetId);
                                 MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
-                                        drive_backUp_accounts.get(0)[0], "sync" , fileHash);
+                                        drive_backUp_accounts.get(0)[0], assetId, "sync" , fileHash);
                             }
 //                                  test[0]--;
                         } catch (Exception e) {
@@ -449,10 +450,12 @@ public class Upload {
                     }
                     else{
                         LogHandler.saveLog("Duplicated file in android was found: " + fileName,false);
+
+                        System.out.println("assetId for " + fileName + " is : " + assetId);
                         if(isDuplicated == true){
                             MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
-                                    String.valueOf(android_items.get(duplicatedFileIndex)[0]),
-                                    "duplicated" , fileHash);
+                                    String.valueOf(android_items.get(duplicatedFileIndex)[0])
+                                    , assetId, "duplicated" , fileHash);
                             System.out.println("Duplicated file " + fileName + " in android was found with another android file." );
                         }
                         if(isInDrive == true){
