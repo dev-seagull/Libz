@@ -90,7 +90,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "fileName TEXT," +
                 "destination TEXT,"+
                 "assetId TEXT,"+
-                "operation TEXT CHECK (operation IN ('duplicated','sync','download')),"+
+                "operation TEXT CHECK (operation IN ('duplicated','sync','download','deletedInDevice')),"+
                 "hash TEXT,"+
                 "date TEXT)";
         sqLiteDatabase.execSQL(TRANSACTIONS);
@@ -479,6 +479,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 String filePath = "";
                 String assetId = "";
                 String device = "";
+                String fileHash = "";
+                String fileName = "";
 
                 int filePathColumnIndex = cursor.getColumnIndex("filePath");
                 if(filePathColumnIndex >= 0){
@@ -490,9 +492,19 @@ public class DBHelper extends SQLiteOpenHelper {
                     assetId = cursor.getString(assetIdColumnIndex);
                 }
 
+                int fileNameColumnIndex = cursor.getColumnIndex("fileName");
+                if(fileNameColumnIndex >= 0){
+                    fileName = cursor.getString(fileNameColumnIndex);
+                }
+
                 int deviceColumnIndex = cursor.getColumnIndex("device");
                 if(deviceColumnIndex >= 0){
                     device = cursor.getString(deviceColumnIndex);
+                }
+
+                int fileHashColumnIndex = cursor.getColumnIndex("fileHash");
+                if(fileHashColumnIndex >= 0){
+                    fileHash = cursor.getString(fileHashColumnIndex);
                 }
 
                 File androidFile = new File(filePath);
@@ -504,6 +516,22 @@ public class DBHelper extends SQLiteOpenHelper {
                         dbWritable.setTransactionSuccessful();
                     } catch (Exception e) {
                         LogHandler.saveLog("Failed to delete the database in ANDROID , deleteRedundantAndroid method. " + e.getLocalizedMessage());
+                    } finally {
+                        dbWritable.endTransaction();
+                    }
+
+                    dbWritable.beginTransaction();
+                    try {
+                        sqlQuery = "INSERT INTO TRANSACTIONS(source, fileName, destination, " +
+                                "assetId, operation, hash, date) values(?,?,?,?,?,?,?)";
+                        System.out.println("adding deleted by user to transactions:  " + filePath);
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        String timestamp = dateFormat.format(new Date());
+                        dbWritable.execSQL(sqlQuery, new Object[]{filePath, fileName, device,
+                                assetId, "deletedInDevice", fileHash, timestamp});
+                        dbWritable.setTransactionSuccessful();
+                    } catch (Exception e) {
+                        LogHandler.saveLog("Failed to add deleted file in device to TRANSACTIONS , deleteRedundantAndroid method. " + e.getLocalizedMessage());
                     } finally {
                         dbWritable.endTransaction();
                     }
