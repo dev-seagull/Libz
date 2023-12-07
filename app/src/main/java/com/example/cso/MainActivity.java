@@ -116,6 +116,14 @@
 
             googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
             googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
+
+            Button restoreButton = findViewById(R.id.restoreButton);
+            restoreButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Upload.restore("");
+                }
+            });
         }
 
 

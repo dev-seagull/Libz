@@ -4,6 +4,7 @@ import static com.example.cso.GooglePhotos.getMemeType;
 import static com.example.cso.GooglePhotos.isImage;
 import static com.example.cso.GooglePhotos.isVideo;
 
+import android.database.Cursor;
 import android.os.Environment;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -509,8 +510,40 @@ public class Upload {
         return hexString.toString().toLowerCase();
     }
 
-    public void restore(String accessToken){
-        String sqlQuery = "SELECT * FROM DRIVE ";
-        MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery , null);
+    public static void restore(String accessToken){
+        String sqlQuery = "SELECT T.id, T.source, T.fileName, T.destination, T.assetId, " +
+                "T.operation, T.hash, T.date, D.fileId , D.userEmail " +
+                "FROM TRANSACTIONS T " +
+                "JOIN DRIVE D ON T.assetId = D.assetId AND T.hash = D.fileHash " +
+                "WHERE T.operation = 'deletedInDevice' " +
+                "AND D.id = (" +
+                "   SELECT MIN(id) " +
+                "   FROM DRIVE " +
+                "   WHERE assetId = T.assetId AND fileHash = T.hash " +
+                ");";
+        Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery , null);
+        List<String[]> resultList = new ArrayList<>();
+        if(cursor.moveToFirst()){
+            do {
+                String[] columns = {"id", "source", "fileName", "destination", "assetId"
+                        , "operation", "hash", "date", "fileId", "userEmail"};
+                String[] row = new String[columns.length];
+                for(int i =0 ; i < columns.length ; i++){
+                    int columnIndex = cursor.getColumnIndex(columns[i]);
+                    if (columnIndex >= 0) {
+                        row[i] = cursor.getString(columnIndex);
+                    }
+                }
+                resultList.add(row);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        System.out.println("files to be restored: ");
+        for (String[] row : resultList) {
+            for (String value : row) {
+                System.out.print(value + " ");
+            }
+            System.out.println();
+        }
     }
 }

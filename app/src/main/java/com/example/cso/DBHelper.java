@@ -524,7 +524,7 @@ public class DBHelper extends SQLiteOpenHelper {
                     try {
                         sqlQuery = "INSERT INTO TRANSACTIONS(source, fileName, destination, " +
                                 "assetId, operation, hash, date) values(?,?,?,?,?,?,?)";
-                        System.out.println("adding deleted by user to transactions:  " + filePath);
+                        System.out.println("adding deleted in device to transactions table:  " + filePath);
                         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                         String timestamp = dateFormat.format(new Date());
                         dbWritable.execSQL(sqlQuery, new Object[]{filePath, fileName, device,
