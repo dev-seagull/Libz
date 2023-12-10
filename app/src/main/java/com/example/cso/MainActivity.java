@@ -121,7 +121,7 @@
             restoreButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Upload.restore("");
+                    Upload.restore();
                 }
             });
         }

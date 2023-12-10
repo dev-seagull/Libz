@@ -18,6 +18,7 @@ import com.google.api.services.drive.Drive;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -510,7 +511,7 @@ public class Upload {
         return hexString.toString().toLowerCase();
     }
 
-    public static void restore(String accessToken){
+    public static void restore(){
         String sqlQuery = "SELECT T.id, T.source, T.fileName, T.destination, D.assetId, " +
                 "T.operation, T.hash, T.date, D.fileId , D.userEmail " +
                 "FROM TRANSACTIONS T " +
@@ -521,6 +522,7 @@ public class Upload {
                 "   FROM DRIVE " +
                 "   WHERE fileHash = T.hash " +
                 ");";
+        //when
         Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery , null);
         List<String[]> resultList = new ArrayList<>();
         if(cursor.moveToFirst()){
@@ -537,13 +539,57 @@ public class Upload {
                 resultList.add(row);
             } while (cursor.moveToNext());
         }
-        cursor.close();
-        System.out.println("files to be restored: ");
+
         for (String[] row : resultList) {
-            for (String value : row) {
-                System.out.print(value + " ");
+            String filePath = row[1];
+            String userEmail = row[9];
+            String fileId = row[8];
+            System.out.println("File path for restore test: " + filePath + " and user email is: " + userEmail  +  "  and file id" +
+                    " is: " + fileId);
+            sqlQuery = "SELECT accessToken from USERPROFILE WHERE USERPROFILE.userEmail = ?";
+            cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery , new String[]{userEmail});
+            String accessToken = "";
+            if(cursor.moveToFirst()) {
+                int userEmailColumnIndex = cursor.getColumnIndex("userEmail");
+                if (userEmailColumnIndex >= 0) {
+                     accessToken = cursor.getString(userEmailColumnIndex);
+                }
             }
-            System.out.println();
+            System.out.println("result for restore test: " + accessToken);
+            if(!accessToken.isEmpty() && accessToken != null){
+                NetHttpTransport HTTP_TRANSPORT = null;
+                try {
+                    HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+                } catch (GeneralSecurityException e) {
+                    LogHandler.saveLog("Failed to http_transport in restore method" + e.getLocalizedMessage(), true);
+                } catch (IOException e) {
+                }
+                final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+
+                String bearerToken = "Bearer " + accessToken;
+                HttpRequestInitializer requestInitializer = request -> {
+                    request.getHeaders().setAuthorization(bearerToken);
+                    request.getHeaders().setContentType("application/json");
+                };
+
+
+                Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
+                        .setApplicationName("cso")
+                        .build();
+
+                OutputStream outputStream = null;
+                try {
+                    outputStream = new FileOutputStream(filePath);
+                } catch (FileNotFoundException e) {
+                    LogHandler.saveLog("failed to save output stream in restore method", true);
+                }
+                try {
+                    service.files().get(fileId).executeMediaAndDownloadTo(outputStream);
+                } catch (IOException e) {
+                    LogHandler.saveLog("failed to download in restore method", true);
+                }
+            }
         }
+        cursor.close();
     }
 }
