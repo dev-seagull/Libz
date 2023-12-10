@@ -511,15 +511,15 @@ public class Upload {
     }
 
     public static void restore(String accessToken){
-        String sqlQuery = "SELECT T.id, T.source, T.fileName, T.destination, T.assetId, " +
+        String sqlQuery = "SELECT T.id, T.source, T.fileName, T.destination, D.assetId, " +
                 "T.operation, T.hash, T.date, D.fileId , D.userEmail " +
                 "FROM TRANSACTIONS T " +
-                "JOIN DRIVE D ON T.assetId = D.assetId AND T.hash = D.fileHash " +
+                "JOIN DRIVE D ON T.hash = D.fileHash " +
                 "WHERE T.operation = 'deletedInDevice' " +
                 "AND D.id = (" +
                 "   SELECT MIN(id) " +
                 "   FROM DRIVE " +
-                "   WHERE assetId = T.assetId AND fileHash = T.hash " +
+                "   WHERE fileHash = T.hash " +
                 ");";
         Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery , null);
         List<String[]> resultList = new ArrayList<>();

@@ -508,7 +508,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
 
                 File androidFile = new File(filePath);
-                if (!androidFile.exists() && !device.equals(MainActivity.androidDeviceName)){
+                if (!androidFile.exists() && device.equals(MainActivity.androidDeviceName)){
                     dbWritable.beginTransaction();
                     try {
                         sqlQuery = "DELETE FROM ANDROID WHERE filePath = ? and assetId = ? ";
