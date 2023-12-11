@@ -57,6 +57,7 @@ public class GoogleDrive {
                 final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
                 final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
                 HttpRequestInitializer httpRequestInitializer = request -> {
+                    System.out.println("access token for get files : " + accessToken);
                     request.getHeaders().setAuthorization("Bearer " + accessToken);
                     request.getHeaders().setContentType("application/json");
                 };

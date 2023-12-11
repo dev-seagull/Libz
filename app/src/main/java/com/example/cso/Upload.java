@@ -34,6 +34,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Upload {
     public ArrayList<String> upload() {
@@ -512,7 +513,7 @@ public class Upload {
     }
 
     public static void restore(){
-        String sqlQuery = "SELECT T.id, T.source, T.fileName, T.destination, D.assetId, " +
+        AtomicReference<String> sqlQuery = new AtomicReference<>("SELECT T.id, T.source, T.fileName, T.destination, D.assetId, " +
                 "T.operation, T.hash, T.date, D.fileId , D.userEmail " +
                 "FROM TRANSACTIONS T " +
                 "JOIN DRIVE D ON T.hash = D.fileHash " +
@@ -521,75 +522,101 @@ public class Upload {
                 "   SELECT MIN(id) " +
                 "   FROM DRIVE " +
                 "   WHERE fileHash = T.hash " +
-                ");";
+                ");");
         //when
-        Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery , null);
+        AtomicReference<Cursor> cursor = new AtomicReference<>(MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery.get(), null));
         List<String[]> resultList = new ArrayList<>();
-        if(cursor.moveToFirst()){
+        if(cursor.get().moveToFirst()){
             do {
                 String[] columns = {"id", "source", "fileName", "destination", "assetId"
                         , "operation", "hash", "date", "fileId", "userEmail"};
                 String[] row = new String[columns.length];
                 for(int i =0 ; i < columns.length ; i++){
-                    int columnIndex = cursor.getColumnIndex(columns[i]);
+                    int columnIndex = cursor.get().getColumnIndex(columns[i]);
                     if (columnIndex >= 0) {
-                        row[i] = cursor.getString(columnIndex);
+                        row[i] = cursor.get().getString(columnIndex);
                     }
                 }
                 resultList.add(row);
-            } while (cursor.moveToNext());
+            } while (cursor.get().moveToNext());
         }
 
-        for (String[] row : resultList) {
-            String filePath = row[1];
-            String userEmail = row[9];
-            String fileId = row[8];
-            System.out.println("File path for restore test: " + filePath + " and user email is: " + userEmail  +  "  and file id" +
-                    " is: " + fileId);
-            sqlQuery = "SELECT accessToken from USERPROFILE WHERE USERPROFILE.userEmail = ?";
-            cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery , new String[]{userEmail});
-            String accessToken = "";
-            if(cursor.moveToFirst()) {
-                int userEmailColumnIndex = cursor.getColumnIndex("userEmail");
-                if (userEmailColumnIndex >= 0) {
-                     accessToken = cursor.getString(userEmailColumnIndex);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        final boolean[] isFinished = {false};
+        Callable<Boolean> backgroundDownloadTask = () -> {
+
+
+
+            for (String[] row : resultList) {
+                String filePath = row[1];
+                String userEmail = row[9];
+                String fileId = row[8];
+                System.out.println("File path for restore test: " + filePath + " and user email is: " + userEmail  +  "  and file id" +
+                        " is: " + fileId);
+                sqlQuery.set("SELECT accessToken from USERPROFILE WHERE USERPROFILE.userEmail = ?");
+                cursor.set(MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery.get(), new String[]{userEmail}));
+                String accessToken = "";
+                if(cursor.get().moveToFirst()) {
+                    int accessTokenColumnIndex = cursor.get().getColumnIndex("accessToken");
+                    if (accessTokenColumnIndex >= 0) {
+                        accessToken = cursor.get().getString(accessTokenColumnIndex);
+                    }
+                }
+                System.out.println("result for restore test: " + accessToken);
+                if(!accessToken.isEmpty() && accessToken != null){
+                    NetHttpTransport HTTP_TRANSPORT = null;
+                    try {
+                        HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+                    } catch (GeneralSecurityException e) {
+                        LogHandler.saveLog("Failed to http_transport in restore method" + e.getLocalizedMessage(), true);
+                    } catch (IOException e) {
+                    }
+                    final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+
+                    String bearerToken = "Bearer " + accessToken;
+                    HttpRequestInitializer requestInitializer = request -> {
+                        request.getHeaders().setAuthorization(bearerToken);
+                        request.getHeaders().setContentType("application/json");
+                    };
+
+
+                    Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
+                            .setApplicationName("cso")
+                            .build();
+
+                    OutputStream outputStream = null;
+                    File file = new File(filePath+"restored.png");
+                    try {
+                        if(!file.exists()){
+                            System.out.println("here and file doesn't exists");
+                            file.getParentFile().mkdirs();
+                            file.createNewFile();
+                        }
+                    } catch (Exception e) {
+                        LogHandler.saveLog("failed to create file in restore method : " + e.getLocalizedMessage(), true);
+                    }
+                    try {
+                        System.out.println("file path : " + filePath);
+                        outputStream = new FileOutputStream(filePath+"restored.png" +
+                                "");
+                    } catch (FileNotFoundException e) {
+                        LogHandler.saveLog("failed to save output stream in restore method : " + e.getLocalizedMessage(), true);
+                    }
+                    try {
+                        service.files().get(fileId).executeMediaAndDownloadTo(outputStream);
+                    } catch (IOException e) {
+                        LogHandler.saveLog("failed to download in restore method : " + e.getLocalizedMessage(), true);
+                    }
                 }
             }
-            System.out.println("result for restore test: " + accessToken);
-            if(!accessToken.isEmpty() && accessToken != null){
-                NetHttpTransport HTTP_TRANSPORT = null;
-                try {
-                    HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-                } catch (GeneralSecurityException e) {
-                    LogHandler.saveLog("Failed to http_transport in restore method" + e.getLocalizedMessage(), true);
-                } catch (IOException e) {
-                }
-                final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-
-                String bearerToken = "Bearer " + accessToken;
-                HttpRequestInitializer requestInitializer = request -> {
-                    request.getHeaders().setAuthorization(bearerToken);
-                    request.getHeaders().setContentType("application/json");
-                };
-
-
-                Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                        .setApplicationName("cso")
-                        .build();
-
-                OutputStream outputStream = null;
-                try {
-                    outputStream = new FileOutputStream(filePath);
-                } catch (FileNotFoundException e) {
-                    LogHandler.saveLog("failed to save output stream in restore method", true);
-                }
-                try {
-                    service.files().get(fileId).executeMediaAndDownloadTo(outputStream);
-                } catch (IOException e) {
-                    LogHandler.saveLog("failed to download in restore method", true);
-                }
-            }
+            cursor.get().close();
+           return isFinished[0];
+        };
+        Future<Boolean> future = executor.submit(backgroundDownloadTask);
+        try{
+            isFinished[0] = future.get();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to get boolean finished in downloading from Photos: " + e.getLocalizedMessage());
         }
-        cursor.close();
     }
 }

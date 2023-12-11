@@ -7,6 +7,8 @@
     import android.content.pm.PackageManager;
     import android.os.Build;
     import android.os.Bundle;
+    import android.os.Environment;
+    import android.provider.Settings;
     import android.text.Layout;
     import android.text.Spannable;
     import android.text.SpannableString;
@@ -35,6 +37,7 @@
 
     import org.checkerframework.checker.units.qual.A;
 
+    import java.security.Permission;
     import java.util.ArrayList;
     import java.util.HashMap;
     import java.util.List;
@@ -74,13 +77,35 @@
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
             int requestCode =1;
-            String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE};
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                    (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED |
-                            ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)) {
-                ActivityCompat.requestPermissions(this, permissions, requestCode);
+            String[] permissions = {
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            };
+
+            System.out.println("I try to request for manage before");
+            if (Build.VERSION.SDK_INT >= 30){
+                if (!Environment.isExternalStorageManager()){
+                    Intent getPermission = new Intent();
+                    getPermission.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                    startActivity(getPermission);
+                }
             }
+            System.out.println("I try to request for manage after");
+            boolean isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
+                    (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
+            while(!isWriteAndReadPermissionGranted){
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                        (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED |
+                                ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)) {
+                    System.out.println("I try to request for write before");
+                    ActivityCompat.requestPermissions(this, permissions, requestCode);
+                    System.out.println("I try to request for read after");
+                }
+                isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
+                        (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
+            }
+
+
             googleCloud = new GoogleCloud(this);
             logFileName = LogHandler.CreateLogFile();
             LogHandler.saveLog("Attention : Don't remove this file - this file makes sure that CSO app is working well.",false);
@@ -121,7 +146,22 @@
             restoreButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Upload.restore();
+
+//                    Thread manageExternalpermissionThread = new Thread(){
+//
+//                        synchronized (this){
+//                            notify();
+//                        }
+//                    };
+
+//
+                    Thread restoreThread = new Thread() {
+                        @Override
+                        public void run() {
+                            Upload.restore();
+                        }
+                    };
+                    restoreThread.start();
                 }
             });
         }
