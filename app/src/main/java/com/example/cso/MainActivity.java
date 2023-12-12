@@ -42,8 +42,11 @@
     import java.util.HashMap;
     import java.util.List;
     import java.util.Map;
+    import java.util.concurrent.Callable;
     import java.util.concurrent.Executor;
+    import java.util.concurrent.ExecutorService;
     import java.util.concurrent.Executors;
+    import java.util.concurrent.Future;
 
 
     public class MainActivity extends AppCompatActivity {
@@ -83,13 +86,7 @@
             };
 
             System.out.println("I try to request for manage before");
-            if (Build.VERSION.SDK_INT >= 30){
-                if (!Environment.isExternalStorageManager()){
-                    Intent getPermission = new Intent();
-                    getPermission.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                    startActivity(getPermission);
-                }
-            }
+
             System.out.println("I try to request for manage after");
             boolean isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
                     (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
@@ -146,23 +143,49 @@
             restoreButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-
-//                    Thread manageExternalpermissionThread = new Thread(){
-//
-//                        synchronized (this){
-//                            notify();
-//                        }
-//                    };
-
-//
+                    int buildSdkInt = Build.VERSION.SDK_INT;
                     Thread restoreThread = new Thread() {
                         @Override
                         public void run() {
-                            Upload.restore();
+                            synchronized (this){
+                                try {
+                                    if (buildSdkInt >= 30) {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                            if (!Environment.isExternalStorageManager()) {
+                                                Intent getPermission = new Intent();
+                                                getPermission.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                                                startActivity(getPermission);
+                                                while (!Environment.isExternalStorageManager()){
+                                                    System.out.println("here " + Environment.isExternalStorageManager());
+                                                    try {
+                                                        Thread.sleep(500);
+                                                        System.out.println("... " + Environment.isExternalStorageManager());
+                                                    } catch (InterruptedException e) {
+                                                        System.out.println("here2" + Environment.isExternalStorageManager());
+                                                        throw new RuntimeException(e);
+
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                        if (Environment.isExternalStorageManager()) {
+                                            LogHandler.saveLog("Starting to restore files from your android device",false);
+                                            System.out.println("Starting to restore files from your android device");
+                                            Upload.restore();
+                                        }}
+                                } catch (Exception e) {
+                                    LogHandler.saveLog("Failed to get manage external storage in restore thread: " + e.getLocalizedMessage());
+                                }
+                                notify();
+                            }
+
                         }
                     };
                     restoreThread.start();
                 }
+
             });
         }
 
