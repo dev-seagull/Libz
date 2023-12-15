@@ -40,7 +40,7 @@ public class DBHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(USERPROFILE);
 
         String DEVICE = "CREATE TABLE IF NOT EXISTS DEVICE("
-                + "id PRIMARY KEY AUTOINCREMENT," +
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "deviceName TEXT," +
                 "totalStorage TEXT," +
                 "freeStorage TEXT)";
@@ -48,7 +48,6 @@ public class DBHelper extends SQLiteOpenHelper {
 
         String ASSET = "CREATE TABLE IF NOT EXISTS ASSET("
                 +"id INTEGER PRIMARY KEY AUTOINCREMENT,"+
-//                "fileName TEXT," +
                 "fileHash TEXT);";
         sqLiteDatabase.execSQL(ASSET);
 

@@ -430,15 +430,109 @@
                         }
                     };
 
-                    Thread updateUIThread =  new Thread(() -> {
+
+                    Thread deleteRedundantDriveThread2 = new Thread(() -> {
                         synchronized (restoreThread){
                             try{
                                 restoreThread.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join updateAndroidFilesThread : " + e.getLocalizedMessage());
+                            }
+                        }
+
+                        String[] columns = {"accessToken","userEmail", "type"};
+                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+
+                        for(String[] userProfile_row : userProfile_rows) {
+                            String type = userProfile_row[2];
+                            if(type.equals("backup")){
+                                String userEmail = userProfile_row[1];
+                                String accessToken = userProfile_row[0];
+                                ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                                ArrayList<String> driveFileIds = new ArrayList<>();
+
+                                for (BackUpAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+                                    String fileId = driveMediaItem.getId();
+                                    driveFileIds.add(fileId);
+                                }
+                                dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
+                            }
+                        }
+                    });
+
+                    Thread updateDriveBackUpThread2 = new Thread(() -> {
+                        synchronized (deleteRedundantDriveThread2){
+                            try {
+                                deleteRedundantDriveThread2.join();
+                            } catch (Exception e) {
+                                LogHandler.saveLog("failed to join deleteRedundantDrive thread: " + e.getLocalizedMessage());
+                            }
+                        }
+
+                        String[] columns = {"accessToken", "userEmail"};
+                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+
+                        for(String[] userProfile_row : userProfile_rows){
+                            String accessToken = userProfile_row[0];
+                            String userEmail = userProfile_row[1];
+                            ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+
+                            for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
+                                Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
+                                if (last_insertId != -1) {
+                                    MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
+                                            driveMediaItem.getHash(), userEmail);
+                                } else {
+                                    LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                                }
+                            }
+                        }
+                    });
+
+                    Thread deleteDuplicatedInDrive2 = new Thread(() -> {
+                        synchronized (updateDriveBackUpThread2){
+                            try {
+                                updateDriveBackUpThread2.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join driveBackUpThread : " + e.getLocalizedMessage());
+                            }
+                        }
+
+
+                        String[] columns = {"accessToken","userEmail", "type"};
+                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+
+                        for(String[] userProfile_row : userProfile_rows) {
+                            String type = userProfile_row[2];
+                            if(type.equals("backup")){
+                                String userEmail = userProfile_row[1];
+                                String accessToken = userProfile_row[0];
+                                GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
+                            }
+                        }
+                    });
+
+
+
+                    Thread updateUIThread =  new Thread(() -> {
+                        synchronized (deleteDuplicatedInDrive2){
+                            try{
+                                deleteDuplicatedInDrive2.join();
                             }catch (Exception e){
                                 LogHandler.saveLog("failed to join androidUploadThread : "  + e.getLocalizedMessage());
                             }
                         }
                         runOnUiThread(() -> {
+                            TextView deviceStorage = findViewById(R.id.deviceStorage);
+                            ArrayList<String> storage =  Android.getAndroidDeviceStorage();
+                            deviceStorage.setText("Total space: " + storage.get(0) +
+                                    "\n" + "free space: " + storage.get(1) + "\n");
+
+                            TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
+                            int total_androidAssets_count = dbHelper.countAndroidAssets();
+                            androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
+                                    "\n" + "synced android assets: " +
+                                    dbHelper.countAndroidSyncedAssets());
                             NotificationHandler.sendNotification("1","restoringAlert", MainActivity.this,
                                     "Restoring is finished","You're files are restored!");
                             TextView restoreTextView = findViewById(R.id.restoreTextView);
@@ -452,6 +546,9 @@
                     updateDriveBackUpThread.start();
                     deleteDuplicatedInDrive.start();
                     restoreThread.start();
+                    deleteRedundantDriveThread2.start();
+                    updateDriveBackUpThread2.start();
+                    deleteDuplicatedInDrive2.start();
                     updateUIThread.start();
 
                 }
@@ -716,15 +813,106 @@
                         upload.upload();
                     });
 
-                    Thread updateUIThread =  new Thread(() -> {
+                    Thread deleteRedundantDriveThread2 = new Thread(() -> {
                         synchronized (androidUploadThread){
                             try{
                                 androidUploadThread.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join updateAndroidFilesThread : " + e.getLocalizedMessage());
+                            }
+                        }
+
+                        String[] columns = {"accessToken","userEmail", "type"};
+                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+
+                        for(String[] userProfile_row : userProfile_rows) {
+                            String type = userProfile_row[2];
+                            if(type.equals("backup")){
+                                String userEmail = userProfile_row[1];
+                                String accessToken = userProfile_row[0];
+                                ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                                ArrayList<String> driveFileIds = new ArrayList<>();
+
+                                for (BackUpAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+                                    String fileId = driveMediaItem.getId();
+                                    driveFileIds.add(fileId);
+                                }
+                                dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
+                            }
+                        }
+                    });
+
+                    Thread driveBackUpThread2 = new Thread(() -> {
+                        synchronized (deleteRedundantDriveThread2){
+                            try {
+                                deleteRedundantDriveThread2.join();
+                            } catch (Exception e) {
+                                LogHandler.saveLog("failed to join deleteRedundantDrive thread: " + e.getLocalizedMessage());
+                            }
+                        }
+
+                        String[] columns = {"accessToken", "userEmail"};
+                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+
+                        for(String[] userProfile_row : userProfile_rows){
+                            String accessToken = userProfile_row[0];
+                            String userEmail = userProfile_row[1];
+                            ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+
+                            for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
+                                Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
+                                if (last_insertId != -1) {
+                                    MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
+                                            driveMediaItem.getHash(), userEmail);
+                                } else {
+                                    LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                                }
+                            }
+                        }
+                    });
+
+                    Thread deleteDuplicatedInDrive2 = new Thread(() -> {
+                        synchronized (driveBackUpThread2){
+                            try {
+                                driveBackUpThread2.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join driveBackUpThread : " + e.getLocalizedMessage());
+                            }
+                        }
+
+
+                        String[] columns = {"accessToken","userEmail", "type"};
+                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+
+                        for(String[] userProfile_row : userProfile_rows) {
+                            String type = userProfile_row[2];
+                            if(type.equals("backup")){
+                                String userEmail = userProfile_row[1];
+                                String accessToken = userProfile_row[0];
+                                GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
+                            }
+                        }
+                    });
+
+                    Thread updateUIThread =  new Thread(() -> {
+                        synchronized (deleteDuplicatedInDrive2){
+                            try{
+                                deleteDuplicatedInDrive2.join();
                             }catch (Exception e){
                                 LogHandler.saveLog("failed to join androidUploadThread : "  + e.getLocalizedMessage());
                             }
                         }
                         runOnUiThread(() -> {
+                            TextView deviceStorage = findViewById(R.id.deviceStorage);
+                            ArrayList<String> storage =  Android.getAndroidDeviceStorage();
+                            deviceStorage.setText("Total space: " + storage.get(0) +
+                                    "\n" + "free space: " + storage.get(1) + "\n");
+
+                            TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
+                            int total_androidAssets_count = dbHelper.countAndroidAssets();
+                            androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
+                                    "\n" + "synced android assets: " +
+                                    dbHelper.countAndroidSyncedAssets());
                             NotificationHandler.sendNotification("1","syncingAlert", MainActivity.this,
                                             "Syncing is finished","You're files are backed-up!");
                             TextView syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
@@ -738,6 +926,9 @@
                     driveBackUpThread.start();
                     deleteDuplicatedInDrive.start();
                     androidUploadThread.start();
+                    deleteRedundantDriveThread2.start();
+                    driveBackUpThread2.start();
+                    deleteDuplicatedInDrive2.start();
                     updateUIThread.start();
                 }
             });
