@@ -85,6 +85,28 @@
                     android:text="Android device"
                     android:textSize="24sp" />
 
+                <TextView
+                    android:id="@+id/deviceStorage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="3dp"
+                    android:layout_marginTop="50dp"
+                    android:layout_marginBottom="50dp"
+                    android:gravity="left"
+                    android:text=""
+                    android:textSize="20sp"/>
+
+                <TextView
+                    android:id="@+id/androidStatistics"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="3dp"
+                    android:layout_marginTop="50dp"
+                    android:layout_marginBottom="50dp"
+                    android:gravity="left"
+                    android:text=""
+                    android:textSize="20sp"/>
+
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="5dp"

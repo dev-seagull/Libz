@@ -39,6 +39,13 @@ public class DBHelper extends SQLiteOpenHelper {
                 "UsedInGmailAndPhotosStorage REAL)";
         sqLiteDatabase.execSQL(USERPROFILE);
 
+        String DEVICE = "CREATE TABLE IF NOT EXISTS DEVICE("
+                + "id PRIMARY KEY AUTOINCREMENT," +
+                "deviceName TEXT," +
+                "totalStorage TEXT," +
+                "freeStorage TEXT)";
+        sqLiteDatabase.execSQL(DEVICE);
+
         String ASSET = "CREATE TABLE IF NOT EXISTS ASSET("
                 +"id INTEGER PRIMARY KEY AUTOINCREMENT,"+
 //                "fileName TEXT," +
@@ -665,12 +672,30 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-    public int countOfDuplicatedInDrive(String assetId){
+    public int countAndroidAssets(){
+        String sqlQuery = "SELECT COUNT(*) FROM ANDROID";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
         int count = 0;
-        String sqlQuery = "SELECT COUNT(*) FROM DRIVE WHERE assetId = ?";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId});
         if(cursor != null && cursor.moveToFirst()){
             count = cursor.getInt(0);
+        }
+        if(count == 0){
+            LogHandler.saveLog("No android file was found in count android assets.");
+        }
+        cursor.close();
+        return count;
+    }
+
+    public int countAndroidSyncedAssets(){
+        String sqlQuery = "SELECT COUNT(*) AS rowCount FROM ANDROID androidTable " +
+                "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
+        int count = 0;
+        if(cursor != null && cursor.moveToFirst()){
+            count = cursor.getInt(0);
+        }
+        if(count == 0){
+            LogHandler.saveLog("No android synced asset was found in countAndroidSyncedAssets");
         }
         cursor.close();
         return count;

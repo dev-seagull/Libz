@@ -7,10 +7,12 @@ import android.provider.MediaStore;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import android.os.StatFs;
 
 public class Android {
 
@@ -150,7 +152,22 @@ public class Android {
         }
         return fileManagerItems;
     }
-    public Android(){
+    public Android() {
+    }
+
+    public static ArrayList<String> getAndroidDeviceStorage(){
+        String externalStorageDirectory = Environment.getExternalStorageDirectory().getPath();
+        StatFs statFs = new StatFs(externalStorageDirectory);
+        long blockSize = statFs.getBlockSizeLong();
+        long totalBlocks = statFs.getBlockCountLong();
+        long availableBlocks = statFs.getAvailableBlocksLong();
+
+        double totalSpaceGB = (totalBlocks * blockSize) / (1024.0 * 1024.0 * 1024.0);
+        double freeSpaceGB = (availableBlocks * blockSize) / (1024.0 * 1024.0 * 1024.0);
+        ArrayList storage = new ArrayList();
+        storage.add(String.format("%.2f GB", totalSpaceGB));
+        storage.add(String.format("%.2f GB", freeSpaceGB));
+        return storage;
     }
 
 }

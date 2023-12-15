@@ -1,6 +1,7 @@
 package com.example.cso;
 
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpRequestInitializer;
@@ -16,6 +17,7 @@ import org.checkerframework.checker.units.qual.A;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -102,6 +104,20 @@ public class GoogleDrive {
     public static void deleteDuplicatedMediaItems(String accessToken, String userEmail){
         String[] driveColumns = {"fileHash", "id","assetId", "fileId", "fileName", "userEmail"};
         List<String[]> drive_rows = MainActivity.dbHelper.getDriveTable(driveColumns, userEmail);
+
+        Map<String, Integer> assetIdCount = new HashMap<>();
+
+        for (String[] drive_row : drive_rows) {
+            String assetId = drive_row[2];
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                assetIdCount.put(assetId, assetIdCount.getOrDefault(assetId, 0) + 1);
+            }
+        }
+
+        for (Map.Entry<String, Integer> entry : assetIdCount.entrySet()) {
+            LogHandler.saveLog("assetId: " + entry.getKey() + ", Count: " + entry.getValue(),false);
+        }
 
         ArrayList<String> fileHashChecker = new ArrayList<>();
         for(String[] drive_row: drive_rows){
