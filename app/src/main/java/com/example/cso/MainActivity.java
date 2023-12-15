@@ -144,46 +144,183 @@
                 @Override
                 public void onClick(View view) {
                     int buildSdkInt = Build.VERSION.SDK_INT;
+                    runOnUiThread(() ->{
+                        TextView restoreTextView = findViewById(R.id.restoreTextView);
+                        restoreTextView.setText("Wait until the restoring process is finished");
+                    });
+                    Thread deleteRedundantAndroidThread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            LogHandler.saveLog("Starting to get files from you android device",false);
+                            dbHelper.deleteRedundantAndroid();
+                            synchronized (this){
+                                notify();
+                            }
+                        }
+                    });
+
+                    Thread updateAndroidFilesThread = new Thread(() -> {
+                        synchronized (deleteRedundantAndroidThread){
+                            try{
+                                deleteRedundantAndroidThread.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join deleteRedundantAndroidThread thread: "  + e.getLocalizedMessage());
+                            }
+                        }
+                        Android.getGalleryMediaItems(MainActivity.this);
+                        LogHandler.saveLog("End of getting files from your android device",false);
+                    });
+
+
+                    Thread deleteRedundantDriveThread = new Thread(() -> {
+                        synchronized (updateAndroidFilesThread){
+                            try{
+                                updateAndroidFilesThread.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join updateAndroidFilesThread : " + e.getLocalizedMessage());
+                            }
+                        }
+
+                        String[] columns = {"accessToken","userEmail", "type"};
+                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+
+                        for(String[] userProfile_row : userProfile_rows) {
+                            String type = userProfile_row[2];
+                            if(type.equals("backup")){
+                                String userEmail = userProfile_row[1];
+                                String accessToken = userProfile_row[0];
+                                ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                                ArrayList<String> driveFileIds = new ArrayList<>();
+
+                                for (BackUpAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+                                    String fileId = driveMediaItem.getId();
+                                    driveFileIds.add(fileId);
+                                }
+                                dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
+                            }
+                        }
+                    });
+
+                    Thread updateDriveBackUpThread = new Thread(() -> {
+                        synchronized (deleteRedundantDriveThread){
+                            try {
+                                deleteRedundantDriveThread.join();
+                            } catch (Exception e) {
+                                LogHandler.saveLog("failed to join deleteRedundantDrive thread: " + e.getLocalizedMessage());
+                            }
+                        }
+
+                        String[] columns = {"accessToken", "userEmail"};
+                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+
+                        for(String[] userProfile_row : userProfile_rows){
+                            String accessToken = userProfile_row[0];
+                            String userEmail = userProfile_row[1];
+                            ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+
+                            for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
+                                Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
+                                if (last_insertId != -1) {
+                                    MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
+                                            driveMediaItem.getHash(), userEmail);
+                                } else {
+                                    LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                                }
+                            }
+                        }
+                    });
+
+                    Thread deleteDuplicatedInDrive = new Thread(() -> {
+                        synchronized (updateDriveBackUpThread){
+                            try {
+                                updateDriveBackUpThread.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join driveBackUpThread : " + e.getLocalizedMessage());
+                            }
+                        }
+
+
+                        String[] columns = {"accessToken","userEmail", "type"};
+                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+
+                        for(String[] userProfile_row : userProfile_rows) {
+                            String type = userProfile_row[2];
+                            if(type.equals("backup")){
+                                String userEmail = userProfile_row[1];
+                                String accessToken = userProfile_row[0];
+                                GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
+                            }
+                        }
+                    });
+
+
                     Thread restoreThread = new Thread() {
                         @Override
                         public void run() {
-                            synchronized (this){
-                                try {
-                                    if (buildSdkInt >= 30) {
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                            if (!Environment.isExternalStorageManager()) {
-                                                Intent getPermission = new Intent();
-                                                getPermission.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                                                startActivity(getPermission);
-                                                while (!Environment.isExternalStorageManager()){
-                                                    System.out.println("here " + Environment.isExternalStorageManager());
-                                                    try {
-                                                        Thread.sleep(500);
-                                                        System.out.println("... " + Environment.isExternalStorageManager());
-                                                    } catch (InterruptedException e) {
-                                                        System.out.println("here2" + Environment.isExternalStorageManager());
-                                                        throw new RuntimeException(e);
+                            synchronized (deleteDuplicatedInDrive){
+                                try{
+                                    deleteDuplicatedInDrive.join();
+                                }catch (Exception e){
+                                    LogHandler.saveLog("failed to join androidUploadThread : "  + e.getLocalizedMessage());
+                                }
+                            }
+                            try {
+                                if (buildSdkInt >= 30) {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                        if (!Environment.isExternalStorageManager()) {
+                                            Intent getPermission = new Intent();
+                                            getPermission.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                                            startActivity(getPermission);
+                                            while (!Environment.isExternalStorageManager()){
+                                                System.out.println("here " + Environment.isExternalStorageManager());
+                                                try {
+                                                    Thread.sleep(500);
+                                                    System.out.println("... " + Environment.isExternalStorageManager());
+                                                } catch (InterruptedException e) {
+                                                    System.out.println("here2" + Environment.isExternalStorageManager());
+                                                    throw new RuntimeException(e);
 
-                                                    }
                                                 }
                                             }
                                         }
                                     }
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                        if (Environment.isExternalStorageManager()) {
-                                            LogHandler.saveLog("Starting to restore files from your android device",false);
-                                            System.out.println("Starting to restore files from your android device");
-                                            Upload.restore();
-                                        }}
-                                } catch (Exception e) {
-                                    LogHandler.saveLog("Failed to get manage external storage in restore thread: " + e.getLocalizedMessage());
                                 }
-                                notify();
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                    if (Environment.isExternalStorageManager()) {
+                                        LogHandler.saveLog("Starting to restore files from your android device",false);
+                                        System.out.println("Starting to restore files from your android device");
+                                        Upload.restore();
+                                    }}
+                            } catch (Exception e) {
+                                LogHandler.saveLog("Failed to get manage external storage in restore thread: " + e.getLocalizedMessage());
                             }
-
                         }
                     };
+
+                    Thread updateUIThread =  new Thread(() -> {
+                        synchronized (restoreThread){
+                            try{
+                                restoreThread.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join androidUploadThread : "  + e.getLocalizedMessage());
+                            }
+                        }
+                        runOnUiThread(() -> {
+                            NotificationHandler.sendNotification("1","restoringAlert", MainActivity.this,
+                                    "Restoring is finished","You're files are restored!");
+                            TextView restoreTextView = findViewById(R.id.restoreTextView);
+                            restoreTextView.setText("restoring process is finished");
+                        });
+                    });
+
+                    deleteRedundantAndroidThread.start();
+                    updateAndroidFilesThread.start();
+                    deleteRedundantDriveThread.start();
+                    updateDriveBackUpThread.start();
+                    deleteDuplicatedInDrive.start();
                     restoreThread.start();
+                    updateUIThread.start();
+
                 }
 
             });
@@ -614,7 +751,7 @@
 
                 dbHelper.updateUserProfileData(userEmail, updatedValues);
 
-                if (type.equals("primary")) {
+                if (type.equals("primary")){
                     LinearLayout primaryLinearLayout = findViewById(R.id.primaryAccountsButtons);
                     Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
                     newGoogleLoginButton.setText(userEmail);

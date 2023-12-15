@@ -110,7 +110,6 @@ public class GoogleDrive {
             String assetId = drive_row[2];
             String fileId = drive_row[3];
             String fileName = drive_row[4];
-            System.out.println("user email for test:" + drive_row[5]);
             if(fileHashChecker.contains(fileHash)){
                 ExecutorService executor = Executors.newSingleThreadExecutor();
                 Callable<Boolean> backgroundTask = () -> {
@@ -128,7 +127,8 @@ public class GoogleDrive {
                             int responseCode = connection.getResponseCode();
                             LogHandler.saveLog("responseCode of deleting duplicate drive : " + responseCode,false);
                             if(responseCode == HttpURLConnection.HTTP_NO_CONTENT){
-                                LogHandler.saveLog("Deleting Duplicated file in backup drive :" +
+                                LogHandler.saveLog("Deleting Duplicated file in backup drive with fileId :" +
+                                        fileId  + " and assetId : " + assetId + " and fileName : " +
                                         fileName,false);
                                 isDeleted[0] = true;
                                 break;
@@ -159,6 +159,7 @@ public class GoogleDrive {
 
             }else if(!fileHashChecker.contains(fileHash)){
                 fileHashChecker.add(fileHash);
+
             }
         }
     }

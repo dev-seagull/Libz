@@ -585,7 +585,7 @@ public class Upload {
                             .build();
 
                     OutputStream outputStream = null;
-                    File file = new File(filePath+"restored.png");
+                    File file = new File(filePath);
                     try {
                         if(!file.exists()){
                             System.out.println("here and file doesn't exists");
@@ -597,8 +597,7 @@ public class Upload {
                     }
                     try {
                         System.out.println("file path : " + filePath);
-                        outputStream = new FileOutputStream(filePath+"restored.png" +
-                                "");
+                        outputStream = new FileOutputStream(filePath);
                     } catch (FileNotFoundException e) {
                         LogHandler.saveLog("failed to save output stream in restore method : " + e.getLocalizedMessage(), true);
                     }

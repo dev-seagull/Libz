@@ -439,9 +439,9 @@ public class DBHelper extends SQLiteOpenHelper {
                                 sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
                                         "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
                                         "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
-                                cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId, assetId, assetId});
-                                if (cursor != null && cursor.moveToFirst()) {
-                                    int result = cursor.getInt(0);
+                                Cursor cursor2 = dbReadable.rawQuery(sqlQuery, new String[]{assetId, assetId, assetId});
+                                if (cursor2 != null && cursor2.moveToFirst()) {
+                                    int result = cursor2.getInt(0);
                                     if (result == 1) {
                                         existsInDatabase = true;
                                     }
@@ -506,7 +506,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 if(fileHashColumnIndex >= 0){
                     fileHash = cursor.getString(fileHashColumnIndex);
                 }
-
+                System.out.println("filePath : " + filePath + " assetId : " + assetId + " device : " + device + " fileHash : " + fileHash + " fileName : " + fileName);
                 File androidFile = new File(filePath);
                 if (!androidFile.exists() && device.equals(MainActivity.androidDeviceName)){
                     dbWritable.beginTransaction();
@@ -541,9 +541,9 @@ public class DBHelper extends SQLiteOpenHelper {
                         sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
                                 "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
                                 "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
-                        cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId,assetId,assetId});
-                        if(cursor != null && cursor.moveToFirst()){
-                            int result = cursor.getInt(0);
+                        Cursor cursor2 = dbReadable.rawQuery(sqlQuery, new String[]{assetId,assetId,assetId});
+                        if(cursor2 != null && cursor2.moveToFirst()){
+                            int result = cursor2.getInt(0);
                             if(result == 1){
                                 existsInDatabase = true;
                             }
@@ -662,5 +662,17 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         cursor.close();
         return resultList;
+    }
+
+
+    public int countOfDuplicatedInDrive(String assetId){
+        int count = 0;
+        String sqlQuery = "SELECT COUNT(*) FROM DRIVE WHERE assetId = ?";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId});
+        if(cursor != null && cursor.moveToFirst()){
+            count = cursor.getInt(0);
+        }
+        cursor.close();
+        return count;
     }
 }
