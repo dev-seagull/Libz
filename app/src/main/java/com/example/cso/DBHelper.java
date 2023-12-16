@@ -679,7 +679,7 @@ public class DBHelper extends SQLiteOpenHelper {
             count = cursor.getInt(0);
         }
         if(count == 0){
-            LogHandler.saveLog("No android file was found in count android assets.");
+            LogHandler.saveLog("No android file was found in count android assets.",false);
         }
         cursor.close();
         return count;
@@ -694,7 +694,7 @@ public class DBHelper extends SQLiteOpenHelper {
             count = cursor.getInt(0);
         }
         if(count == 0){
-            LogHandler.saveLog("No android synced asset was found in countAndroidSyncedAssets");
+            LogHandler.saveLog("No android synced asset was found in countAndroidSyncedAssets",false);
         }
         cursor.close();
         return count;
