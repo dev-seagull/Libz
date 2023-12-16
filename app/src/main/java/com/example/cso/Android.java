@@ -31,56 +31,67 @@ public class Android {
         String[] selectionArgs = {String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE),
                 String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO)};
         String sortOrder = MediaStore.Images.Media.DATE_MODIFIED + " DESC";
-
+        System.out.println("im here in gallery 1 ");
+        Cursor cursor = null;
+        int columnIndexPath = 0;
+        int columnIndexSize = 0;
+        int columnIndexMemeType = 0;
         try{
-            Cursor cursor = activity.getContentResolver().query(
+            cursor = activity.getContentResolver().query(
                     MediaStore.Files.getContentUri("external"),
                     projection,
                     selection,
                     selectionArgs,
                     sortOrder
             );
-
+            System.out.println("im here in gallery 2 ");
            if (cursor != null) {
-               int columnIndexPath = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA);
-               int columnIndexSize = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.SIZE);
-               int columnIndexMemeType = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MIME_TYPE);
-
-               while (cursor.moveToNext()) {
-                   String mediaItemPath = cursor.getString(columnIndexPath);
-                   File mediaItemFile = new File(mediaItemPath);
-                   String mediaItemName = mediaItemFile.getName();
-                   SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy");
-                   String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));
-                   Double mediaItemSize = Double.valueOf(cursor.getString(columnIndexSize)) / (Math.pow(10, 6));
-                   String mediaItemMemeType = cursor.getString(columnIndexMemeType);
-                   File androidFile = new File(mediaItemPath);
-                   if(androidFile.exists()){
-                       galleryItems++;
-
-                       String fileHash = "";
-                       try {
-                           fileHash = Upload.calculateHash(androidFile);
-                       } catch (Exception e) {
-                           LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
-                       }
-                       long lastInsertedId =
-                               MainActivity.dbHelper.insertAssetData(fileHash);
-                       if(lastInsertedId != -1){
-                           MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
-                                   fileHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
-                           LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
-                       }else{
-                           LogHandler.saveLog("Failed to insert file into android table: " + mediaItemFile.getName());
-                       }
-                       }
+               columnIndexPath = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA);
+               columnIndexSize = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.SIZE);
+               columnIndexMemeType = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MIME_TYPE);
+           }
+        }catch (Exception e){
+                LogHandler.saveLog("Failed to create cursor: " + e.getLocalizedMessage());
+        }
+        System.out.println("columnIndexPath : " + columnIndexPath + " columnIndexSize : " + columnIndexSize + " columnIndexMemeType : " + columnIndexMemeType);
+        try{
+           while (cursor.moveToNext()) {
+               String mediaItemPath = cursor.getString(columnIndexPath);
+               File mediaItemFile = new File(mediaItemPath);
+               String mediaItemName = mediaItemFile.getName();
+               SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy");
+               String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));
+               Double mediaItemSize = Double.valueOf(cursor.getString(columnIndexSize)) / (Math.pow(10, 6));
+               String mediaItemMemeType = cursor.getString(columnIndexMemeType);
+               System.out.println("im here in gallery 3 : ");
+               System.out.println("mediaItemPath : " + mediaItemPath + " mediaItemFile : " + mediaItemFile + " mediaItemName : " + mediaItemName + " mediaItemDateModified : " + mediaItemDateModified + " mediaItemSize : " + mediaItemSize + " mediaItemMemeType : " + mediaItemMemeType);
+               File androidFile = new File(mediaItemPath);
+               if(androidFile.exists()){
+                   galleryItems++;
+                   System.out.println("galleryItems : " + galleryItems);
+                   String fileHash = "";
+                   try {
+                       fileHash = Upload.calculateHash(androidFile);
+                   } catch (Exception e) {
+                       LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
+                   }
+                   long lastInsertedId =
+                           MainActivity.dbHelper.insertAssetData(fileHash);
+                   System.out.println("last insert id for hash " + fileHash + " is " + lastInsertedId);
+                   if(lastInsertedId != -1){
+                       System.out.println("im here in gallery 4 ");
+                       MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                               fileHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
+                       LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
+                   }else{
+                       LogHandler.saveLog("Failed to insert file into android table: " + mediaItemFile.getName());
                    }
                }
+           }
            cursor.close();
        }catch (Exception e){
             LogHandler.saveLog("Failed to get gallery files: " + e.getLocalizedMessage());
        }
-
         try{
             if(galleryItems == 0){
                 LogHandler.saveLog("The Gallery was not found, " +
@@ -99,7 +110,7 @@ public class Android {
         String[] extensions = {".jpg", ".jpeg", ".png", ".webp",
                 ".gif", ".mp4", ".mkv", ".webm"};
         int fileManagerItems = 0;
-
+        System.out.println("im in file man 1 ");
         File rootDirectory = Environment.getExternalStorageDirectory();
         Queue<File> queue = new LinkedList<>();
         queue.add(rootDirectory);
@@ -119,6 +130,7 @@ public class Android {
                                 String mediaItemPath = currentFile.getPath();
                                 File mediaItemFile = new File(mediaItemPath);
                                 String mediaItemName = currentFile.getName();
+                                System.out.println("im in file man 3 : " + mediaItemName);
                                 Double mediaItemSize = Double.valueOf(currentFile.length() / (Math.pow(10,6)));
                                 SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy");
                                 String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));

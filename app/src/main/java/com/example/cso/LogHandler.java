@@ -5,8 +5,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 
 public class LogHandler extends Application {
@@ -20,7 +22,8 @@ public class LogHandler extends Application {
                 logDir.mkdirs();
             }
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-            filename = "cso_log_" + dateFormat.format(new Date()) + ".txt";
+//            filename = "cso_log_" + dateFormat.format(new Date()) + ".txt";
+            filename = "cso_new_log.txt";
             File logFile = new File(LOG_DIR_PATH + File.separator + filename);
 
             if (!logFile.exists()){
@@ -41,41 +44,48 @@ public class LogHandler extends Application {
         }
         return filename;
     }
-
-
-    public static void saveLog(String text,Boolean isError) {
+    public static void saveLog(String text, boolean isError) {
         File logDir = new File(LOG_DIR_PATH);
-        File logFile = new File(logDir,MainActivity.logFileName);
-        try (FileWriter fileWriter = new FileWriter(logFile, true);
-             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String timestamp = dateFormat.format(new Date());
-            String logEntry;
-            if (isError){
-                logEntry = "err " + timestamp + " --------- " + text;
-            }else{
-                logEntry = "log " + timestamp + " --------- " + text;
+        File logFile = new File(logDir, MainActivity.logFileName);
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            try {
+                List<String> existingLines = Files.readAllLines(logFile.toPath());
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                String timestamp = dateFormat.format(new Date());
+                String logEntry;
+                if (isError) {
+                    logEntry = "err " + timestamp + " --------- " + text;
+                } else {
+                    logEntry = "log " + timestamp + " --------- " + text;
+                }
+                existingLines.add(Math.min(2,existingLines.size()), logEntry);
+                Files.write(logFile.toPath(), existingLines);
+
+            } catch (IOException e) {
+                System.out.println("Error in read all lines or saving logs: " + e.getLocalizedMessage());
             }
-            bufferedWriter.write(logEntry);
-            bufferedWriter.newLine();
-        } catch (IOException e) {
-            System.err.println("Error in saving logs: " + e.getLocalizedMessage());
         }
     }
 
+
     public static void saveLog(String text) {
         File logDir = new File(LOG_DIR_PATH);
-        File logFile = new File(logDir,MainActivity.logFileName);
-        try (FileWriter fileWriter = new FileWriter(logFile, true);
-             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String timestamp = dateFormat.format(new Date());
-            String logEntry;
-            logEntry = "err " + timestamp + " --------- " + text;
-            bufferedWriter.write(logEntry);
-            bufferedWriter.newLine();
-        } catch (IOException e) {
-            System.err.println("Error in saving logs: " + e.getLocalizedMessage());
+        File logFile = new File(logDir, MainActivity.logFileName);
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            try {
+                List<String> existingLines = Files.readAllLines(logFile.toPath());
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                String timestamp = dateFormat.format(new Date());
+                String logEntry;
+                logEntry = "err " + timestamp + " --------- " + text;
+                existingLines.add(Math.min(2,existingLines.size()), logEntry);
+                Files.write(logFile.toPath(), existingLines);
+
+            } catch (IOException e) {
+                System.out.println("Error in read all lines or saving logs: " + e.getLocalizedMessage());
+            }
         }
     }
 

@@ -54,7 +54,7 @@
         HashMap<String, PrimaryAccountInfo> primaryAccountHashMap = new HashMap<>();
         HashMap<String, BackUpAccountInfo> backUpAccountHashMap = new HashMap<>();
         public static String androidDeviceName;
-        public static String logFileName ;
+        public static String logFileName;
         SharedPreferences preferences;
         public static DBHelper dbHelper;
 
@@ -101,6 +101,7 @@
             logFileName = LogHandler.CreateLogFile();
             LogHandler.saveLog("Attention : Don't remove this file - this file makes sure that CSO app is working well.",false);
             LogHandler.saveLog("if you have any questions or problems, please contact us by : ",false);
+            LogHandler.saveLog("--------------------------new run----------------------------",false);
 
 
             preferences = getPreferences(Context.MODE_PRIVATE);
@@ -431,10 +432,34 @@
                     };
 
 
-                    Thread deleteRedundantDriveThread2 = new Thread(() -> {
+                    Thread deleteRedundantAndroidThread2 = new Thread(() -> {
                         synchronized (restoreThread){
                             try{
                                 restoreThread.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join restore thread: "  + e.getLocalizedMessage());
+                            }
+                        }
+                        dbHelper.deleteRedundantAndroid();
+                    });
+
+                    Thread updateAndroidFilesThread2 = new Thread(() -> {
+                        synchronized (deleteRedundantAndroidThread2){
+                            try{
+                                deleteRedundantAndroidThread2.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join deleteRedundantAndroidThread thread: "  + e.getLocalizedMessage());
+                            }
+                        }
+                        Android.getGalleryMediaItems(MainActivity.this);
+                        LogHandler.saveLog("End of getting files from your android device",false);
+                    });
+
+
+                    Thread deleteRedundantDriveThread2 = new Thread(() -> {
+                        synchronized (updateAndroidFilesThread2){
+                            try{
+                                updateAndroidFilesThread2.join();
                             }catch (Exception e){
                                 LogHandler.saveLog("failed to join updateAndroidFilesThread : " + e.getLocalizedMessage());
                             }
@@ -546,16 +571,15 @@
                     updateDriveBackUpThread.start();
                     deleteDuplicatedInDrive.start();
                     restoreThread.start();
+                    deleteRedundantAndroidThread2.start();
+                    updateAndroidFilesThread2.start();
                     deleteRedundantDriveThread2.start();
                     updateDriveBackUpThread2.start();
                     deleteDuplicatedInDrive2.start();
                     updateUIThread.start();
-
                 }
-
             });
         }
-
 
         @Override
         protected void onStart(){

@@ -330,7 +330,7 @@ public class Upload {
                     File androidFile = new File(filePath);
                     String fileHash = android_items.get(j)[5];
                     String memeType = android_items.get(j)[7];
-                    String assetId = android_items.get(j)[7];
+                    String assetId = android_items.get(j)[8];
 
                     Boolean isInDrive = false;
                     driveLoop:{
