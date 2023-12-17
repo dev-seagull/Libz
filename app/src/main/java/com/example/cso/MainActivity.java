@@ -56,6 +56,9 @@
         public static String androidDeviceName;
         public static String logFileName;
         SharedPreferences preferences;
+        public  static  ArrayList<String> comparator1;
+
+        public  static  ArrayList<String> comparator2;
         public static DBHelper dbHelper;
 
         private Boolean isFirstTime(SharedPreferences preferences){
@@ -142,7 +145,7 @@
             Thread deleteRedundantAndroidThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    LogHandler.saveLog("Starting to get files from you android device when starting the app",false);
+                    LogHandler.saveLog("Activity started : Starting to get files from you android device when starting the app",false);
                     dbHelper.deleteRedundantAndroid();
                     synchronized (this){
                         notify();

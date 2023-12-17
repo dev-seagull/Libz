@@ -20,8 +20,6 @@ public class Android {
         int galleryItems = 0;
         String[] projection = {
                 MediaStore.Files.FileColumns.DATA,
-                MediaStore.Files.FileColumns.DATE_ADDED,
-                MediaStore.Files.FileColumns.DATE_MODIFIED,
                 MediaStore.Files.FileColumns.SIZE,
                 MediaStore.Files.FileColumns.MIME_TYPE
         };
@@ -31,7 +29,6 @@ public class Android {
         String[] selectionArgs = {String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE),
                 String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO)};
         String sortOrder = MediaStore.Images.Media.DATE_MODIFIED + " DESC";
-        System.out.println("im here in gallery 1 ");
         Cursor cursor = null;
         int columnIndexPath = 0;
         int columnIndexSize = 0;
@@ -44,7 +41,6 @@ public class Android {
                     selectionArgs,
                     sortOrder
             );
-            System.out.println("im here in gallery 2 ");
            if (cursor != null) {
                columnIndexPath = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA);
                columnIndexSize = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.SIZE);
@@ -53,7 +49,7 @@ public class Android {
         }catch (Exception e){
                 LogHandler.saveLog("Failed to create cursor: " + e.getLocalizedMessage());
         }
-        System.out.println("columnIndexPath : " + columnIndexPath + " columnIndexSize : " + columnIndexSize + " columnIndexMemeType : " + columnIndexMemeType);
+
         try{
            while (cursor.moveToNext()) {
                String mediaItemPath = cursor.getString(columnIndexPath);
@@ -63,12 +59,9 @@ public class Android {
                String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));
                Double mediaItemSize = Double.valueOf(cursor.getString(columnIndexSize)) / (Math.pow(10, 6));
                String mediaItemMemeType = cursor.getString(columnIndexMemeType);
-               System.out.println("im here in gallery 3 : ");
-               System.out.println("mediaItemPath : " + mediaItemPath + " mediaItemFile : " + mediaItemFile + " mediaItemName : " + mediaItemName + " mediaItemDateModified : " + mediaItemDateModified + " mediaItemSize : " + mediaItemSize + " mediaItemMemeType : " + mediaItemMemeType);
                File androidFile = new File(mediaItemPath);
                if(androidFile.exists()){
                    galleryItems++;
-                   System.out.println("galleryItems : " + galleryItems);
                    String fileHash = "";
                    try {
                        fileHash = Upload.calculateHash(androidFile);
@@ -79,7 +72,6 @@ public class Android {
                            MainActivity.dbHelper.insertAssetData(fileHash);
                    System.out.println("last insert id for hash " + fileHash + " is " + lastInsertedId);
                    if(lastInsertedId != -1){
-                       System.out.println("im here in gallery 4 ");
                        MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
                                fileHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
                        LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
@@ -93,6 +85,7 @@ public class Android {
             LogHandler.saveLog("Failed to get gallery files: " + e.getLocalizedMessage());
        }
         try{
+            System.out.println("number of gallery items is equal to: " + galleryItems );
             if(galleryItems == 0){
                 LogHandler.saveLog("The Gallery was not found, " +
                         "So it's starting to get the files from the file manager",false);
@@ -149,7 +142,7 @@ public class Android {
                                     if(lastInsertedId != -1){
                                         MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
                                                 mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
-                                        LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
+                                        LogHandler.saveLog("File was detected in file manager: " + mediaItemFile.getName(),false);
                                     }else{
                                         LogHandler.saveLog("Failed to insert file into android table: " + mediaItemFile.getName());
                                     }

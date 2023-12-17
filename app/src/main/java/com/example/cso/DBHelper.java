@@ -335,17 +335,16 @@ public class DBHelper extends SQLiteOpenHelper {
         fileHash = fileHash.toLowerCase();
         String sqlQuery = "";
         Boolean existsInAndroid = false;
-        System.out.println("assetId : " + assetId + " fileName : " + fileName + " filePath : " + filePath + " device : " + device + " fileHash : " + fileHash + " fileSize : " + fileSize + " dateModified : " + dateModified + " memeType : " + memeType);
         try{
-            sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ? and fileHash = ? and fileSize = ? and device = ?)";
-            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), fileHash,
+            sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ? and filePath = ? and fileHash = ? and fileSize = ? and device = ?)";
+            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), filePath, fileHash,
                     String.valueOf(fileSize), device});
-            System.out.println("Result in inserting into android table method kkk: " + cursor.getCount() +" "+ fileName + " "+ assetId);
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
-                System.out.println("Result in inserting into android table method : " + result +" "+ fileName + " "+ assetId);
                 if(result == 1){
                     existsInAndroid = true;
+                }else{
+                    System.out.println("Result in inserting into android table method : " +  fileName + " "+ assetId);
                 }
             }
             cursor.close();
@@ -512,7 +511,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 if(fileHashColumnIndex >= 0){
                     fileHash = cursor.getString(fileHashColumnIndex);
                 }
-                System.out.println("filePath : " + filePath + " assetId : " + assetId + " device : " + device + " fileHash : " + fileHash + " fileName : " + fileName);
+
                 File androidFile = new File(filePath);
                 if (!androidFile.exists() && device.equals(MainActivity.androidDeviceName)){
                     dbWritable.beginTransaction();
@@ -525,12 +524,10 @@ public class DBHelper extends SQLiteOpenHelper {
                     } finally {
                         dbWritable.endTransaction();
                     }
-
                     dbWritable.beginTransaction();
                     try {
                         sqlQuery = "INSERT INTO TRANSACTIONS(source, fileName, destination, " +
                                 "assetId, operation, hash, date) values(?,?,?,?,?,?,?)";
-                        System.out.println("adding deleted in device to transactions table:  " + filePath);
                         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                         String timestamp = dateFormat.format(new Date());
                         dbWritable.execSQL(sqlQuery, new Object[]{filePath, fileName, device,
@@ -672,17 +669,21 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
     public int countAndroidAssets(){
-        String sqlQuery = "SELECT COUNT(*) FROM ANDROID";
+        String sqlQuery = "SELECT COUNT(filePath) AS pathCount FROM ANDROID";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
-        int count = 0;
-        if(cursor != null && cursor.moveToFirst()){
-            count = cursor.getInt(0);
+        int pathCount = 0;
+        if(cursor != null){
+            cursor.moveToFirst();
+            int pathCountColumnIndex = cursor.getColumnIndex("pathCount");
+            if(pathCountColumnIndex >= 0){
+                pathCount = cursor.getInt(pathCountColumnIndex);
+            }
         }
-        if(count == 0){
+        if(pathCount == 0){
             LogHandler.saveLog("No android file was found in count android assets.",false);
         }
         cursor.close();
-        return count;
+        return pathCount;
     }
 
     public int countAndroidSyncedAssets(){
