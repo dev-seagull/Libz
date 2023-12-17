@@ -4,8 +4,14 @@ import static com.example.cso.GooglePhotos.getMemeType;
 import static com.example.cso.GooglePhotos.isImage;
 import static com.example.cso.GooglePhotos.isVideo;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.Environment;
+import android.util.Log;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.FileContent;
@@ -512,57 +518,53 @@ public class Upload {
         return hexString.toString().toLowerCase();
     }
 
-    public static void restore(){
-        AtomicReference<String> sqlQuery = new AtomicReference<>("SELECT T.id, T.source, T.fileName, T.destination, D.assetId, " +
+    public static void restore(Context context){
+        String sqlQuery = "SELECT T.id, T.source, T.fileName, T.destination, D.assetId, " +
                 "T.operation, T.hash, T.date, D.fileId , D.userEmail " +
                 "FROM TRANSACTIONS T " +
                 "JOIN DRIVE D ON T.hash = D.fileHash " +
-                "WHERE T.operation = 'deletedInDevice' " +
+                "WHERE T.operation = 'deletedInDevice' and T.destination = ?" +
                 "AND D.id = (" +
                 "   SELECT MIN(id) " +
                 "   FROM DRIVE " +
                 "   WHERE fileHash = T.hash " +
-                ");");
-        //when
-        AtomicReference<Cursor> cursor = new AtomicReference<>(MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery.get(), null));
+                ");";
+
+        Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidDeviceName});
         List<String[]> resultList = new ArrayList<>();
-        if(cursor.get().moveToFirst()){
+        if(cursor.moveToFirst() && cursor != null){
             do {
                 String[] columns = {"id", "source", "fileName", "destination", "assetId"
                         , "operation", "hash", "date", "fileId", "userEmail"};
                 String[] row = new String[columns.length];
                 for(int i =0 ; i < columns.length ; i++){
-                    int columnIndex = cursor.get().getColumnIndex(columns[i]);
+                    int columnIndex = cursor.getColumnIndex(columns[i]);
                     if (columnIndex >= 0) {
-                        row[i] = cursor.get().getString(columnIndex);
+                        row[i] = cursor.getString(columnIndex);
                     }
                 }
                 resultList.add(row);
-            } while (cursor.get().moveToNext());
+            } while (cursor.moveToNext());
         }
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final boolean[] isFinished = {false};
         Callable<Boolean> backgroundDownloadTask = () -> {
-
-
-
             for (String[] row : resultList) {
                 String filePath = row[1];
                 String userEmail = row[9];
                 String fileId = row[8];
                 System.out.println("File path for restore test: " + filePath + " and user email is: " + userEmail  +  "  and file id" +
                         " is: " + fileId);
-                sqlQuery.set("SELECT accessToken from USERPROFILE WHERE USERPROFILE.userEmail = ?");
-                cursor.set(MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery.get(), new String[]{userEmail}));
+                String accessTokenSqlQuery = "SELECT accessToken from USERPROFILE WHERE USERPROFILE.userEmail = ?";
+                Cursor accessTokenCursor = MainActivity.dbHelper.dbReadable.rawQuery(accessTokenSqlQuery, new String[]{userEmail});
                 String accessToken = "";
-                if(cursor.get().moveToFirst()) {
-                    int accessTokenColumnIndex = cursor.get().getColumnIndex("accessToken");
+                if(accessTokenCursor.moveToFirst() && accessTokenCursor != null) {
+                    int accessTokenColumnIndex = accessTokenCursor.getColumnIndex("accessToken");
                     if (accessTokenColumnIndex >= 0) {
-                        accessToken = cursor.get().getString(accessTokenColumnIndex);
+                        accessToken = accessTokenCursor.getString(accessTokenColumnIndex);
                     }
                 }
-                System.out.println("result for restore test: " + accessToken);
                 if(!accessToken.isEmpty() && accessToken != null){
                     NetHttpTransport HTTP_TRANSPORT = null;
                     try {
@@ -579,7 +581,6 @@ public class Upload {
                         request.getHeaders().setContentType("application/json");
                     };
 
-
                     Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
                             .setApplicationName("cso")
                             .build();
@@ -588,7 +589,6 @@ public class Upload {
                     File file = new File(filePath);
                     try {
                         if(!file.exists()){
-                            System.out.println("here and file doesn't exists");
                             file.getParentFile().mkdirs();
                             file.createNewFile();
                         }
@@ -596,7 +596,6 @@ public class Upload {
                         LogHandler.saveLog("failed to create file in restore method : " + e.getLocalizedMessage(), true);
                     }
                     try {
-                        System.out.println("file path : " + filePath);
                         outputStream = new FileOutputStream(filePath);
                     } catch (FileNotFoundException e) {
                         LogHandler.saveLog("failed to save output stream in restore method : " + e.getLocalizedMessage(), true);
@@ -606,9 +605,16 @@ public class Upload {
                     } catch (IOException e) {
                         LogHandler.saveLog("failed to download in restore method : " + e.getLocalizedMessage(), true);
                     }
+
+                    MediaScannerConnection.scanFile(
+                            context,
+                            new String[]{filePath},
+                            new String[]{"image/jpeg", "image/"+getMemeType(file).toLowerCase(), "image/jpg", "video/"+getMemeType(file)},
+                            null
+                    );
                 }
             }
-            cursor.get().close();
+            cursor.close();
            return isFinished[0];
         };
         Future<Boolean> future = executor.submit(backgroundDownloadTask);

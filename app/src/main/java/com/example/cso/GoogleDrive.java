@@ -63,25 +63,34 @@ public class GoogleDrive {
                     request.getHeaders().setAuthorization("Bearer " + accessToken);
                     request.getHeaders().setContentType("application/json");
                 };
+
                 Drive driveService = new Drive.Builder(netHttpTransport, jsonFactory, httpRequestInitializer)
                         .setApplicationName("cso").build();
-                FileList result = driveService.files().list()
-                        .setFields("files(id, name, sha256Checksum)")
-                        .execute();
-                List<File> files = result.getFiles();
-                if (files != null && !files.isEmpty()) {
-                    for (File file : files) {
-                        if (GooglePhotos.isVideo(GoogleCloud.getMemeType(file.getName())) |
-                                GooglePhotos.isImage(GoogleCloud.getMemeType(file.getName()))){
-                            BackUpAccountInfo.MediaItem mediaItem = new BackUpAccountInfo.MediaItem(file.getName(),
-                                    file.getSha256Checksum().toLowerCase(), file.getId());
-                            mediaItems.add(mediaItem);
-                        }else{
-                            System.out.println("File " + file.getName() + " is not a media item 000000000000000000000000000000000000000");
+                String nextPageToken = null;
+                do{
+                    System.out.println("page token is: " + nextPageToken);
+                    FileList result = driveService.files().list()
+                            .setFields("files(id, name, sha256Checksum),nextPageToken")
+                            .setPageToken(nextPageToken)
+                            .execute();
+                    List<File> files = result.getFiles();
+                    if (files != null && !files.isEmpty()) {
+                        for (File file : files) {
+                            if (GooglePhotos.isVideo(GoogleCloud.getMemeType(file.getName())) |
+                                    GooglePhotos.isImage(GoogleCloud.getMemeType(file.getName()))){
+                                BackUpAccountInfo.MediaItem mediaItem = new BackUpAccountInfo.MediaItem(file.getName(),
+                                        file.getSha256Checksum().toLowerCase(), file.getId());
+                                mediaItems.add(mediaItem);
+                            }else{
+                                System.out.println("File " + file.getName() + " is not a media item 000000000000000000000000000000000000000");
+                            }
                         }
-                    }
+                    }    nextPageToken = result.getNextPageToken();
+                }while (nextPageToken != null);
+
+                if(mediaItems.size() != 0 ){
                     LogHandler.saveLog( mediaItems.size() + " files were found in Google Drive back up account",false);
-                } else {
+                }else{
                     LogHandler.saveLog("No file was found in Google Drive back up account",false);
                 }
                 return mediaItems;

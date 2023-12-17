@@ -421,7 +421,7 @@
                                     if (Environment.isExternalStorageManager()) {
                                         LogHandler.saveLog("Starting to restore files from your android device",false);
                                         System.out.println("Starting to restore files from your android device");
-                                        Upload.restore();
+                                        Upload.restore(getApplicationContext());
                                     }}
                             } catch (Exception e) {
                                 LogHandler.saveLog("Failed to get manage external storage in restore thread: " + e.getLocalizedMessage());

@@ -332,6 +332,10 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public void insertIntoAndroidTable(long assetId,String fileName,String filePath,String device,
                                        String fileHash, Double fileSize,String dateModified,String memeType) {
+        if(filePath.equals("/storage/emulated/0/Pictures/Telegram/IMG_20231216_222431_269.jpg")){
+            System.out.println("there  we go");
+        }
+
         fileHash = fileHash.toLowerCase();
         String sqlQuery = "";
         Boolean existsInAndroid = false;
@@ -343,8 +347,6 @@ public class DBHelper extends SQLiteOpenHelper {
                 int result = cursor.getInt(0);
                 if(result == 1){
                     existsInAndroid = true;
-                }else{
-                    System.out.println("Result in inserting into android table method : " +  fileName + " "+ assetId);
                 }
             }
             cursor.close();
@@ -516,7 +518,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 if (!androidFile.exists() && device.equals(MainActivity.androidDeviceName)){
                     dbWritable.beginTransaction();
                     try {
-                        sqlQuery = "DELETE FROM ANDROID WHERE filePath = ? and assetId = ? ";
+                        sqlQuery = "DELETE FROM ANDROID WHERE filePath = ? and assetId = ?";
                         dbWritable.execSQL(sqlQuery, new Object[]{filePath, assetId});
                         dbWritable.setTransactionSuccessful();
                     } catch (Exception e) {
@@ -669,8 +671,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
     public int countAndroidAssets(){
-        String sqlQuery = "SELECT COUNT(filePath) AS pathCount FROM ANDROID";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
+        String sqlQuery = "SELECT COUNT(filePath) AS pathCount FROM ANDROID where device = ?";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidDeviceName});
         int pathCount = 0;
         if(cursor != null){
             cursor.moveToFirst();
@@ -688,8 +690,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public int countAndroidSyncedAssets(){
         String sqlQuery = "SELECT COUNT(*) AS rowCount FROM ANDROID androidTable " +
-                "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
+                "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId where androidTable.device = ?";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidDeviceName});
         int count = 0;
         if(cursor != null && cursor.moveToFirst()){
             count = cursor.getInt(0);
