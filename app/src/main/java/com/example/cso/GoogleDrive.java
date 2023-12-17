@@ -76,6 +76,8 @@ public class GoogleDrive {
                             BackUpAccountInfo.MediaItem mediaItem = new BackUpAccountInfo.MediaItem(file.getName(),
                                     file.getSha256Checksum().toLowerCase(), file.getId());
                             mediaItems.add(mediaItem);
+                        }else{
+                            System.out.println("File " + file.getName() + " is not a media item 000000000000000000000000000000000000000");
                         }
                     }
                     LogHandler.saveLog( mediaItems.size() + " files were found in Google Drive back up account",false);
