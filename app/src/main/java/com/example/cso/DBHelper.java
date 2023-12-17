@@ -153,8 +153,8 @@ public class DBHelper extends SQLiteOpenHelper {
         String sqlQuery = "";
         Boolean existsInDrive = false;
         try{
-            sqlQuery = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ? and fileHash = ? and fileId =?)";
-            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), fileHash, fileId});
+            sqlQuery = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ? and fileHash = ? and fileId =? and userEmail = ?)";
+            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), fileHash, fileId, userEmail});
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
                 if(result == 1){
