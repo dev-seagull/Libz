@@ -98,10 +98,7 @@
             
             googleCloud = new GoogleCloud(this);
             logFileName = LogHandler.CreateLogFile();
-            LogHandler.saveLog("Attention : Don't remove this file - this file makes sure that CSO app is working well.",false);
-            LogHandler.saveLog("if you have any questions or problems, please contact us by : ",false);
             LogHandler.saveLog("--------------------------new run----------------------------",false);
-
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
@@ -1035,8 +1032,10 @@
                                         if (item.getItemId() == R.id.sign_out) {
                                             googleCloud.signOut();
                                             dbHelper.deleteUserProfileData(buttonText);
-                                            ViewGroup parentView = (ViewGroup) button.getParent();
+                                            String sqlQuery = "DELETE FROM photos WHERE userEmail = ?";
+                                            dbHelper.dbWritable.execSQL(sqlQuery, new String[] {buttonText});
 
+                                            ViewGroup parentView = (ViewGroup) button.getParent();
                                             for (Map.Entry<String, PrimaryAccountInfo> primaryAccountEntrySet :
                                                     primaryAccountHashMap.entrySet()) {
                                                 if (primaryAccountEntrySet.getKey().equals(buttonText)) {
@@ -1074,7 +1073,7 @@
                                     button.setText("Wait");
                                     googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
                                 } else if (buttonText.equals("wait")){
-                                    button.setText("Add a primary account");
+                                    button.setText("add a back up account");
                                 }else {
                                     PopupMenu popupMenu = new PopupMenu(MainActivity.this, button, Gravity.CENTER);
                                     popupMenu.getMenuInflater().inflate(R.menu.account_button_menu, popupMenu.getMenu());
@@ -1085,8 +1084,10 @@
                                         if (item.getItemId() == R.id.sign_out) {
                                             googleCloud.signOut();
                                             dbHelper.deleteUserProfileData(buttonText);
-                                            ViewGroup parentView = (ViewGroup) button.getParent();
+                                            String sqlQuery = "DELETE FROM drive WHERE userEmail = ?";
+                                            dbHelper.dbWritable.execSQL(sqlQuery, new String[] {buttonText});
 
+                                            ViewGroup parentView = (ViewGroup) button.getParent();
                                             for (Map.Entry<String, BackUpAccountInfo> backUpAccountEntrySet :
                                                     backUpAccountHashMap.entrySet()) {
                                                 if (backUpAccountEntrySet.getKey().equals(buttonText)) {

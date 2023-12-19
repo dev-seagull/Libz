@@ -22,7 +22,7 @@ public class LogHandler extends Application {
                 logDir.mkdirs();
             }
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-//            filename = "cso_log_" + dateFormat.format(new Date()) + ".txt";
+            filename = "cso_log_" + dateFormat.format(new Date()) + ".txt";
             filename = "cso_new_log.txt";
             File logFile = new File(LOG_DIR_PATH + File.separator + filename);
 
@@ -37,6 +37,8 @@ public class LogHandler extends Application {
                     System.out.println("error in creating log file (exception)" + e.getLocalizedMessage());
                 }
             }else{
+//                LogHandler.saveLog("Attention : Don't remove this file - this file makes sure that CSO app is working well.",false);
+//                LogHandler.saveLog("if you have any questions or problems, please contact us by : ",false);
                 System.out.println("Log file is exists");
             }
         } catch (Exception e) {
@@ -62,7 +64,7 @@ public class LogHandler extends Application {
                 existingLines.add(Math.min(2,existingLines.size()), logEntry);
                 Files.write(logFile.toPath(), existingLines);
 
-            } catch (IOException e) {
+            } catch (Exception e) {
                 System.out.println("Error in read all lines or saving logs: " + e.getLocalizedMessage());
             }
         }
@@ -83,7 +85,7 @@ public class LogHandler extends Application {
                 existingLines.add(Math.min(2,existingLines.size()), logEntry);
                 Files.write(logFile.toPath(), existingLines);
 
-            } catch (IOException e) {
+            } catch (Exception e) {
                 System.out.println("Error in read all lines or saving logs: " + e.getLocalizedMessage());
             }
         }
