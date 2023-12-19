@@ -115,12 +115,11 @@
             }
         }
 
-        public PrimaryAccountInfo handleSignInToPrimaryResult(Intent data){
+        public String handleSignInToPrimaryResult(Intent data){
             String userEmail = "";
             String authCode;
             PrimaryAccountInfo.Tokens tokens = null;
             PrimaryAccountInfo.Storage storage = null;
-            ArrayList<GooglePhotos.MediaItem> mediaItems = null;
             try{
                 Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
                 GoogleSignInAccount account = googleSignInTask.getResult(ApiException.class);
@@ -133,7 +132,7 @@
                 authCode = account.getServerAuthCode();
                 tokens = getTokens(authCode);
                 storage = getStorage(tokens);
-                mediaItems = GooglePhotos.getGooglePhotosMediaItems(tokens);
+                GooglePhotos.getGooglePhotosMediaItems(userEmail);
                 String[] columnsList = new String[]{"userEmail"};
                 List<String[]> userProfileData = MainActivity.dbHelper.getUserProfile(columnsList);
                 boolean isInUserProfileData = false;
@@ -166,7 +165,7 @@
             }catch (Exception e){
                 LogHandler.saveLog("handle primary sign in result failed: " + e.getLocalizedMessage());
             }
-            return new PrimaryAccountInfo(userEmail, tokens, storage, mediaItems);
+            return userEmail;
         }
 
 

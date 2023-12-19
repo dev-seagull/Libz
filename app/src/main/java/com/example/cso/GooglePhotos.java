@@ -1,6 +1,7 @@
 package com.example.cso;
 
 import android.app.Activity;
+import android.database.Cursor;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.FileContent;
@@ -62,13 +63,26 @@ public class GooglePhotos {
         public String getFileName() {return fileName;}
     }
 
-    public static ArrayList<MediaItem> getGooglePhotosMediaItems(PrimaryAccountInfo.Tokens tokens){
+    public static ArrayList<MediaItem> getGooglePhotosMediaItems(String userEmail){
+        String sqlQuery = "SELECT accessToken FROM USERPROFILE WHERE userEmail = ?;";
+        Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
+        String accessToken = "";
+        if(cursor.moveToFirst() && cursor != null){
+            int accessTokenColumnIndex  = cursor.getColumnIndex("accessToken");
+            if(accessTokenColumnIndex >= 0){
+                accessToken = cursor.getString(accessTokenColumnIndex);
+            }
+        }else{
+            LogHandler.saveLog("Failed to get access token in getGooglePhotosMediaItems");
+        }
+
         ExecutorService executor = Executors.newSingleThreadExecutor();
+        String finalAccessToken = accessToken;
         Callable<ArrayList<MediaItem>> backgroundTask = () -> {
-            if (tokens == null) {
+            if (finalAccessToken == null | finalAccessToken.isEmpty()) {
                 return new ArrayList<>();
             }
-            String accessToken = tokens.getAccessToken();
+            System.out.println("access token to uplaod to photos for test: "+ finalAccessToken);
             ArrayList<MediaItem> mediaItems = new ArrayList<>();
             String nextPageToken = null;
             JSONObject responseJson = null;
@@ -83,7 +97,7 @@ public class GooglePhotos {
                     HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                     httpURLConnection.setRequestMethod("GET");
                     httpURLConnection.setRequestProperty("Content-type", "application/json");
-                    httpURLConnection.setRequestProperty("Authorization", "Bearer " + accessToken);
+                    httpURLConnection.setRequestProperty("Authorization", "Bearer " + finalAccessToken);
                     int responseCode = httpURLConnection.getResponseCode();
                     if (responseCode == HttpURLConnection.HTTP_OK) {
                         InputStreamReader inputStreamReader = new InputStreamReader(httpURLConnection.getInputStream());
@@ -104,9 +118,11 @@ public class GooglePhotos {
                             String id = mediaItemJsonObject.getString("id");
                             JSONObject mediaMetaDataObject = mediaItemJsonObject.getJSONObject("mediaMetadata");
                             String creationTime = mediaMetaDataObject.getString("creationTime");
-                            MediaItem mediaItem = new MediaItem(id, baseUrl, creationTime, filename, null);
-                            mediaItems.add(mediaItem);
-                            LogHandler.saveLog("File was detected in Photos account : " + mediaItem.getFileName(),false);
+
+                            MainActivity.dbHelper.insertIntoPhotosTable(Long.valueOf(0), id, filename, "",
+                                    userEmail, creationTime, baseUrl);
+
+                            LogHandler.saveLog("File was detected in Photos account : " + filename,false);
                         }
                         nextPageToken = responseJson.optString("nextPageToken", null);
                     }

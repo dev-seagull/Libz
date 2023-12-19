@@ -514,10 +514,7 @@
                         Executor signInExecutor = Executors.newSingleThreadExecutor();
                         try {
                             Runnable backgroundTask = () -> {
-                                PrimaryAccountInfo primaryAccountInfo = googleCloud.handleSignInToPrimaryResult(result.getData());
-                                String userEmail = primaryAccountInfo.getUserEmail();
-                                primaryAccountHashMap.put(primaryAccountInfo.getUserEmail(), primaryAccountInfo);
-                                LogHandler.saveLog("Number of primary accounts : " + primaryAccountHashMap.size(),false);
+                                String userEmail = googleCloud.handleSignInToPrimaryResult(result.getData());
 
                                 runOnUiThread(() -> {
                                     childview[0] = primaryAccountsButtonsLinearLayout.getChildAt(

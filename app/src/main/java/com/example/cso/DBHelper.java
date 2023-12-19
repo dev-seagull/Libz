@@ -149,6 +149,108 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
+    public void deleteRedundantPhotos(ArrayList<String> fileIds, String userEmail){
+        String sqlQuery = "SELECT * FROM PHOTOS where userEmail = ?";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
+        if(cursor.moveToFirst()){
+            do{
+                int fileIdColumnIndex = cursor.getColumnIndex("fileId");
+                if(fileIdColumnIndex >= 0) {
+                    String fileId = cursor.getString(fileIdColumnIndex);
+                    if (!fileIds.contains(fileId)) {
+                        dbWritable.beginTransaction();
+                        try {
+                            sqlQuery = "DELETE FROM PHOTOS WHERE fileId = ?";
+                            dbWritable.execSQL(sqlQuery, new Object[]{fileId});
+                            dbWritable.setTransactionSuccessful();
+                        } catch (Exception e) {
+                            LogHandler.saveLog("Failed to delete the database in PHOTOS, deleteRedundantPhotos method. " + e.getLocalizedMessage());
+                        } finally {
+                            dbWritable.endTransaction();
+                        }
+
+                        int assetIdColumnIndex = cursor.getColumnIndex("assetId");
+                        boolean existsInDatabase = false;
+                        String assetId = "";
+                        if (assetIdColumnIndex >= 0) {
+                            dbReadable = getReadableDatabase();
+                            assetId = cursor.getString(assetIdColumnIndex);
+                            try {
+                                sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
+                                        "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
+                                        "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
+                                Cursor cursor2 = dbReadable.rawQuery(sqlQuery, new String[]{assetId, assetId, assetId});
+                                if (cursor2 != null && cursor2.moveToFirst()) {
+                                    int result = cursor2.getInt(0);
+                                    if (result == 1) {
+                                        existsInDatabase = true;
+                                    }
+                                }
+                            } catch (Exception e) {
+                                LogHandler.saveLog("Failed to check if the data exists in Database in deleteRedundantPhotos");
+                            }
+                        }
+
+                        if (existsInDatabase == false) {
+                            dbWritable.beginTransaction();
+                            try {
+                                sqlQuery = "DELETE FROM ASSET WHERE id = ? ";
+                                dbWritable.execSQL(sqlQuery, new Object[]{assetId});
+                                dbWritable.setTransactionSuccessful();
+                            } catch (Exception e) {
+                                LogHandler.saveLog("Failed to delete the database in ASSET , deleteRedundantPhotos method. " + e.getLocalizedMessage());
+                            } finally {
+                                dbWritable.endTransaction();
+                            }
+                        }
+                    }
+                }
+            }while (cursor.moveToNext());
+        }
+        cursor.close();
+    }
+
+    public void insertIntoPhotosTable(Long assetId, String fileId,String fileName, String fileHash,
+                                     String userEmail, String creationTime, String baseUrl){
+        String sqlQuery = "";
+        Boolean existsInPhotos = false;
+        try{
+            sqlQuery = "SELECT EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ? and fileHash = ? and fileId =? and userEmail = ?)";
+            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), fileHash, fileId, userEmail});
+            if(cursor != null && cursor.moveToFirst()){
+                int result = cursor.getInt(0);
+                if(result == 1){
+                    existsInPhotos = true;
+                }
+            }
+            cursor.close();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to select from PHOTOS in insertIntoPhotosTable method: " + e.getLocalizedMessage());
+        }
+        if(existsInPhotos == false){
+            dbWritable.beginTransaction();
+            try{
+                sqlQuery = "INSERT INTO PHOTOS (" +
+                        "assetId," +
+                        "fileId," +
+                        "fileName, " +
+                        "userEmail, " +
+                        "creationTime, " +
+                        "fileHash, " +
+                        "baseUrl) VALUES (?,?,?,?,?,?,?)";
+                Object[] values = new Object[]{assetId,fileId,fileName,userEmail,creationTime,fileHash,baseUrl};
+                dbWritable.execSQL(sqlQuery, values);
+                dbWritable.setTransactionSuccessful();
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to save into the database in insertIntoPhotosTable method. "+e.getLocalizedMessage());
+            }finally {
+                dbWritable.endTransaction();
+            }
+        }
+    }
+
+
+
     public void insertIntoDriveTable(Long assetId, String fileId,String fileName, String fileHash,String userEmail){
         String sqlQuery = "";
         Boolean existsInDrive = false;
