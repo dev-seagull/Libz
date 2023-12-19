@@ -587,23 +587,24 @@ public class Upload {
 
                     OutputStream outputStream = null;
                     File file = new File(filePath);
+
                     try {
                         if(!file.exists()){
                             file.getParentFile().mkdirs();
                             file.createNewFile();
+                            try {
+                                outputStream = new FileOutputStream(filePath);
+                            } catch (FileNotFoundException e) {
+                                LogHandler.saveLog("failed to save output stream in restore method : " + e.getLocalizedMessage(), true);
+                            }
+                            try {
+                                service.files().get(fileId).executeMediaAndDownloadTo(outputStream);
+                            } catch (IOException e) {
+                                LogHandler.saveLog("failed to download in restore method : " + e.getLocalizedMessage(), true);
+                            }
                         }
                     } catch (Exception e) {
                         LogHandler.saveLog("failed to create file in restore method : " + e.getLocalizedMessage(), true);
-                    }
-                    try {
-                        outputStream = new FileOutputStream(filePath);
-                    } catch (FileNotFoundException e) {
-                        LogHandler.saveLog("failed to save output stream in restore method : " + e.getLocalizedMessage(), true);
-                    }
-                    try {
-                        service.files().get(fileId).executeMediaAndDownloadTo(outputStream);
-                    } catch (IOException e) {
-                        LogHandler.saveLog("failed to download in restore method : " + e.getLocalizedMessage(), true);
                     }
 
                     MediaScannerConnection.scanFile(
@@ -615,6 +616,7 @@ public class Upload {
                 }
             }
             cursor.close();
+
            return isFinished[0];
         };
         Future<Boolean> future = executor.submit(backgroundDownloadTask);

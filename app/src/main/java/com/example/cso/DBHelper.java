@@ -790,9 +790,9 @@ public class DBHelper extends SQLiteOpenHelper {
         return pathCount;
     }
 
-    public int countAndroidSyncedAssets(){
-        String sqlQuery = "SELECT COUNT(*) AS rowCount FROM ANDROID androidTable " +
-                "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId where androidTable.device = ?";
+    public int countAndroidSyncedAssets(){ //
+        String sqlQuery = "SELECT COUNT(DISTINCT androidTable.filePath) AS rowCount FROM ANDROID androidTable\n" +
+                "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId WHERE androidTable.device = ?;";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidDeviceName});
         int count = 0;
         if(cursor != null && cursor.moveToFirst()){
