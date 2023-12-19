@@ -97,16 +97,28 @@ public class Upload {
         return new ArrayList<>();
     }
 
-    private Boolean downloadFromPhotos(ArrayList<String> baseUrls, ArrayList<String> fileNames,
-                                    File destinationFolder){
+    public static Boolean downloadFromPhotos(ArrayList<GooglePhotos.MediaItem> photosMediaItems,
+                                    File destinationFolder, String userEmail){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final boolean[] isFinished = {false};
         Callable<Boolean> backgroundDownloadTask = () -> {
-            System.out.println("number of base urls" +baseUrls.size() +"number of filenames :" +fileNames.size());
-            int i = 0;
-            for(String baseUrl: baseUrls){
+            for(GooglePhotos.MediaItem photosMediaItem: photosMediaItems){
+                String sqlQuery =  "SELECT assetId FROM PHOTOS WHERE " +
+                        "EXISTS (SELECT 1 FROM PHOTOS WHERE fileId = ?)";
+                Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery, new String[]{photosMediaItem.getId()});
+                if(cursor != null && cursor.moveToFirst()){
+                    int assetIdColumnIndex = cursor.getColumnIndex("assetId");
+                    if(assetIdColumnIndex >= 0){
+                        String assetId = cursor.getString(assetIdColumnIndex);
+                        //then check if the assetId also exists in drive table so it's backed up
+                    }
+                }
+
+
+
+
                 try {
-                    URL url = new URL(baseUrl + "=d");
+                    URL url = new URL(photosMediaItem.getBaseUrl() + "=d");
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("GET");
                     int responseCode = connection.getResponseCode();
@@ -119,7 +131,7 @@ public class Upload {
                                 LogHandler.saveLog("The destination folder was not created");
                             }
                         }
-                        String fileName = fileNames.get(i);
+                        String fileName = photosMediaItem.getFileName();
                         String filePath = destinationFolder + File.separator + fileName;
                         OutputStream outputStream = null;
                         try {
@@ -133,7 +145,7 @@ public class Upload {
                                     outputStream.write(buffer, 0, bytesRead);
                                 }
                                 if (downloadFile.length() == (long) contentLength) {
-                                    LogHandler.saveLog("downloaded to CSO folder : " + fileNames.get(i), false);
+                                    LogHandler.saveLog("downloaded to CSO folder : " + photosMediaItem.getFileName(), false);
                                     break;
                                 } else {
                                     LogHandler.saveLog("Failed to download " + downloadFile.length() + "!=" + contentLength);
@@ -150,17 +162,28 @@ public class Upload {
                             } catch (IOException e) {
                                 LogHandler.saveLog("Closing output stream failed : " + e.getLocalizedMessage());
                             }
+
+                            String fileHash = calculateHash(new File(filePath));
+                            System.out.println("file hash for test: "+ fileHash + " for file name: " + fileName);
+                            long last_insertedId = MainActivity.dbHelper.insertAssetData(fileHash);
+                            if(last_insertedId != -1){
+                                MainActivity.dbHelper.insertIntoPhotosTable(last_insertedId,
+                                        photosMediaItem.getId(),photosMediaItem.getFileName(),
+                                        fileHash,userEmail,photosMediaItem.getCreationTime(), photosMediaItem.getBaseUrl());
+                            }else{
+                                LogHandler.saveLog("Last inserted id -1 in inserting into asset " +
+                                        "in downloadFromPhotos",true);
+                            }
                         }
                         inputStream.close();
                         connection.disconnect();
                         isFinished[0] = true;
                     }else {
-                        LogHandler.saveLog("Failed to download "+fileNames.get(i)+"with response code : "  + responseCode);
+                        LogHandler.saveLog("Failed to download "+photosMediaItem.getFileName()+"with response code : "  + responseCode);
                     }
                 } catch (IOException e) {
                     LogHandler.saveLog("Downloading from Photos failed: " + e.getLocalizedMessage());
                 }
-                i++;
             }
             return isFinished[0];
         };

@@ -63,19 +63,7 @@ public class GooglePhotos {
         public String getFileName() {return fileName;}
     }
 
-    public static ArrayList<MediaItem> getGooglePhotosMediaItems(String userEmail){
-        String sqlQuery = "SELECT accessToken FROM USERPROFILE WHERE userEmail = ?;";
-        Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
-        String accessToken = "";
-        if(cursor.moveToFirst() && cursor != null){
-            int accessTokenColumnIndex  = cursor.getColumnIndex("accessToken");
-            if(accessTokenColumnIndex >= 0){
-                accessToken = cursor.getString(accessTokenColumnIndex);
-            }
-        }else{
-            LogHandler.saveLog("Failed to get access token in getGooglePhotosMediaItems");
-        }
-
+    public static ArrayList<MediaItem> getGooglePhotosMediaItems(String accessToken){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         String finalAccessToken = accessToken;
         Callable<ArrayList<MediaItem>> backgroundTask = () -> {
@@ -118,9 +106,8 @@ public class GooglePhotos {
                             String id = mediaItemJsonObject.getString("id");
                             JSONObject mediaMetaDataObject = mediaItemJsonObject.getJSONObject("mediaMetadata");
                             String creationTime = mediaMetaDataObject.getString("creationTime");
-
-                            MainActivity.dbHelper.insertIntoPhotosTable(Long.valueOf(0), id, filename, "",
-                                    userEmail, creationTime, baseUrl);
+                            MediaItem mediaItem = new MediaItem(id,baseUrl,creationTime,filename,"");
+                            mediaItems.add(mediaItem);
 
                             LogHandler.saveLog("File was detected in Photos account : " + filename,false);
                         }

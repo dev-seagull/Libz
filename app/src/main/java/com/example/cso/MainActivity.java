@@ -5,6 +5,7 @@
     import android.content.Intent;
     import android.content.SharedPreferences;
     import android.content.pm.PackageManager;
+    import android.database.Cursor;
     import android.os.Build;
     import android.os.Bundle;
     import android.os.Environment;
@@ -684,11 +685,37 @@
                         TextView syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
                         syncToBackUpAccountTextView.setText("Wait until the uploading process is finished");
                     });
-//
-//                    BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
-//                    PrimaryAccountInfo.Tokens backupTokens = firstBackUpAccountInfo.getTokens();
-//                    String backUpAccessToken = firstBackUpAccountInfo.getTokens().getAccessToken();
-//                    ArrayList<BackUpAccountInfo.MediaItem> backupMediaItems = firstBackUpAccountInfo.getMediaItems();
+
+
+                    Thread deleteRedundantAndUpdatePhotos = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            String[] columns = {"accessToken","userEmail", "type"};
+                            List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                            File destinationFolder = new File(Environment
+                                    .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator
+                                    + "cso");
+
+                            for(String[] userProfile_row : userProfile_rows) {
+                                String type = userProfile_row[2];
+                                String userEmail = userProfile_row[1];
+                                String accessToken = userProfile_row[0];
+                                if(type.equals("primary")){
+                                    ArrayList<GooglePhotos.MediaItem> photosMediaItems = GooglePhotos.getGooglePhotosMediaItems(accessToken);
+                                    ArrayList<String> fileIds = new ArrayList<>();
+                                    for(GooglePhotos.MediaItem photosMediaItem: photosMediaItems){
+                                        fileIds.add(photosMediaItem.getId());
+                                     }
+                                    MainActivity.dbHelper.deleteRedundantPhotos(fileIds,userEmail);
+
+
+                                        Upload.downloadFromPhotos(photosMediaItems,destinationFolder,userEmail);
+                                }
+                            }
+                        }
+                    });
+
+
                     Thread deleteRedundantAndroidThread = new Thread(new Runnable() {
                         @Override
                         public void run() {
