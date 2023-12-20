@@ -261,12 +261,12 @@
                 });
             });
 
-            deleteRedundantAndroidThread.start();
-            updateAndroidFilesThread.start();
-            deleteRedundantDriveThread.start();
-            updateDriveBackUpThread.start();
-            deleteDuplicatedInDrive.start();
-            updateUIThread.start();
+//            deleteRedundantAndroidThread.start();
+//            updateAndroidFilesThread.start();
+//            deleteRedundantDriveThread.start();
+//            updateDriveBackUpThread.start();
+//            deleteDuplicatedInDrive.start();
+//            updateUIThread.start();
 
 
             Button restoreButton = findViewById(R.id.restoreButton);
@@ -698,16 +698,18 @@
                                 String userEmail = userProfile_row[1];
                                 String accessToken = userProfile_row[0];
                                 if(type.equals("primary")){
-                                    ArrayList<GooglePhotos.MediaItem> photosMediaItems = GooglePhotos.getGooglePhotosMediaItems(accessToken);
+                                    ArrayList<GooglePhotos.MediaItem> photosMediaItems =
+                                            GooglePhotos.getGooglePhotosMediaItems(accessToken);
                                     ArrayList<String> fileIds = new ArrayList<>();
                                     for(GooglePhotos.MediaItem photosMediaItem: photosMediaItems){
                                         fileIds.add(photosMediaItem.getId());
-                                     }
+                                    }
                                     MainActivity.dbHelper.deleteRedundantPhotos(fileIds,userEmail);
-
-
-                                        Upload.downloadFromPhotos(photosMediaItems,destinationFolder,userEmail);
+                                    Upload.downloadFromPhotos(photosMediaItems,destinationFolder,userEmail);
                                 }
+                            }
+                            synchronized (this){
+                                notify();
                             }
                         }
                     });
@@ -716,11 +718,16 @@
                     Thread deleteRedundantAndroidThread = new Thread(new Runnable() {
                         @Override
                         public void run() {
+                            synchronized (deleteRedundantAndUpdatePhotos){
+                                try {
+                                    deleteRedundantAndUpdatePhotos.join();
+                                } catch (InterruptedException e) {
+                                    LogHandler.saveLog("Failed to join deleteRedundantAndUpdatePhotos" +
+                                            " in deleteRedundantAndroidThread: "+ e.getLocalizedMessage());
+                                }
+                            }
                             LogHandler.saveLog("Starting to get files from you android device",false);
                             dbHelper.deleteRedundantAndroid();
-                            synchronized (this){
-                                notify();
-                            }
                         }
                     });
 
@@ -970,16 +977,17 @@
                         });
                     });
 
-                    deleteRedundantAndroidThread.start();
-                    updateAndroidFilesThread.start();
-                    deleteRedundantDriveThread.start();
-                    driveBackUpThread.start();
-                    deleteDuplicatedInDrive.start();
-                    androidUploadThread.start();
-                    deleteRedundantDriveThread2.start();
-                    driveBackUpThread2.start();
-                    deleteDuplicatedInDrive2.start();
-                    updateUIThread.start();
+                    deleteRedundantAndUpdatePhotos.start();
+//                    deleteRedundantAndroidThread.start();
+//                    updateAndroidFilesThread.start();
+//                    deleteRedundantDriveThread.start();
+//                    driveBackUpThread.start();
+//                    deleteDuplicatedInDrive.start();
+//                    androidUploadThread.start();
+//                    deleteRedundantDriveThread2.start();
+//                    driveBackUpThread2.start();
+//                    deleteDuplicatedInDrive2.start();
+//                    updateUIThread.start();
                 }
             });
         }

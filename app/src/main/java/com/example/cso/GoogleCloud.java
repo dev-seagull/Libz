@@ -132,7 +132,6 @@
                 authCode = account.getServerAuthCode();
                 tokens = getTokens(authCode);
                 storage = getStorage(tokens);
-                GooglePhotos.getGooglePhotosMediaItems(userEmail);
                 String[] columnsList = new String[]{"userEmail"};
                 List<String[]> userProfileData = MainActivity.dbHelper.getUserProfile(columnsList);
                 boolean isInUserProfileData = false;

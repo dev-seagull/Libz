@@ -4,14 +4,10 @@ import static com.example.cso.GooglePhotos.getMemeType;
 import static com.example.cso.GooglePhotos.isImage;
 import static com.example.cso.GooglePhotos.isVideo;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.media.MediaScannerConnection;
-import android.net.Uri;
 import android.os.Environment;
-import android.util.Log;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.FileContent;
@@ -40,7 +36,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class Upload {
     public ArrayList<String> upload() {
@@ -110,79 +105,149 @@ public class Upload {
                     int assetIdColumnIndex = cursor.getColumnIndex("assetId");
                     if(assetIdColumnIndex >= 0){
                         String assetId = cursor.getString(assetIdColumnIndex);
-                        //then check if the assetId also exists in drive table so it's backed up
-                    }
-                }
+                        String sqlQuery2 =  "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
+                        Cursor cursor2 = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery2, new String[]{assetId});
+                        if(cursor2 != null && cursor2.moveToFirst()) {
+                            int existsInDrive = cursor2.getInt(0);
+                            if(existsInDrive == 0){
+                                try {
+                                    URL url = new URL(photosMediaItem.getBaseUrl() + "=d");
+                                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                                    connection.setRequestMethod("GET");
+                                    int responseCode = connection.getResponseCode();
+                                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                                        int contentLength = connection.getContentLength();
+                                        InputStream inputStream = new BufferedInputStream(connection.getInputStream());
+                                        if (!destinationFolder.exists()) {
+                                            boolean isFolderCreated = destinationFolder.mkdirs();
+                                            if (!isFolderCreated) {
+                                                LogHandler.saveLog("The destination folder was not created");
+                                            }
+                                        }
+                                        String fileName = photosMediaItem.getFileName();
+                                        String filePath = destinationFolder + File.separator + fileName;
+                                        OutputStream outputStream = null;
+                                        try {
+                                            File downloadFile = new File(filePath);
+                                            downloadFile.createNewFile();
+                                            for (int k = 0; k <3; k++){
+                                                outputStream = new FileOutputStream(downloadFile);
+                                                byte[] buffer = new byte[1024];
+                                                int bytesRead;
+                                                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                                                    outputStream.write(buffer, 0, bytesRead);
+                                                }
+                                                if (downloadFile.length() == (long) contentLength) {
+                                                    LogHandler.saveLog("downloaded to CSO folder : " + photosMediaItem.getFileName(), false);
+                                                    break;
+                                                } else {
+                                                    LogHandler.saveLog("Failed to download " + downloadFile.length() + "!=" + contentLength);
+                                                }
+                                            }
 
+                                        } catch (IOException e) {
+                                            LogHandler.saveLog("Error in file output stream handling: " + e.getLocalizedMessage());
+                                        } finally {
+                                            try {
+                                                if (outputStream != null) {
+                                                    outputStream.close();
+                                                }
+                                            } catch (IOException e) {
+                                                LogHandler.saveLog("Closing output stream failed : " + e.getLocalizedMessage());
+                                            }
 
-
-
-                try {
-                    URL url = new URL(photosMediaItem.getBaseUrl() + "=d");
-                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                    connection.setRequestMethod("GET");
-                    int responseCode = connection.getResponseCode();
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        int contentLength = connection.getContentLength();
-                        InputStream inputStream = new BufferedInputStream(connection.getInputStream());
-                        if (!destinationFolder.exists()) {
-                            boolean isFolderCreated = destinationFolder.mkdirs();
-                            if (!isFolderCreated) {
-                                LogHandler.saveLog("The destination folder was not created");
+                                            String fileHash = calculateHash(new File(filePath));
+                                            System.out.println("file hash for test: "+ fileHash + " for file name: " + fileName);
+                                            long last_insertedId = MainActivity.dbHelper.insertAssetData(fileHash);
+                                            if(last_insertedId != -1){
+                                                MainActivity.dbHelper.insertIntoPhotosTable(last_insertedId,
+                                                        photosMediaItem.getId(),photosMediaItem.getFileName(),
+                                                        fileHash,userEmail,photosMediaItem.getCreationTime(), photosMediaItem.getBaseUrl());
+                                            }else{
+                                                LogHandler.saveLog("Last inserted id -1 in inserting into asset " +
+                                                        "in downloadFromPhotos",true);
+                                            }
+                                        }
+                                        inputStream.close();
+                                        connection.disconnect();
+                                        isFinished[0] = true;
+                                    }else {
+                                        LogHandler.saveLog("Failed to download "+photosMediaItem.getFileName()+"with response code : "  + responseCode);
+                                    }
+                                } catch (IOException e) {
+                                    LogHandler.saveLog("Downloading from Photos failed: " + e.getLocalizedMessage());
+                                }
                             }
                         }
-                        String fileName = photosMediaItem.getFileName();
-                        String filePath = destinationFolder + File.separator + fileName;
-                        OutputStream outputStream = null;
-                        try {
-                            File downloadFile = new File(filePath);
-                            downloadFile.createNewFile();
-                            for (int k = 0; k <3; k++){
-                                outputStream = new FileOutputStream(downloadFile);
-                                byte[] buffer = new byte[1024];
-                                int bytesRead;
-                                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                                    outputStream.write(buffer, 0, bytesRead);
-                                }
-                                if (downloadFile.length() == (long) contentLength) {
-                                    LogHandler.saveLog("downloaded to CSO folder : " + photosMediaItem.getFileName(), false);
-                                    break;
-                                } else {
-                                    LogHandler.saveLog("Failed to download " + downloadFile.length() + "!=" + contentLength);
+                    }
+                }else{
+                    try {
+                        URL url = new URL(photosMediaItem.getBaseUrl() + "=d");
+                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                        connection.setRequestMethod("GET");
+                        int responseCode = connection.getResponseCode();
+                        if (responseCode == HttpURLConnection.HTTP_OK) {
+                            int contentLength = connection.getContentLength();
+                            InputStream inputStream = new BufferedInputStream(connection.getInputStream());
+                            if (!destinationFolder.exists()) {
+                                boolean isFolderCreated = destinationFolder.mkdirs();
+                                if (!isFolderCreated) {
+                                    LogHandler.saveLog("The destination folder was not created");
                                 }
                             }
-
-                        } catch (IOException e) {
-                            LogHandler.saveLog("Error in file output stream handling: " + e.getLocalizedMessage());
-                        } finally {
+                            String fileName = photosMediaItem.getFileName();
+                            String filePath = destinationFolder + File.separator + fileName;
+                            OutputStream outputStream = null;
                             try {
-                                if (outputStream != null) {
-                                    outputStream.close();
+                                File downloadFile = new File(filePath);
+                                downloadFile.createNewFile();
+                                for (int k = 0; k <3; k++){
+                                    outputStream = new FileOutputStream(downloadFile);
+                                    byte[] buffer = new byte[1024];
+                                    int bytesRead;
+                                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                                        outputStream.write(buffer, 0, bytesRead);
+                                    }
+                                    if (downloadFile.length() == (long) contentLength) {
+                                        LogHandler.saveLog("downloaded to CSO folder : " + photosMediaItem.getFileName(), false);
+                                        break;
+                                    } else {
+                                        LogHandler.saveLog("Failed to download " + downloadFile.length() + "!=" + contentLength);
+                                    }
                                 }
-                            } catch (IOException e) {
-                                LogHandler.saveLog("Closing output stream failed : " + e.getLocalizedMessage());
-                            }
 
-                            String fileHash = calculateHash(new File(filePath));
-                            System.out.println("file hash for test: "+ fileHash + " for file name: " + fileName);
-                            long last_insertedId = MainActivity.dbHelper.insertAssetData(fileHash);
-                            if(last_insertedId != -1){
-                                MainActivity.dbHelper.insertIntoPhotosTable(last_insertedId,
-                                        photosMediaItem.getId(),photosMediaItem.getFileName(),
-                                        fileHash,userEmail,photosMediaItem.getCreationTime(), photosMediaItem.getBaseUrl());
-                            }else{
-                                LogHandler.saveLog("Last inserted id -1 in inserting into asset " +
-                                        "in downloadFromPhotos",true);
+                            } catch (IOException e) {
+                                LogHandler.saveLog("Error in file output stream handling: " + e.getLocalizedMessage());
+                            } finally {
+                                try {
+                                    if (outputStream != null) {
+                                        outputStream.close();
+                                    }
+                                } catch (IOException e) {
+                                    LogHandler.saveLog("Closing output stream failed : " + e.getLocalizedMessage());
+                                }
+
+                                String fileHash = calculateHash(new File(filePath));
+                                System.out.println("file hash for test: "+ fileHash + " for file name: " + fileName);
+                                long last_insertedId = MainActivity.dbHelper.insertAssetData(fileHash);
+                                if(last_insertedId != -1){
+                                    MainActivity.dbHelper.insertIntoPhotosTable(last_insertedId,
+                                            photosMediaItem.getId(),photosMediaItem.getFileName(),
+                                            fileHash,userEmail,photosMediaItem.getCreationTime(), photosMediaItem.getBaseUrl());
+                                }else{
+                                    LogHandler.saveLog("Last inserted id -1 in inserting into asset " +
+                                            "in downloadFromPhotos",true);
+                                }
                             }
+                            inputStream.close();
+                            connection.disconnect();
+                            isFinished[0] = true;
+                        }else {
+                            LogHandler.saveLog("Failed to download "+photosMediaItem.getFileName()+"with response code : "  + responseCode);
                         }
-                        inputStream.close();
-                        connection.disconnect();
-                        isFinished[0] = true;
-                    }else {
-                        LogHandler.saveLog("Failed to download "+photosMediaItem.getFileName()+"with response code : "  + responseCode);
+                    } catch (IOException e) {
+                        LogHandler.saveLog("Downloading from Photos failed: " + e.getLocalizedMessage());
                     }
-                } catch (IOException e) {
-                    LogHandler.saveLog("Downloading from Photos failed: " + e.getLocalizedMessage());
                 }
             }
             return isFinished[0];
