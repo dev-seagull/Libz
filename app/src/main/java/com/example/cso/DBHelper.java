@@ -804,4 +804,52 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
         return count;
     }
+
+    public void deleteRedundantAsset(){
+        String sqlQuery = "SELECT id FROM ASSET";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
+        ArrayList<String> assetIds = new ArrayList<>();
+        if (cursor.moveToFirst()) {
+            do {
+                int assetIdColumnIndex = cursor.getColumnIndex("id");
+                if (assetIdColumnIndex >= 0) {
+                    String assetId = cursor.getString(assetIdColumnIndex);
+                    assetIds.add(assetId);
+                }
+            } while (cursor.moveToNext());
+        }
+
+        for (String assetId : assetIds){
+            boolean existsInDatabase = false;
+            try {
+                sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
+                        "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
+                        "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
+                Cursor cursor2 = dbReadable.rawQuery(sqlQuery, new String[]{assetId, assetId, assetId});
+                if (cursor2 != null && cursor2.moveToFirst()) {
+                    int result = cursor2.getInt(0);
+                    if (result == 1) {
+                        existsInDatabase = true;
+                    }
+                }
+            } catch (Exception e) {
+                LogHandler.saveLog("Failed to check if the data exists in Database in deleteRedundantPhotos");
+            }
+            if (existsInDatabase == false) {
+                dbWritable.beginTransaction();
+                try {
+                    sqlQuery = "DELETE FROM ASSET WHERE id = ? ";
+                    dbWritable.execSQL(sqlQuery, new Object[]{assetId});
+                    dbWritable.setTransactionSuccessful();
+                } catch (Exception e) {
+                    LogHandler.saveLog("Failed to delete the database in ASSET , deleteRedundantPhotos method. " + e.getLocalizedMessage());
+                } finally {
+                    dbWritable.endTransaction();
+                }
+            }
+        }
+    }
+
+
+
 }

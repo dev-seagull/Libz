@@ -197,21 +197,23 @@
                     }
                 }
 
-                String[] columns = {"accessToken", "userEmail"};
+                String[] columns = {"accessToken", "userEmail","type"};
                 List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
 
                 for(String[] userProfile_row : userProfile_rows){
                     String accessToken = userProfile_row[0];
                     String userEmail = userProfile_row[1];
-                    ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
-
-                    for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
-                        Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
-                        if (last_insertId != -1) {
-                            MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
-                                    driveMediaItem.getHash(), userEmail);
-                        } else {
-                            LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                    String type = userProfile_row[2];
+                    if (type.equals("backup")){
+                        ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                        for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
+                            Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
+                            if (last_insertId != -1) {
+                                MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
+                                        driveMediaItem.getHash(), userEmail);
+                            } else {
+                                LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                            }
                         }
                     }
                 }
@@ -340,21 +342,23 @@
                             }
                         }
 
-                        String[] columns = {"accessToken", "userEmail"};
+                        String[] columns = {"accessToken", "userEmail","type"};
                         List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
 
                         for(String[] userProfile_row : userProfile_rows){
                             String accessToken = userProfile_row[0];
                             String userEmail = userProfile_row[1];
-                            ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
-
-                            for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
-                                Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
-                                if (last_insertId != -1) {
-                                    MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
-                                            driveMediaItem.getHash(), userEmail);
-                                } else {
-                                    LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                            String type = userProfile_row[2];
+                            if (type.equals("backup")){
+                                ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                                for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
+                                    Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
+                                    if (last_insertId != -1) {
+                                        MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
+                                                driveMediaItem.getHash(), userEmail);
+                                    } else {
+                                        LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                                    }
                                 }
                             }
                         }
@@ -614,21 +618,23 @@
                                     }
                                 }
 
-                                String[] columns = {"accessToken", "userEmail"};
+                                String[] columns = {"accessToken", "userEmail","type"};
                                 List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
 
                                 for(String[] userProfile_row : userProfile_rows){
                                     String accessToken = userProfile_row[0];
                                     String userEmail = userProfile_row[1];
-                                    ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
-
-                                    for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
-                                        Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
-                                        if (last_insertId != -1) {
-                                            MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
-                                                    driveMediaItem.getHash(), userEmail);
-                                        } else {
-                                            LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                                    String type = userProfile_row[2];
+                                    if (type.equals("backup")){
+                                        ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                                        for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
+                                            Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
+                                            if (last_insertId != -1) {
+                                                MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
+                                                        driveMediaItem.getHash(), userEmail);
+                                            } else {
+                                                LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                                            }
                                         }
                                     }
                                 }
@@ -782,21 +788,23 @@
                             }
                         }
 
-                        String[] columns = {"accessToken", "userEmail"};
+                        String[] columns = {"accessToken", "userEmail","type"};
                         List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
 
                         for(String[] userProfile_row : userProfile_rows){
                             String accessToken = userProfile_row[0];
                             String userEmail = userProfile_row[1];
-                            ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
-
-                            for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
-                                Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
-                                if (last_insertId != -1) {
-                                    MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
-                                            driveMediaItem.getHash(), userEmail);
-                                } else {
-                                    LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                            String type = userProfile_row[2];
+                            if (type.equals("backup")){
+                                ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                                for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
+                                    Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
+                                    if (last_insertId != -1) {
+                                        MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
+                                                driveMediaItem.getHash(), userEmail);
+                                    } else {
+                                        LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                                    }
                                 }
                             }
                         }
@@ -908,21 +916,23 @@
                             }
                         }
 
-                        String[] columns = {"accessToken", "userEmail"};
+                        String[] columns = {"accessToken", "userEmail","type"};
                         List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
 
                         for(String[] userProfile_row : userProfile_rows){
                             String accessToken = userProfile_row[0];
                             String userEmail = userProfile_row[1];
-                            ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
-
-                            for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
-                                Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
-                                if (last_insertId != -1) {
-                                    MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
-                                            driveMediaItem.getHash(), userEmail);
-                                } else {
-                                    LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                            String type = userProfile_row[2];
+                            if (type.equals("backup")){
+                                ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                                for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
+                                    Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
+                                    if (last_insertId != -1) {
+                                        MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
+                                                driveMediaItem.getHash(), userEmail);
+                                    } else {
+                                        LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                                    }
                                 }
                             }
                         }
@@ -1042,6 +1052,7 @@
                                             dbHelper.deleteUserProfileData(buttonText);
                                             String sqlQuery = "DELETE FROM photos WHERE userEmail = ?";
                                             dbHelper.dbWritable.execSQL(sqlQuery, new String[] {buttonText});
+                                            dbHelper.deleteRedundantAsset();
 
                                             ViewGroup parentView = (ViewGroup) button.getParent();
                                             for (Map.Entry<String, PrimaryAccountInfo> primaryAccountEntrySet :
@@ -1094,6 +1105,7 @@
                                             dbHelper.deleteUserProfileData(buttonText);
                                             String sqlQuery = "DELETE FROM drive WHERE userEmail = ?";
                                             dbHelper.dbWritable.execSQL(sqlQuery, new String[] {buttonText});
+                                            dbHelper.deleteRedundantAsset();
 
                                             ViewGroup parentView = (ViewGroup) button.getParent();
                                             for (Map.Entry<String, BackUpAccountInfo> backUpAccountEntrySet :

@@ -188,7 +188,7 @@
                 storage = getStorage(tokens);
                 mediaItems = GoogleDrive.getMediaItems(tokens.getAccessToken());
 
-                String[] columnsList = new String[]{"userEmail"};
+                String[] columnsList = new String[]{"userEmail","type"};
                 List<String[]> userProfileData = MainActivity.dbHelper.getUserProfile(columnsList);
                 boolean isInUserProfileData = false;
 
@@ -210,6 +210,7 @@
                         isInUserProfileData = true;
                     }
                 }
+                System.out.println("user email is : " + userEmail);
                 if (!isInUserProfileData){
                     MainActivity.dbHelper.insertUserProfileData(userEmail,"backup",tokens.getRefreshToken(),tokens.getAccessToken(),
                             storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
