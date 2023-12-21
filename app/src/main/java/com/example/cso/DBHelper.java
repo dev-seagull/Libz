@@ -96,7 +96,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "fileName TEXT," +
                 "destination TEXT,"+
                 "assetId TEXT,"+
-                "operation TEXT CHECK (operation IN ('duplicated','sync','download','deletedInDevice')),"+
+                "operation TEXT CHECK (operation IN ('duplicated','sync','syncPhotos','download','deletedInDevice')),"+
                 "hash TEXT,"+
                 "date TEXT)";
         sqLiteDatabase.execSQL(TRANSACTIONS);

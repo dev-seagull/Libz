@@ -56,7 +56,7 @@
         HashMap<String, PrimaryAccountInfo> primaryAccountHashMap = new HashMap<>();
         HashMap<String, BackUpAccountInfo> backUpAccountHashMap = new HashMap<>();
         public static String androidDeviceName;
-        public static String logFileName;
+        final public static String logFileName = "cso_jadid_log.txt";
         SharedPreferences preferences;
         public  static  ArrayList<String> comparator1;
 
@@ -95,9 +95,9 @@
                 isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
                         (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
             }
-            
+
             googleCloud = new GoogleCloud(this);
-            logFileName = LogHandler.CreateLogFile();
+            LogHandler.CreateLogFile();
             LogHandler.saveLog("--------------------------new run----------------------------",false);
 
             preferences = getPreferences(Context.MODE_PRIVATE);
@@ -263,12 +263,12 @@
                 });
             });
 
-//            deleteRedundantAndroidThread.start();
-//            updateAndroidFilesThread.start();
-//            deleteRedundantDriveThread.start();
-//            updateDriveBackUpThread.start();
-//            deleteDuplicatedInDrive.start();
-//            updateUIThread.start();
+            deleteRedundantAndroidThread.start();
+            updateAndroidFilesThread.start();
+            deleteRedundantDriveThread.start();
+            updateDriveBackUpThread.start();
+            deleteDuplicatedInDrive.start();
+            updateUIThread.start();
 
 
             Button restoreButton = findViewById(R.id.restoreButton);
@@ -720,13 +720,78 @@
                         }
                     });
 
+                    Thread uploadPhotosToDriveThread = new Thread(() -> {
+                        int buildSdkInt = Build.VERSION.SDK_INT;
+                        synchronized (deleteRedundantAndUpdatePhotos){
+                            try{
+                                deleteRedundantAndUpdatePhotos.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join deleteRedundantAndUpdatePhotos : "  + e.getLocalizedMessage());
+                            }
+                        }
+                        try {
+                            if (buildSdkInt >= 30) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                    if (!Environment.isExternalStorageManager()) {
+                                        Intent getPermission = new Intent();
+                                        getPermission.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                                        startActivity(getPermission);
+                                        while (!Environment.isExternalStorageManager()){
+                                            System.out.println("here " + Environment.isExternalStorageManager());
+                                            try {
+                                                Thread.sleep(500);
+                                                System.out.println("... " + Environment.isExternalStorageManager());
+                                            } catch (InterruptedException e) {
+                                                System.out.println("here2" + Environment.isExternalStorageManager());
+                                                throw new RuntimeException(e);
+
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                if (Environment.isExternalStorageManager()) {
+                                    LogHandler.CreateLogFile();
+                                    System.out.println("retry to create log file");
+                                    String[] columns = {"userEmail", "type" ,"accessToken"};
+                                    List<String[]> selectedRows = dbHelper.getUserProfile(columns);
+                                    for(String[] selectedRow: selectedRows){
+                                        String destinationUserEmail = selectedRow[0];
+                                        String type = selectedRow[1];
+                                        String accessToken = selectedRow[2];
+                                        if(type.equals("backup")){
+                                            Upload upload = new Upload();
+                                            upload.uploadPhotosToDrive(destinationUserEmail,accessToken);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (Exception e) {
+                            LogHandler.saveLog("Failed to get manage external storage in photos thread: " + e.getLocalizedMessage());
+                        }
+                    });
+
+
+                    Thread deletePhotosFromAndroidThread = new Thread(() -> {
+                        synchronized (uploadPhotosToDriveThread){
+                            try{
+                                uploadPhotosToDriveThread.join();
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to join uploadPhotosToDriveThread : "  + e.getLocalizedMessage());
+                            }
+                        }
+                        Upload.deletePhotosFromAndroid();
+                    });
+
 
                     Thread deleteRedundantAndroidThread = new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            synchronized (deleteRedundantAndUpdatePhotos){
+                            synchronized (deletePhotosFromAndroidThread){
                                 try {
-                                    deleteRedundantAndUpdatePhotos.join();
+                                    deletePhotosFromAndroidThread.join();
                                 } catch (InterruptedException e) {
                                     LogHandler.saveLog("Failed to join deleteRedundantAndUpdatePhotos" +
                                             " in deleteRedundantAndroidThread: "+ e.getLocalizedMessage());
@@ -834,38 +899,6 @@
                     });
 
 
-//                    Thread photosUploadThread = new Thread(() -> {
-//                        synchronized (driveBackUpThread){
-//                            try{
-//                                driveBackUpThread.join();
-//                            }catch (Exception e){
-//                                LogHandler.saveLog("failed to join drive back up thread: "  + e.getLocalizedMessage());
-//                            }
-//                        }
-//                        String[] columns = {"userEmail", "type" ,"accessToken"};
-//                        List<String[]> selectedRows = dbHelper.getUserProfile(columns);
-//
-//                        ArrayList
-//                        for(String[] selectedRow: selectedRows){
-//                            if(type.eq)
-//                        }
-//                        for(String[] selectedRow: selectedRows){
-//                        String userEmail = selectedRow[0];
-//                        String type = selectedRow[1];
-//                        String accessToken = selectedRow[3];
-//                        if(type.equals("primary")){
-//                            ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems = firstBackUpAccountInfo.getMediaItems();
-//                            ArrayList<GooglePhotos.MediaItem> mediaItems = primaryAccountInfo.getMediaItems();
-//                            Upload upload = new Upload();
-//
-//                            upload.uploadPhotosToGoogleDrive(mediaItems, backUpAccessToken
-//                                    ,backUpMediaItems,primaryAccountInfo.getUserEmail(),firstBackUpAccountInfo.getUserEmail());
-//                        }
-//                    }
-//                        for (PrimaryAccountInfo primaryAccountInfo : primaryAccountHashMap.values()) {
-//                             }
-//                    });
-//
                     Thread androidUploadThread = new Thread(() -> {
                         synchronized (deleteDuplicatedInDrive){
                             try{
@@ -875,7 +908,7 @@
                             }
                         }
                         Upload upload = new Upload();
-                        upload.upload();
+                        upload.uploadAndroidToDrive();
                     });
 
                     Thread deleteRedundantDriveThread2 = new Thread(() -> {
@@ -988,38 +1021,22 @@
                     });
 
                     deleteRedundantAndUpdatePhotos.start();
-//                    deleteRedundantAndroidThread.start();
-//                    updateAndroidFilesThread.start();
-//                    deleteRedundantDriveThread.start();
-//                    driveBackUpThread.start();
-//                    deleteDuplicatedInDrive.start();
-//                    androidUploadThread.start();
-//                    deleteRedundantDriveThread2.start();
-//                    driveBackUpThread2.start();
-//                    deleteDuplicatedInDrive2.start();
-//                    updateUIThread.start();
+                    uploadPhotosToDriveThread.start();
+                    deletePhotosFromAndroidThread.start();
+                    deleteRedundantAndroidThread.start();
+                    updateAndroidFilesThread.start();
+                    deleteRedundantDriveThread.start();
+                    driveBackUpThread.start();
+                    deleteDuplicatedInDrive.start();
+                    androidUploadThread.start();
+                    deleteRedundantDriveThread2.start();
+                    driveBackUpThread2.start();
+                    deleteDuplicatedInDrive2.start();
+                    updateUIThread.start();
                 }
             });
         }
 
-//        void uploadAndroidToDriveAccounts(String backUpAccessToken){
-//            try{
-//                Executor uploadExecutor = Executors.newSingleThreadExecutor();
-//                Runnable backgroundTask = () -> {
-//                    BackUpAccountInfo firstBackUpAccountInfo = backUpAccountHashMap.values().iterator().next();
-//                    ArrayList<BackUpAccountInfo.MediaItem> backUpMediaItems = firstBackUpAccountInfo.getMediaItems();
-//                    for(PrimaryAccountInfo primaryAccountInfo: primaryAccountHashMap.values()){
-//                        ArrayList<GooglePhotos.MediaItem> primaryMediaItems = primaryAccountInfo.getMediaItems();
-//                        System.out.println("here to sync android!");
-//                        googlePhotos.uploadAndroidToGoogleDrive(androidMediaItems, primaryMediaItems ,backUpAccessToken,
-//                                backUpMediaItems, this);
-//                    }
-//                };
-//                uploadExecutor.execute(backgroundTask);
-//            }catch (Exception e){
-//                LogHandler.saveLog("Failed to upload from android to drive: " + e.getLocalizedMessage());
-//            }
-//        }
 
         private void updateButtonsListeners() {
             updatePrimaryButtonsListener();

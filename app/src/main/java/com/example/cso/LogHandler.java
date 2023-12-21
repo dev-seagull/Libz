@@ -14,7 +14,7 @@ import java.util.List;
 public class LogHandler extends Application {
     static String LOG_DIR_PATH = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator + "cso";
 
-    public static String CreateLogFile() {
+    public static void CreateLogFile() {
         String filename = "";
         try {
             File logDir = new File(LOG_DIR_PATH);
@@ -23,7 +23,7 @@ public class LogHandler extends Application {
             }
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
             filename = "cso_log_" + dateFormat.format(new Date()) + ".txt";
-            filename = "cso_new_log.txt";
+            filename = MainActivity.logFileName;
             File logFile = new File(LOG_DIR_PATH + File.separator + filename);
 
             if (!logFile.exists()){
@@ -44,9 +44,9 @@ public class LogHandler extends Application {
         } catch (Exception e) {
             System.out.println("error in creating log file in existing directory" + e.getLocalizedMessage());
         }
-        return filename;
     }
     public static void saveLog(String text, boolean isError) {
+        System.out.println("LOG IS SAVED: " + text);
         File logDir = new File(LOG_DIR_PATH);
         File logFile = new File(logDir, MainActivity.logFileName);
 
@@ -72,6 +72,7 @@ public class LogHandler extends Application {
 
 
     public static void saveLog(String text) {
+        System.out.println("LOG IS SAVED: " + text);
         File logDir = new File(LOG_DIR_PATH);
         File logFile = new File(logDir, MainActivity.logFileName);
 
