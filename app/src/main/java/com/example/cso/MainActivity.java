@@ -1033,6 +1033,7 @@
                     driveBackUpThread2.start();
                     deleteDuplicatedInDrive2.start();
                     updateUIThread.start();
+
                 }
             });
         }
