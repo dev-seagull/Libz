@@ -157,8 +157,7 @@ public class Android {
         }
         return fileManagerItems;
     }
-    public Android() {
-    }
+
 
     public static ArrayList<String> getAndroidDeviceStorage(){
         String externalStorageDirectory = Environment.getExternalStorageDirectory().getPath();
