@@ -880,6 +880,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 } catch (GeneralSecurityException e) {
                     LogHandler.saveLog("Failed to http_transport when trying to back up database" + e.getLocalizedMessage());
                 } catch (IOException e) {
+                    LogHandler.saveLog("Failed to IOException when trying to back up database" + e.getLocalizedMessage());
                 }
                 final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
@@ -907,16 +908,23 @@ public class DBHelper extends SQLiteOpenHelper {
                 com.google.api.services.drive.model.File fileMetadata =
                         new com.google.api.services.drive.model.File();
                 fileMetadata.setName("CSODatabase.db");
-                String memeTypeToUpload = getMemeType(new File(dataBasePath));
 
-                File androidFile = new File(dataBasePath);
+                File androidFile = new File("/data/data/com.example.cso/databases/CSODatabase");
+                if (!androidFile.exists()) {
+                    LogHandler.saveLog("Failed to upload database from Android to backup because it doesn't exist");
+
+                }
                 FileContent mediaContent = new FileContent("application/x-sqlite3", androidFile);
-
+                if (mediaContent == null) {
+                    LogHandler.saveLog("Failed to upload database from Android to backup because it's null");
+                }
                 com.google.api.services.drive.model.File uploadFile =
                         service.files().create(fileMetadata, mediaContent).setFields("id").execute();
                 String uploadFileId = uploadFile.getId();
+                System.out.println("upload id is " + uploadFileId);
                 while (uploadFileId == null) {
                     wait();
+                    System.out.println("waiting ... ");
                 }
                 if (uploadFileId == null | uploadFileId.isEmpty()) {
                     LogHandler.saveLog("Failed to upload database from Android to backup because it's null");
@@ -925,7 +933,7 @@ public class DBHelper extends SQLiteOpenHelper {
                             "account uploadId : " + uploadFileId, false);
                 }
             } catch (Exception e) {
-
+                LogHandler.saveLog("Failed to upload database from Android to backup main try " + e.getLocalizedMessage());
             }
             return new ArrayList<>();
         };
