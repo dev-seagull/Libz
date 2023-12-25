@@ -29,8 +29,8 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:gravity="center"
                 android:background="@color/sky_blue"
+                android:gravity="center"
                 android:orientation="vertical"
                 android:padding="16dp"
                 tools:context=".MainActivity">
@@ -50,20 +50,18 @@
                     android:background="#050505" />
 
 
-
                 <LinearLayout
                     android:id="@+id/primaryAccountsButtons"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center"></LinearLayout>
+                    android:gravity="center"
+                    android:orientation="vertical"></LinearLayout>
 
 
                 <TextView
                     android:id="@+id/googlePhotosMediaItemsCount"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    > </TextView>
+                    android:layout_height="wrap_content"></TextView>
 
                 <View
                     android:layout_width="match_parent"
@@ -90,22 +88,60 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="3dp"
-                    android:layout_marginTop="50dp"
-                    android:layout_marginBottom="50dp"
+                    android:layout_marginTop="30dp"
+                    android:layout_marginBottom="30dp"
                     android:gravity="left"
                     android:text=""
-                    android:textSize="20sp"/>
+                    android:textSize="20sp" />
 
                 <TextView
                     android:id="@+id/androidStatistics"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="3dp"
-                    android:layout_marginTop="50dp"
-                    android:layout_marginBottom="50dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="20dp"
                     android:gravity="left"
                     android:text=""
-                    android:textSize="20sp"/>
+                    android:textSize="20sp" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="5dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:alpha="1"
+                    android:background="#050505" />
+
+                <Button
+                    android:id="@+id/syncToBackUpAccountButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:backgroundTint="#42A5F5"
+                    android:text="Sync"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/syncToBackUpAccountTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp" />
+
+                <Button
+                    android:id="@+id/restoreButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="#42A5F5"
+                    android:text="Restore"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/restoreTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp" />
+
 
                 <View
                     android:layout_width="match_parent"
@@ -119,40 +155,8 @@
                     android:id="@+id/backUpAccountsButtons"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center"> </LinearLayout>
-
-
-                <Button
-                    android:id="@+id/syncToBackUpAccountButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:backgroundTint="#42A5F5"
-                    android:text="Sync"
-                    android:layout_marginTop="20dp"
-                    android:textSize="16sp" />
-
-                <TextView
-                    android:id="@+id/syncToBackUpAccountTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp" />
-
-                <Button
-                    android:id="@+id/restoreButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Restore"
-                    android:textSize="16sp"
-                    android:backgroundTint="#42A5F5" />
-
-                <TextView
-                    android:id="@+id/restoreTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp" />
-
-
+                    android:gravity="center"
+                    android:orientation="vertical"></LinearLayout>
             </LinearLayout>
 
         </ScrollView>

@@ -1,17 +1,34 @@
 package com.example.cso;
 
+import static com.example.cso.GooglePhotos.getMemeType;
+import static com.example.cso.GooglePhotos.isImage;
+import static com.example.cso.GooglePhotos.isVideo;
+
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.FileContent;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.drive.Drive;
+
 import java.io.File;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class DBHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "CSODatabase";
@@ -850,6 +867,75 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    public void backUpDataBase(Context context) {
+        String dataBasePath = context.getDatabasePath("CSODatabase.db").getAbsolutePath();
+        System.out.println("db path" + dataBasePath);
 
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Callable<ArrayList<String>> uploadTask = () -> {
+            try {
+                NetHttpTransport HTTP_TRANSPORT = null;
+                try {
+                    HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+                } catch (GeneralSecurityException e) {
+                    LogHandler.saveLog("Failed to http_transport when trying to back up database" + e.getLocalizedMessage());
+                } catch (IOException e) {
+                }
+                final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
+                String driveBackupAccessToken = "";
+                String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
+                List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getUserProfile(drive_backup_selected_columns);
+                for (String[] drive_backUp_account : drive_backUp_accounts) {
+                    if (drive_backUp_account[1].equals("backup")) {
+                        driveBackupAccessToken = drive_backUp_account[2];
+                        break;
+                    }
+
+                }
+                String bearerToken = "Bearer " + driveBackupAccessToken;
+                System.out.println("access token to upload is " + driveBackupAccessToken);
+                HttpRequestInitializer requestInitializer = request -> {
+                    request.getHeaders().setAuthorization(bearerToken);
+                    request.getHeaders().setContentType("application/json");
+                };
+
+                Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
+                        .setApplicationName("cso")
+                        .build();
+
+                com.google.api.services.drive.model.File fileMetadata =
+                        new com.google.api.services.drive.model.File();
+                fileMetadata.setName("CSODatabase.db");
+                String memeTypeToUpload = getMemeType(new File(dataBasePath));
+
+                File androidFile = new File(dataBasePath);
+                FileContent mediaContent = new FileContent("application/x-sqlite3", androidFile);
+
+                com.google.api.services.drive.model.File uploadFile =
+                        service.files().create(fileMetadata, mediaContent).setFields("id").execute();
+                String uploadFileId = uploadFile.getId();
+                while (uploadFileId == null) {
+                    wait();
+                }
+                if (uploadFileId == null | uploadFileId.isEmpty()) {
+                    LogHandler.saveLog("Failed to upload database from Android to backup because it's null");
+                } else {
+                    LogHandler.saveLog("Uploading database from android into backup " +
+                            "account uploadId : " + uploadFileId, false);
+                }
+            } catch (Exception e) {
+
+            }
+            return new ArrayList<>();
+        };
+        Future<ArrayList<String>> future = executor.submit(uploadTask);
+        ArrayList<String> uploadFileIdsFuture = new ArrayList<>();
+        try{
+            uploadFileIdsFuture = future.get();
+            LogHandler.saveLog("Finished with " + uploadFileIdsFuture.size() + " uploads",false);
+        }catch (Exception e){
+            System.out.println(e.getLocalizedMessage());
+        }
+    }
 }
