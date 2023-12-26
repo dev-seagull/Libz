@@ -102,7 +102,6 @@
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
-            dbHelper.backUpDataBase(getApplicationContext());
             drawerLayout = findViewById(R.id.drawer_layout);
             NavigationView navigationView = findViewById(R.id.navigationView);
             ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
@@ -119,6 +118,7 @@
             infoButton.setOnClickListener(view -> drawerLayout.openDrawer(GravityCompat.END));
 
             initializeButtons();
+            dbHelper.backUpDataBase(getApplicationContext());
 
             syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
             Button androidDeviceButton = findViewById(R.id.androidDeviceButton);

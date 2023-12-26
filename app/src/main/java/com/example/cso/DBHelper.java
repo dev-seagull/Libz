@@ -8,6 +8,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Build;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.FileContent;
@@ -41,6 +42,7 @@ public class DBHelper extends SQLiteOpenHelper {
         dbReadable = getReadableDatabase();
         dbWritable = getWritableDatabase();
         onCreate(getWritableDatabase());
+        System.out.println("in constructor : "+context.getDatabasePath(DATABASE_NAME));
     }
 
     @Override
@@ -867,9 +869,23 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+//    public static String getAppSpecificPath(Context context) {
+//        if (context != null) {
+//            if (Build.FINGERPRINT.contains("generic")) {
+//                return context.getFilesDir().getPath(); // /data/data/<package_name>/
+//            } else {
+//                // Physical device path
+//                return context.getDataDir().getPath(); // /data/user/0/<package_name>/
+//            }
+//        }
+//
+//        return null; // Handle the case where Context is null
+//    }
+
     public void backUpDataBase(Context context) {
-        String dataBasePath = context.getDatabasePath("CSODatabase.db").getAbsolutePath();
-        System.out.println("db path" + dataBasePath);
+
+        String dataBasePath = context.getDatabasePath("CSODatabase").getPath();
+        System.out.println("db path -- >  " + dataBasePath);
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<ArrayList<String>> uploadTask = () -> {
@@ -880,6 +896,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 } catch (GeneralSecurityException e) {
                     LogHandler.saveLog("Failed to http_transport when trying to back up database" + e.getLocalizedMessage());
                 } catch (IOException e) {
+                    LogHandler.saveLog("Failed to IOException when trying to back up database" + e.getLocalizedMessage());
                 }
                 final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
@@ -903,20 +920,36 @@ public class DBHelper extends SQLiteOpenHelper {
                 Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
                         .setApplicationName("cso")
                         .build();
-
-                com.google.api.services.drive.model.File fileMetadata =
+                String folder_name = "Stash_DataBase";
+                com.google.api.services.drive.model.File folder_metadata =
                         new com.google.api.services.drive.model.File();
+                folder_metadata.setName(folder_name);
+                folder_metadata.setMimeType("application/vnd.google-apps.folder");
+                com.google.api.services.drive.model.File folder = service.files().create(folder_metadata)
+                        .setFields("id").execute();
+
+                System.out.println("drive folder id is : " + folder.getId());
+                com.google.api.services.drive.model.File fileMetadata =
+                            new com.google.api.services.drive.model.File();
                 fileMetadata.setName("CSODatabase.db");
-                String memeTypeToUpload = getMemeType(new File(dataBasePath));
+                fileMetadata.setParents(java.util.Collections.singletonList(folder.getId()));
 
                 File androidFile = new File(dataBasePath);
-                FileContent mediaContent = new FileContent("application/x-sqlite3", androidFile);
+                if (!androidFile.exists()) {
+                    LogHandler.saveLog("Failed to upload database from Android to backup because it doesn't exist");
 
+                }
+                FileContent mediaContent = new FileContent("application/x-sqlite3", androidFile);
+                if (mediaContent == null) {
+                    LogHandler.saveLog("Failed to upload database from Android to backup because it's null");
+                }
                 com.google.api.services.drive.model.File uploadFile =
                         service.files().create(fileMetadata, mediaContent).setFields("id").execute();
                 String uploadFileId = uploadFile.getId();
+                System.out.println("upload id is " + uploadFileId);
                 while (uploadFileId == null) {
                     wait();
+                    System.out.println("waiting ... ");
                 }
                 if (uploadFileId == null | uploadFileId.isEmpty()) {
                     LogHandler.saveLog("Failed to upload database from Android to backup because it's null");
@@ -925,7 +958,7 @@ public class DBHelper extends SQLiteOpenHelper {
                             "account uploadId : " + uploadFileId, false);
                 }
             } catch (Exception e) {
-
+                LogHandler.saveLog("Failed to upload database from Android to backup main try " + e.getLocalizedMessage());
             }
             return new ArrayList<>();
         };
