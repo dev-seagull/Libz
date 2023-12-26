@@ -83,6 +83,15 @@
                     android:text="Android device"
                     android:textSize="24sp" />
 
+                <Button
+                    android:id="@+id/androidDeviceButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:backgroundTint="#42A5F5"
+                    android:textSize="16sp" />
+
+
                 <TextView
                     android:id="@+id/deviceStorage"
                     android:layout_width="wrap_content"

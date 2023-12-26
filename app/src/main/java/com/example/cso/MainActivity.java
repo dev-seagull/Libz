@@ -121,9 +121,8 @@
             initializeButtons();
 
             syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
-            TextView androidDeviceNameTextView = findViewById(R.id.androidDeviceTextView);
-            androidDeviceName = DeviceName.getDeviceName();
-            androidDeviceNameTextView.setText(androidDeviceName);
+            Button androidDeviceButton = findViewById(R.id.androidDeviceButton);
+            androidDeviceButton.setText(DeviceName.getDeviceName());
 
             LinearLayout primaryAccountsButtonsLayout= findViewById(R.id.primaryAccountsButtons);
             LinearLayout backupAccountsButtonsLayout= findViewById(R.id.backUpAccountsButtons);
