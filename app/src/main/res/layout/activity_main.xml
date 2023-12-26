@@ -72,24 +72,13 @@
                     android:background="#050505" />
 
 
-                <TextView
-                    android:id="@+id/androidDeviceTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="3dp"
-                    android:layout_marginTop="50dp"
-                    android:layout_marginBottom="50dp"
-                    android:gravity="left"
-                    android:text="Android device"
-                    android:textSize="24sp" />
-
                 <Button
                     android:id="@+id/androidDeviceButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
-                    android:backgroundTint="#42A5F5"
-                    android:textSize="16sp" />
+                    android:backgroundTint="#0D47A1"
+                    android:textSize="18dp" />
 
 
                 <TextView
@@ -112,6 +101,7 @@
                     android:layout_marginBottom="20dp"
                     android:gravity="left"
                     android:text=""
+                    android:visibility="gone"
                     android:textSize="20sp" />
 
                 <View
@@ -127,7 +117,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
-                    android:backgroundTint="#42A5F5"
+                    android:backgroundTint="#4CAF50"
                     android:text="Sync"
                     android:textSize="16sp" />
 
@@ -141,7 +131,7 @@
                     android:id="@+id/restoreButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:backgroundTint="#42A5F5"
+                    android:backgroundTint="#4CAF50"
                     android:text="Restore"
                     android:textSize="16sp" />
 

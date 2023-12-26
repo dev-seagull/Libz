@@ -121,8 +121,10 @@
             dbHelper.backUpDataBase(getApplicationContext());
 
             syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
+
+            androidDeviceName = DeviceName.getDeviceName();
             Button androidDeviceButton = findViewById(R.id.androidDeviceButton);
-            androidDeviceButton.setText(DeviceName.getDeviceName());
+            androidDeviceButton.setText(androidDeviceName);
 
             LinearLayout primaryAccountsButtonsLayout= findViewById(R.id.primaryAccountsButtons);
             LinearLayout backupAccountsButtonsLayout= findViewById(R.id.backUpAccountsButtons);
@@ -131,8 +133,8 @@
             googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
 
             runOnUiThread(() ->{
-                TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
-                androidStatisticsTextView.setText("Wait until we get an update of your assets ...");
+                TextView deviceStorageTextView = findViewById(R.id.deviceStorage);
+                deviceStorageTextView.setText("Wait until we get an update of your assets ...");
             });
 
             Thread deleteRedundantAndroidThread = new Thread(new Runnable() {
@@ -256,6 +258,7 @@
                             "\n" + "free space: " + storage.get(1) + "\n");
 
                     TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
+                    androidStatisticsTextView.setVisibility(View.VISIBLE);
                     int total_androidAssets_count = dbHelper.countAndroidAssets();
                     androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
                             "\n" + "synced android assets: " +
@@ -471,6 +474,7 @@
                                     "\n" + "free space: " + storage.get(1) + "\n");
 
                             TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
+                            androidStatisticsTextView.setVisibility(View.VISIBLE);
                             int total_androidAssets_count = dbHelper.countAndroidAssets();
                             androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
                                     "\n" + "synced android assets: " +
@@ -669,6 +673,7 @@
                             runOnUiThread(() -> {
                                 childview[0].setClickable(true);
                                 TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
+                                androidStatisticsTextView.setVisibility(View.VISIBLE);
                                 int total_androidAssets_count = dbHelper.countAndroidAssets();
                                 androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
                                         "\n" + "synced android assets: " +
@@ -1009,6 +1014,7 @@
                                     "\n" + "free space: " + storage.get(1) + "\n");
 
                             TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
+                            androidStatisticsTextView.setVisibility(View.VISIBLE);
                             int total_androidAssets_count = dbHelper.countAndroidAssets();
                             androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
                                     "\n" + "synced android assets: " +
