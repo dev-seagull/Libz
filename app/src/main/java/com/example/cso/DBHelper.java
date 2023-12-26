@@ -8,6 +8,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Build;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.FileContent;
@@ -41,6 +42,7 @@ public class DBHelper extends SQLiteOpenHelper {
         dbReadable = getReadableDatabase();
         dbWritable = getWritableDatabase();
         onCreate(getWritableDatabase());
+        System.out.println("in constructor : "+context.getDatabasePath(DATABASE_NAME));
     }
 
     @Override
@@ -867,9 +869,23 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+//    public static String getAppSpecificPath(Context context) {
+//        if (context != null) {
+//            if (Build.FINGERPRINT.contains("generic")) {
+//                return context.getFilesDir().getPath(); // /data/data/<package_name>/
+//            } else {
+//                // Physical device path
+//                return context.getDataDir().getPath(); // /data/user/0/<package_name>/
+//            }
+//        }
+//
+//        return null; // Handle the case where Context is null
+//    }
+
     public void backUpDataBase(Context context) {
-        String dataBasePath = context.getDatabasePath("CSODatabase.db").getAbsolutePath();
-        System.out.println("db path" + dataBasePath);
+
+        String dataBasePath = context.getDatabasePath("CSODatabase").getPath();
+        System.out.println("db path -- >  " + dataBasePath);
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<ArrayList<String>> uploadTask = () -> {
@@ -904,12 +920,21 @@ public class DBHelper extends SQLiteOpenHelper {
                 Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
                         .setApplicationName("cso")
                         .build();
-
-                com.google.api.services.drive.model.File fileMetadata =
+                String folder_name = "Stash_DataBase";
+                com.google.api.services.drive.model.File folder_metadata =
                         new com.google.api.services.drive.model.File();
-                fileMetadata.setName("CSODatabase.db");
+                folder_metadata.setName(folder_name);
+                folder_metadata.setMimeType("application/vnd.google-apps.folder");
+                com.google.api.services.drive.model.File folder = service.files().create(folder_metadata)
+                        .setFields("id").execute();
 
-                File androidFile = new File("/data/data/com.example.cso/databases/CSODatabase");
+                System.out.println("drive folder id is : " + folder.getId());
+                com.google.api.services.drive.model.File fileMetadata =
+                            new com.google.api.services.drive.model.File();
+                fileMetadata.setName("CSODatabase.db");
+                fileMetadata.setParents(java.util.Collections.singletonList(folder.getId()));
+
+                File androidFile = new File(dataBasePath);
                 if (!androidFile.exists()) {
                     LogHandler.saveLog("Failed to upload database from Android to backup because it doesn't exist");
 
