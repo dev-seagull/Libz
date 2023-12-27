@@ -285,7 +285,7 @@
             LogHandler.saveLog("--------------------------Start of app----------------------------",false);
 
             deleteRedundantAndroidThread.start();
-            //updateAndroidFilesThread.start();
+            updateAndroidFilesThread.start();
             deleteRedundantDriveThread.start();
             updateDriveBackUpThread.start();
             deleteDuplicatedInDrive.start();
@@ -1147,11 +1147,11 @@
                     uploadPhotosToDriveThread.start();
                     deletePhotosFromAndroidThread.start();
                     deleteRedundantAndroidThread.start();
-                    //updateAndroidFilesThread.start();
+                    updateAndroidFilesThread.start();
                     deleteRedundantDriveThread.start();
                     driveBackUpThread.start();
                     deleteDuplicatedInDrive.start();
-                    //androidUploadThread.start();
+                    androidUploadThread.start();
                     deleteRedundantDriveThread2.start();
                     driveBackUpThread2.start();
                     deleteDuplicatedInDrive2.start();
