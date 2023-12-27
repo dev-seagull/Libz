@@ -23,10 +23,15 @@ public class Hash {
             byte[] buffer = new byte[BUFFER_SIZE];
             int bytesRead;
             while ((bytesRead = bufferedInputStream.read(buffer)) > 0) {
-                digest.update(buffer, 0, bytesRead);
+                if (digest != null) {
+                    digest.update(buffer, 0, bytesRead);
+                }
             }
             bufferedInputStream.close();
-            byte[] hash = digest.digest();
+            byte[] hash = new byte[0];
+            if (digest != null) {
+                hash = digest.digest();
+            }
             for (byte b : hash) {
                 hexString.append(String.format("%02X", b));
             }
