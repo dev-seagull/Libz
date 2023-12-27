@@ -236,33 +236,6 @@ public class Upload {
         }
     }
 
-    public static String calculateHash(File file) throws IOException {
-        final int BUFFER_SIZE = 8192;
-        StringBuilder hexString = new StringBuilder();
-        MessageDigest digest = null;
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            LogHandler.saveLog("SHA-256 algorithm not available " + e.getLocalizedMessage());
-        }
-        try(BufferedInputStream bufferedInputStream = new BufferedInputStream(
-                new FileInputStream(file))){
-            byte[] buffer = new byte[BUFFER_SIZE];
-            int bytesRead;
-            while ((bytesRead = bufferedInputStream.read(buffer)) > 0) {
-                digest.update(buffer, 0, bytesRead);
-            }
-            bufferedInputStream.close();
-            byte[] hash = digest.digest();
-            for (byte b : hash) {
-                hexString.append(String.format("%02X", b));
-            }
-        }catch (Exception e){
-            LogHandler.saveLog("error in calculating hash " + e.getLocalizedMessage());
-        }
-        return hexString.toString().toLowerCase();
-    }
-
     public static void restore(Context context){
         String sqlQuery = "SELECT T.id, T.source, T.fileName, T.destination, D.assetId, " +
                 "T.operation, T.hash, T.date, D.fileId , D.userEmail " +
@@ -573,7 +546,7 @@ public class Upload {
                                                 LogHandler.saveLog("Closing output stream failed : " + e.getLocalizedMessage());
                                             }
 
-                                            String fileHash = calculateHash(new File(filePath));
+                                            String fileHash = Hash.calculateHash(new File(filePath));
                                             System.out.println("file hash for test: "+ fileHash + " for file name: " + fileName);
                                             long last_insertedId = MainActivity.dbHelper.insertAssetData(fileHash);
                                             if(last_insertedId != -1){
@@ -644,7 +617,7 @@ public class Upload {
                                     LogHandler.saveLog("Closing output stream failed : " + e.getLocalizedMessage());
                                 }
 
-                                String fileHash = calculateHash(new File(filePath));
+                                String fileHash = Hash.calculateHash(new File(filePath));
                                 System.out.println("file hash for test: "+ fileHash + " for file name: " + fileName);
                                 long last_insertedId = MainActivity.dbHelper.insertAssetData(fileHash);
                                 if(last_insertedId != -1){

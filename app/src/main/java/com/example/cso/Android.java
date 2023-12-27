@@ -51,7 +51,7 @@ public class Android {
         }
 
         try{
-           while (cursor.moveToNext()) {
+           while (cursor.moveToNext() && cursor!=null) {
                String mediaItemPath = cursor.getString(columnIndexPath);
                File mediaItemFile = new File(mediaItemPath);
                String mediaItemName = mediaItemFile.getName();
@@ -64,7 +64,7 @@ public class Android {
                    galleryItems++;
                    String fileHash = "";
                    try {
-                       fileHash = Upload.calculateHash(androidFile);
+                       fileHash = Hash.calculateHash(androidFile);
                    } catch (Exception e) {
                        LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
                    }
@@ -126,7 +126,7 @@ public class Android {
                                     fileManagerItems++;
                                     String mediaItemHash = "";
                                     try {
-                                        mediaItemHash = Upload.calculateHash(mediaItemFile);
+                                        mediaItemHash = Hash.calculateHash(mediaItemFile);
                                     } catch (Exception e) {
                                         LogHandler.saveLog("Failed to calculate hash in file manager: " + e.getLocalizedMessage());
                                     }
@@ -161,7 +161,7 @@ public class Android {
 
         double totalSpaceGB = (totalBlocks * blockSize) / (1024.0 * 1024.0 * 1024.0);
         double freeSpaceGB = (availableBlocks * blockSize) / (1024.0 * 1024.0 * 1024.0);
-        ArrayList storage = new ArrayList();
+        ArrayList<String> storage = new ArrayList<>();
         storage.add(String.format("%.2f GB", totalSpaceGB));
         storage.add(String.format("%.2f GB", freeSpaceGB));
         return storage;
