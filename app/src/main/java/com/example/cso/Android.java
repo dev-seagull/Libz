@@ -70,7 +70,6 @@ public class Android {
                    }
                    long lastInsertedId =
                            MainActivity.dbHelper.insertAssetData(fileHash);
-                   System.out.println("last insert id for hash " + fileHash + " is " + lastInsertedId);
                    if(lastInsertedId != -1){
                        MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
                                fileHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
@@ -85,7 +84,6 @@ public class Android {
             LogHandler.saveLog("Failed to get gallery files: " + e.getLocalizedMessage());
        }
         try{
-            System.out.println("number of gallery items is equal to: " + galleryItems );
             if(galleryItems == 0){
                 LogHandler.saveLog("The Gallery was not found, " +
                         "So it's starting to get the files from the file manager",false);
@@ -103,7 +101,6 @@ public class Android {
         String[] extensions = {".jpg", ".jpeg", ".png", ".webp",
                 ".gif", ".mp4", ".mkv", ".webm"};
         int fileManagerItems = 0;
-        System.out.println("im in file man 1 ");
         File rootDirectory = Environment.getExternalStorageDirectory();
         Queue<File> queue = new LinkedList<>();
         queue.add(rootDirectory);
@@ -112,8 +109,6 @@ public class Android {
             File[] currentFiles = new File[0];
             if (currentDirectory != null) {
                 currentFiles = currentDirectory.listFiles();
-            }else{
-                LogHandler.saveLog("Current directory is null",false);
             }
             if(currentFiles != null){
                 for(File currentFile: currentFiles){
@@ -123,7 +118,6 @@ public class Android {
                                 String mediaItemPath = currentFile.getPath();
                                 File mediaItemFile = new File(mediaItemPath);
                                 String mediaItemName = currentFile.getName();
-                                System.out.println("im in file man 3 : " + mediaItemName);
                                 Double mediaItemSize = Double.valueOf(currentFile.length() / (Math.pow(10,6)));
                                 SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy");
                                 String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));
@@ -134,22 +128,21 @@ public class Android {
                                     try {
                                         mediaItemHash = Upload.calculateHash(mediaItemFile);
                                     } catch (Exception e) {
-                                        LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
+                                        LogHandler.saveLog("Failed to calculate hash in file manager: " + e.getLocalizedMessage());
                                     }
                                     long lastInsertedId =
                                             MainActivity.dbHelper.insertAssetData(mediaItemHash);
-                                    System.out.println("lastInsertedId: " + lastInsertedId);
                                     if(lastInsertedId != -1){
                                         MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
                                                 mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
                                         LogHandler.saveLog("File was detected in file manager: " + mediaItemFile.getName(),false);
                                     }else{
-                                        LogHandler.saveLog("Failed to insert file into android table: " + mediaItemFile.getName());
+                                        LogHandler.saveLog("Failed to insert file into android table in file manager : " + mediaItemFile.getName());
                                     }
                                 }
                             }
                         }
-                    } else if(currentFile.isDirectory()){
+                    }else if(currentFile.isDirectory()){
                         queue.add(currentFile);
                     }
                 }
