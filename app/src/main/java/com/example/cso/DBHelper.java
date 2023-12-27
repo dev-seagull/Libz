@@ -1,28 +1,26 @@
 package com.example.cso;
 
-import static com.example.cso.GooglePhotos.getMemeType;
-import static com.example.cso.GooglePhotos.isImage;
-import static com.example.cso.GooglePhotos.isVideo;
-
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Build;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.FileContent;
+import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.model.FileList;
 
 import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +28,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class DBHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "CSODatabase";
@@ -42,7 +41,6 @@ public class DBHelper extends SQLiteOpenHelper {
         dbReadable = getReadableDatabase();
         dbWritable = getWritableDatabase();
         onCreate(getWritableDatabase());
-        System.out.println("in constructor : "+context.getDatabasePath(DATABASE_NAME));
     }
 
     @Override
@@ -71,7 +69,7 @@ public class DBHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(ASSET);
 
         String BACKUPDB = "CREATE TABLE IF NOT EXISTS BACKUPDB("
-                +"userEmail TEXT REFERENCES USERPROFILE(userEmail) ON UPDATE CASCADE ON DELETE CASCADE,"+
+                +"userEmail TEXT REFERENCES USERPROFILE(userEmail), "+
                 "fileId TEXT);";
         sqLiteDatabase.execSQL(BACKUPDB);
 
@@ -703,71 +701,6 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
     }
 
-//    public void deleteRedundantDrive(list<String[]> driveFileRows,ArrayList<String> driveFileIds){
-//        String filePath;
-//        for (String driveFileId : driveFileIds){
-//            for (String[] row : driveFileRows){
-//                if (row[1].equals(driveFileId)){
-//                    filePath = row[2];
-//                    String id = row[0];
-//                    File driveFile = new File(filePath);
-//                    if (!driveFile.exists()){
-//                        SQLiteDatabase db = getWritableDatabase();
-//                        db.beginTransaction();
-//                        try {
-//                            String sqlQuery = "DELETE FROM DRIVE WHERE id = ? ";
-//                            db.execSQL(sqlQuery, new Object[]{id});
-//                            db.setTransactionSuccessful();
-//                        } catch (Exception e) {
-//                            LogHandler.saveLog("Failed to delete the database in DRIVE , deleteRedundantDrive method. " + e.getLocalizedMessage());
-//                        } finally {
-//                            db.endTransaction();
-//                        }
-//
-//                        db.beginTransaction();
-//                        try {
-//                            String sqlQuery = "DELETE FROM ASSET WHERE id = ? ";
-//                            db.execSQL(sqlQuery, new Object[]{id});
-//                            db.setTransactionSuccessful();
-//                        } catch (Exception e) {
-//                            LogHandler.saveLog("Failed to delete the database in ASSET , deleteRedundantDrive method. " + e.getLocalizedMessage());
-//                        } finally {
-//                            db.endTransaction();
-//                            db.close();
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//            filePath = androidRow[2];
-//            String id = androidRow[0];
-//            File androidFile = new File(filePath);
-//            if (!androidFile.exists()){
-//                SQLiteDatabase db = getWritableDatabase();
-//                db.beginTransaction();
-//                try {
-//                    String sqlQuery = "DELETE FROM ANDROID WHERE id = ? ";
-//                    db.execSQL(sqlQuery, new Object[]{id});
-//                    db.setTransactionSuccessful();
-//                } catch (Exception e) {
-//                    LogHandler.saveLog("Failed to delete the database in ANDROID , deleteRedundantAndroid method. " + e.getLocalizedMessage());
-//                } finally {
-//                    db.endTransaction();
-//                }
-//
-//                db.beginTransaction();
-//                try {
-//                    String sqlQuery = "DELETE FROM ASSET WHERE id = ? ";
-//                    db.execSQL(sqlQuery, new Object[]{id});
-//                    db.setTransactionSuccessful();
-//                } catch (Exception e) {
-//                    LogHandler.saveLog("Failed to delete the database in ASSET , deleteRedundantAndroid method. " + e.getLocalizedMessage());
-//                } finally {
-//                    db.endTransaction();
-//                    db.close();
-//                }
-//            }
-//        }
 
     public List<String[]> getDriveTable(String[] columns, String userEmail){
         List<String[]> resultList = new ArrayList<>();
@@ -875,47 +808,29 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-//    public static String getAppSpecificPath(Context context) {
-//        if (context != null) {
-//            if (Build.FINGERPRINT.contains("generic")) {
-//                return context.getFilesDir().getPath(); // /data/data/<package_name>/
-//            } else {
-//                // Physical device path
-//                return context.getDataDir().getPath(); // /data/user/0/<package_name>/
-//            }
-//        }
-//
-//        return null; // Handle the case where Context is null
-//    }
-
-    public void backUpDataBase(Context context) {
+    public List<String> backUpDataBase(Context context) {
 
         String dataBasePath = context.getDatabasePath("CSODatabase").getPath();
         System.out.println("db path -- >  " + dataBasePath);
+        final String[] userEmail = {""};
+        final String[] uploadFileId = new String[1];
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Callable<ArrayList<String>> uploadTask = () -> {
+        Callable<String> uploadTask = () -> {
             try {
-                NetHttpTransport HTTP_TRANSPORT = null;
-                try {
-                    HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-                } catch (GeneralSecurityException e) {
-                    LogHandler.saveLog("Failed to http_transport when trying to back up database" + e.getLocalizedMessage());
-                } catch (IOException e) {
-                    LogHandler.saveLog("Failed to IOException when trying to back up database" + e.getLocalizedMessage());
-                }
-                final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-
                 String driveBackupAccessToken = "";
                 String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
                 List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getUserProfile(drive_backup_selected_columns);
                 for (String[] drive_backUp_account : drive_backUp_accounts) {
                     if (drive_backUp_account[1].equals("backup")) {
                         driveBackupAccessToken = drive_backUp_account[2];
+                        userEmail[0] = drive_backUp_account[0];
                         break;
                     }
 
                 }
+                NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();;
+                final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
                 String bearerToken = "Bearer " + driveBackupAccessToken;
                 System.out.println("access token to upload is " + driveBackupAccessToken);
                 HttpRequestInitializer requestInitializer = request -> {
@@ -927,23 +842,40 @@ public class DBHelper extends SQLiteOpenHelper {
                         .setApplicationName("cso")
                         .build();
                 String folder_name = "Stash_DataBase";
-                com.google.api.services.drive.model.File folder_metadata =
-                        new com.google.api.services.drive.model.File();
-                folder_metadata.setName(folder_name);
-                folder_metadata.setMimeType("application/vnd.google-apps.folder");
-                com.google.api.services.drive.model.File folder = service.files().create(folder_metadata)
-                        .setFields("id").execute();
+                String folderId = null;
+                com.google.api.services.drive.model.File folder = null;
 
-                System.out.println("drive folder id is : " + folder.getId());
+                FileList fileList = service.files().list()
+                        .setQ("mimeType='application/vnd.google-apps.folder' and name='"
+                                + folder_name + "'")
+                        .setSpaces("drive")
+                        .setFields("files(id)")
+                        .execute();
+                List<com.google.api.services.drive.model.File> driveFolders = fileList.getFiles();
+                for(com.google.api.services.drive.model.File driveFolder: driveFolders){
+                    folderId = driveFolder.getId();
+                }
+
+                if (folderId == null) {
+                    com.google.api.services.drive.model.File folder_metadata =
+                            new com.google.api.services.drive.model.File();
+                    folder_metadata.setName(folder_name);
+                    folder_metadata.setMimeType("application/vnd.google-apps.folder");
+                    folder = service.files().create(folder_metadata)
+                            .setFields("id").execute();
+
+                    folderId = folder.getId();
+                }
+
+
                 com.google.api.services.drive.model.File fileMetadata =
                             new com.google.api.services.drive.model.File();
                 fileMetadata.setName("CSODatabase.db");
-                fileMetadata.setParents(java.util.Collections.singletonList(folder.getId()));
+                fileMetadata.setParents(java.util.Collections.singletonList(folderId));
 
                 File androidFile = new File(dataBasePath);
                 if (!androidFile.exists()) {
                     LogHandler.saveLog("Failed to upload database from Android to backup because it doesn't exist");
-
                 }
                 FileContent mediaContent = new FileContent("application/x-sqlite3", androidFile);
                 if (mediaContent == null) {
@@ -951,30 +883,31 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
                 com.google.api.services.drive.model.File uploadFile =
                         service.files().create(fileMetadata, mediaContent).setFields("id").execute();
-                String uploadFileId = uploadFile.getId();
-                System.out.println("upload id is " + uploadFileId);
-                while (uploadFileId == null) {
+                uploadFileId[0] = uploadFile.getId();
+                System.out.println("upload id is " + uploadFileId[0]);
+                while (uploadFileId[0] == null) {
                     wait();
                     System.out.println("waiting ... ");
                 }
-                if (uploadFileId == null | uploadFileId.isEmpty()) {
+                if (uploadFileId[0] == null | uploadFileId[0].isEmpty()) {
                     LogHandler.saveLog("Failed to upload database from Android to backup because it's null");
                 } else {
                     LogHandler.saveLog("Uploading database from android into backup " +
-                            "account uploadId : " + uploadFileId, false);
+                            "account uploadId : " + uploadFileId[0], false);
                 }
             } catch (Exception e) {
-                LogHandler.saveLog("Failed to upload database from Android to backup main try " + e.getLocalizedMessage());
+                LogHandler.saveLog("Failed to upload database from Android to backup : " + e.getLocalizedMessage());
             }
-            return new ArrayList<>();
+            return uploadFileId[0];
         };
-        Future<ArrayList<String>> future = executor.submit(uploadTask);
-        ArrayList<String> uploadFileIdsFuture = new ArrayList<>();
+        Future<String> future = executor.submit(uploadTask);
+        String uploadFileIdFuture = new String();
         try{
-            uploadFileIdsFuture = future.get();
-            LogHandler.saveLog("Finished with " + uploadFileIdsFuture.size() + " uploads",false);
+            uploadFileIdFuture = future.get();
         }catch (Exception e){
             System.out.println(e.getLocalizedMessage());
         }
+        List<String> result = Arrays.asList(userEmail[0],uploadFileIdFuture);
+        return result;
     }
 }

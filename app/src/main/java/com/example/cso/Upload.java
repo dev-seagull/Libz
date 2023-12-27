@@ -346,6 +346,7 @@ public class Upload {
     }
 
     public ArrayList<String> uploadPhotosToDrive(String destinationUserEmail,String accessToken){
+        System.out.println("here in photos to drive");
         String destinationFolderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()
                 + File.separator + "cso";
         String sqlQury = "SELECT * FROM PHOTOS";
@@ -499,6 +500,7 @@ public class Upload {
                         Cursor cursor2 = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery2, new String[]{assetId});
                         if(cursor2 != null && cursor2.moveToFirst()) {
                             int existsInDrive = cursor2.getInt(0);
+                            System.out.println("exits in drive: "  + existsInDrive + " " + assetId);
                             if(existsInDrive == 0){
                                 try {
                                     URL url = new URL(photosMediaItem.getBaseUrl() + "=d");

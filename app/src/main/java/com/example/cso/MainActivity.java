@@ -38,11 +38,23 @@
     import com.google.android.material.navigation.NavigationView;
     import com.jaredrummler.android.device.DeviceName;
 
+    import org.json.JSONObject;
+
+    import java.io.BufferedReader;
     import java.io.File;
+    import java.io.IOException;
+    import java.io.InputStreamReader;
+    import java.io.OutputStream;
+    import java.net.HttpURLConnection;
+    import java.net.MalformedURLException;
+    import java.net.ProtocolException;
+    import java.net.URL;
+    import java.nio.charset.StandardCharsets;
     import java.util.ArrayList;
     import java.util.HashMap;
     import java.util.List;
     import java.util.Map;
+    import java.util.concurrent.Callable;
     import java.util.concurrent.Executor;
     import java.util.concurrent.Executors;
 
@@ -58,11 +70,9 @@
         HashMap<String, PrimaryAccountInfo> primaryAccountHashMap = new HashMap<>();
         HashMap<String, BackUpAccountInfo> backUpAccountHashMap = new HashMap<>();
         public static String androidDeviceName;
-        final public static String logFileName = "cso_jadid_log.txt";
+        public static String logFileName = "cso_log.txt";
+        public static int errorCounter = 0;
         SharedPreferences preferences;
-        public  static  ArrayList<String> comparator1;
-
-        public  static  ArrayList<String> comparator2;
         public static DBHelper dbHelper;
 
         private Boolean isFirstTime(SharedPreferences preferences){
@@ -100,7 +110,9 @@
 
             googleCloud = new GoogleCloud(this);
             LogHandler.CreateLogFile();
-            LogHandler.saveLog("--------------------------new run----------------------------",false);
+//            LogHandler.saveLog("--------------------------new run----------------------------",false);
+//            LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
+//                    Build.VERSION_CODES.M, false);
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
@@ -120,7 +132,6 @@
             infoButton.setOnClickListener(view -> drawerLayout.openDrawer(GravityCompat.END));
 
             initializeButtons();
-            dbHelper.backUpDataBase(getApplicationContext());
 
             syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
 
@@ -271,12 +282,20 @@
                 });
             });
 
+            LogHandler.saveLog("--------------------------Start of app----------------------------",false);
+
             deleteRedundantAndroidThread.start();
-            updateAndroidFilesThread.start();
+            //updateAndroidFilesThread.start();
             deleteRedundantDriveThread.start();
             updateDriveBackUpThread.start();
             deleteDuplicatedInDrive.start();
             updateUIThread.start();
+//            if(errorCounter == 0){
+//                LogHandler.deleteLogFile();
+//            }
+
+            System.out.println("here 1 : "+  errorCounter );
+            LogHandler.saveLog("--------------------------first threads were finished----------------------------",false);
 
 
             Button restoreButton = findViewById(R.id.restoreButton);
@@ -762,10 +781,9 @@
                                     }
                                 }
                             }
+                            System.out.println("here Build.VERSION.SDK_INT >= Build.VERSION_CODES.R" + (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R));
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                                 if (Environment.isExternalStorageManager()) {
-                                    LogHandler.CreateLogFile();
-                                    System.out.println("retry to create log file");
                                     String[] columns = {"userEmail", "type" ,"accessToken"};
                                     List<String[]> selectedRows = dbHelper.getUserProfile(columns);
                                     for(String[] selectedRow: selectedRows){
@@ -1004,6 +1022,98 @@
                                 GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
                             }
                         }
+
+                        String DBSqlQuery = "SELECT * FROM BACKUPDB";
+                        Cursor cursor = dbHelper.dbReadable.rawQuery(DBSqlQuery, null);
+                        if(cursor != null && cursor.moveToFirst()){
+                            System.out.println("cur no null");
+                            int fileIdColumnIndex = cursor.getColumnIndex("fileId");
+                            int userEmailColumnIndex = cursor.getColumnIndex("userEmail");
+
+                            if(fileIdColumnIndex >= 0 && userEmailColumnIndex >= 0){
+                                String fileId = cursor.getString(fileIdColumnIndex);
+                                String userEmail = cursor.getString(userEmailColumnIndex);
+                                String driveBackupAccessToken = "";
+                                String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
+                                List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getUserProfile(drive_backup_selected_columns);
+                                for (String[] drive_backUp_account : drive_backUp_accounts) {
+                                    System.out.println(userEmail);
+                                    System.out.println(drive_backUp_account[1]);
+                                    System.out.println(drive_backUp_account[0]);
+                                    System.out.println(drive_backUp_account[2]);
+                                    if (drive_backUp_account[1].equals("backup") && drive_backUp_account[0].equals(userEmail)) {
+                                        driveBackupAccessToken = drive_backUp_account[2];
+                                    }
+                                }
+
+                                System.out.println("drive token to delete database: "+ driveBackupAccessToken);
+                                URL url = null;
+                                try {
+                                    url = new URL("https://www.googleapis.com/drive/v3/files/" + fileId);
+                                } catch (MalformedURLException e) {
+                                    LogHandler.saveLog("failed to set url to delete backup database");
+                                }
+                                for(int i=0; i<3; i++){
+                                    HttpURLConnection connection = null;
+                                    try {
+                                        connection = (HttpURLConnection) url.openConnection();
+                                    } catch (IOException e) {
+                                        LogHandler.saveLog("failed to set connection to delete backup database");
+                                    }
+                                    try {
+                                        connection.setRequestMethod("DELETE");
+                                    } catch (ProtocolException e) {
+                                        LogHandler.saveLog("failed to set delete request method to delete backup database");
+                                    }
+                                    connection.setRequestProperty("Content-type", "application/json");
+                                    connection.setRequestProperty("Authorization", "Bearer " + driveBackupAccessToken);
+                                    int responseCode = 0;
+                                    try {
+                                        responseCode = connection.getResponseCode();
+                                    } catch (IOException e) {
+                                        LogHandler.saveLog("failed to get response code of deleting backup database");
+                                    }
+                                    LogHandler.saveLog("responseCode of deleting duplicate drive : " + responseCode,false);
+                                    if(responseCode == HttpURLConnection.HTTP_NO_CONTENT){
+                                        String deleteQuery = "DELETE FROM BACKUPDB WHERE UserEmail = ?  and fileId = ? ";
+                                        dbHelper.dbWritable.execSQL(deleteQuery, new String[]{userEmail, fileId});
+                                        break;
+                                    }else{
+                                        BufferedReader bufferedReader = null;
+                                        try {
+                                            bufferedReader = new BufferedReader(
+                                                    new InputStreamReader(connection.getInputStream() != null ? connection.getErrorStream() : connection.getInputStream())
+                                            );
+                                        } catch (IOException e) {
+                                            throw new RuntimeException(e);
+                                        }
+                                        StringBuilder responseBuilder = new StringBuilder();
+                                        String line;
+                                        while (true) {
+                                            try {
+                                                if (!((line = bufferedReader.readLine()) != null))
+                                                    break;
+                                            } catch (IOException e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                            responseBuilder.append(line);
+                                        }
+                                        String response = responseBuilder.toString();
+                                        System.out.println(response);
+                                        LogHandler.saveLog("Retrying to delete backup database " +
+                                            "from Drive back up account " + userEmail +
+                                            " with response code of " + responseCode);
+                                    }
+                                }
+                            }
+                        }
+
+                        System.out.println("herer");
+                        List<String> result = dbHelper.backUpDataBase(getApplicationContext());
+                        String userEmailDatabase = result.get(0);
+                        String databaseFileId = result.get(1);
+                        String sqlQuery = "INSERT INTO BACKUPDB(userEmail, fileId) VALUES (?,?)";
+                        dbHelper.dbWritable.execSQL(sqlQuery,new String[]{userEmailDatabase,databaseFileId});
                     });
 
                     Thread updateUIThread =  new Thread(() -> {
@@ -1037,11 +1147,11 @@
                     uploadPhotosToDriveThread.start();
                     deletePhotosFromAndroidThread.start();
                     deleteRedundantAndroidThread.start();
-                    updateAndroidFilesThread.start();
+                    //updateAndroidFilesThread.start();
                     deleteRedundantDriveThread.start();
                     driveBackUpThread.start();
                     deleteDuplicatedInDrive.start();
-                    androidUploadThread.start();
+                    //androidUploadThread.start();
                     deleteRedundantDriveThread2.start();
                     driveBackUpThread2.start();
                     deleteDuplicatedInDrive2.start();
