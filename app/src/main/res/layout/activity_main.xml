@@ -77,6 +77,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
+                    android:clickable="false"
                     android:drawableLeft="@drawable/android_device_icon"
                     android:backgroundTint="#0D47A1"
                     android:textSize="18dp" />
