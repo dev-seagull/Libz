@@ -70,6 +70,12 @@ public class DBHelper extends SQLiteOpenHelper {
                 "fileHash TEXT);";
         sqLiteDatabase.execSQL(ASSET);
 
+        String BACKUPDB = "CREATE TABLE IF NOT EXISTS BACKUPDB("
+                +"userEmail TEXT REFERENCES USERPROFILE(userEmail) ON UPDATE CASCADE ON DELETE CASCADE,"+
+                "fileId TEXT);";
+        sqLiteDatabase.execSQL(BACKUPDB);
+
+
         String DRIVE = "CREATE TABLE IF NOT EXISTS DRIVE("
                 +"id INTEGER PRIMARY KEY AUTOINCREMENT,"+
                 "assetId INTEGER REFERENCES ASSET(id),"+

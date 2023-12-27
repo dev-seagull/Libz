@@ -5,7 +5,9 @@
     import android.content.Intent;
     import android.content.SharedPreferences;
     import android.content.pm.PackageManager;
+    import android.content.res.ColorStateList;
     import android.database.Cursor;
+    import android.graphics.Color;
     import android.os.Build;
     import android.os.Bundle;
     import android.os.Environment;
@@ -129,8 +131,11 @@
             LinearLayout primaryAccountsButtonsLayout= findViewById(R.id.primaryAccountsButtons);
             LinearLayout backupAccountsButtonsLayout= findViewById(R.id.backUpAccountsButtons);
 
-            googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
-            googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
+            Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
+            newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+
+            Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
+            newBackupLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
 
             runOnUiThread(() ->{
                 TextView deviceStorageTextView = findViewById(R.id.deviceStorage);
@@ -527,8 +532,9 @@
                                             primaryAccountsButtonsLinearLayout.getChildCount() - 2);
                                     LogHandler.saveLog(userEmail +  " has logged in to the primary account",false);
                                      if(childview[0] instanceof Button){
-                                            Button bt = (Button) childview[0];
-                                            bt.setText(userEmail);
+                                        Button bt = (Button) childview[0];
+                                        bt.setText(userEmail);
+                                        bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
                                      }
                                     updateButtonsListeners();
                                 });
@@ -578,6 +584,7 @@
                                     if(childview[0] instanceof Button){
                                         Button bt = (Button) childview[0];
                                         bt.setText(userEmail);
+                                        bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
                                     }
                                     updateButtonsListeners();
                                 });

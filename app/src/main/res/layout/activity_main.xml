@@ -74,12 +74,16 @@
 
                 <Button
                     android:id="@+id/androidDeviceButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
                     android:clickable="false"
                     android:drawableLeft="@drawable/android_device_icon"
                     android:backgroundTint="#0D47A1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textColor="@color/white"
+                    android:paddingRight="84dp"
+                    android:foregroundGravity="center"
                     android:textSize="18dp" />
 
 
@@ -121,7 +125,8 @@
                     android:layout_marginTop="20dp"
                     android:backgroundTint="#4CAF50"
                     android:text="Sync"
-                    android:textSize="16sp" />
+                    android:textSize="16sp"
+                    app:cornerRadius="100dp"/>
 
                 <TextView
                     android:id="@+id/syncToBackUpAccountTextView"
@@ -135,7 +140,8 @@
                     android:layout_height="wrap_content"
                     android:backgroundTint="#4CAF50"
                     android:text="Restore"
-                    android:textSize="16sp" />
+                    android:textSize="16sp"
+                    app:cornerRadius="50dp"/>
 
                 <TextView
                     android:id="@+id/restoreTextView"

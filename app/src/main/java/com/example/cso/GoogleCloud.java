@@ -158,7 +158,9 @@
                             storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
                     runOnUiThread(() -> {
                         LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
-                        createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
+                        Button newGoogleLoginButton = createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
+                        newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+
                     });
                 }
             }catch (Exception e){
@@ -227,7 +229,9 @@
 
                     runOnUiThread(() -> {
                         LinearLayout backupAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-                        createBackUpLoginButton(backupAccountsButtonsLinearLayout);
+                        Button newGoogleLoginButton = createBackUpLoginButton(backupAccountsButtonsLinearLayout);
+                        newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+
                     });
                 }
             }catch (Exception e){
