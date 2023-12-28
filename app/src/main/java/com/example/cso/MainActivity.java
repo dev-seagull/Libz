@@ -70,7 +70,7 @@
         HashMap<String, PrimaryAccountInfo> primaryAccountHashMap = new HashMap<>();
         HashMap<String, BackUpAccountInfo> backUpAccountHashMap = new HashMap<>();
         public static String androidDeviceName;
-        public static String logFileName = "cso_log.txt";
+        public static String logFileName = "stash_log.txt";
         public static int errorCounter = 0;
         SharedPreferences preferences;
         public static DBHelper dbHelper;
@@ -89,6 +89,7 @@
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
+            LogHandler.CreateLogFile();
             setContentView(R.layout.activity_main);
             int requestCode =1;
             String[] permissions = {
@@ -109,7 +110,6 @@
             }
 
             googleCloud = new GoogleCloud(this);
-            LogHandler.CreateLogFile();
 //            LogHandler.saveLog("--------------------------new run----------------------------",false);
 //            LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
 //                    Build.VERSION_CODES.M, false);
@@ -294,7 +294,7 @@
 //                LogHandler.deleteLogFile();
 //            }
 
-            System.out.println("here 1 : "+  errorCounter );
+            System.out.println(" here 1 : " +  errorCounter );
             LogHandler.saveLog("--------------------------first threads were finished----------------------------",false);
 
 
@@ -603,7 +603,7 @@
                                     if(childview[0] instanceof Button){
                                         Button bt = (Button) childview[0];
                                         bt.setText(userEmail);
-                                        bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
+                                        bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#42A5F5")));
                                     }
                                     updateButtonsListeners();
                                 });
