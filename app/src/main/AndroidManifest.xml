@@ -16,6 +16,8 @@
     <application android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
         android:name=".LogHandler"
+        android:largeHeap="true"
+        android:hardwareAccelerated="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -49,5 +51,6 @@
         <activity android:name=".GoogleCloud"
             tools:ignore="Instantiatable" />
     </application>
+
 
 </manifest>
