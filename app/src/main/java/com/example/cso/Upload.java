@@ -18,6 +18,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -661,11 +662,17 @@ public class Upload {
 
 
     public static byte[] readBytesFromFile(File file) throws IOException {
-        FileInputStream fis = new FileInputStream(file);
-        byte[] bytes = new byte[(int) file.length()];
-        fis.read(bytes);
-        fis.close();
-        return bytes;
+        int bufferSize = 1024 * 1024; 
+        byte[] buffer = new byte[bufferSize];
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(file))) {
+            int bytesRead;
+            while ((bytesRead = in.read(buffer, 0, bufferSize)) != -1) {
+                out.write(buffer, 0, bytesRead);
+            }
+        }
+        return out.toByteArray();
     }
 
 }
