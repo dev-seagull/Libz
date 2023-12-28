@@ -8,6 +8,7 @@ import android.provider.MediaStore;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -65,6 +66,9 @@ public class Android {
                    String fileHash = "";
                    try {
                        fileHash = Hash.calculateHash(androidFile);
+                       byte[] fileBytes = Upload.readBytesFromFile(androidFile);
+                       System.out.println("Bytes of the android file " + androidFile.getName() + ": " + Arrays.toString(fileBytes));
+
                    } catch (Exception e) {
                        LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
                    }

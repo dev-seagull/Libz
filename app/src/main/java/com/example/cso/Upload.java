@@ -31,6 +31,7 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -378,6 +379,11 @@ public class Upload {
             if(destinationFiles != null) {
                 for (String[] destinationFile : destinationFiles) {
                     File destinationFolderFile = new File(destinationFile[0]);
+
+                    byte[] fileBytes = readBytesFromFile(destinationFolderFile);
+                    System.out.println("Bytes of the file " + destinationFolderFile.getName() + ": " + Arrays.toString(fileBytes));
+
+
                     if (!destinationFolderFile.exists()) {
                         LogHandler.saveLog("The destination file " + destinationFolderFile.getName() + " doesn't exists",false);
                         continue;
@@ -653,6 +659,14 @@ public class Upload {
         return isFinished[0];
     }
 
+
+    public static byte[] readBytesFromFile(File file) throws IOException {
+        FileInputStream fis = new FileInputStream(file);
+        byte[] bytes = new byte[(int) file.length()];
+        fis.read(bytes);
+        fis.close();
+        return bytes;
+    }
 
 }
 
