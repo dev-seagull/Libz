@@ -66,8 +66,6 @@ public class Android {
                    String fileHash = "";
                    try {
                        fileHash = Hash.calculateHash(androidFile);
-                       byte[] fileBytes = Upload.readBytesFromFile(androidFile);
-                       System.out.println("Bytes of the android file " + androidFile.getName() + ": " + Arrays.toString(fileBytes));
 
                    } catch (Exception e) {
                        LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
@@ -132,6 +130,7 @@ public class Android {
                                         String mediaItemHash = "";
                                         try {
                                             mediaItemHash = Hash.calculateHash(mediaItemFile);
+
                                         } catch (Exception e) {
                                             LogHandler.saveLog("Failed to calculate hash in file manager: " + e.getLocalizedMessage());
                                         }
