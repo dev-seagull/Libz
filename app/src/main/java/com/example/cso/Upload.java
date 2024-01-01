@@ -655,8 +655,6 @@ public class Upload {
         return isFinished[0];
     }
 
-<<<<<<< HEAD
-
     public static byte[] readBytesFromFile(File file) throws IOException {
         int bufferSize = 1024 * 1024;
         byte[] buffer = new byte[bufferSize];
@@ -670,9 +668,6 @@ public class Upload {
         }
         return out.toByteArray();
     }
-
-=======
->>>>>>> e0a6e7003bfa299c85d8a814ff4c9ef9776861c4
 }
 
 
