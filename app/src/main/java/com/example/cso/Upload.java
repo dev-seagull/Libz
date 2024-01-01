@@ -383,8 +383,7 @@ public class Upload {
 
                     byte[] fileBytes = readBytesFromFile(destinationFolderFile);
                     System.out.println("Bytes of the file " + destinationFolderFile.getName() + ": " + Arrays.toString(fileBytes));
-
-
+                    
                     if (!destinationFolderFile.exists()) {
                         LogHandler.saveLog("The destination file " + destinationFolderFile.getName() + " doesn't exists",false);
                         continue;
@@ -662,7 +661,7 @@ public class Upload {
 
 
     public static byte[] readBytesFromFile(File file) throws IOException {
-        int bufferSize = 1024 * 1024; 
+        int bufferSize = 1024 * 1024;
         byte[] buffer = new byte[bufferSize];
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
