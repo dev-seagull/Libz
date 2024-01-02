@@ -130,13 +130,13 @@ public class Android {
                                         String mediaItemHash = "";
                                         try {
                                             mediaItemHash = Hash.calculateHash(mediaItemFile);
-
                                         } catch (Exception e) {
                                             LogHandler.saveLog("Failed to calculate hash in file manager: " + e.getLocalizedMessage());
                                         }
                                         long lastInsertedId =
                                                 MainActivity.dbHelper.insertAssetData(mediaItemHash);
                                         if(lastInsertedId != -1){
+
                                             MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
                                                     mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
                                             LogHandler.saveLog("File was detected in file manager: " + mediaItemFile.getName(),false);

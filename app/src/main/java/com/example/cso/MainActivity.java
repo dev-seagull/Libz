@@ -70,6 +70,7 @@
         HashMap<String, PrimaryAccountInfo> primaryAccountHashMap = new HashMap<>();
         HashMap<String, BackUpAccountInfo> backUpAccountHashMap = new HashMap<>();
         public static String androidDeviceName;
+        Button restoreButton;
         public static String logFileName = "stash_log.txt";
         public static int errorCounter = 0;
         SharedPreferences preferences;
@@ -298,12 +299,21 @@
             LogHandler.saveLog("--------------------------first threads were finished----------------------------",false);
 
 
-            Button restoreButton = findViewById(R.id.restoreButton);
+            restoreButton = findViewById(R.id.restoreButton);
             restoreButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     int buildSdkInt = Build.VERSION.SDK_INT;
+                    if (!dbHelper.backupAccountExists()){
+                        runOnUiThread(() ->{
+                            TextView restoreTextView = findViewById(R.id.restoreTextView);
+                            restoreTextView.setText("First Login to a backup account");
+                        });
+                        return;
+                    }
                     runOnUiThread(() ->{
+                        syncToBackUpAccountButton.setClickable(false);
+                        restoreButton.setClickable(false);
                         TextView restoreTextView = findViewById(R.id.restoreTextView);
                         restoreTextView.setText("Wait until the restoring process is finished");
                     });
@@ -492,6 +502,8 @@
                             }
                         }
                         runOnUiThread(() -> {
+                            syncToBackUpAccountButton.setClickable(true);
+                            restoreButton.setClickable(true);
                             TextView deviceStorage = findViewById(R.id.deviceStorage);
                             ArrayList<String> storage =  Android.getAndroidDeviceStorage();
                             deviceStorage.setText("Total space: " + storage.get(0) +
@@ -709,17 +721,38 @@
                         }catch (Exception e){
                             LogHandler.saveLog("Failed to sign in to backup : "  + e.getLocalizedMessage());
                         }
-                    }
-                });
+                    }else{
+                        runOnUiThread(() -> {
+                            LogHandler.saveLog("login with back up launcher failed");
+                            LinearLayout backupAccountsButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
+                            View childview = backupAccountsButtonsLinearLayout.getChildAt(
+                                    backupAccountsButtonsLinearLayout.getChildCount() - 1);
+                            if(childview instanceof Button){
+                                Button bt = (Button) childview;
+                                bt.setText("ADD A BACK UP ACCOUNT");
+                            }
+                            updateButtonsListeners();
+                        });
+                }
+            });
 
             syncToBackUpAccountButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+
+                    if (!dbHelper.backupAccountExists()){
+                        runOnUiThread(() ->{
+                            TextView syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
+                            syncToBackUpAccountTextView.setText("First Login to a backup account");
+                        });
+                        return;
+                    }
                     runOnUiThread(() ->{
+                        restoreButton.setClickable(false);
+                        syncToBackUpAccountButton.setClickable(false);
                         TextView syncToBackUpAccountTextView = findViewById(R.id.syncToBackUpAccountTextView);
                         syncToBackUpAccountTextView.setText("Wait until the uploading process is finished");
                     });
-
 
                     Thread deleteRedundantAndUpdatePhotos = new Thread(new Runnable() {
                         @Override
@@ -1125,6 +1158,8 @@
                             }
                         }
                         runOnUiThread(() -> {
+                            restoreButton.setClickable(true);
+                            syncToBackUpAccountButton.setClickable(true);
                             TextView deviceStorage = findViewById(R.id.deviceStorage);
                             ArrayList<String> storage =  Android.getAndroidDeviceStorage();
                             deviceStorage.setText("Total space: " + storage.get(0) +
@@ -1174,10 +1209,14 @@
                     Button button = (Button) childView;
                     button.setOnClickListener(
                             view -> {
+                                syncToBackUpAccountButton.setClickable(false);
+                                restoreButton.setClickable(false);
                                 String buttonText = button.getText().toString().toLowerCase();
                                 if (buttonText.equals("add a primary account")){
                                     button.setText("Wait");
+                                    button.setClickable(false);
                                     googleCloud.signInToGoogleCloud(signInToPrimaryLauncher);
+                                    button.setClickable(true);
                                 }else if (buttonText.equals("wait")){
                                     button.setText("Add a primary account");
                                 }
@@ -1215,8 +1254,11 @@
                                     });
                                     popupMenu.show();
                                 }
+                                syncToBackUpAccountButton.setClickable(true);
+                                restoreButton.setClickable(true);
                             }
-                    );
+                        );
+
                 }
             }
         }
@@ -1228,10 +1270,15 @@
                     Button button = (Button) childView;
                     button.setOnClickListener(
                             view -> {
+                                System.out.println("salam salam");
+                                syncToBackUpAccountButton.setClickable(false);
+                                restoreButton.setClickable(false);
                                 String buttonText = button.getText().toString().toLowerCase();
                                 if (buttonText.equals("add a back up account")) {
                                     button.setText("Wait");
+                                    button.setClickable(false);
                                     googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
+                                    button.setClickable(true);
                                 } else if (buttonText.equals("wait")){
                                     button.setText("add a back up account");
                                 }else {
@@ -1261,13 +1308,15 @@
                                                     break;
                                                 }
                                             }
-
                                             parentView.removeView(button);
                                         }
                                         return true;
                                     });
                                     popupMenu.show();
                                 }
+                                syncToBackUpAccountButton.setClickable(true);
+                                restoreButton.setClickable(true);
+
                             }
                     );
                 }

@@ -910,4 +910,18 @@ public class DBHelper extends SQLiteOpenHelper {
         List<String> result = Arrays.asList(userEmail[0],uploadFileIdFuture);
         return result;
     }
+
+    public boolean backupAccountExists(){
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM USERPROFILE WHERE type = 'backup')";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
+        boolean exists = false;
+        if(cursor != null && cursor.moveToFirst()){
+            int result = cursor.getInt(0);
+            if(result == 1){
+                exists = true;
+            }
+        }
+        cursor.close();
+        return exists;
+    }
 }
