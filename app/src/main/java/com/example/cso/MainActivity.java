@@ -765,7 +765,7 @@
                         }
                     }else{
                         runOnUiThread(() -> {
-                            LogHandler.saveLog("login with back up launcher failed");
+                            LogHandler.saveLog("login with back up launcher failed with response code :" + result.getResultCode());
                             LinearLayout backupAccountsButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
                             View childview = backupAccountsButtonsLinearLayout.getChildAt(
                                     backupAccountsButtonsLinearLayout.getChildCount() - 1);

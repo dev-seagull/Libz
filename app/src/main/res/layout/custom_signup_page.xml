@@ -5,30 +5,30 @@
     android:padding="16dp">
 
     <EditText
-        android:id="@+id/editTextUsernameSignIn"
+        android:id="@+id/editTextUsernameSignUp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Username"
         android:inputType="text" />
 
     <EditText
-        android:id="@+id/editTextPasswordSignIn"
+        android:id="@+id/editTextPasswordSignUp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Password"
         android:inputType="textPassword" />
 
     <Button
-        android:id="@+id/buttonCustomSignIn"
+        android:id="@+id/buttonCustomSignUp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Sign In" />
+        android:text="Sign Up" />
 
     <TextView
-        android:id="@+id/noAccountSignedUp"
+        android:id="@+id/alreadyHaveAccount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Don't have any account ?, Sign up"
+        android:text="Already have a account ?, Sign In "
         />
 
 </LinearLayout>

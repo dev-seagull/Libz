@@ -54,6 +54,9 @@
 
         <activity android:name=".CustomLoginPage"
             android:theme="@style/AppTheme.Dialog" />
+
+        <activity android:name=".CustomSignUpPage"
+            android:theme="@style/AppTheme.Dialog" />
     </application>
 
 
