@@ -13,6 +13,8 @@ public class CustomLoginPage extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.custom_login_page);
+        String username = getIntent().getStringExtra("username");
+        String password = getIntent().getStringExtra("password");
 
         noAccountSignedUpTextView = findViewById(R.id.noAccountSignedUp);
         noAccountSignedUpTextView.setOnClickListener(new View.OnClickListener() {
