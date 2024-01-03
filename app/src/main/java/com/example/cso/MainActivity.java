@@ -11,16 +11,20 @@
     import android.os.Build;
     import android.os.Bundle;
     import android.os.Environment;
+    import android.os.Handler;
+    import android.os.Looper;
     import android.provider.Settings;
     import android.text.Layout;
     import android.text.Spannable;
     import android.text.SpannableString;
     import android.text.style.AlignmentSpan;
     import android.view.Gravity;
+    import android.view.LayoutInflater;
     import android.view.MenuItem;
     import android.view.View;
     import android.view.ViewGroup;
     import android.widget.Button;
+    import android.widget.EditText;
     import android.widget.LinearLayout;
     import android.widget.PopupMenu;
     import android.widget.TextView;
@@ -55,8 +59,10 @@
     import java.util.List;
     import java.util.Map;
     import java.util.concurrent.Callable;
+    import java.util.concurrent.ExecutionException;
     import java.util.concurrent.Executor;
     import java.util.concurrent.Executors;
+    import java.util.concurrent.FutureTask;
 
 
     public class MainActivity extends AppCompatActivity {
@@ -704,9 +710,45 @@
                                 }
                             });
 
+                            Thread customLoginThread = new Thread(() ->{
+                                synchronized (deleteDuplicatedInDrive){
+                                    try{
+                                        deleteDuplicatedInDrive.join();
+                                    }catch (Exception e){
+                                        LogHandler.saveLog("Failed to join delete duplicated drive " +
+                                                "thread in customLoginThread : " + e.getLocalizedMessage(),true);
+                                    }
+                                }
+
+                                Callable<Void> customLoginCallable = new Callable<Void>() {
+                                    @Override
+                                    public Void call() throws Exception {
+                                        Handler handler = new Handler(Looper.getMainLooper());
+                                        handler.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                Intent intent = new Intent(MainActivity.this, CustomLoginPage.class);
+                                                startActivity(intent);
+                                            }
+                                        });
+                                        return null;
+                                    }
+                                };
+                                FutureTask<Void> futureTask = new FutureTask<>(customLoginCallable);
+                                new Thread(futureTask).start();
+                                try {
+                                    futureTask.get();
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                } catch (ExecutionException e) {
+                                    e.printStackTrace();
+                                }
+                            });
+
                             deleteRedundantDriveThread.start();
                             updateDriveBackUpThread.start();
                             deleteDuplicatedInDrive.start();
+                            customLoginThread.start();
 
                             runOnUiThread(() -> {
                                 childview[0].setClickable(true);
@@ -1270,7 +1312,6 @@
                     Button button = (Button) childView;
                     button.setOnClickListener(
                             view -> {
-                                System.out.println("salam salam");
                                 syncToBackUpAccountButton.setClickable(false);
                                 restoreButton.setClickable(false);
                                 String buttonText = button.getText().toString().toLowerCase();
@@ -1316,7 +1357,6 @@
                                 }
                                 syncToBackUpAccountButton.setClickable(true);
                                 restoreButton.setClickable(true);
-
                             }
                     );
                 }

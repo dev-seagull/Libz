@@ -50,6 +50,10 @@
 
         <activity android:name=".GoogleCloud"
             tools:ignore="Instantiatable" />
+
+
+        <activity android:name=".CustomLoginPage"
+            android:theme="@style/AppTheme.Dialog" />
     </application>
 
 
