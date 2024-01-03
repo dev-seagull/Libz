@@ -41,4 +41,25 @@ public class Hash {
         return hexString.toString().toLowerCase();
     }
 
+    public static String calculateSHA256(String input) {
+        StringBuilder hexString = null;
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+            byte[] hash = digest.digest(input.getBytes());
+
+            hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+        } catch (NoSuchAlgorithmException e) {
+            LogHandler.saveLog("Failed with error of :  " + e.getLocalizedMessage());
+        }
+        return hexString.toString();
+    }
+
 }
