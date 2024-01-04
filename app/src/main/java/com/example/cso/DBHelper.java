@@ -36,8 +36,11 @@ public class DBHelper extends SQLiteOpenHelper {
     public SQLiteDatabase dbReadable;
     public SQLiteDatabase dbWritable;
 
+    private Context context;
+
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.context = context;
         dbReadable = getReadableDatabase();
         dbWritable = getWritableDatabase();
         onCreate(getWritableDatabase());
@@ -47,7 +50,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         String USERPROFILE = "CREATE TABLE IF NOT EXISTS USERPROFILE("
                 + "userEmail TEXT PRIMARY KEY," +
-                "type TEXT CHECK (type IN ('primary','backup')), " +
+                "type TEXT CHECK (type IN ('primary','backup','profile')), " +
                 "refreshToken TEXT, " +
                 "accessToken TEXT, " +
                 "totalStorage REAL," +
@@ -913,6 +916,34 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public boolean backupAccountExists(){
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM USERPROFILE WHERE type = 'backup')";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
+        boolean exists = false;
+        if(cursor != null && cursor.moveToFirst()){
+            int result = cursor.getInt(0);
+            if(result == 1){
+                exists = true;
+            }
+        }
+        cursor.close();
+        return exists;
+    }
+
+    public void insertProfile(String username,String password){
+        String sqlQuery = "Insert into USERPROFILE (userEmail,type,refreshToken) values (?,?,?)";
+        dbWritable.beginTransaction();
+        try {
+            String newPass = Hash.calculateSHA256(password,context);
+            dbWritable.execSQL(sqlQuery, new String[]{username,"profile",newPass});
+            dbWritable.setTransactionSuccessful();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to insert profile data into USERPROFILE.");
+        } finally {
+            dbWritable.endTransaction();
+        }
+    }
+
+    public boolean profileExists(){
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM USERPROFILE WHERE type = 'profile')";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
         boolean exists = false;
         if(cursor != null && cursor.moveToFirst()){

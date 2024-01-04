@@ -612,8 +612,6 @@
                             Runnable backgroundTask = () -> {
                                 BackUpAccountInfo backUpAccountInfo = googleCloud.handleSignInToBackupResult(result.getData());
                                 String userEmail = backUpAccountInfo.getUserEmail();
-                                backUpAccountHashMap.put(backUpAccountInfo.getUserEmail(),backUpAccountInfo);
-                                LogHandler.saveLog("Number of backup accounts : " + backUpAccountHashMap.size(),false);
                                 runOnUiThread(() -> {
                                     LogHandler.saveLog(userEmail +  " has logged in to the backup account",false);
                                     childview[0] = backupAccountsButtonsLinearLayout.getChildAt(
@@ -734,14 +732,18 @@
                                         return null;
                                     }
                                 };
-                                FutureTask<Void> futureTask = new FutureTask<>(customLoginCallable);
-                                new Thread(futureTask).start();
-                                try {
-                                    futureTask.get();
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                } catch (ExecutionException e) {
-                                    e.printStackTrace();
+                                if (!dbHelper.profileExists()){
+                                    {
+                                        FutureTask<Void> futureTask = new FutureTask<>(customLoginCallable);
+                                        new Thread(futureTask).start();
+                                        try {
+                                            futureTask.get();
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        } catch (ExecutionException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
                                 }
                             });
 

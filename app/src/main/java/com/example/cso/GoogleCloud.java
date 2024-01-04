@@ -169,7 +169,6 @@
             return userEmail;
         }
 
-
         public BackUpAccountInfo handleSignInToBackupResult(Intent data){
             String userEmail = "";
             String authCode;

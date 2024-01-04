@@ -1,5 +1,7 @@
 package com.example.cso;
 
+import android.content.Context;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,8 +43,9 @@ public class Hash {
         return hexString.toString().toLowerCase();
     }
 
-    public static String calculateSHA256(String input) {
+    public static String calculateSHA256(String input, Context context){
         StringBuilder hexString = null;
+        String salt = context.getResources().getString(R.string.salt);
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
