@@ -2,7 +2,12 @@ package com.example.cso;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,9 +18,6 @@ public class CustomSignUpPage extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.custom_signup_page);
-        String username = getIntent().getStringExtra("username");
-        String password = getIntent().getStringExtra("password");
-
 
         alreadyHaveAccountTextView = findViewById(R.id.alreadyHaveAccount);
         alreadyHaveAccountTextView.setOnClickListener(new View.OnClickListener() {
@@ -25,10 +27,27 @@ public class CustomSignUpPage extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-    }
-    @Override
-    public void onBackPressed() {
-        Intent intent = new Intent(this, CustomSignUpPage.class);
-        startActivity(intent);
+
+        Button buttonCustomSignUp = findViewById(R.id.buttonCustomSignUp);
+        buttonCustomSignUp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                EditText editTextUsernameSignUp = findViewById(R.id.editTextUsernameSignUp);
+                EditText editTextPasswordSignUp = findViewById(R.id.editTextPasswordSignUp);
+                String userName = editTextUsernameSignUp.getText().toString();
+                String password = editTextPasswordSignUp.getText().toString();
+                if(userName != null && !userName.isEmpty() && !password.isEmpty() && password != null){
+                    System.out.println(userName + " " + password);
+                    finish();
+                }else{
+                    TextView signUpStateTextView = findViewById(R.id.signUpState);
+                    if(userName.isEmpty() | userName == null){
+                        signUpStateTextView.setText("Enter your username!");
+                    }else if(password.isEmpty() | password == null) {
+                        signUpStateTextView.setText("Enter your password!");
+                    }
+                }
+            }
+        });
     }
 }

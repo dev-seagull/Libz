@@ -16,5 +16,6 @@
     <style name="AppTheme.Dialog" parent="Theme.AppCompat.Light.Dialog">
         <item name="android:windowMinWidthMajor">90%</item>
         <item name="android:windowMinWidthMinor">90%</item>
+        <item name="android:windowCloseOnTouchOutside">false</item>
     </style>
 </resources>
