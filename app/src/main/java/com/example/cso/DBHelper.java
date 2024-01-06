@@ -4,20 +4,18 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-
+import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.FileContent;
-import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
+import com.google.api.services.drive.model.Permission;
 
 import java.io.File;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,7 +26,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 public class DBHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "CSODatabase";
@@ -955,4 +952,108 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
         return exists;
     }
+
+    public boolean checkProfile(String username,String password){
+        String sqlQuery = "SELECT * FROM USERPROFILE WHERE userEmail = ? and type = 'profile' and refreshToken = ?";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{username,Hash.calculateSHA256(password,context)});
+        boolean exists = false;
+        if(cursor != null && cursor.moveToFirst()){
+            int result = cursor.getInt(0);
+            if(result == 1){
+                exists = true;
+            }
+        }
+        cursor.close();
+        return exists;
+    }
+
+    public String createProfileMap(){
+        List<String[]> userProfiles = getUserProfile(new String[]{"userEmail","type","refreshToken"});
+        String userProfileUserName = "";
+        String userProfilePassword = "";
+        String accounts = "";
+        for (String[] userProfile : userProfiles){
+            if(userProfile[1].equals("profile")){
+                userProfileUserName = userProfile[0];
+                userProfilePassword = userProfile[2];
+            }
+            else if(userProfile[1].equals("backup")){
+                accounts += userProfile[0] + " :\n" + userProfile[2] + "\n";
+            }
+        }
+        String result = userProfileUserName + "\n" + userProfilePassword + "\n" + accounts;
+        System.out.println("profile Map is :\n" + result);
+        return result;
+    }
+
+    public String backUpProfileMap(Context context) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Callable<String> uploadTask = () -> {
+            String uploadFileId = "";
+            try {
+                String driveBackupAccessToken = "";
+                String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
+                List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getUserProfile(drive_backup_selected_columns);
+                for (String[] drive_backUp_account : drive_backUp_accounts) {
+                    if (drive_backUp_account[1].equals("backup")) {
+                        driveBackupAccessToken = drive_backUp_account[2];
+                        NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+                        JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+                        String bearerToken = "Bearer " + driveBackupAccessToken;
+                        System.out.println("access token to upload is " + driveBackupAccessToken);
+                        HttpRequestInitializer requestInitializer = request -> {
+                            request.getHeaders().setAuthorization(bearerToken);
+                            request.getHeaders().setContentType("application/json");
+                        };
+
+                        Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
+                                .setApplicationName("cso")
+                                .build();
+
+                        com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+                        fileMetadata.setName("profileMap.txt");
+                        String content = createProfileMap();
+
+                        ByteArrayContent mediaContent = ByteArrayContent.fromString("text/plain", content);
+
+                        com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
+                                .setFields("id")
+                                .execute();
+
+                        String uploadedFileId = uploadedFile.getId();
+
+                        while (uploadedFileId == null) {
+                            wait();
+                            System.out.println("waiting for profile map backup... ");
+                        }
+                        if (uploadedFileId == null | uploadedFileId.isEmpty()) {
+                            LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
+                        } else {
+                            Permission permission = new Permission();
+                            permission.setType("user");
+                            permission.setRole("reader");
+                            permission.setEmailAddress("me");
+//                            permission.setEmailAddress(drive_backUp_account[0]+"@gmail.com");
+                            service.permissions().create(uploadedFileId, permission).setFields("id").execute();
+                            LogHandler.saveLog("Uploading profileMap from android into backup " +
+                                    "account uploadId : " + uploadedFileId, false);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LogHandler.saveLog("Failed to upload profileMap from Android to backup : " + e.getLocalizedMessage());
+            }
+            return uploadFileId;
+        };
+
+        Future<String> future = executor.submit(uploadTask);
+        String uploadFileIdFuture = new String();
+        try{
+            uploadFileIdFuture = future.get();
+        }catch (Exception e){
+            System.out.println(e.getLocalizedMessage());
+        }
+        return uploadFileIdFuture;
+    }
+
 }

@@ -22,6 +22,7 @@ public class CustomLoginPage extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(CustomLoginPage.this, CustomSignUpPage.class);
                 startActivity(intent);
+                finish();
             }
         });
 

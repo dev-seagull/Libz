@@ -2,12 +2,9 @@ package com.example.cso;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,6 +22,7 @@ public class CustomSignUpPage extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(CustomSignUpPage.this, CustomLoginPage.class);
                 startActivity(intent);
+                finish();
             }
         });
 
@@ -37,7 +35,10 @@ public class CustomSignUpPage extends AppCompatActivity {
                 String userName = editTextUsernameSignUp.getText().toString();
                 String password = editTextPasswordSignUp.getText().toString();
                 if(userName != null && !userName.isEmpty() && !password.isEmpty() && password != null){
-                    System.out.println(userName + " " + password);
+//                    if (!MainActivity.dbHelper.checkProfile()){
+                        MainActivity.dbHelper.insertProfile(userName,password);
+                        MainActivity.dbHelper.backUpProfileMap(getApplicationContext());
+//                    }
                     finish();
                 }else{
                     TextView signUpStateTextView = findViewById(R.id.signUpState);
