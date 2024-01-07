@@ -8,6 +8,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.List;
+
 public class CustomLoginPage extends AppCompatActivity {
     private TextView noAccountSignedUpTextView;
 
@@ -35,8 +38,30 @@ public class CustomLoginPage extends AppCompatActivity {
                 String userName = editTextUsernameSignIn.getText().toString();
                 String password = editTextPasswordSignIn.getText().toString();
                 if(userName != null && !userName.isEmpty() && !password.isEmpty() && password != null){
-                    System.out.println(userName + " " + password);
-                    finish();
+                    runOnUiThread(() -> {
+                        List<String> auth = MainActivity.dbHelper.readProfile();
+                        String userNameResult = auth.get(0);
+                        String passResult = auth.get(1);
+                        TextView signInStateTextView = findViewById(R.id.signInState);
+                        if (!userNameResult.isEmpty() && userNameResult != null &&
+                                !passResult.isEmpty() && passResult != null) {
+                            if(userNameResult.equals(userName)){
+                                if(passResult.equals(password)){
+                                    finish();
+                                }
+                            }else{
+                                signInStateTextView.setText("Wrong password!");
+                            }
+                        }else{
+                            signInStateTextView.setText("No account was found with this username and password!");
+                        }
+                    });
+                    TextView signInStateTextView = findViewById(R.id.signInState);
+                    if(userName.isEmpty() | userName == null){
+                        signInStateTextView.setText("Enter your username!");
+                    }else if(password.isEmpty() | password == null) {
+                        signInStateTextView.setText("Enter your password!");
+                    }
                 }else{
                     TextView signInStateTextView = findViewById(R.id.signInState);
                     if(userName.isEmpty() | userName == null){

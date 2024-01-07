@@ -4,6 +4,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.widget.TextView;
+
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.FileContent;
@@ -15,7 +17,11 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
 import com.google.api.services.drive.model.Permission;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -827,7 +833,6 @@ public class DBHelper extends SQLiteOpenHelper {
                         userEmail[0] = drive_backUp_account[0];
                         break;
                     }
-
                 }
                 NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();;
                 final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
@@ -953,19 +958,6 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
-    public boolean checkProfile(String username,String password){
-        String sqlQuery = "SELECT * FROM USERPROFILE WHERE userEmail = ? and type = 'profile' and refreshToken = ?";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{username,Hash.calculateSHA256(password,context)});
-        boolean exists = false;
-        if(cursor != null && cursor.moveToFirst()){
-            int result = cursor.getInt(0);
-            if(result == 1){
-                exists = true;
-            }
-        }
-        cursor.close();
-        return exists;
-    }
 
     public String createProfileMap(){
         List<String[]> userProfiles = getUserProfile(new String[]{"userEmail","type","refreshToken"});
@@ -1010,8 +1002,37 @@ public class DBHelper extends SQLiteOpenHelper {
                                 .setApplicationName("cso")
                                 .build();
 
+                        String folder_name = "stash_user_profile";
+                        String folderId = null;
+                        com.google.api.services.drive.model.File folder = null;
+
+                        FileList fileList = service.files().list()
+                                .setQ("mimeType='application/vnd.google-apps.folder' and name='"
+                                        + folder_name + "'")
+                                .setSpaces("drive")
+                                .setFields("files(id)")
+                                .execute();
+                        List<com.google.api.services.drive.model.File> driveFolders = fileList.getFiles();
+                        for(com.google.api.services.drive.model.File driveFolder: driveFolders){
+                            folderId = driveFolder.getId();
+                        }
+
+                        if (folderId == null) {
+                            com.google.api.services.drive.model.File folder_metadata =
+                                    new com.google.api.services.drive.model.File();
+                            folder_metadata.setName(folder_name);
+                            folder_metadata.setMimeType("application/vnd.google-apps.folder");
+                            folder = service.files().create(folder_metadata)
+                                    .setFields("id").execute();
+
+                            folderId = folder.getId();
+                        }
+
+
                         com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
                         fileMetadata.setName("profileMap.txt");
+                        fileMetadata.setParents(java.util.Collections.singletonList(folderId));
+
                         String content = createProfileMap();
 
                         ByteArrayContent mediaContent = ByteArrayContent.fromString("text/plain", content);
@@ -1056,4 +1077,94 @@ public class DBHelper extends SQLiteOpenHelper {
         return uploadFileIdFuture;
     }
 
+    public List<String> readProfile() {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Callable<List<String>> uploadTask = () -> {
+            List<String> auth = new ArrayList<>(2);
+            String userEmail = "";
+            String driveBackupAccessToken = "";
+            String folderId = "";
+
+            String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
+            List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getUserProfile(drive_backup_selected_columns);
+            for (String[] drive_backUp_account : drive_backUp_accounts) {
+                if (drive_backUp_account[1].equals("backup")) {
+                    driveBackupAccessToken = drive_backUp_account[2];
+                    userEmail = drive_backUp_account[0];
+                    break;
+                }
+            }
+
+            NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+            JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+            String bearerToken = "Bearer " + driveBackupAccessToken;
+            System.out.println("access token to upload is " + driveBackupAccessToken);
+            HttpRequestInitializer requestInitializer = request -> {
+                request.getHeaders().setAuthorization(bearerToken);
+                request.getHeaders().setContentType("application/json");
+            };
+            Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
+                    .setApplicationName("cso")
+                    .build();
+
+            String folder_name = "stash_user_profile";
+            String query = "mimeType='application/vnd.google-apps.folder' and name='" + folder_name + "' and trashed=false";
+            FileList result = service.files().list()
+                    .setQ(query)
+                    .setSpaces("drive")
+                    .execute();
+
+            List<com.google.api.services.drive.model.File> folders = result.getFiles();
+            if (folders != null && !folders.isEmpty()) {
+                folderId = folders.get(0).getId();
+            }
+
+            if(!folderId.isEmpty() && folderId != null){
+                query = "'" + folderId + "' in parents and trashed=false";
+
+                FileList resultTxt = service.files().list()
+                        .setQ(query)
+                        .setSpaces("drive")
+                        .execute();
+
+                List<com.google.api.services.drive.model.File> files = resultTxt.getFiles();
+
+                for (com.google.api.services.drive.model.File file : files) {
+                    if ("text/plain".equals(file.getMimeType()) && file.getName().endsWith(".txt")) {
+                        try{
+                            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                            service.files().get(file.getId())
+                                    .executeMediaAndDownloadTo(outputStream);
+                            BufferedReader reader = new BufferedReader(new InputStreamReader
+                                    (new ByteArrayInputStream(outputStream.toByteArray())));
+
+                            String line1 = reader.readLine();
+                            String line2 = reader.readLine();
+
+                            auth.add(line1);
+                            auth.add(line2);
+
+                            System.out.println("First Line: " + line1);
+                            System.out.println("Second Line: " + line2);
+
+                            reader.close();
+                            outputStream.close();
+                        }catch (Exception e){
+                            LogHandler.saveLog("failed to read from user profile : " + e.getLocalizedMessage());
+                        }
+                    }
+                }
+            }
+            return auth;
+        };
+
+        Future<List<String>> future = executor.submit(uploadTask);
+        List<String> authFuture = new ArrayList<>(2);
+        try {
+            authFuture = future.get();
+        } catch (Exception e) {
+            LogHandler.saveLog("error when downloading user profile : " + e.getLocalizedMessage());
+        }
+        return authFuture;
+    }
 }
