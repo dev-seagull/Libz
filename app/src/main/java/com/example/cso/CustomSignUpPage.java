@@ -40,8 +40,8 @@ public class CustomSignUpPage extends AppCompatActivity {
                 if(userName != null && !userName.isEmpty() && !password.isEmpty() && password != null){
                     MainActivity.dbHelper.insertProfile(userName,password);
                     MainActivity.dbHelper.backUpProfileMap(getApplicationContext());
-                    buttonCustomSignUp.setClickable(true);
                     finish();
+                    buttonCustomSignUp.setClickable(true);
                 }else{
                     buttonCustomSignUp.setClickable(true);
                     if(userName.isEmpty() | userName == null){

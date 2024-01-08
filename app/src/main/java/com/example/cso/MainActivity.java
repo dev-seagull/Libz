@@ -1274,7 +1274,7 @@
                                         if (item.getItemId() == R.id.sign_out) {
                                             googleCloud.signOut();
                                             dbHelper.deleteUserProfileData(buttonText);
-                                            String sqlQuery = "DELETE FROM photos WHERE userEmail = ?";
+                                            String sqlQuery = "DELETE FROM photos WHERE userEmail = ? and type = 'primary'";
                                             dbHelper.dbWritable.execSQL(sqlQuery, new String[] {buttonText});
                                             dbHelper.deleteRedundantAsset();
 
@@ -1334,7 +1334,7 @@
                                         if (item.getItemId() == R.id.sign_out) {
                                             googleCloud.signOut();
                                             dbHelper.deleteUserProfileData(buttonText);
-                                            String sqlQuery = "DELETE FROM drive WHERE userEmail = ?";
+                                            String sqlQuery = "DELETE FROM drive WHERE userEmail = ? and type = 'backup'";
                                             dbHelper.dbWritable.execSQL(sqlQuery, new String[] {buttonText});
                                             dbHelper.deleteRedundantAsset();
 

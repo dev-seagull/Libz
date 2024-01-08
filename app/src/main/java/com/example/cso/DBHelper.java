@@ -52,14 +52,15 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         String USERPROFILE = "CREATE TABLE IF NOT EXISTS USERPROFILE("
-                + "userEmail TEXT PRIMARY KEY," +
+                + "userEmail TEXT ," +
                 "type TEXT CHECK (type IN ('primary','backup','profile')), " +
                 "refreshToken TEXT, " +
                 "accessToken TEXT, " +
                 "totalStorage REAL," +
                 "usedStorage REAL," +
                 "usedInDriveStorage REAL,"+
-                "UsedInGmailAndPhotosStorage REAL)";
+                "UsedInGmailAndPhotosStorage REAL," +
+                "PRIMARY KEY (userEmail, type))";
         sqLiteDatabase.execSQL(USERPROFILE);
 
         String DEVICE = "CREATE TABLE IF NOT EXISTS DEVICE("
@@ -938,7 +939,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, new String[]{username,"profile",newPass});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to insert profile data into USERPROFILE.");
+            LogHandler.saveLog("Failed to insert profile data into USERPROFILE." + e.getLocalizedMessage());
         } finally {
             dbWritable.endTransaction();
         }
