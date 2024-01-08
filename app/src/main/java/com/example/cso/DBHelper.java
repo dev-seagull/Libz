@@ -1131,29 +1131,35 @@ public class DBHelper extends SQLiteOpenHelper {
 
                 for (com.google.api.services.drive.model.File file : files) {
                     if ("text/plain".equals(file.getMimeType()) && file.getName().endsWith(".txt")) {
-                        try{
-                            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                            service.files().get(file.getId())
-                                    .executeMediaAndDownloadTo(outputStream);
-                            BufferedReader reader = new BufferedReader(new InputStreamReader
-                                    (new ByteArrayInputStream(outputStream.toByteArray())));
+                        for (int i =0; i<3; i++){
+                            try{
+                                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                                service.files().get(file.getId())
+                                        .executeMediaAndDownloadTo(outputStream);
+                                BufferedReader reader = new BufferedReader(new InputStreamReader
+                                        (new ByteArrayInputStream(outputStream.toByteArray())));
 
-                            String line1 = reader.readLine();
-                            String line2 = reader.readLine();
+                                String line1 = reader.readLine();
+                                String line2 = reader.readLine();
 
-                            auth.add(line1);
-                            auth.add(line2);
+                                auth.add(line1);
+                                auth.add(line2);
 
-                            System.out.println("First Line: " + line1);
-                            System.out.println("Second Line: " + line2);
+                                System.out.println("First Line: " + line1);
+                                System.out.println("Second Line: " + line2);
 
-                            reader.close();
-                            outputStream.close();
-                        }catch (Exception e){
-                            LogHandler.saveLog("failed to read from user profile : " + e.getLocalizedMessage());
+                                reader.close();
+                                outputStream.close();
+                                break;
+                            }catch (Exception e){
+                                LogHandler.saveLog("failed to read from user profile : " + e.getLocalizedMessage());
+                            }
                         }
                     }
                 }
+            }
+            for (String authString : auth){
+                System.out.println("auth is : " + authString);
             }
             return auth;
         };

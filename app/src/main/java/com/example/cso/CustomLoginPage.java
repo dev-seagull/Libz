@@ -36,21 +36,34 @@ public class CustomLoginPage extends AppCompatActivity {
                 EditText editTextUsernameSignIn = findViewById(R.id.editTextUsernameSignIn);
                 EditText editTextPasswordSignIn = findViewById(R.id.editTextPasswordSignIn);
                 String userName = editTextUsernameSignIn.getText().toString();
-                String password = editTextPasswordSignIn.getText().toString();
+                String password = Hash.calculateSHA256(editTextPasswordSignIn.getText().toString(), getApplicationContext());
+                System.out.println("input userName: " + userName);
+                System.out.println("input password: " + password);
+                System.out.println("input password hash: " + Hash.calculateSHA256(password, getApplicationContext()));
+
                 if(userName != null && !userName.isEmpty() && !password.isEmpty() && password != null){
                     runOnUiThread(() -> {
-                        List<String> auth = MainActivity.dbHelper.readProfile();
-                        String userNameResult = auth.get(0);
-                        String passResult = auth.get(1);
                         TextView signInStateTextView = findViewById(R.id.signInState);
+                        String userNameResult = null;
+                        String passResult = null ;
+                        signInStateTextView.setText("wait !");
+                        List<String> auth = MainActivity.dbHelper.readProfile();
+                        if (auth != null) {
+                            userNameResult = auth.get(0);
+                            passResult = auth.get(1);
+                        }
                         if (!userNameResult.isEmpty() && userNameResult != null &&
                                 !passResult.isEmpty() && passResult != null) {
+                            System.out.println("i'm here 1");
                             if(userNameResult.equals(userName)){
+                                System.out.println("i'm here 2");
                                 if(passResult.equals(password)){
                                     finish();
+                                }else{
+                                    signInStateTextView.setText("Wrong password!");
                                 }
                             }else{
-                                signInStateTextView.setText("Wrong password!");
+                                signInStateTextView.setText("Wrong Username!");
                             }
                         }else{
                             signInStateTextView.setText("No account was found with this username and password!");
