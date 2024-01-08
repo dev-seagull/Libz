@@ -33,20 +33,20 @@ public class CustomLoginPage extends AppCompatActivity {
         buttonCustomSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                buttonCustomSignIn.setClickable(false);
+                TextView signInStateTextView = findViewById(R.id.signInState);
+                signInStateTextView.setText("Wait...");
                 EditText editTextUsernameSignIn = findViewById(R.id.editTextUsernameSignIn);
                 EditText editTextPasswordSignIn = findViewById(R.id.editTextPasswordSignIn);
                 String userName = editTextUsernameSignIn.getText().toString();
                 String password = Hash.calculateSHA256(editTextPasswordSignIn.getText().toString(), getApplicationContext());
                 System.out.println("input userName: " + userName);
                 System.out.println("input password: " + password);
-                System.out.println("input password hash: " + Hash.calculateSHA256(password, getApplicationContext()));
 
                 if(userName != null && !userName.isEmpty() && !password.isEmpty() && password != null){
                     runOnUiThread(() -> {
-                        TextView signInStateTextView = findViewById(R.id.signInState);
                         String userNameResult = null;
                         String passResult = null ;
-                        signInStateTextView.setText("wait !");
                         List<String> auth = MainActivity.dbHelper.readProfile();
                         if (auth != null) {
                             userNameResult = auth.get(0);
@@ -54,29 +54,35 @@ public class CustomLoginPage extends AppCompatActivity {
                         }
                         if (!userNameResult.isEmpty() && userNameResult != null &&
                                 !passResult.isEmpty() && passResult != null) {
+                            buttonCustomSignIn.setClickable(true);
                             System.out.println("i'm here 1");
                             if(userNameResult.equals(userName)){
                                 System.out.println("i'm here 2");
                                 if(passResult.equals(password)){
+                                    MainActivity.dbHelper.insertProfile(userName, password);
                                     finish();
                                 }else{
+                                    buttonCustomSignIn.setClickable(true);
                                     signInStateTextView.setText("Wrong password!");
                                 }
                             }else{
+                                buttonCustomSignIn.setClickable(true);
                                 signInStateTextView.setText("Wrong Username!");
                             }
                         }else{
+                            buttonCustomSignIn.setClickable(true);
                             signInStateTextView.setText("No account was found with this username and password!");
                         }
                     });
-                    TextView signInStateTextView = findViewById(R.id.signInState);
                     if(userName.isEmpty() | userName == null){
+                        buttonCustomSignIn.setClickable(true);
                         signInStateTextView.setText("Enter your username!");
                     }else if(password.isEmpty() | password == null) {
+                        buttonCustomSignIn.setClickable(true);
                         signInStateTextView.setText("Enter your password!");
                     }
                 }else{
-                    TextView signInStateTextView = findViewById(R.id.signInState);
+                    buttonCustomSignIn.setClickable(true);
                     if(userName.isEmpty() | userName == null){
                         signInStateTextView.setText("Enter your username!");
                     }else if(password.isEmpty() | password == null) {

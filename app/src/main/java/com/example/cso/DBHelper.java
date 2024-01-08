@@ -964,6 +964,8 @@ public class DBHelper extends SQLiteOpenHelper {
         String userProfileUserName = "";
         String userProfilePassword = "";
         String accounts = "";
+        String dbUserEmail = "";
+        String dbFileId = "";
         for (String[] userProfile : userProfiles){
             if(userProfile[1].equals("profile")){
                 userProfileUserName = userProfile[0];
@@ -973,6 +975,19 @@ public class DBHelper extends SQLiteOpenHelper {
                 accounts += userProfile[0] + " :\n" + userProfile[2] + "\n";
             }
         }
+
+//        String sqlQuery = "SELECT * FROM BACKUPDB";
+//        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
+//        if(cursor != null && cursor.moveToFirst()){
+//            int userEmailColumnIndex = cursor.getColumnIndex("userEmail");
+//            int fileIdColumnIndex = cursor.getColumnIndex("fileId");
+//            if(userEmailColumnIndex >= 0 && fileIdColumnIndex >= 0){
+//                dbUserEmail = cursor.getString(userEmailColumnIndex);
+//                dbFileId = cursor.getString(fileIdColumnIndex);
+//                System.out.println("User and file id for test : " + dbUserEmail + " " + dbFileId );
+//            }
+//        }
+
         String result = userProfileUserName + "\n" + userProfilePassword + "\n" + accounts;
         System.out.println("profile Map is :\n" + result);
         return result;
@@ -1028,7 +1043,6 @@ public class DBHelper extends SQLiteOpenHelper {
                             folderId = folder.getId();
                         }
 
-
                         com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
                         fileMetadata.setName("profileMap.txt");
                         fileMetadata.setParents(java.util.Collections.singletonList(folderId));
@@ -1049,15 +1063,6 @@ public class DBHelper extends SQLiteOpenHelper {
                         }
                         if (uploadedFileId == null | uploadedFileId.isEmpty()) {
                             LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
-                        } else {
-                            Permission permission = new Permission();
-                            permission.setType("user");
-                            permission.setRole("reader");
-                            permission.setEmailAddress("me");
-//                            permission.setEmailAddress(drive_backUp_account[0]+"@gmail.com");
-                            service.permissions().create(uploadedFileId, permission).setFields("id").execute();
-                            LogHandler.saveLog("Uploading profileMap from android into backup " +
-                                    "account uploadId : " + uploadedFileId, false);
                         }
                     }
                 }
@@ -1129,37 +1134,39 @@ public class DBHelper extends SQLiteOpenHelper {
 
                 List<com.google.api.services.drive.model.File> files = resultTxt.getFiles();
 
-                for (com.google.api.services.drive.model.File file : files) {
-                    if ("text/plain".equals(file.getMimeType()) && file.getName().endsWith(".txt")) {
-                        for (int i =0; i<3; i++){
-                            try{
-                                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                                service.files().get(file.getId())
-                                        .executeMediaAndDownloadTo(outputStream);
-                                BufferedReader reader = new BufferedReader(new InputStreamReader
-                                        (new ByteArrayInputStream(outputStream.toByteArray())));
+                if(!files.isEmpty() && files != null){
+                    for (com.google.api.services.drive.model.File file : files) {
+                        if ("text/plain".equals(file.getMimeType()) && file.getName().endsWith(".txt")) {
+                            for (int i =0; i<3; i++){
+                                try{
+                                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                                    service.files().get(file.getId())
+                                            .executeMediaAndDownloadTo(outputStream);
+                                    BufferedReader reader = new BufferedReader(new InputStreamReader
+                                            (new ByteArrayInputStream(outputStream.toByteArray())));
 
-                                String line1 = reader.readLine();
-                                String line2 = reader.readLine();
+                                    String line1 = reader.readLine();
+                                    String line2 = reader.readLine();
 
-                                auth.add(line1);
-                                auth.add(line2);
+                                    auth.add(line1);
+                                    auth.add(line2);
 
-                                System.out.println("First Line: " + line1);
-                                System.out.println("Second Line: " + line2);
+                                    System.out.println("First Line: " + line1);
+                                    System.out.println("Second Line: " + line2);
 
-                                reader.close();
-                                outputStream.close();
-                                break;
-                            }catch (Exception e){
-                                LogHandler.saveLog("failed to read from user profile : " + e.getLocalizedMessage());
+                                    reader.close();
+                                    outputStream.close();
+
+                                    if(line1 != null && line2 != null && !line1.isEmpty() && !line2.isEmpty()){
+                                        break;
+                                    }
+                                }catch (Exception e){
+                                    LogHandler.saveLog("failed to read from user profile : " + e.getLocalizedMessage());
+                                }
                             }
                         }
                     }
                 }
-            }
-            for (String authString : auth){
-                System.out.println("auth is : " + authString);
             }
             return auth;
         };

@@ -30,18 +30,20 @@ public class CustomSignUpPage extends AppCompatActivity {
         buttonCustomSignUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                buttonCustomSignUp.setClickable(false);
+                TextView signUpStateTextView = findViewById(R.id.signUpState);
+                signUpStateTextView.setText("Wait...");
                 EditText editTextUsernameSignUp = findViewById(R.id.editTextUsernameSignUp);
                 EditText editTextPasswordSignUp = findViewById(R.id.editTextPasswordSignUp);
                 String userName = editTextUsernameSignUp.getText().toString();
                 String password = editTextPasswordSignUp.getText().toString();
                 if(userName != null && !userName.isEmpty() && !password.isEmpty() && password != null){
-//                    if (!MainActivity.dbHelper.checkProfile()){
-                        MainActivity.dbHelper.insertProfile(userName,password);
-                        MainActivity.dbHelper.backUpProfileMap(getApplicationContext());
-//                    }
+                    MainActivity.dbHelper.insertProfile(userName,password);
+                    MainActivity.dbHelper.backUpProfileMap(getApplicationContext());
+                    buttonCustomSignUp.setClickable(true);
                     finish();
                 }else{
-                    TextView signUpStateTextView = findViewById(R.id.signUpState);
+                    buttonCustomSignUp.setClickable(true);
                     if(userName.isEmpty() | userName == null){
                         signUpStateTextView.setText("Enter your username!");
                     }else if(password.isEmpty() | password == null) {
