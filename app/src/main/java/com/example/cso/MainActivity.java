@@ -96,13 +96,57 @@
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            LogHandler.CreateLogFile();
+            System.out.println("new log cat ##########################################");
             setContentView(R.layout.activity_main);
             int requestCode =1;
             String[] permissions = {
                     Manifest.permission.READ_EXTERNAL_STORAGE,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE,
             };
+
+            Thread manageAccessThread = new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        int buildSdkInt = Build.VERSION.SDK_INT;
+                        if (buildSdkInt >= 30) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                if (!Environment.isExternalStorageManager()) {
+                                    Intent getPermission = new Intent();
+                                    getPermission.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                                    startActivity(getPermission);
+                                    while (!Environment.isExternalStorageManager()){
+                                        System.out.println("here " + Environment.isExternalStorageManager());
+                                        try {
+                                            Thread.sleep(1000);
+                                        } catch (InterruptedException e) {
+                                            throw new RuntimeException(e);
+
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            if (Environment.isExternalStorageManager()) {
+                                LogHandler.saveLog("Starting to restore files from your android device",false);
+                                System.out.println("Starting to restore files from your android device");
+                                Upload.restore(getApplicationContext());
+                            }}
+                    } catch (Exception e) {
+                        LogHandler.saveLog("Failed to get manage external storage in restore thread: " + e.getLocalizedMessage());
+                    }
+                }
+            };
+
+            manageAccessThread.start();
+
+            try {
+                manageAccessThread.join();
+
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
 
             boolean isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
                     (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
@@ -115,7 +159,7 @@
                 isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
                         (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
             }
-
+            LogHandler.CreateLogFile();
             googleCloud = new GoogleCloud(this);
 //            LogHandler.saveLog("--------------------------new run----------------------------",false);
 //            LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
@@ -1273,8 +1317,8 @@
                                     popupMenu.setOnMenuItemClickListener(item -> {
                                         if (item.getItemId() == R.id.sign_out) {
                                             googleCloud.signOut();
-                                            dbHelper.deleteUserProfileData(buttonText);
-                                            String sqlQuery = "DELETE FROM photos WHERE userEmail = ? and type = 'primary'";
+                                            dbHelper.deleteUserProfileData(buttonText,"primary");
+                                            String sqlQuery = "DELETE FROM photos WHERE userEmail = ?";
                                             dbHelper.dbWritable.execSQL(sqlQuery, new String[] {buttonText});
                                             dbHelper.deleteRedundantAsset();
 
@@ -1333,8 +1377,8 @@
                                     popupMenu.setOnMenuItemClickListener(item -> {
                                         if (item.getItemId() == R.id.sign_out) {
                                             googleCloud.signOut();
-                                            dbHelper.deleteUserProfileData(buttonText);
-                                            String sqlQuery = "DELETE FROM drive WHERE userEmail = ? and type = 'backup'";
+                                            dbHelper.deleteUserProfileData(buttonText,"backup");
+                                            String sqlQuery = "DELETE FROM drive WHERE userEmail = ?";
                                             dbHelper.dbWritable.execSQL(sqlQuery, new String[] {buttonText});
                                             dbHelper.deleteRedundantAsset();
 
@@ -1379,7 +1423,7 @@
                     put("accessToken", tokens.getAccessToken());
                 }};
 
-                dbHelper.updateUserProfileData(userEmail, updatedValues);
+                dbHelper.updateUserProfileData(userEmail, updatedValues, type);
 
                 if (type.equals("primary")){
                     LinearLayout primaryLinearLayout = findViewById(R.id.primaryAccountsButtons);

@@ -388,7 +388,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-    public void updateUserProfileData(String userEmail, Map<String, Object> updateValues) {
+    public void updateUserProfileData(String userEmail, Map<String, Object> updateValues,String type) {
         dbWritable.beginTransaction();
         try {
             StringBuilder sqlQueryBuilder = new StringBuilder("UPDATE USERPROFILE SET ");
@@ -403,8 +403,9 @@ public class DBHelper extends SQLiteOpenHelper {
             }
 
             sqlQueryBuilder.delete(sqlQueryBuilder.length() - 2, sqlQueryBuilder.length());
-            sqlQueryBuilder.append(" WHERE userEmail = ?");
+            sqlQueryBuilder.append(" WHERE userEmail = ? and type = ?");
             valuesList.add(userEmail);
+            valuesList.add(type);
 
             String sqlQuery = sqlQueryBuilder.toString();
             Object[] values = valuesList.toArray(new Object[0]);
@@ -419,11 +420,11 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
 
-    public void deleteUserProfileData(String userEmail) {
+    public void deleteUserProfileData(String userEmail,String type) {
         dbWritable.beginTransaction();
         try {
-            String sqlQuery = "DELETE FROM USERPROFILE WHERE userEmail = ?";
-            dbWritable.execSQL(sqlQuery, new Object[]{userEmail});
+            String sqlQuery = "DELETE FROM USERPROFILE WHERE userEmail = ? and type = ?";
+            dbWritable.execSQL(sqlQuery, new Object[]{userEmail,type});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
             LogHandler.saveLog("Failed to delete the database in deleteUserProfileData method. " + e.getLocalizedMessage());
