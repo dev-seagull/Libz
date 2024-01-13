@@ -234,7 +234,18 @@
                         return null;
                     }
                 };
-                if (!Profile.profileExists()){
+
+                boolean backUpAccountExists = false;
+                String[] columns = {"type"};
+                List<String[]> backUpAccounts = DBHelper.getUserProfile(columns);
+                for(String[] backUpAccount: backUpAccounts){
+                    if(backUpAccount[0].equals("backup")){
+                        backUpAccountExists = true;
+                        break;
+                    }
+                }
+
+                if (!Profile.profileExists() && backUpAccountExists == false){
                     {
                         FutureTask<Void> futureTask = new FutureTask<>(customLoginCallable);
                         new Thread(futureTask).start();
