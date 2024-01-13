@@ -136,7 +136,7 @@
                 List<String[]> userProfileData = MainActivity.dbHelper.getUserProfile(columnsList);
                 boolean isInUserProfileData = false;
                 for (String[] row : userProfileData) {
-                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
+                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail) && row[1].equals("primary")) {
                         PrimaryAccountInfo.Tokens finalTokens = tokens;
                         PrimaryAccountInfo.Storage finalStorage = storage;
                         Map<String, Object> updatedValues = new HashMap<String, Object>(){{
@@ -149,7 +149,7 @@
                             put("usedInGmailAndPhotosStorage", finalStorage.getUsedInGmailAndPhotosStorage());
                             put("accessToken", finalTokens.getAccessToken());
                         }};
-                        MainActivity.dbHelper.updateUserProfileData(userEmail, updatedValues);
+                        MainActivity.dbHelper.updateUserProfileData(userEmail, updatedValues,"primary");
                         isInUserProfileData = true;
                     }
                 }
@@ -194,7 +194,7 @@
                 boolean isInUserProfileData = false;
 
                 for (String[] row : userProfileData) {
-                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
+                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail) && row[1].equals("backup")) {
                         PrimaryAccountInfo.Tokens finalTokens = tokens;
                         PrimaryAccountInfo.Storage finalStorage = storage;
                         Map<String, Object> updatedValues = new HashMap<String, Object>(){{
@@ -207,7 +207,7 @@
                             put("usedInGmailAndPhotosStorage", finalStorage.getUsedInGmailAndPhotosStorage());
                             put("accessToken", finalTokens.getAccessToken());
                         }};
-                        MainActivity.dbHelper.updateUserProfileData(userEmail,updatedValues);
+                        MainActivity.dbHelper.updateUserProfileData(userEmail,updatedValues,"backup");
                         isInUserProfileData = true;
                     }
                 }

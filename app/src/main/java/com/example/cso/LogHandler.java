@@ -3,9 +3,16 @@ package com.example.cso;
 import android.app.Application;
 import android.os.Environment;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.nio.file.Files;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -39,32 +46,54 @@ public class LogHandler extends Application {
         }
     }
 
+
     public static void saveLog(String text, boolean isError) {
         File logDir = new File(LOG_DIR_PATH);
         File logFile = new File(logDir, MainActivity.logFileName);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             try {
-                List<String> existingLines = Files.readAllLines(logFile.toPath());
+                // Read existing lines
+                List<String> existingLines = new ArrayList<>();
+                if (logFile.exists()) {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(logFile)))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            existingLines.add(line);
+                        }
+                    }catch (Exception e){
+                        System.out.println("Error in buffer reader log handler" + e.getLocalizedMessage());
+                    }
+                }
+
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String timestamp = dateFormat.format(new Date());
                 String logEntry;
                 if (isError) {
-                    MainActivity.errorCounter ++;
+                    MainActivity.errorCounter++;
                     logEntry = "err " + timestamp + " --------- " + text;
                     System.out.println("Err IS SAVED: " + text);
                 } else {
                     logEntry = "log " + timestamp + " --------- " + text;
                     System.out.println("LOG IS SAVED: " + text);
                 }
-                existingLines.add(Math.min(2,existingLines.size()), logEntry);
-                Files.write(logFile.toPath(), existingLines);
+                existingLines.add(Math.min(2, existingLines.size()), logEntry);
+
+                // Write back to the file
+                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(logFile)))) {
+                    for (String line : existingLines) {
+                        writer.write(line);
+                        writer.newLine();
+                    }
+                }
+                catch (Exception e){
+                    System.out.println("Error in buffer writer log handler" + e.getLocalizedMessage());
+                }
             } catch (Exception e) {
-                System.out.println("Error in read all lines or saving logs: " + e.getMessage());
+                System.out.println("Error in reading all lines or saving logs: " + e.getMessage());
             }
         }
     }
-
 
     public static void saveLog(String text) {
         File logDir = new File(LOG_DIR_PATH);
@@ -72,17 +101,39 @@ public class LogHandler extends Application {
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             try {
-                List<String> existingLines = Files.readAllLines(logFile.toPath());
+                // Read existing lines
+                List<String> existingLines = new ArrayList<>();
+                if (logFile.exists()) {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(logFile)))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            existingLines.add(line);
+                        }
+                    }catch (Exception e){
+                        System.out.println("Error in buffer reader log handler" + e.getLocalizedMessage());
+                    }
+                }
+
+                // Append new log entry
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String timestamp = dateFormat.format(new Date());
-                String logEntry;
-                logEntry = "err " + timestamp + " --------- " + text;
-                existingLines.add(Math.min(2,existingLines.size()), logEntry);
-                Files.write(logFile.toPath(), existingLines);
-                MainActivity.errorCounter ++;
+                String logEntry = "err " + timestamp + " --------- " + text;
+                existingLines.add(Math.min(2, existingLines.size()), logEntry);
+
+                // Write back to the file
+                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(logFile)))) {
+                    for (String line : existingLines) {
+                        writer.write(line);
+                        writer.newLine();
+                    }
+                }catch (Exception e){
+                    System.out.println("Error in buffer writer log handler" + e.getLocalizedMessage() );
+                }
+
+                MainActivity.errorCounter++;
                 System.out.println("Err IS SAVED: " + text);
             } catch (Exception e) {
-                System.out.println("Error in read all lines or saving logs: " + e.getMessage());
+                System.out.println("Error in reading all lines or saving logs: " + e.getMessage());
             }
         }
     }

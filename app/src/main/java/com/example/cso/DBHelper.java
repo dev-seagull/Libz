@@ -2,6 +2,8 @@ package com.example.cso;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.widget.Button;
@@ -23,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -55,14 +58,15 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         String USERPROFILE = "CREATE TABLE IF NOT EXISTS USERPROFILE("
-                + "userEmail TEXT PRIMARY KEY," +
+                + "userEmail TEXT ," +
                 "type TEXT CHECK (type IN ('primary','backup','profile')), " +
                 "refreshToken TEXT, " +
                 "accessToken TEXT, " +
                 "totalStorage REAL," +
                 "usedStorage REAL," +
                 "usedInDriveStorage REAL,"+
-                "UsedInGmailAndPhotosStorage REAL)";
+                "UsedInGmailAndPhotosStorage REAL," +
+                "PRIMARY KEY (userEmail, type))";
         sqLiteDatabase.execSQL(USERPROFILE);
 
         String DEVICE = "CREATE TABLE IF NOT EXISTS DEVICE("
@@ -390,7 +394,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-    public void updateUserProfileData(String userEmail, Map<String, Object> updateValues) {
+    public void updateUserProfileData(String userEmail, Map<String, Object> updateValues,String type) {
         dbWritable.beginTransaction();
         try {
             StringBuilder sqlQueryBuilder = new StringBuilder("UPDATE USERPROFILE SET ");
@@ -405,8 +409,9 @@ public class DBHelper extends SQLiteOpenHelper {
             }
 
             sqlQueryBuilder.delete(sqlQueryBuilder.length() - 2, sqlQueryBuilder.length());
-            sqlQueryBuilder.append(" WHERE userEmail = ?");
+            sqlQueryBuilder.append(" WHERE userEmail = ? and type = ?");
             valuesList.add(userEmail);
+            valuesList.add(type);
 
             String sqlQuery = sqlQueryBuilder.toString();
             Object[] values = valuesList.toArray(new Object[0]);
@@ -421,11 +426,11 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
 
-    public void deleteUserProfileData(String userEmail) {
+    public void deleteUserProfileData(String userEmail,String type) {
         dbWritable.beginTransaction();
         try {
-            String sqlQuery = "DELETE FROM USERPROFILE WHERE userEmail = ?";
-            dbWritable.execSQL(sqlQuery, new Object[]{userEmail});
+            String sqlQuery = "DELETE FROM USERPROFILE WHERE userEmail = ? and type = ?";
+            dbWritable.execSQL(sqlQuery, new Object[]{userEmail,type});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
             LogHandler.saveLog("Failed to delete the database in deleteUserProfileData method. " + e.getLocalizedMessage());
@@ -940,9 +945,12 @@ public class DBHelper extends SQLiteOpenHelper {
             String newPass = Hash.calculateSHA256(password,context);
             dbWritable.execSQL(sqlQuery, new String[]{username,"profile",newPass});
             dbWritable.setTransactionSuccessful();
-        } catch (Exception e) {
-            LogHandler.saveLog("Failed to insert profile data into USERPROFILE.");
-        } finally {
+        }catch (SQLiteConstraintException e) {
+            LogHandler.saveLog("WARNING : SQLiteConstraintException in insert profile method "+ e.getLocalizedMessage(),false);
+        }catch (Exception e) {
+            LogHandler.saveLog("Failed to insert profile data into USERPROFILE." + e.getLocalizedMessage());
+        }
+        finally {
             dbWritable.endTransaction();
         }
     }
@@ -1167,7 +1175,10 @@ public class DBHelper extends SQLiteOpenHelper {
 
                                     String line1 = reader.readLine();
                                     String line2 = reader.readLine();
-
+                                    if (line1 == null || line2 == null) {
+                                        LogHandler.saveLog("Failed to read from user profile because it's null or not found");
+                                        continue;
+                                    }
                                     auth.add(line1);
                                     auth.add(line2);
 
@@ -1176,9 +1187,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
                                     reader.close();
                                     outputStream.close();
-
                                     if(line1 != null && line2 != null && !line1.isEmpty() && !line2.isEmpty()){
-                                        break;
+                                        return auth;
                                     }
                                 }catch (Exception e){
                                     LogHandler.saveLog("failed to read from user profile : " + e.getLocalizedMessage());
