@@ -58,11 +58,8 @@ public class CustomSignUpPage extends AppCompatActivity {
                     }, 5000);
 
                 }else{
-<<<<<<< HEAD
                     buttonCustomSignUp.setClickable(true);
                     alreadyHaveAccountTextView.setClickable(true);
-=======
->>>>>>> 5b8495b502442d51b40c0c994f3923bc4fd6fb9d
                     if(userName.isEmpty() | userName == null){
                         signUpStateTextView.setText("Enter your username!");
                     }else if(password.isEmpty() | password == null) {
