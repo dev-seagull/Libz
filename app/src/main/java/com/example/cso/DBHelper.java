@@ -1009,6 +1009,10 @@ public class DBHelper extends SQLiteOpenHelper {
         return result;
     }
 
+    public void syncProfileMap(){
+
+    }
+
     public String backUpProfileMap() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<String> uploadTask = () -> {
