@@ -245,7 +245,7 @@
                     }
                 }
 
-                if (!Profile.profileExists() && backUpAccountExists == false){
+                if (!Profile.profileExists() && backUpAccountExists == true){
                     {
                         FutureTask<Void> futureTask = new FutureTask<>(customLoginCallable);
                         new Thread(futureTask).start();
