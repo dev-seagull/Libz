@@ -19,12 +19,10 @@
     import android.text.SpannableString;
     import android.text.style.AlignmentSpan;
     import android.view.Gravity;
-    import android.view.LayoutInflater;
     import android.view.MenuItem;
     import android.view.View;
     import android.view.ViewGroup;
     import android.widget.Button;
-    import android.widget.EditText;
     import android.widget.LinearLayout;
     import android.widget.PopupMenu;
     import android.widget.TextView;
@@ -42,18 +40,14 @@
     import com.google.android.material.navigation.NavigationView;
     import com.jaredrummler.android.device.DeviceName;
 
-    import org.json.JSONObject;
-
     import java.io.BufferedReader;
     import java.io.File;
     import java.io.IOException;
     import java.io.InputStreamReader;
-    import java.io.OutputStream;
     import java.net.HttpURLConnection;
     import java.net.MalformedURLException;
     import java.net.ProtocolException;
     import java.net.URL;
-    import java.nio.charset.StandardCharsets;
     import java.util.ArrayList;
     import java.util.HashMap;
     import java.util.List;
@@ -148,17 +142,9 @@
                 throw new RuntimeException(e);
             }
 
-            boolean isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
-                    (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
-            while(!isWriteAndReadPermissionGranted){
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                        (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED |
-                                ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)) {
-                    ActivityCompat.requestPermissions(this, permissions, requestCode);
-                }
-                isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
-                        (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
-            }
+
+
+
             LogHandler.CreateLogFile();
             googleCloud = new GoogleCloud(this);
 //            LogHandler.saveLog("--------------------------new run----------------------------",false);
@@ -182,6 +168,31 @@
             AppCompatButton infoButton = findViewById(R.id.infoButton);
             infoButton.setOnClickListener(view -> drawerLayout.openDrawer(GravityCompat.END));
 
+            Thread manageReadAndWritePermissonsThread = new Thread() {
+                @Override
+                public void run() {
+                    synchronized (manageAccessThread){
+                        try{
+                            manageAccessThread.join();
+                        }catch (Exception e){
+                            LogHandler.saveLog("Failed to join delete duplicated drive " +
+                                    "thread in customLoginThread : " + e.getLocalizedMessage(),true);
+                        }
+                    }
+                    boolean isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
+                            (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
+                    while(!isWriteAndReadPermissionGranted){
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                                (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED |
+                                        ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)) {
+                            ActivityCompat.requestPermissions(MainActivity.this, permissions, requestCode);
+                        }
+                        isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
+                                (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
+                    }
+                }
+            };
+
             initializeButtons();
 
             syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
@@ -198,6 +209,46 @@
 
             Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
             newBackupLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+
+            Thread customLoginThread = new Thread(() ->{
+                synchronized (manageReadAndWritePermissonsThread){
+                    try{
+                        manageReadAndWritePermissonsThread.join();
+                    }catch (Exception e){
+                        LogHandler.saveLog("Failed to join delete duplicated drive " +
+                                "thread in customLoginThread : " + e.getLocalizedMessage(),true);
+                    }
+                }
+
+                Callable<Void> customLoginCallable = new Callable<Void>() {
+                    @Override
+                    public Void call() throws Exception {
+                        Handler handler = new Handler(Looper.getMainLooper());
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Intent intent = new Intent(MainActivity.this, CustomLoginPage.class);
+                                startActivity(intent);
+                            }
+                        });
+                        return null;
+                    }
+                };
+                if (!Profile.profileExists()){
+                    {
+                        FutureTask<Void> futureTask = new FutureTask<>(customLoginCallable);
+                        new Thread(futureTask).start();
+                        try {
+                            futureTask.get();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        } catch (ExecutionException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+
 
             runOnUiThread(() ->{
                 TextView deviceStorageTextView = findViewById(R.id.deviceStorage);
@@ -335,6 +386,8 @@
 
             LogHandler.saveLog("--------------------------Start of app----------------------------",false);
 
+            manageReadAndWritePermissonsThread.start();
+            customLoginThread.start();
             deleteRedundantAndroidThread.start();
             updateAndroidFilesThread.start();
             deleteRedundantDriveThread.start();
@@ -776,7 +829,7 @@
                                         return null;
                                     }
                                 };
-                                if (!dbHelper.profileExists()){
+                                if (!Profile.profileExists()){
                                     {
                                         FutureTask<Void> futureTask = new FutureTask<>(customLoginCallable);
                                         new Thread(futureTask).start();

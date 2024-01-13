@@ -20,6 +20,8 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
 import com.google.api.services.drive.model.Permission;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -42,7 +44,7 @@ import java.util.concurrent.Future;
 public class DBHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "CSODatabase";
     private static final int DATABASE_VERSION = 1;
-    public SQLiteDatabase dbReadable;
+    public static SQLiteDatabase dbReadable;
     public SQLiteDatabase dbWritable;
 
     private Context context;
@@ -367,7 +369,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-    public List<String []> getUserProfile(String[] columns){
+    public static List<String []> getUserProfile(String[] columns){
         List<String[]> resultList = new ArrayList<>();
 
         String sqlQuery = "SELECT ";
@@ -955,59 +957,6 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public boolean profileExists(){
-        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM USERPROFILE WHERE type = 'profile')";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
-        boolean exists = false;
-        if(cursor != null && cursor.moveToFirst()){
-            int result = cursor.getInt(0);
-            if(result == 1){
-                exists = true;
-            }
-        }
-        cursor.close();
-        return exists;
-    }
-
-
-    public String createProfileMap(){
-        List<String[]> userProfiles = getUserProfile(new String[]{"userEmail","type","refreshToken"});
-        String userProfileUserName = "";
-        String userProfilePassword = "";
-        String backUpAccounts = "";
-        String primaryAccounts = "";
-//        String dbUserEmail = "";
-//        String dbFileId = "";
-        for (String[] userProfile : userProfiles){
-            if(userProfile[1].equals("profile")){
-                userProfileUserName = userProfile[0];
-                userProfilePassword = userProfile[2];
-            }
-            else if(userProfile[1].equals("backup")){
-                backUpAccounts += userProfile[0] + " :\n" + userProfile[2] + "\n";
-            }
-            else if (userProfile[1].equals("primary")){
-                primaryAccounts += userProfile[0] + " :\n" + userProfile[2] + "\n";
-            }
-        }
-
-//        String sqlQuery = "SELECT * FROM BACKUPDB";
-//        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
-//        if(cursor != null && cursor.moveToFirst()){
-//            int userEmailColumnIndex = cursor.getColumnIndex("userEmail");
-//            int fileIdColumnIndex = cursor.getColumnIndex("fileId");
-//            if(userEmailColumnIndex >= 0 && fileIdColumnIndex >= 0){
-//                dbUserEmail = cursor.getString(userEmailColumnIndex);
-//                dbFileId = cursor.getString(fileIdColumnIndex);
-//                System.out.println("User and file id for test : " + dbUserEmail + " " + dbFileId );
-//            }
-//        }
-
-        String result = userProfileUserName + "\n" + userProfilePassword + "\n" + "Backup Data:\n" + backUpAccounts +
-                "Primary Data:\n" + primaryAccounts;
-        System.out.println("profile Map is :\n" + result);
-        return result;
-    }
 
     public void syncProfileMap(){
 
@@ -1027,15 +976,13 @@ public class DBHelper extends SQLiteOpenHelper {
                         NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
                         JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
                         String bearerToken = "Bearer " + driveBackupAccessToken;
-                        System.out.println("access token to upload is " + driveBackupAccessToken);
                         HttpRequestInitializer requestInitializer = request -> {
                             request.getHeaders().setAuthorization(bearerToken);
                             request.getHeaders().setContentType("application/json");
                         };
 
                         Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                                .setApplicationName("cso")
-                                .build();
+                                .setApplicationName("cso").build();
 
                         String folder_name = "stash_user_profile";
                         String folderId = null;
@@ -1076,12 +1023,12 @@ public class DBHelper extends SQLiteOpenHelper {
                         }
 
                         com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                        fileMetadata.setName("profileMap.txt");
+                        fileMetadata.setName("profileMap.json");
                         fileMetadata.setParents(java.util.Collections.singletonList(folderId));
 
-                        String content = createProfileMap();
+                        String content = Profile.createProfileMapContent().toString();
 
-                        ByteArrayContent mediaContent = ByteArrayContent.fromString("text/plain", content);
+                        ByteArrayContent mediaContent = ByteArrayContent.fromString("application/json", content);
 
                         com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
                                 .setFields("id")
