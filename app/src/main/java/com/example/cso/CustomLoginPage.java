@@ -34,6 +34,7 @@ public class CustomLoginPage extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 buttonCustomSignIn.setClickable(false);
+                noAccountSignedUpTextView.setClickable(false);
                 TextView signInStateTextView = findViewById(R.id.signInState);
                 signInStateTextView.setText("Wait...");
                 EditText editTextUsernameSignIn = findViewById(R.id.editTextUsernameSignIn);
@@ -48,13 +49,14 @@ public class CustomLoginPage extends AppCompatActivity {
                         String userNameResult = null;
                         String passResult = null ;
                         List<String> auth = MainActivity.dbHelper.readProfile();
-                        if (auth != null) {
+                        if (auth != null && !auth.isEmpty()) {
                             userNameResult = auth.get(0);
                             passResult = auth.get(1);
                         }
                         if (!userNameResult.isEmpty() && userNameResult != null &&
                                 !passResult.isEmpty() && passResult != null) {
                             buttonCustomSignIn.setClickable(true);
+                            noAccountSignedUpTextView.setClickable(true);
                             System.out.println("i'm here 1");
                             if(userNameResult.equals(userName)){
                                 System.out.println("i'm here 2");
@@ -63,26 +65,32 @@ public class CustomLoginPage extends AppCompatActivity {
                                     finish();
                                 }else{
                                     buttonCustomSignIn.setClickable(true);
+                                    noAccountSignedUpTextView.setClickable(true);
                                     signInStateTextView.setText("Wrong password!");
                                 }
                             }else{
                                 buttonCustomSignIn.setClickable(true);
+                                noAccountSignedUpTextView.setClickable(true);
                                 signInStateTextView.setText("Wrong Username!");
                             }
                         }else{
                             buttonCustomSignIn.setClickable(true);
+                            noAccountSignedUpTextView.setClickable(true);
                             signInStateTextView.setText("No account was found with this username and password!");
                         }
                     });
                     if(userName.isEmpty() | userName == null){
                         buttonCustomSignIn.setClickable(true);
+                        noAccountSignedUpTextView.setClickable(true);
                         signInStateTextView.setText("Enter your username!");
                     }else if(password.isEmpty() | password == null) {
                         buttonCustomSignIn.setClickable(true);
+                        noAccountSignedUpTextView.setClickable(true);
                         signInStateTextView.setText("Enter your password!");
                     }
                 }else{
                     buttonCustomSignIn.setClickable(true);
+                    noAccountSignedUpTextView.setClickable(true);
                     if(userName.isEmpty() | userName == null){
                         signInStateTextView.setText("Enter your username!");
                     }else if(password.isEmpty() | password == null) {

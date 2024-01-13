@@ -4,6 +4,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.api.client.http.ByteArrayContent;
@@ -26,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -963,16 +966,20 @@ public class DBHelper extends SQLiteOpenHelper {
         List<String[]> userProfiles = getUserProfile(new String[]{"userEmail","type","refreshToken"});
         String userProfileUserName = "";
         String userProfilePassword = "";
-        String accounts = "";
-        String dbUserEmail = "";
-        String dbFileId = "";
+        String backUpAccounts = "";
+        String primaryAccounts = "";
+//        String dbUserEmail = "";
+//        String dbFileId = "";
         for (String[] userProfile : userProfiles){
             if(userProfile[1].equals("profile")){
                 userProfileUserName = userProfile[0];
                 userProfilePassword = userProfile[2];
             }
             else if(userProfile[1].equals("backup")){
-                accounts += userProfile[0] + " :\n" + userProfile[2] + "\n";
+                backUpAccounts += userProfile[0] + " :\n" + userProfile[2] + "\n";
+            }
+            else if (userProfile[1].equals("primary")){
+                primaryAccounts += userProfile[0] + " :\n" + userProfile[2] + "\n";
             }
         }
 
@@ -988,12 +995,13 @@ public class DBHelper extends SQLiteOpenHelper {
 //            }
 //        }
 
-        String result = userProfileUserName + "\n" + userProfilePassword + "\n" + accounts;
+        String result = userProfileUserName + "\n" + userProfilePassword + "\n" + "Backup Data:\n" + backUpAccounts +
+                "Primary Data:\n" + primaryAccounts;
         System.out.println("profile Map is :\n" + result);
         return result;
     }
 
-    public String backUpProfileMap(Context context) {
+    public String backUpProfileMap() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<String> uploadTask = () -> {
             String uploadFileId = "";
@@ -1041,6 +1049,18 @@ public class DBHelper extends SQLiteOpenHelper {
                                     .setFields("id").execute();
 
                             folderId = folder.getId();
+                        }
+
+
+                        fileList = service.files().list()
+                                .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
+                                .setSpaces("drive")
+                                .setFields("files(id)")
+                                .execute();
+                        List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
+                        for (com.google.api.services.drive.model.File existingFile : existingFiles) {
+                            service.files().delete(existingFile.getId()).execute();
+                            System.out.println("Deleted existing profileMap.txt file with ID: " + existingFile.getId());
                         }
 
                         com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();

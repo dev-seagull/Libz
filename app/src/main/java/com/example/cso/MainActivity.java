@@ -1185,7 +1185,6 @@
                             }
                         }
 
-                        System.out.println("herer");
                         List<String> result = dbHelper.backUpDataBase(getApplicationContext());
                         String userEmailDatabase = result.get(0);
                         String databaseFileId = result.get(1);

@@ -31,6 +31,7 @@ public class CustomSignUpPage extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 buttonCustomSignUp.setClickable(false);
+                alreadyHaveAccountTextView.setClickable(false);
                 TextView signUpStateTextView = findViewById(R.id.signUpState);
                 signUpStateTextView.setText("Wait...");
                 EditText editTextUsernameSignUp = findViewById(R.id.editTextUsernameSignUp);
@@ -39,11 +40,13 @@ public class CustomSignUpPage extends AppCompatActivity {
                 String password = editTextPasswordSignUp.getText().toString();
                 if(userName != null && !userName.isEmpty() && !password.isEmpty() && password != null){
                     MainActivity.dbHelper.insertProfile(userName,password);
-                    MainActivity.dbHelper.backUpProfileMap(getApplicationContext());
+                    MainActivity.dbHelper.backUpProfileMap();
                     buttonCustomSignUp.setClickable(true);
+                    alreadyHaveAccountTextView.setClickable(true);
                     finish();
                 }else{
                     buttonCustomSignUp.setClickable(true);
+                    alreadyHaveAccountTextView.setClickable(true);
                     if(userName.isEmpty() | userName == null){
                         signUpStateTextView.setText("Enter your username!");
                     }else if(password.isEmpty() | password == null) {
