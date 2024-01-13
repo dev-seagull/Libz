@@ -2,6 +2,8 @@ package com.example.cso;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.widget.TextView;
@@ -21,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -939,9 +942,12 @@ public class DBHelper extends SQLiteOpenHelper {
             String newPass = Hash.calculateSHA256(password,context);
             dbWritable.execSQL(sqlQuery, new String[]{username,"profile",newPass});
             dbWritable.setTransactionSuccessful();
-        } catch (Exception e) {
+        }catch (SQLiteConstraintException e) {
+            LogHandler.saveLog("WARNING : SQLiteConstraintException in insert profile method "+ e.getLocalizedMessage(),false);
+        }catch (Exception e) {
             LogHandler.saveLog("Failed to insert profile data into USERPROFILE." + e.getLocalizedMessage());
-        } finally {
+        }
+        finally {
             dbWritable.endTransaction();
         }
     }
@@ -1149,7 +1155,10 @@ public class DBHelper extends SQLiteOpenHelper {
 
                                     String line1 = reader.readLine();
                                     String line2 = reader.readLine();
-
+                                    if (line1 == null || line2 == null) {
+                                        LogHandler.saveLog("Failed to read from user profile because it's null or not found");
+                                        continue;
+                                    }
                                     auth.add(line1);
                                     auth.add(line2);
 
@@ -1158,9 +1167,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
                                     reader.close();
                                     outputStream.close();
-
                                     if(line1 != null && line2 != null && !line1.isEmpty() && !line2.isEmpty()){
-                                        break;
+                                        return auth;
                                     }
                                 }catch (Exception e){
                                     LogHandler.saveLog("failed to read from user profile : " + e.getLocalizedMessage());

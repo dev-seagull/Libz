@@ -35,7 +35,7 @@ public class CustomLoginPage extends AppCompatActivity {
             public void onClick(View view) {
                 buttonCustomSignIn.setClickable(false);
                 TextView signInStateTextView = findViewById(R.id.signInState);
-                signInStateTextView.setText("Wait...");
+                signInStateTextView.setText(" Wait... ");
                 EditText editTextUsernameSignIn = findViewById(R.id.editTextUsernameSignIn);
                 EditText editTextPasswordSignIn = findViewById(R.id.editTextPasswordSignIn);
                 String userName = editTextUsernameSignIn.getText().toString();
@@ -48,9 +48,11 @@ public class CustomLoginPage extends AppCompatActivity {
                         String userNameResult = null;
                         String passResult = null ;
                         List<String> auth = MainActivity.dbHelper.readProfile();
-                        if (auth != null) {
+                        if (auth != null && !auth.isEmpty()) {
                             userNameResult = auth.get(0);
                             passResult = auth.get(1);
+                        }else {
+                            System.out.println("auth is null or empty + auth.isEmpty() : " + auth.isEmpty());
                         }
                         if (!userNameResult.isEmpty() && userNameResult != null &&
                                 !passResult.isEmpty() && passResult != null) {

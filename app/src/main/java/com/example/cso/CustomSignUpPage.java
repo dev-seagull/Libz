@@ -32,7 +32,13 @@ public class CustomSignUpPage extends AppCompatActivity {
             public void onClick(View view) {
                 buttonCustomSignUp.setClickable(false);
                 TextView signUpStateTextView = findViewById(R.id.signUpState);
-                signUpStateTextView.setText("Wait...");
+                view.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        signUpStateTextView.setText(" Wait... ");
+                    }
+                }, 10000);
+
                 EditText editTextUsernameSignUp = findViewById(R.id.editTextUsernameSignUp);
                 EditText editTextPasswordSignUp = findViewById(R.id.editTextPasswordSignUp);
                 String userName = editTextUsernameSignUp.getText().toString();
@@ -41,15 +47,27 @@ public class CustomSignUpPage extends AppCompatActivity {
                     MainActivity.dbHelper.insertProfile(userName,password);
                     MainActivity.dbHelper.backUpProfileMap(getApplicationContext());
                     finish();
-                    buttonCustomSignUp.setClickable(true);
+                    view.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            buttonCustomSignUp.setClickable(true);
+                        }
+                    }, 5000);
+
                 }else{
-                    buttonCustomSignUp.setClickable(true);
                     if(userName.isEmpty() | userName == null){
                         signUpStateTextView.setText("Enter your username!");
                     }else if(password.isEmpty() | password == null) {
                         signUpStateTextView.setText("Enter your password!");
                     }
                 }
+                view.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        buttonCustomSignUp.setClickable(true);
+                    }
+                }, 5000);
+
             }
         });
     }
