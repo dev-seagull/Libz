@@ -245,7 +245,7 @@
                     }
                 }
 
-                if (!Profile.profileExists() && backUpAccountExists == true){
+                if (!Profile.profileMapExists() && backUpAccountExists == true){
                     {
                         FutureTask<Void> futureTask = new FutureTask<>(customLoginCallable);
                         new Thread(futureTask).start();
@@ -840,7 +840,7 @@
                                         return null;
                                     }
                                 };
-                                if (!Profile.profileExists()){
+                                if (!Profile.profileMapExists()){
                                     {
                                         FutureTask<Void> futureTask = new FutureTask<>(customLoginCallable);
                                         new Thread(futureTask).start();

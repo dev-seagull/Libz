@@ -68,7 +68,7 @@ public class CustomLoginPage extends AppCompatActivity {
                                 if(userNameResult.equals(userName)){
                                     System.out.println("i'm here 2");
                                     if(passResult.equals(password)){
-                                        MainActivity.dbHelper.insertProfile(userName, password);
+                                        Profile.insertProfile(userName, password, getApplicationContext());
                                         finish();
                                     }else{
                                         buttonCustomSignIn.setClickable(true);

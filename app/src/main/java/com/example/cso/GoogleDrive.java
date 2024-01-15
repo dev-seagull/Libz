@@ -190,4 +190,40 @@ public class GoogleDrive {
             }
         }
     }
+
+    public static Drive initializeDrive(String accessToken){
+        Drive service = null;
+        try{
+            NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+            JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+            String bearerToken = "Bearer " + accessToken;
+            HttpRequestInitializer requestInitializer = request -> {
+                request.getHeaders().setAuthorization(bearerToken);
+                request.getHeaders().setContentType("application/json");
+            };
+            service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
+                    .setApplicationName("cso")
+                    .build();
+
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to initialize DRIVE : " + e.getLocalizedMessage(), true);
+        }
+        return service;
+    }
+
+    public static List<com.google.api.services.drive.model.File> getDriveFolderFiles(Drive service, String folderId){
+        List<com.google.api.services.drive.model.File> files = null;
+        try{
+            String query = "'" + folderId + "' in parents and trashed=false";
+            FileList resultJson = service.files().list()
+                    .setQ(query)
+                    .setSpaces("drive")
+                    .execute();
+
+             files = resultJson.getFiles();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to get drive folder files : " + e.getLocalizedMessage(), true);
+        }
+        return files;
+    }
 }

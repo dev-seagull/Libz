@@ -2,16 +2,12 @@ package com.example.cso;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
-import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.FileContent;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -19,21 +15,12 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
-import com.google.api.services.drive.model.Permission;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -45,7 +32,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "CSODatabase";
     private static final int DATABASE_VERSION = 1;
     public static SQLiteDatabase dbReadable;
-    public SQLiteDatabase dbWritable;
+    public static SQLiteDatabase dbWritable;
 
     private Context context;
 
@@ -940,22 +927,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
-    public void insertProfile(String username,String password){
-        String sqlQuery = "Insert into USERPROFILE (userEmail,type,refreshToken) values (?,?,?)";
-        dbWritable.beginTransaction();
-        try {
-            String newPass = Hash.calculateSHA256(password,context);
-            dbWritable.execSQL(sqlQuery, new String[]{username,"profile",newPass});
-            dbWritable.setTransactionSuccessful();
-        }catch (SQLiteConstraintException e) {
-            LogHandler.saveLog("WARNING : SQLiteConstraintException in insert profile method "+ e.getLocalizedMessage(),false);
-        }catch (Exception e) {
-            LogHandler.saveLog("Failed to insert profile data into USERPROFILE." + e.getLocalizedMessage());
-        }
-        finally {
-            dbWritable.endTransaction();
-        }
-    }
+
 
 
     public void syncProfileMap(){
@@ -1061,104 +1033,4 @@ public class DBHelper extends SQLiteOpenHelper {
         return uploadFileIdFuture;
     }
 
-    public List<String> readProfile() {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Callable<List<String>> uploadTask = () -> {
-            List<String> auth = new ArrayList<>(2);
-            String userEmail = "";
-            String driveBackupAccessToken = "";
-            String folderId = "";
-
-            String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
-            List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getUserProfile(drive_backup_selected_columns);
-            for (String[] drive_backUp_account : drive_backUp_accounts) {
-                if (drive_backUp_account[1].equals("backup")) {
-                    driveBackupAccessToken = drive_backUp_account[2];
-                    userEmail = drive_backUp_account[0];
-                    break;
-                }
-            }
-
-            NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-            JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-            String bearerToken = "Bearer " + driveBackupAccessToken;
-            System.out.println("access token to upload is " + driveBackupAccessToken);
-            HttpRequestInitializer requestInitializer = request -> {
-                request.getHeaders().setAuthorization(bearerToken);
-                request.getHeaders().setContentType("application/json");
-            };
-            Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                    .setApplicationName("cso")
-                    .build();
-
-            String folder_name = "stash_user_profile";
-            String query = "mimeType='application/vnd.google-apps.folder' and name='" + folder_name + "' and trashed=false";
-            FileList result = service.files().list()
-                    .setQ(query)
-                    .setSpaces("drive")
-                    .execute();
-
-            List<com.google.api.services.drive.model.File> folders = result.getFiles();
-            if (folders != null && !folders.isEmpty()) {
-                folderId = folders.get(0).getId();
-            }
-
-            if(!folderId.isEmpty() && folderId != null){
-                query = "'" + folderId + "' in parents and trashed=false";
-
-                FileList resultTxt = service.files().list()
-                        .setQ(query)
-                        .setSpaces("drive")
-                        .execute();
-
-                List<com.google.api.services.drive.model.File> files = resultTxt.getFiles();
-
-                if(!files.isEmpty() && files != null){
-                    for (com.google.api.services.drive.model.File file : files) {
-                        if ("text/plain".equals(file.getMimeType()) && file.getName().endsWith(".txt")) {
-                            for (int i =0; i<3; i++){
-                                try{
-                                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                                    service.files().get(file.getId())
-                                            .executeMediaAndDownloadTo(outputStream);
-                                    BufferedReader reader = new BufferedReader(new InputStreamReader
-                                            (new ByteArrayInputStream(outputStream.toByteArray())));
-
-                                    String line1 = reader.readLine();
-                                    String line2 = reader.readLine();
-                                    if (line1 == null || line2 == null) {
-                                        LogHandler.saveLog("Failed to read from user profile because it's null or not found");
-                                        continue;
-                                    }
-                                    auth.add(line1);
-                                    auth.add(line2);
-
-                                    System.out.println("First Line: " + line1);
-                                    System.out.println("Second Line: " + line2);
-
-                                    reader.close();
-                                    outputStream.close();
-                                    if(line1 != null && line2 != null && !line1.isEmpty() && !line2.isEmpty()){
-                                        return auth;
-                                    }
-                                }catch (Exception e){
-                                    LogHandler.saveLog("failed to read from user profile : " + e.getLocalizedMessage());
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return auth;
-        };
-
-        Future<List<String>> future = executor.submit(uploadTask);
-        List<String> authFuture = new ArrayList<>(2);
-        try {
-            authFuture = future.get();
-        } catch (Exception e) {
-            LogHandler.saveLog("error when downloading user profile : " + e.getLocalizedMessage());
-        }
-        return authFuture;
-    }
 }

@@ -45,7 +45,7 @@ public class CustomSignUpPage extends AppCompatActivity {
                 String userName = editTextUsernameSignUp.getText().toString();
                 String password = editTextPasswordSignUp.getText().toString();
                 if(userName != null && !userName.isEmpty() && !password.isEmpty() && password != null){
-                    MainActivity.dbHelper.insertProfile(userName,password);
+                    Profile.insertProfile(userName, password, getApplicationContext());
                     MainActivity.dbHelper.backUpProfileMap();
                     buttonCustomSignUp.setClickable(true);
                     alreadyHaveAccountTextView.setClickable(true);
