@@ -1,6 +1,7 @@
     package com.example.cso;
 
     import android.Manifest;
+    import android.app.Activity;
     import android.content.Context;
     import android.content.Intent;
     import android.content.SharedPreferences;
@@ -63,7 +64,8 @@
 
         private DrawerLayout drawerLayout;
         Button syncToBackUpAccountButton;
-        GoogleCloud googleCloud;
+        public static Activity activity ;
+        static GoogleCloud googleCloud;
         ActivityResultLauncher<Intent> signInToPrimaryLauncher;
         ActivityResultLauncher<Intent> signInToBackUpLauncher;
         GooglePhotos googlePhotos;
@@ -89,6 +91,7 @@
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
+            activity = this;
             super.onCreate(savedInstanceState);
             System.out.println("new log cat ##########################################");
             setContentView(R.layout.activity_main);
@@ -123,12 +126,11 @@
                         }
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             if (Environment.isExternalStorageManager()) {
-                                LogHandler.saveLog("Starting to restore files from your android device",false);
-                                System.out.println("Starting to restore files from your android device");
-                                Upload.restore(getApplicationContext());
+                                LogHandler.saveLog("Starting to get access files from your android device",false);
+                                System.out.println("Starting to get access from your android device");
                             }}
                     } catch (Exception e) {
-                        LogHandler.saveLog("Failed to get manage external storage in restore thread: " + e.getLocalizedMessage());
+                        LogHandler.saveLog("Failed to get manage external storage when on create thread: " + e.getLocalizedMessage());
                     }
                 }
             };
@@ -154,6 +156,7 @@
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
             drawerLayout = findViewById(R.id.drawer_layout);
+            Profile.test();
             NavigationView navigationView = findViewById(R.id.navigationView);
             ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
                     this, drawerLayout, R.string.navigation_drawer_open,
@@ -193,7 +196,7 @@
                 }
             };
 
-            initializeButtons();
+            initializeButtons(this,googleCloud);
 
             syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
 
@@ -577,7 +580,7 @@
                                         Upload.restore(getApplicationContext());
                                     }}
                             } catch (Exception e) {
-                                LogHandler.saveLog("Failed to get manage external storage in restore thread: " + e.getLocalizedMessage());
+                                LogHandler.saveLog("kFailed to get manage external storage in restore thread: " + e.getLocalizedMessage());
                             }
                         }
                     };
@@ -1472,15 +1475,13 @@
             }
         }
 
-
-        private void initializeButtons(){
+        public static void initializeButtons(Activity activity,GoogleCloud googleCloud){
             String[] columnsList = {"userEmail", "type", "refreshToken"};
             List<String[]> userProfiles = dbHelper.getUserProfile(columnsList);
             for (String[] userProfile : userProfiles) {
                 String userEmail = userProfile[0];
                 String type = userProfile[1];
                 String refreshToken = userProfile[2];
-
                 PrimaryAccountInfo.Tokens tokens = googleCloud.requestAccessToken(refreshToken);
                 Map<String, Object> updatedValues = new HashMap<String, Object>(){{
                     put("accessToken", tokens.getAccessToken());
@@ -1489,16 +1490,17 @@
                 dbHelper.updateUserProfileData(userEmail, updatedValues, type);
 
                 if (type.equals("primary")){
-                    LinearLayout primaryLinearLayout = findViewById(R.id.primaryAccountsButtons);
+                    LinearLayout primaryLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
                     Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
                     newGoogleLoginButton.setText(userEmail);
                 }else if (type.equals("backup")){
-                    LinearLayout backupLinearLayout = findViewById(R.id.backUpAccountsButtons);
+                    LinearLayout backupLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
                     Button newGoogleLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
                     newGoogleLoginButton.setText(userEmail);
                 }
             }
         }
+
     }
 
 

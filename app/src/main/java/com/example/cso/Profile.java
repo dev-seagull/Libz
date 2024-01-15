@@ -93,7 +93,7 @@ public class Profile {
     }
 
 
-    public JsonObject readProfileMapContent() {
+    public static JsonObject readProfileMapContent() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<JsonObject> uploadTask = () -> {
             JsonObject result = null;
@@ -122,7 +122,7 @@ public class Profile {
                 if(!driveFolderId.isEmpty() && driveFolderId != null){
                     if(!files.isEmpty() && files != null){
                         for (com.google.api.services.drive.model.File file : files) {
-                            if ("text/plain".equals(file.getMimeType()) && file.getName().endsWith(".txt")) {
+                            if ("application/json".equals(file.getMimeType()) && file.getName().endsWith(".json")) {
                                 for (int i =0; i<3; i++){
                                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                                     service.files().get(file.getId())
@@ -130,7 +130,11 @@ public class Profile {
                                     String jsonString = outputStream.toString();
                                     result = JsonParser.parseString(jsonString).getAsJsonObject();
                                     outputStream.close();
+                                    if(result != null){
+                                        break;
+                                    }
                                 }
+                                break;
                             }
                         }
                     }
@@ -175,7 +179,7 @@ public class Profile {
     }
 
 
-    private String get_StashUserProfile_DriveFolderId(Drive service){
+    private static String get_StashUserProfile_DriveFolderId(Drive service){
         String folderId = null;
         String folder_name = "stash_user_profile";
         String query = "mimeType='application/vnd.google-apps.folder' and name='" + folder_name + "' and trashed=false";
@@ -193,4 +197,56 @@ public class Profile {
         }
         return folderId;
     }
+
+    public static void insertBackupAccounts(JsonArray backupAccounts){
+        String sqlQuery = "Insert into USERPROFILE (userEmail,type,refreshToken) values (?,?,?)";
+        DBHelper.dbWritable.beginTransaction();
+        for (int i = 0; i < backupAccounts.size(); i++) {
+            try {
+                JsonObject backupAccount = backupAccounts.get(i).getAsJsonObject();
+                String backupEmail = backupAccount.get("backupEmail").getAsString();
+                String refreshToken = backupAccount.get("refreshToken").getAsString();
+                DBHelper.dbWritable.execSQL(sqlQuery, new String[]{backupEmail, "backup", refreshToken});
+                DBHelper.dbWritable.setTransactionSuccessful();
+            } catch (SQLiteConstraintException e) {
+                LogHandler.saveLog("SQLiteConstraintException in insert backup accounts method " + e.getLocalizedMessage(), false);
+            } catch (Exception e) {
+                LogHandler.saveLog("Failed to insert backup accounts data into USERPROFILE." + e.getLocalizedMessage(), true);
+            }
+        }
+        DBHelper.dbWritable.endTransaction();
+    }
+
+    public static void insertPrimaryAccounts(JsonArray primaryAccounts){
+        String sqlQuery = "Insert into USERPROFILE (userEmail,type,refreshToken) values (?,?,?)";
+        DBHelper.dbWritable.beginTransaction();
+        for (int i = 0; i < primaryAccounts.size(); i++) {
+            try {
+                JsonObject primaryAccount = primaryAccounts.get(i).getAsJsonObject();
+                String primaryEmail = primaryAccount.get("primaryEmail").getAsString();
+                String refreshToken = primaryAccount.get("refreshToken").getAsString();
+                DBHelper.dbWritable.execSQL(sqlQuery, new String[]{primaryEmail, "primary", refreshToken});
+                DBHelper.dbWritable.setTransactionSuccessful();
+            } catch (SQLiteConstraintException e) {
+                LogHandler.saveLog("SQLiteConstraintException in insert primary accounts method " + e.getLocalizedMessage(), false);
+            } catch (Exception e) {
+                LogHandler.saveLog("Failed to insert primary accounts data into USERPROFILE." + e.getLocalizedMessage(), true);
+            }
+        }
+        DBHelper.dbWritable.endTransaction();
+    }
+
+    public static void test(){
+        String sqlQuery = "DELETE FROM USERPROFILE WHERE type = 'profile'";
+        DBHelper.dbWritable.beginTransaction();
+        try {
+            DBHelper.dbWritable.execSQL(sqlQuery);
+            DBHelper.dbWritable.setTransactionSuccessful();
+        }catch (SQLiteConstraintException e) {
+            LogHandler.saveLog("SQLiteConstraintException in insert profile method "+ e.getLocalizedMessage(),false);
+        }finally {
+            DBHelper.dbWritable.endTransaction();
+        }
+    }
+
 }

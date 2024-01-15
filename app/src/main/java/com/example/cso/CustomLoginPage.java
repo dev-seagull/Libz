@@ -1,14 +1,18 @@
 package com.example.cso;
 
+import static com.google.android.material.internal.ContextUtils.getActivity;
+
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.util.List;
+import com.google.gson.JsonObject;
 
 public class CustomLoginPage extends AppCompatActivity {
     private TextView noAccountSignedUpTextView;
@@ -40,81 +44,66 @@ public class CustomLoginPage extends AppCompatActivity {
                 EditText editTextUsernameSignIn = findViewById(R.id.editTextUsernameSignIn);
                 EditText editTextPasswordSignIn = findViewById(R.id.editTextPasswordSignIn);
                 String userName = editTextUsernameSignIn.getText().toString();
-                String password = Hash.calculateSHA256(editTextPasswordSignIn.getText().toString(), getApplicationContext());
+                String earlyPassword = editTextPasswordSignIn.getText().toString();
+                String password = Hash.calculateSHA256(earlyPassword, getApplicationContext());
                 System.out.println("input userName: " + userName);
-                System.out.println("input password: " + password);
-
-                if(userName != null && password != null){
-                    if (!userName.isEmpty() && !password.isEmpty() ){
-                        runOnUiThread(() -> {
-                            String userNameResult = null;
-                            String passResult = null ;
-                            List<String> auth = MainActivity.dbHelper.readProfile();
-                            if (auth != null) {
-                                if (!auth.isEmpty()){
-                                    userNameResult = auth.get(0);
-                                    passResult = auth.get(1);
-                                }else {
-                                    System.out.println("auth is empty + auth.isEmpty() : " + auth.isEmpty());
-                                }
-                            }else {
-                                System.out.println("auth is null  : ");
-                            }
-                            if (!userNameResult.isEmpty() && userNameResult != null &&
-                                    !passResult.isEmpty() && passResult != null) {
-                                buttonCustomSignIn.setClickable(true);
-                                noAccountSignedUpTextView.setClickable(true);
-                                System.out.println("i'm here 1");
-                                if(userNameResult.equals(userName)){
-                                    System.out.println("i'm here 2");
-                                    if(passResult.equals(password)){
-                                        Profile.insertProfile(userName, password, getApplicationContext());
-                                        finish();
-                                    }else{
-                                        buttonCustomSignIn.setClickable(true);
-                                        noAccountSignedUpTextView.setClickable(true);
-                                        signInStateTextView.setText("Wrong password!");
-                                    }
-                                }else{
-                                    buttonCustomSignIn.setClickable(true);
-                                    noAccountSignedUpTextView.setClickable(true);
-                                    signInStateTextView.setText("Wrong Username!");
-                                }
-                            }else{
-                                buttonCustomSignIn.setClickable(true);
-                                noAccountSignedUpTextView.setClickable(true);
-                                signInStateTextView.setText("No account was found with this username and password!");
-                            }
-                        });
-                        if(userName.isEmpty() | userName == null){
-                            buttonCustomSignIn.setClickable(true);
-                            noAccountSignedUpTextView.setClickable(true);
-                            signInStateTextView.setText("Enter your username!");
-                        }else if(password.isEmpty() | password == null) {
-                            buttonCustomSignIn.setClickable(true);
-                            noAccountSignedUpTextView.setClickable(true);
-                            signInStateTextView.setText("Enter your password!");
-                        }
-                    }else{
-                        buttonCustomSignIn.setClickable(true);
-                        noAccountSignedUpTextView.setClickable(true);
-                        if(userName.isEmpty()){
-                            signInStateTextView.setText("Enter your username!");
-                        }else if(password.isEmpty()) {
-                            signInStateTextView.setText("Enter your password!");
-                        }
-                    }
-                }else{
+                System.out.println("input password: " + earlyPassword + " h-> " + password);
+                if (userName == null || password == null) {
+                    signInStateTextView.setText("Please Try Again");//Enter your credential");
                     buttonCustomSignIn.setClickable(true);
-                    noAccountSignedUpTextView.setClickable(true);
-                    if(userName == null){
-                        signInStateTextView.setText("Enter your username!");
-                    }else if(password == null) {
-                        signInStateTextView.setText("Enter your password!");
-                    }
+                    return;
                 }
+                if (userName.isEmpty()) {
+                    signInStateTextView.setText("Enter your username !");
+                    buttonCustomSignIn.setClickable(true);
+                    return;
+                }
+                if (earlyPassword.isEmpty()) {
+                    signInStateTextView.setText("Enter your password !");
+                    buttonCustomSignIn.setClickable(true);
+                    return;
+                }
+                JsonObject profileMapContent = Profile.readProfileMapContent();
+                JsonObject userProfileJson = profileMapContent.get("userProfile").getAsJsonObject();
+                if (profileMapContent == null || !profileMapContent.has("userProfile")){
+                    signInStateTextView.setText("No account was found with this Email !");
+                    buttonCustomSignIn.setClickable(true);
+                    return;
+                }
+                if (!userProfileJson.has("userName") || !userProfileJson.has("password")) {
+                    signInStateTextView.setText("No username, password was found in this Email !");
+                    buttonCustomSignIn.setClickable(true);
+                    return;
+                }
+                runOnUiThread(() -> {
+                    String userNameResult = userProfileJson.get("userName").getAsString();
+                    String passwordResult = userProfileJson.get("password").getAsString();
+                    if (!userNameResult.equals(userName)) {
+                        signInStateTextView.setText("Username Not found !");
+                        buttonCustomSignIn.setClickable(true);
+                        return;
+                    }
+                    //should compare with signup page
+//                    if (earlyPassword.length() < 8){
+//                        signInStateTextView.setText("Wrong password Format please check again");
+//                        buttonCustomSignIn.setClickable(true);
+//                        return;
+//                    }
+                    if (!passwordResult.equals(password)){
+                        signInStateTextView.setText("Wrong password please check again or ... ");
+                        buttonCustomSignIn.setClickable(true);
+                        return;
+                    }
+                    Profile.insertProfile(userName, password, getApplicationContext());
+                    Profile.insertBackupAccounts(profileMapContent.get("backupAccounts").getAsJsonArray());
+                    Profile.insertPrimaryAccounts(profileMapContent.get("primaryAccounts").getAsJsonArray());
+                    Activity activity = MainActivity.activity;
+                    if (activity != null) {
+                        MainActivity.initializeButtons(activity, MainActivity.googleCloud);
+                    }
+                    finish();
+                });
             }
         });
-
     }
 }
