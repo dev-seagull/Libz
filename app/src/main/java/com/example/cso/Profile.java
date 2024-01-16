@@ -37,7 +37,6 @@ public class Profile {
         return exists;
     }
 
-
     public static JsonObject createProfileMapContent(){
         List<String[]> userProfiles = DBHelper.getUserProfile(new String[]{"userEmail","type","refreshToken"});
         JsonObject userProfileJson = new JsonObject();
@@ -118,11 +117,12 @@ public class Profile {
 
             List<com.google.api.services.drive.model.File> files = GoogleDrive.getDriveFolderFiles(service, driveFolderId);
 
+
             try{
                 if(!driveFolderId.isEmpty() && driveFolderId != null){
                     if(!files.isEmpty() && files != null){
                         for (com.google.api.services.drive.model.File file : files) {
-                            if ("application/json".equals(file.getMimeType()) && file.getName().endsWith(".json")) {
+                            if ("application/json".equals(file.getMimeType()) && file.getName().startsWith("profileMap")) {
                                 for (int i =0; i<3; i++){
                                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                                     service.files().get(file.getId())
@@ -198,7 +198,7 @@ public class Profile {
         return folderId;
     }
 
-    public static void insertBackupAccounts(JsonArray backupAccounts){
+    public static void insertBackupFromMap(JsonArray backupAccounts){
         String sqlQuery = "Insert into USERPROFILE (userEmail,type,refreshToken) values (?,?,?)";
         DBHelper.dbWritable.beginTransaction();
         for (int i = 0; i < backupAccounts.size(); i++) {
@@ -217,7 +217,7 @@ public class Profile {
         DBHelper.dbWritable.endTransaction();
     }
 
-    public static void insertPrimaryAccounts(JsonArray primaryAccounts){
+    public static void insertPrimaryFromMap(JsonArray primaryAccounts){
         String sqlQuery = "Insert into USERPROFILE (userEmail,type,refreshToken) values (?,?,?)";
         DBHelper.dbWritable.beginTransaction();
         for (int i = 0; i < primaryAccounts.size(); i++) {
@@ -236,17 +236,6 @@ public class Profile {
         DBHelper.dbWritable.endTransaction();
     }
 
-    public static void test(){
-        String sqlQuery = "DELETE FROM USERPROFILE WHERE type = 'profile'";
-        DBHelper.dbWritable.beginTransaction();
-        try {
-            DBHelper.dbWritable.execSQL(sqlQuery);
-            DBHelper.dbWritable.setTransactionSuccessful();
-        }catch (SQLiteConstraintException e) {
-            LogHandler.saveLog("SQLiteConstraintException in insert profile method "+ e.getLocalizedMessage(),false);
-        }finally {
-            DBHelper.dbWritable.endTransaction();
-        }
-    }
+
 
 }

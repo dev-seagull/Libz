@@ -64,12 +64,12 @@ public class CustomLoginPage extends AppCompatActivity {
                     return;
                 }
                 JsonObject profileMapContent = Profile.readProfileMapContent();
-                JsonObject userProfileJson = profileMapContent.get("userProfile").getAsJsonObject();
                 if (profileMapContent == null || !profileMapContent.has("userProfile")){
                     signInStateTextView.setText("No account was found with this Email !");
                     buttonCustomSignIn.setClickable(true);
                     return;
                 }
+                JsonObject userProfileJson = profileMapContent.get("userProfile").getAsJsonObject();
                 if (!userProfileJson.has("userName") || !userProfileJson.has("password")) {
                     signInStateTextView.setText("No username, password was found in this Email !");
                     buttonCustomSignIn.setClickable(true);
@@ -95,8 +95,8 @@ public class CustomLoginPage extends AppCompatActivity {
                         return;
                     }
                     Profile.insertProfile(userName, password, getApplicationContext());
-                    Profile.insertBackupAccounts(profileMapContent.get("backupAccounts").getAsJsonArray());
-                    Profile.insertPrimaryAccounts(profileMapContent.get("primaryAccounts").getAsJsonArray());
+                    Profile.insertBackupFromMap(profileMapContent.get("backupAccounts").getAsJsonArray());
+                    Profile.insertPrimaryFromMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
                     Activity activity = MainActivity.activity;
                     if (activity != null) {
                         MainActivity.initializeButtons(activity, MainActivity.googleCloud);

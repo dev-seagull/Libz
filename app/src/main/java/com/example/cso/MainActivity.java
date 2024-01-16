@@ -156,7 +156,7 @@
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
             drawerLayout = findViewById(R.id.drawer_layout);
-            Profile.test();
+//            Profile.test();
             NavigationView navigationView = findViewById(R.id.navigationView);
             ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
                     this, drawerLayout, R.string.navigation_drawer_open,
