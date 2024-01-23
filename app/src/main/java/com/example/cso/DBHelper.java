@@ -2,7 +2,6 @@ package com.example.cso;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -46,7 +45,9 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        String USERPROFILE = "CREATE TABLE IF NOT EXISTS USERPROFILE("
+        String ACCOUNTS = "CREATE TABLE IF NOT EXISTS ACCOUNTS("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                +"profileId INTEGER ,"
                 + "userEmail TEXT ," +
                 "type TEXT CHECK (type IN ('primary','backup','profile')), " +
                 "refreshToken TEXT, " +
@@ -55,8 +56,16 @@ public class DBHelper extends SQLiteOpenHelper {
                 "usedStorage REAL," +
                 "usedInDriveStorage REAL,"+
                 "UsedInGmailAndPhotosStorage REAL," +
-                "PRIMARY KEY (userEmail, type))";
-        sqLiteDatabase.execSQL(USERPROFILE);
+                "FOREIGN KEY (profileId) REFERENCES PROFILE(id));";
+        sqLiteDatabase.execSQL(ACCOUNTS);
+
+        String PROFILE = "CREATE TABLE IF NOT EXISTS PROFILE(" +
+            "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+            "userName TEXT ," +
+            "passWord TEXT," +
+            "joined_at_timeStamp DATE);";
+
+        sqLiteDatabase.execSQL(PROFILE);
 
         String DEVICE = "CREATE TABLE IF NOT EXISTS DEVICE("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -71,8 +80,9 @@ public class DBHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(ASSET);
 
         String BACKUPDB = "CREATE TABLE IF NOT EXISTS BACKUPDB("
-                +"userEmail TEXT REFERENCES USERPROFILE(userEmail), "+
+                +"userEmail TEXT REFERENCES ACCOUNTS(userEmail), "+
                 "fileId TEXT);";
+
         sqLiteDatabase.execSQL(BACKUPDB);
 
 
@@ -81,7 +91,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "assetId INTEGER REFERENCES ASSET(id),"+
                 "fileId TEXT," +
                 "fileName TEXT," +
-                "userEmail TEXT REFERENCES USERPROFILE(userEmail) ON UPDATE CASCADE ON DELETE CASCADE, " +
+                "userEmail TEXT REFERENCES ACCOUNTS(userEmail) ON UPDATE CASCADE ON DELETE CASCADE, " +
                 "fileHash TEXT)";
         sqLiteDatabase.execSQL(DRIVE);
 
@@ -103,7 +113,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "assetId INTEGER REFERENCES ASSET(id) ON UPDATE CASCADE ON DELETE CASCADE,"+
                 "fileId TEXT," +
                 "fileName TEXT," +
-                "userEmail TEXT REFERENCES USERPROFILE(userEmail) ON UPDATE CASCADE ON DELETE CASCADE,"+
+                "userEmail TEXT REFERENCES ACCOUNTS(userEmail) ON UPDATE CASCADE ON DELETE CASCADE,"+
                 "creationTime TEXT," +
                 "fileHash TEXT," +
                 "baseUrl TEXT)";
@@ -356,7 +366,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-    public static List<String []> getUserProfile(String[] columns){
+    public static List<String []> getAccounts(String[] columns){
         List<String[]> resultList = new ArrayList<>();
 
         String sqlQuery = "SELECT ";
@@ -364,7 +374,7 @@ public class DBHelper extends SQLiteOpenHelper {
             sqlQuery += column + ", ";
         }
         sqlQuery = sqlQuery.substring(0, sqlQuery.length() - 2);
-        sqlQuery += " FROM USERPROFILE" ;
+        sqlQuery += " FROM ACCOUNTS" ;
         Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
         if (cursor.moveToFirst()) {
             do {
@@ -381,6 +391,33 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
         return resultList;
     }
+
+    public static List<String []> getAccounts(String[] columns,boolean allProfile){
+        List<String[]> resultList = new ArrayList<>();
+
+        String sqlQuery = "SELECT ";
+        for (String column:columns){
+            sqlQuery += column + ", ";
+        }
+        sqlQuery = sqlQuery.substring(0, sqlQuery.length() - 2);
+        sqlQuery += " FROM ACCOUNTS" ;
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
+        if (cursor.moveToFirst()) {
+            do {
+                String[] row = new String[columns.length];
+                for (int i = 0; i < columns.length; i++) {
+                    int columnIndex = cursor.getColumnIndex(columns[i]);
+                    if (columnIndex >= 0) {
+                        row[i] = cursor.getString(columnIndex);
+                    }
+                }
+                resultList.add(row);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return resultList;
+    }
+
 
 
     public void updateUserProfileData(String userEmail, Map<String, Object> updateValues,String type) {
@@ -823,7 +860,7 @@ public class DBHelper extends SQLiteOpenHelper {
             try {
                 String driveBackupAccessToken = "";
                 String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
-                List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getUserProfile(drive_backup_selected_columns);
+                List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getAccounts(drive_backup_selected_columns);
                 for (String[] drive_backUp_account : drive_backUp_accounts) {
                     if (drive_backUp_account[1].equals("backup")) {
                         driveBackupAccessToken = drive_backUp_account[2];
@@ -941,7 +978,7 @@ public class DBHelper extends SQLiteOpenHelper {
             try {
                 String driveBackupAccessToken = "";
                 String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
-                List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getUserProfile(drive_backup_selected_columns);
+                List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getAccounts(drive_backup_selected_columns);
                 for (String[] drive_backUp_account : drive_backUp_accounts) {
                     if (drive_backUp_account[1].equals("backup")) {
                         driveBackupAccessToken = drive_backUp_account[2];

@@ -63,7 +63,7 @@ public class CustomLoginPage extends AppCompatActivity {
                     buttonCustomSignIn.setClickable(true);
                     return;
                 }
-                JsonObject profileMapContent = Profile.readProfileMapContent();
+                JsonObject profileMapContent = Profile.readProfileMapContent(1);
                 if (profileMapContent == null || !profileMapContent.has("userProfile")){
                     signInStateTextView.setText("No account was found with this Email !");
                     buttonCustomSignIn.setClickable(true);

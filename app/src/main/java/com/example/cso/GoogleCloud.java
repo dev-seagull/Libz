@@ -10,6 +10,7 @@
     import android.view.ViewGroup;
     import android.widget.Button;
     import android.widget.LinearLayout;
+    import android.widget.Toast;
 
     import androidx.activity.result.ActivityResultLauncher;
     import androidx.appcompat.app.AppCompatActivity;
@@ -129,38 +130,28 @@
                     userEmail = account.getEmail();
                     userEmail = userEmail.replace("@gmail.com", "");
                 }
-                authCode = account.getServerAuthCode();
-                tokens = getTokens(authCode);
-                storage = getStorage(tokens);
-                String[] columnsList = new String[]{"userEmail"};
-                List<String[]> userProfileData = MainActivity.dbHelper.getUserProfile(columnsList);
-                boolean isInUserProfileData = false;
-                for (String[] row : userProfileData) {
+                List<String[]> userAccounts = MainActivity.dbHelper.getAccounts(new String[]{"userEmail","type"});
+                boolean isInAccounts = false;
+                for (String[] row : userAccounts) {
                     if (row.length > 0 && row[0] != null && row[0].equals(userEmail) && row[1].equals("primary")) {
-                        PrimaryAccountInfo.Tokens finalTokens = tokens;
-                        PrimaryAccountInfo.Storage finalStorage = storage;
-                        Map<String, Object> updatedValues = new HashMap<String, Object>(){{
-                            put("type", "primary");
-                            put("refreshToken", finalTokens.getRefreshToken());
-                            put("accessToken", finalTokens.getRefreshToken());
-                            put("totalStorage", finalStorage.getTotalStorage());
-                            put("usedStorage", finalStorage.getUsedStorage());
-                            put("usedInDriveStorage", finalStorage.getUsedInDriveStorage());
-                            put("usedInGmailAndPhotosStorage", finalStorage.getUsedInGmailAndPhotosStorage());
-                            put("accessToken", finalTokens.getAccessToken());
-                        }};
-                        MainActivity.dbHelper.updateUserProfileData(userEmail, updatedValues,"primary");
-                        isInUserProfileData = true;
+                        isInAccounts = true;
+                        runOnUiThread(() -> { // sendToast
+                            CharSequence text = "This Account Already Exists !";
+                            Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
+                        });
+                        userEmail =  "f";
                     }
                 }
-                if (!isInUserProfileData){
+                if (isInAccounts == false){
+                    authCode = account.getServerAuthCode();
+                    tokens = getTokens(authCode);
+                    storage = getStorage(tokens);
                     MainActivity.dbHelper.insertUserProfileData(userEmail,"primary",tokens.getRefreshToken(),tokens.getAccessToken(),
                             storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
                     runOnUiThread(() -> {
                         LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
                         Button newGoogleLoginButton = createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
                         newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-
                     });
                 }
             }catch (Exception e){
@@ -169,7 +160,7 @@
             return userEmail;
         }
 
-        public BackUpAccountInfo handleSignInToBackupResult(Intent data){
+        public String handleSignInToBackupResult(Intent data){
             String userEmail = "";
             String authCode;
             PrimaryAccountInfo.Tokens tokens = null;
@@ -184,35 +175,26 @@
                     userEmail = account.getEmail();
                     userEmail = userEmail.replace("@gmail.com", "");
                 }
-                authCode = account.getServerAuthCode();
-                tokens = getTokens(authCode);
-                storage = getStorage(tokens);
-                mediaItems = GoogleDrive.getMediaItems(tokens.getAccessToken());
 
                 String[] columnsList = new String[]{"userEmail","type"};
-                List<String[]> userProfileData = MainActivity.dbHelper.getUserProfile(columnsList);
-                boolean isInUserProfileData = false;
+                List<String[]> userProfileData = MainActivity.dbHelper.getAccounts(columnsList);
+                boolean isInAccounts = false;
 
                 for (String[] row : userProfileData) {
                     if (row.length > 0 && row[0] != null && row[0].equals(userEmail) && row[1].equals("backup")) {
-                        PrimaryAccountInfo.Tokens finalTokens = tokens;
-                        PrimaryAccountInfo.Storage finalStorage = storage;
-                        Map<String, Object> updatedValues = new HashMap<String, Object>(){{
-                            put("type", "backup");
-                            put("refreshToken", finalTokens.getRefreshToken());
-                            put("accessToken", finalTokens.getRefreshToken());
-                            put("totalStorage", finalStorage.getTotalStorage());
-                            put("usedStorage", finalStorage.getUsedStorage());
-                            put("usedInDriveStorage", finalStorage.getUsedInDriveStorage());
-                            put("usedInGmailAndPhotosStorage", finalStorage.getUsedInGmailAndPhotosStorage());
-                            put("accessToken", finalTokens.getAccessToken());
-                        }};
-                        MainActivity.dbHelper.updateUserProfileData(userEmail,updatedValues,"backup");
-                        isInUserProfileData = true;
-                    }
+                            isInAccounts = true;
+                            runOnUiThread(() -> { // sendToast
+                                CharSequence text = "This Account Already Exists !";
+                                Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
+                            });
+                            userEmail =  "f";
+                        }
                 }
-                System.out.println("user email is : " + userEmail);
-                if (!isInUserProfileData){
+                if (isInAccounts == false){
+                    authCode = account.getServerAuthCode();
+                    tokens = getTokens(authCode);
+                    storage = getStorage(tokens);
+                    mediaItems = GoogleDrive.getMediaItems(tokens.getAccessToken());
                     MainActivity.dbHelper.insertUserProfileData(userEmail,"backup",tokens.getRefreshToken(),tokens.getAccessToken(),
                             storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
 
@@ -232,11 +214,12 @@
                         newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
 
                     });
+
                 }
             }catch (Exception e){
                 LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage());
             }
-            return new BackUpAccountInfo(userEmail, tokens, storage,mediaItems);
+            return userEmail;
         }
 
 

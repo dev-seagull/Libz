@@ -46,6 +46,7 @@ public class Hash {
     public static String calculateSHA256(String input, Context context){
         StringBuilder hexString = null;
         String salt = context.getResources().getString(R.string.salt);
+//        input = input + salt ;
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
 

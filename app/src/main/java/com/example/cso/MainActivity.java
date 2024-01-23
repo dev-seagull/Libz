@@ -240,7 +240,7 @@
 
                 boolean backUpAccountExists = false;
                 String[] columns = {"type"};
-                List<String[]> backUpAccounts = DBHelper.getUserProfile(columns);
+                List<String[]> backUpAccounts = DBHelper.getAccounts(columns);
                 for(String[] backUpAccount: backUpAccounts){
                     if(backUpAccount[0].equals("backup")){
                         backUpAccountExists = true;
@@ -303,13 +303,13 @@
                 }
 
                 String[] columns = {"accessToken","userEmail", "type"};
-                List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                List<String[]> account_rows = dbHelper.getAccounts(columns);
 
-                for(String[] userProfile_row : userProfile_rows) {
-                    String type = userProfile_row[2];
+                for(String[] account_row : account_rows) {
+                    String type = account_row[2];
                     if(type.equals("backup")){
-                        String userEmail = userProfile_row[1];
-                        String accessToken = userProfile_row[0];
+                        String userEmail = account_row[1];
+                        String accessToken = account_row[0];
                         ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
                         ArrayList<String> driveFileIds = new ArrayList<>();
 
@@ -332,13 +332,13 @@
                 }
 
                 String[] columns = {"accessToken", "userEmail","type"};
-                List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                List<String[]> account_rows = dbHelper.getAccounts(columns);
 
-                for(String[] userProfile_row : userProfile_rows){
-                    String accessToken = userProfile_row[0];
-                    String userEmail = userProfile_row[1];
-                    String type = userProfile_row[2];
+                for(String[] account_row : account_rows){
+                    String type = account_row[2];
                     if (type.equals("backup")){
+                        String accessToken = account_row[0];
+                        String userEmail = account_row[1];
                         ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
                         for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
                             Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
@@ -363,13 +363,13 @@
                 }
 
                 String[] columns = {"accessToken","userEmail", "type"};
-                List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                List<String[]> account_rows = dbHelper.getAccounts(columns);
 
-                for(String[] userProfile_row : userProfile_rows) {
-                    String type = userProfile_row[2];
+                for(String[] account_row : account_rows) {
+                    String type = account_row[2];
                     if(type.equals("backup")){
-                        String userEmail = userProfile_row[1];
-                        String accessToken = userProfile_row[0];
+                        String userEmail = account_row[1];
+                        String accessToken = account_row[0];
                         GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
                     }
                 }
@@ -468,13 +468,13 @@
                         }
 
                         String[] columns = {"accessToken","userEmail", "type"};
-                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                        List<String[]> account_rows = dbHelper.getAccounts(columns);
 
-                        for(String[] userProfile_row : userProfile_rows) {
-                            String type = userProfile_row[2];
+                        for(String[] account_row : account_rows) {
+                            String type = account_row[2];
                             if(type.equals("backup")){
-                                String userEmail = userProfile_row[1];
-                                String accessToken = userProfile_row[0];
+                                String userEmail = account_row[1];
+                                String accessToken = account_row[0];
                                 ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
                                 ArrayList<String> driveFileIds = new ArrayList<>();
 
@@ -497,12 +497,12 @@
                         }
 
                         String[] columns = {"accessToken", "userEmail","type"};
-                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                        List<String[]> account_rows = dbHelper.getAccounts(columns);
 
-                        for(String[] userProfile_row : userProfile_rows){
-                            String accessToken = userProfile_row[0];
-                            String userEmail = userProfile_row[1];
-                            String type = userProfile_row[2];
+                        for(String[] account_row : account_rows){
+                            String accessToken = account_row[0];
+                            String userEmail = account_row[1];
+                            String type = account_row[2];
                             if (type.equals("backup")){
                                 ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
                                 for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
@@ -529,13 +529,13 @@
 
 
                         String[] columns = {"accessToken","userEmail", "type"};
-                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                        List<String[]> account_rows = dbHelper.getAccounts(columns);
 
-                        for(String[] userProfile_row : userProfile_rows) {
-                            String type = userProfile_row[2];
+                        for(String[] account_row : account_rows) {
+                            String type = account_row[2];
                             if(type.equals("backup")){
-                                String userEmail = userProfile_row[1];
-                                String accessToken = userProfile_row[0];
+                                String userEmail = account_row[1];
+                                String accessToken = account_row[0];
                                 GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
                             }
                         }
@@ -667,23 +667,33 @@
                 result -> {
                     if(result.getResultCode() == RESULT_OK){
                         LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
-                        final View[] childview = {primaryAccountsButtonsLinearLayout.getChildAt(
+                        View[] childview = {primaryAccountsButtonsLinearLayout.getChildAt(
                                 primaryAccountsButtonsLinearLayout.getChildCount() - 1)};
                         runOnUiThread(() -> childview[0].setClickable(false));
                         Executor signInExecutor = Executors.newSingleThreadExecutor();
                         try {
                             Runnable backgroundTask = () -> {
                                 String userEmail = googleCloud.handleSignInToPrimaryResult(result.getData());
-
                                 runOnUiThread(() -> {
-                                    childview[0] = primaryAccountsButtonsLinearLayout.getChildAt(
-                                            primaryAccountsButtonsLinearLayout.getChildCount() - 2);
-                                    LogHandler.saveLog(userEmail +  " has logged in to the primary account",false);
-                                     if(childview[0] instanceof Button){
-                                        Button bt = (Button) childview[0];
-                                        bt.setText(userEmail);
-                                        bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
-                                     }
+                                    if (userEmail != "f") {
+                                        childview[0] = primaryAccountsButtonsLinearLayout.getChildAt(
+                                                primaryAccountsButtonsLinearLayout.getChildCount() - 2);
+                                        LogHandler.saveLog(userEmail + " has logged in to the primary account", false);
+                                        if (childview[0] instanceof Button) {
+                                            Button bt = (Button) childview[0];
+                                            bt.setText(userEmail);
+                                            bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
+                                        }
+                                    }else{
+                                            LogHandler.saveLog("login with launcher failed");
+                                            LinearLayout primaryAccountsButtonsLinearLayout2 = findViewById(R.id.primaryAccountsButtons);
+                                            View childview2 = primaryAccountsButtonsLinearLayout2.getChildAt(
+                                                    primaryAccountsButtonsLinearLayout2.getChildCount() - 1);
+                                            if (childview2 instanceof Button) {
+                                                Button bt = (Button) childview2;
+                                                bt.setText("ADD A PRIMARY ACCOUNT");
+                                            }
+                                    }
                                     updateButtonsListeners();
                                 });
                             };
@@ -721,16 +731,26 @@
                         Executor signInToBackupExecutor = Executors.newSingleThreadExecutor();
                         try{
                             Runnable backgroundTask = () -> {
-                                BackUpAccountInfo backUpAccountInfo = googleCloud.handleSignInToBackupResult(result.getData());
-                                String userEmail = backUpAccountInfo.getUserEmail();
+                                String userEmail = googleCloud.handleSignInToBackupResult(result.getData());
                                 runOnUiThread(() -> {
-                                    LogHandler.saveLog(userEmail +  " has logged in to the backup account",false);
-                                    childview[0] = backupAccountsButtonsLinearLayout.getChildAt(
+                                    if (userEmail != "f") {
+                                        LogHandler.saveLog(userEmail + " has logged in to the backup account", false);
+                                        childview[0] = backupAccountsButtonsLinearLayout.getChildAt(
                                                 backupAccountsButtonsLinearLayout.getChildCount() - 2);
-                                    if(childview[0] instanceof Button){
-                                        Button bt = (Button) childview[0];
-                                        bt.setText(userEmail);
-                                        bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#42A5F5")));
+                                        if (childview[0] instanceof Button) {
+                                            Button bt = (Button) childview[0];
+                                            bt.setText(userEmail);
+                                            bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#42A5F5")));
+                                        }
+                                    } else {
+                                        LogHandler.saveLog(userEmail + " has logged in to the backup account", false);
+                                        childview[0] = backupAccountsButtonsLinearLayout.getChildAt(
+                                                backupAccountsButtonsLinearLayout.getChildCount() - 2);
+                                        if (childview[0] instanceof Button) {
+                                            Button bt = (Button) childview[0];
+                                            bt.setText(userEmail);
+                                            bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#42A5F5")));
+                                        }
                                     }
                                     updateButtonsListeners();
                                 });
@@ -744,7 +764,7 @@
 
                                 try{
                                     String[] columns = {"accessToken","userEmail", "type"};
-                                    List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                                    List<String[]> userProfile_rows = dbHelper.getAccounts(columns);
 
                                     for(String[] userProfile_row : userProfile_rows) {
                                         String type = userProfile_row[2];
@@ -776,13 +796,13 @@
                                 }
 
                                 String[] columns = {"accessToken", "userEmail","type"};
-                                List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                                List<String[]> account_rows = dbHelper.getAccounts(columns);
 
-                                for(String[] userProfile_row : userProfile_rows){
-                                    String accessToken = userProfile_row[0];
-                                    String userEmail = userProfile_row[1];
-                                    String type = userProfile_row[2];
+                                for(String[] account_row : account_rows){
+                                    String type = account_row[2];
                                     if (type.equals("backup")){
+                                        String accessToken = account_row[0];
+                                        String userEmail = account_row[1];
                                         ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
                                         for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
                                             Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
@@ -807,13 +827,13 @@
                                 }
 
                                 String[] columns = {"accessToken","userEmail", "type"};
-                                List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                                List<String[]> account_rows = dbHelper.getAccounts(columns);
 
-                                for(String[] userProfile_row : userProfile_rows) {
-                                    String type = userProfile_row[2];
+                                for(String[] account_row : account_rows) {
+                                    String type = account_row[2];
                                     if(type.equals("backup")){
-                                        String userEmail = userProfile_row[1];
-                                        String accessToken = userProfile_row[0];
+                                        String userEmail = account_row[1];
+                                        String accessToken = account_row[0];
                                         GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
                                     }
                                 }
@@ -913,16 +933,15 @@
                         @Override
                         public void run() {
                             String[] columns = {"accessToken","userEmail", "type"};
-                            List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                            List<String[]> account_rows = dbHelper.getAccounts(columns);
                             File destinationFolder = new File(Environment
                                     .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator
                                     + "cso");
-
-                            for(String[] userProfile_row : userProfile_rows) {
-                                String type = userProfile_row[2];
-                                String userEmail = userProfile_row[1];
-                                String accessToken = userProfile_row[0];
+                            for(String[] account_row : account_rows) {
+                                String type = account_row[2];
                                 if(type.equals("primary")){
+                                    String userEmail = account_row[1];
+                                    String accessToken = account_row[0];
                                     ArrayList<GooglePhotos.MediaItem> photosMediaItems =
                                             GooglePhotos.getGooglePhotosMediaItems(accessToken);
                                     ArrayList<String> fileIds = new ArrayList<>();
@@ -973,7 +992,7 @@
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                                 if (Environment.isExternalStorageManager()) {
                                     String[] columns = {"userEmail", "type" ,"accessToken"};
-                                    List<String[]> selectedRows = dbHelper.getUserProfile(columns);
+                                    List<String[]> selectedRows = dbHelper.getAccounts(columns);
                                     for(String[] selectedRow: selectedRows){
                                         String destinationUserEmail = selectedRow[0];
                                         String type = selectedRow[1];
@@ -1043,13 +1062,13 @@
                         }
 
                         String[] columns = {"accessToken","userEmail", "type"};
-                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                        List<String[]> account_rows = dbHelper.getAccounts(columns);
 
-                        for(String[] userProfile_row : userProfile_rows) {
-                            String type = userProfile_row[2];
+                        for(String[] account_row : account_rows) {
+                            String type = account_row[2];
                             if(type.equals("backup")){
-                                String userEmail = userProfile_row[1];
-                                String accessToken = userProfile_row[0];
+                                String userEmail = account_row[1];
+                                String accessToken = account_row[0];
                                 ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
                                 ArrayList<String> driveFileIds = new ArrayList<>();
 
@@ -1072,13 +1091,13 @@
                         }
 
                         String[] columns = {"accessToken", "userEmail","type"};
-                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                        List<String[]> account_rows = dbHelper.getAccounts(columns);
 
-                        for(String[] userProfile_row : userProfile_rows){
-                            String accessToken = userProfile_row[0];
-                            String userEmail = userProfile_row[1];
-                            String type = userProfile_row[2];
+                        for(String[] account_row : account_rows){
+                            String type = account_row[2];
                             if (type.equals("backup")){
+                                String accessToken = account_row[0];
+                                String userEmail = account_row[1];
                                 ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
                                 for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
                                     Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
@@ -1104,13 +1123,13 @@
 
 
                         String[] columns = {"accessToken","userEmail", "type"};
-                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                        List<String[]> account_rows = dbHelper.getAccounts(columns);
 
-                        for(String[] userProfile_row : userProfile_rows) {
-                            String type = userProfile_row[2];
+                        for(String[] account_row : account_rows) {
+                            String type = account_row[2];
                             if(type.equals("backup")){
-                                String userEmail = userProfile_row[1];
-                                String accessToken = userProfile_row[0];
+                                String userEmail = account_row[1];
+                                String accessToken = account_row[0];
                                 GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
                             }
                         }
@@ -1139,13 +1158,13 @@
                         }
 
                         String[] columns = {"accessToken","userEmail", "type"};
-                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                        List<String[]> account_rows = dbHelper.getAccounts(columns);
 
-                        for(String[] userProfile_row : userProfile_rows) {
-                            String type = userProfile_row[2];
+                        for(String[] account_row : account_rows) {
+                            String type = account_row[2];
                             if(type.equals("backup")){
-                                String userEmail = userProfile_row[1];
-                                String accessToken = userProfile_row[0];
+                                String userEmail = account_row[1];
+                                String accessToken = account_row[0];
                                 ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
                                 ArrayList<String> driveFileIds = new ArrayList<>();
 
@@ -1168,13 +1187,13 @@
                         }
 
                         String[] columns = {"accessToken", "userEmail","type"};
-                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                        List<String[]> account_rows = dbHelper.getAccounts(columns);
 
-                        for(String[] userProfile_row : userProfile_rows){
-                            String accessToken = userProfile_row[0];
-                            String userEmail = userProfile_row[1];
-                            String type = userProfile_row[2];
+                        for(String[] account_row : account_rows){
+                            String type = account_row[2];
                             if (type.equals("backup")){
+                                String accessToken = account_row[0];
+                                String userEmail = account_row[1];
                                 ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
                                 for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
                                     Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
@@ -1200,13 +1219,13 @@
 
 
                         String[] columns = {"accessToken","userEmail", "type"};
-                        List<String[]> userProfile_rows = dbHelper.getUserProfile(columns);
+                        List<String[]> account_rows = dbHelper.getAccounts(columns);
 
-                        for(String[] userProfile_row : userProfile_rows) {
-                            String type = userProfile_row[2];
+                        for(String[] account_row : account_rows) {
+                            String type = account_row[2];
                             if(type.equals("backup")){
-                                String userEmail = userProfile_row[1];
-                                String accessToken = userProfile_row[0];
+                                String userEmail = account_row[1];
+                                String accessToken = account_row[0];
                                 GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
                             }
                         }
@@ -1223,14 +1242,11 @@
                                 String userEmail = cursor.getString(userEmailColumnIndex);
                                 String driveBackupAccessToken = "";
                                 String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
-                                List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getUserProfile(drive_backup_selected_columns);
+                                List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getAccounts(drive_backup_selected_columns);
                                 for (String[] drive_backUp_account : drive_backUp_accounts) {
-                                    System.out.println(userEmail);
-                                    System.out.println(drive_backUp_account[1]);
-                                    System.out.println(drive_backUp_account[0]);
-                                    System.out.println(drive_backUp_account[2]);
                                     if (drive_backUp_account[1].equals("backup") && drive_backUp_account[0].equals(userEmail)) {
                                         driveBackupAccessToken = drive_backUp_account[2];
+                                        break;
                                     }
                                 }
 
@@ -1349,6 +1365,8 @@
                 }
             });
         }
+
+
 
 
         private void updateButtonsListeners() {
@@ -1477,11 +1495,11 @@
 
         public static void initializeButtons(Activity activity,GoogleCloud googleCloud){
             String[] columnsList = {"userEmail", "type", "refreshToken"};
-            List<String[]> userProfiles = dbHelper.getUserProfile(columnsList);
-            for (String[] userProfile : userProfiles) {
-                String userEmail = userProfile[0];
-                String type = userProfile[1];
-                String refreshToken = userProfile[2];
+            List<String[]> account_rows = dbHelper.getAccounts(columnsList);
+            for (String[] account_row : account_rows) {
+                String userEmail = account_row[0];
+                String type = account_row[1];
+                String refreshToken = account_row[2];
                 PrimaryAccountInfo.Tokens tokens = googleCloud.requestAccessToken(refreshToken);
                 Map<String, Object> updatedValues = new HashMap<String, Object>(){{
                     put("accessToken", tokens.getAccessToken());

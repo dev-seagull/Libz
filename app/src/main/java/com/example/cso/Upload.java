@@ -73,7 +73,7 @@ public class Upload {
 
 
                 String[] selected_userProfile_columns = {"userEmail" , "type"};
-                List<String[]> userProfile_items = MainActivity.dbHelper.getUserProfile(selected_userProfile_columns);
+                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_userProfile_columns);
 
                 ArrayList<String> androidItemsToUpload_hash = new ArrayList<>();
                 int duplicatedFileIndex = -1;
@@ -88,9 +88,9 @@ public class Upload {
 
                     Boolean isInDrive = false;
                     driveLoop:{
-                        for(String[] userProfile_item : userProfile_items){
-                            String userEmail = userProfile_item[0];
-                            String type = userProfile_item[1];
+                        for(String[] account_row : account_rows){
+                            String userEmail = account_row[0];
+                            String type = account_row[1];
                             if(type.equals("backup")){
                                 String[] selected_drive_columns = {"id", "assetId", "fileId", "fileName",
                                         "userEmail","fileHash"};
@@ -129,7 +129,7 @@ public class Upload {
 
                             String driveBackupAccessToken = "";
                             String[] drive_backup_selected_columns = {"userEmail","type","accessToken"};
-                            List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getUserProfile(drive_backup_selected_columns);
+                            List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getAccounts(drive_backup_selected_columns);
                             for (String[] drive_backUp_account : drive_backUp_accounts) {
                                 if (drive_backUp_account[1].equals("backup")) {
                                     driveBackupAccessToken = drive_backUp_account[2];

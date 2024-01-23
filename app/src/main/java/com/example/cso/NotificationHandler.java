@@ -52,4 +52,5 @@ public class NotificationHandler {
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(activity);
         notificationManager.notify(Integer.valueOf(channelId), builder.build());
     }
+
 }
