@@ -22,7 +22,7 @@ public class Profile {
     public static boolean profileMapExists(){
         boolean exists = false;
         try{
-            String sqlQuery = "SELECT EXISTS(SELECT 1 FROM USERPROFILE WHERE type = 'profile')";
+            String sqlQuery = "SELECT EXISTS(SELECT 1 FROM PROFILE)";
             Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery, null);
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
@@ -39,10 +39,10 @@ public class Profile {
 
     public static JsonObject createProfileMapContent(){
         List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
-        JsonObject userProfileJson = new JsonObject();
+        JsonArray profileJson = new JsonArray();
         JsonArray backupAccountsJson = new JsonArray();
         JsonArray primaryAccountsJson = new JsonArray();
-        JsonObject backUpDBJson = new JsonObject();
+        JsonArray backUpDBJson = new JsonArray();
         JsonObject resultJson = new JsonObject();
         String profileSQLQuery = "SELECT * FROM PROFILE";
         MainActivity.dbHelper.dbReadable.rawQuery(profileSQLQuery,null);
@@ -50,11 +50,6 @@ public class Profile {
         try{
             for (String[] account_row : account_rows){
                 switch (account_row[1]) {
-//                    case "profile": //note
-//                        String userProfileUserName = account_row[0];
-//                        userProfileJson.addProperty("userName", userProfileUserName);
-//                        String userProfilePassword = account_row[2];
-//                        userProfileJson.addProperty("password", userProfilePassword);
                     case "backup":
                         JsonObject backupAccount = new JsonObject();
                         backupAccount.addProperty("backupEmail", account_row[0]);
@@ -74,16 +69,30 @@ public class Profile {
                 int userEmailColumnIndex = cursor.getColumnIndex("userEmail");
                 int fileIdColumnIndex = cursor.getColumnIndex("fileId");
                 if(userEmailColumnIndex >= 0 && fileIdColumnIndex >= 0){
+                    JsonObject backUpDB = new JsonObject();
                     String dbUserEmail = cursor.getString(userEmailColumnIndex);
                     String dbFileId = cursor.getString(fileIdColumnIndex);
-                    backUpDBJson.addProperty("dbUserEmail", dbUserEmail);
-                    backUpDBJson.addProperty("dbFileId", dbFileId);
+                    backUpDB.addProperty("dbUserEmail", dbUserEmail);
+                    backUpDB.addProperty("dbFileId", dbFileId);
+                    backUpDBJson.add(backUpDB);
                 }
             }
 
-            resultJson.add("userProfile", userProfileJson);
+            String[] selected_columns = {"userName","password","joined"};
+            List<String[]> profile_rows = MainActivity.dbHelper.getProfile(selected_columns);
+            for(String[] profile_row : profile_rows){
+                JsonObject profile = new JsonObject();
+                String userName = profile_row[0];
+                String password = profile_row[1];
+                profile.addProperty("userName", userName);
+                profile.addProperty("password", password);
+                profileJson.add(profile);
+            }
+
+            resultJson.add("profile", profileJson);
             resultJson.add("backupAccounts", backupAccountsJson);
             resultJson.add("primaryAccounts", primaryAccountsJson);
+            resultJson.add("backUpDB", backUpDBJson);
             cursor.close();
         }catch (Exception e){
             LogHandler.saveLog("Failed to create profile map content : " + e.getLocalizedMessage() , true);
@@ -172,24 +181,6 @@ public class Profile {
     }
 
 
-    public static void insertProfile(String username, String password, Context context){
-        String sqlQuery = "Insert into USERPROFILE (userEmail,type,refreshToken) values (?,?,?)";
-        DBHelper.dbWritable.beginTransaction();
-        try {
-            String newPass = Hash.calculateSHA256(password,context);
-            DBHelper.dbWritable.execSQL(sqlQuery, new String[]{username,"profile",newPass});
-            DBHelper.dbWritable.setTransactionSuccessful();
-        }catch (SQLiteConstraintException e) {
-            LogHandler.saveLog("SQLiteConstraintException in insert profile method "+ e.getLocalizedMessage(),false);
-        }catch (Exception e) {
-            LogHandler.saveLog("Failed to insert profile data into USERPROFILE." + e.getLocalizedMessage(), true);
-        }
-        finally {
-            DBHelper.dbWritable.endTransaction();
-        }
-    }
-
-
     private static String get_StashUserProfile_DriveFolderId(Drive service){
         String folderId = null;
         String folder_name = "stash_user_profile";
@@ -210,7 +201,7 @@ public class Profile {
     }
 
     public static void insertBackupFromMap(JsonArray backupAccounts){
-        String sqlQuery = "Insert into USERPROFILE (userEmail,type,refreshToken) values (?,?,?)";
+        String sqlQuery = "Insert into ACCOUNTS (userEmail,type,refreshToken) values (?,?,?)";
         DBHelper.dbWritable.beginTransaction();
         for (int i = 0; i < backupAccounts.size(); i++) {
             try {
@@ -222,14 +213,14 @@ public class Profile {
             } catch (SQLiteConstraintException e) {
                 LogHandler.saveLog("SQLiteConstraintException in insert backup accounts method " + e.getLocalizedMessage(), false);
             } catch (Exception e) {
-                LogHandler.saveLog("Failed to insert backup accounts data into USERPROFILE." + e.getLocalizedMessage(), true);
+                LogHandler.saveLog("Failed to insert backup accounts data into ACCOUNTS  : " + e.getLocalizedMessage(), true);
             }
         }
         DBHelper.dbWritable.endTransaction();
     }
 
     public static void insertPrimaryFromMap(JsonArray primaryAccounts){
-        String sqlQuery = "Insert into USERPROFILE (userEmail,type,refreshToken) values (?,?,?)";
+        String sqlQuery = "Insert into ACCOUNTS (userEmail,type,refreshToken) values (?,?,?)";
         DBHelper.dbWritable.beginTransaction();
         for (int i = 0; i < primaryAccounts.size(); i++) {
             try {
@@ -241,7 +232,7 @@ public class Profile {
             } catch (SQLiteConstraintException e) {
                 LogHandler.saveLog("SQLiteConstraintException in insert primary accounts method " + e.getLocalizedMessage(), false);
             } catch (Exception e) {
-                LogHandler.saveLog("Failed to insert primary accounts data into USERPROFILE." + e.getLocalizedMessage(), true);
+                LogHandler.saveLog("Failed to insert primary accounts data into ACCOUNTS : " + e.getLocalizedMessage(), true);
             }
         }
         DBHelper.dbWritable.endTransaction();

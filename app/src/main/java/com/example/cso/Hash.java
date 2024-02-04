@@ -43,14 +43,14 @@ public class Hash {
         return hexString.toString().toLowerCase();
     }
 
-    public static String calculateSHA256(String input, Context context){
+    public static String calculateSHA256(String input){
         StringBuilder hexString = null;
-        String salt = context.getResources().getString(R.string.salt);
-//        input = input + salt ;
+        String salt = MainActivity.activity.getApplicationContext().getString(R.string.salt);
+        String final_input = input  + String.valueOf(input.length()) + salt;
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
-            byte[] hash = digest.digest(input.getBytes());
+            byte[] hash = digest.digest(final_input.getBytes());
 
             hexString = new StringBuilder();
             for (byte b : hash) {

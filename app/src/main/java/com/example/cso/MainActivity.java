@@ -93,7 +93,6 @@
         protected void onCreate(Bundle savedInstanceState) {
             activity = this;
             super.onCreate(savedInstanceState);
-            System.out.println("new log cat ##########################################");
             setContentView(R.layout.activity_main);
             int requestCode =1;
             String[] permissions = {
@@ -145,8 +144,6 @@
             }
 
 
-
-
             LogHandler.CreateLogFile();
             googleCloud = new GoogleCloud(this);
 //            LogHandler.saveLog("--------------------------new run----------------------------",false);
@@ -155,6 +152,16 @@
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
+//            if(dbHelper.DATABASE_VERSION < 11) {
+            LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
+            Boolean upgradedFrom1To2 = upgrade.upgradeDataBaseFrom1to2();
+            if(upgradedFrom1To2){
+                LogHandler.saveLog("Upgraded database from version 1 to version 2", false);
+            }else{
+                LogHandler.saveLog("Failed to upgrade database from version 1 to version 2", true);
+            }
+
+
             drawerLayout = findViewById(R.id.drawer_layout);
 //            Profile.test();
             NavigationView navigationView = findViewById(R.id.navigationView);
@@ -764,13 +771,13 @@
 
                                 try{
                                     String[] columns = {"accessToken","userEmail", "type"};
-                                    List<String[]> userProfile_rows = dbHelper.getAccounts(columns);
+                                    List<String[]> accounts_rows = dbHelper.getAccounts(columns);
 
-                                    for(String[] userProfile_row : userProfile_rows) {
-                                        String type = userProfile_row[2];
+                                    for(String[] account_row : accounts_rows) {
+                                        String type = account_row[2];
                                         if(type.equals("backup")){
-                                            String userEmail = userProfile_row[1];
-                                            String accessToken = userProfile_row[0];
+                                            String userEmail = account_row[1];
+                                            String accessToken = account_row[0];
                                             ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
                                             ArrayList<String> driveFileIds = new ArrayList<>();
 
@@ -1401,7 +1408,7 @@
                                     popupMenu.setOnMenuItemClickListener(item -> {
                                         if (item.getItemId() == R.id.sign_out) {
                                             googleCloud.signOut();
-                                            dbHelper.deleteUserProfileData(buttonText,"primary");
+                                            dbHelper.deleteAccounts(buttonText,"primary");
                                             String sqlQuery = "DELETE FROM photos WHERE userEmail = ?";
                                             dbHelper.dbWritable.execSQL(sqlQuery, new String[] {buttonText});
                                             dbHelper.deleteRedundantAsset();
@@ -1461,7 +1468,7 @@
                                     popupMenu.setOnMenuItemClickListener(item -> {
                                         if (item.getItemId() == R.id.sign_out) {
                                             googleCloud.signOut();
-                                            dbHelper.deleteUserProfileData(buttonText,"backup");
+                                            dbHelper.deleteAccounts(buttonText,"backup");
                                             String sqlQuery = "DELETE FROM drive WHERE userEmail = ?";
                                             dbHelper.dbWritable.execSQL(sqlQuery, new String[] {buttonText});
                                             dbHelper.deleteRedundantAsset();
@@ -1505,7 +1512,7 @@
                     put("accessToken", tokens.getAccessToken());
                 }};
 
-                dbHelper.updateUserProfileData(userEmail, updatedValues, type);
+                dbHelper.updateAccounts(userEmail, updatedValues, type);
 
                 if (type.equals("primary")){
                     LinearLayout primaryLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);

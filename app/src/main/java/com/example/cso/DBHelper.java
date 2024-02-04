@@ -16,6 +16,11 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,15 +33,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class DBHelper extends SQLiteOpenHelper {
-    private static final String DATABASE_NAME = "CSODatabase";
-    private static final int DATABASE_VERSION = 1;
+    private static final String OLD_DATABASE_NAME = "CSODatabase";
+    public static final int DATABASE_VERSION = 11;
     public static SQLiteDatabase dbReadable;
     public static SQLiteDatabase dbWritable;
 
     private Context context;
 
     public DBHelper(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        super(context, OLD_DATABASE_NAME, null, DATABASE_VERSION);
         this.context = context;
         dbReadable = getReadableDatabase();
         dbWritable = getWritableDatabase();
@@ -49,7 +54,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 +"profileId INTEGER ,"
                 + "userEmail TEXT ," +
-                "type TEXT CHECK (type IN ('primary','backup','profile')), " +
+                "type TEXT CHECK (type IN ('primary','backup')), " +
                 "refreshToken TEXT, " +
                 "accessToken TEXT, " +
                 "totalStorage REAL," +
@@ -62,9 +67,8 @@ public class DBHelper extends SQLiteOpenHelper {
         String PROFILE = "CREATE TABLE IF NOT EXISTS PROFILE(" +
             "id INTEGER PRIMARY KEY AUTOINCREMENT," +
             "userName TEXT ," +
-            "passWord TEXT," +
-            "joined_at_timeStamp DATE);";
-
+            "password TEXT," +
+            "joined DATE);";
         sqLiteDatabase.execSQL(PROFILE);
 
         String DEVICE = "CREATE TABLE IF NOT EXISTS DEVICE("
@@ -138,8 +142,30 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
+    public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
+
     }
+
+    private void copyDatabase(Context context, String oldDatabaseName, String newDatabaseName) {
+        try {
+            InputStream inputStream = context.getAssets().open(oldDatabaseName);
+            OutputStream outputStream = new FileOutputStream(new File
+                    (context.getDatabasePath(newDatabaseName).getPath()));
+
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) > 0) {
+                outputStream.write(buffer, 0, length);
+            }
+            outputStream.flush();
+            outputStream.close();
+            inputStream.close();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to copy database from csoDatabase : " +  e.getLocalizedMessage());
+        }
+    }
+
+
     public long insertAssetData(String fileHash) {
         long lastInsertedId = -1;
         String sqlQuery;
@@ -166,18 +192,17 @@ public class DBHelper extends SQLiteOpenHelper {
                 dbWritable.execSQL(sqlQuery, new Object[]{fileHash});
                 dbWritable.setTransactionSuccessful();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to insert data into ASSET.");
+                LogHandler.saveLog("Failed to insert data into ASSET : "  + e.getLocalizedMessage());
             }finally {
                 dbWritable.endTransaction();
             }
         }
-
         sqlQuery = "SELECT id FROM ASSET WHERE fileHash = ?;";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{fileHash});
         if(cursor != null && cursor.moveToFirst()){
             lastInsertedId = cursor.getInt(0);
         }else{
-            LogHandler.saveLog("Failed to find the existing file id in Asset database");
+            LogHandler.saveLog("Failed to find the existing file id in Asset database.", true);
         }
         cursor.close();
         return lastInsertedId;
@@ -199,7 +224,9 @@ public class DBHelper extends SQLiteOpenHelper {
                             dbWritable.execSQL(sqlQuery, new Object[]{fileId});
                             dbWritable.setTransactionSuccessful();
                         } catch (Exception e) {
-                            LogHandler.saveLog("Failed to delete the database in PHOTOS, deleteRedundantPhotos method. " + e.getLocalizedMessage());
+                            LogHandler
+                                    .saveLog("Failed to delete the database in" +
+                                            " deleteRedundantPhotos method. " + e.getLocalizedMessage());
                         } finally {
                             dbWritable.endTransaction();
                         }
@@ -210,20 +237,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         if (assetIdColumnIndex >= 0) {
                             dbReadable = getReadableDatabase();
                             assetId = cursor.getString(assetIdColumnIndex);
-                            try {
-                                sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
-                                        "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
-                                        "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
-                                Cursor cursor2 = dbReadable.rawQuery(sqlQuery, new String[]{assetId, assetId, assetId});
-                                if (cursor2 != null && cursor2.moveToFirst()) {
-                                    int result = cursor2.getInt(0);
-                                    if (result == 1) {
-                                        existsInDatabase = true;
-                                    }
-                                }
-                            } catch (Exception e) {
-                                LogHandler.saveLog("Failed to check if the data exists in Database in deleteRedundantPhotos");
-                            }
+                            existsInDatabase = assetExistsInDatabase(assetId);
                         }
 
                         if (existsInDatabase == false) {
@@ -233,7 +247,8 @@ public class DBHelper extends SQLiteOpenHelper {
                                 dbWritable.execSQL(sqlQuery, new Object[]{assetId});
                                 dbWritable.setTransactionSuccessful();
                             } catch (Exception e) {
-                                LogHandler.saveLog("Failed to delete the database in ASSET , deleteRedundantPhotos method. " + e.getLocalizedMessage());
+                                LogHandler.saveLog("Failed to delete the database in" +
+                                        " deleteRedundantPhotos method. " + e.getLocalizedMessage());
                             } finally {
                                 dbWritable.endTransaction();
                             }
@@ -245,13 +260,34 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
     }
 
+    private boolean assetExistsInDatabase(String assetId){
+        boolean existsInDatabase = false;
+        try {
+            String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
+                    "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
+                    "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
+            Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId, assetId, assetId});
+            if (cursor != null && cursor.moveToFirst()) {
+                int result = cursor.getInt(0);
+                if (result == 1) {
+                    existsInDatabase = true;
+                }
+            }
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to check if the data exists in Database : " + e.getLocalizedMessage());
+        }
+        return existsInDatabase;
+    }
+
     public void insertIntoPhotosTable(Long assetId, String fileId,String fileName, String fileHash,
                                      String userEmail, String creationTime, String baseUrl){
         String sqlQuery = "";
         Boolean existsInPhotos = false;
         try{
-            sqlQuery = "SELECT EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ? and fileHash = ? and fileId =? and userEmail = ?)";
-            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), fileHash, fileId, userEmail});
+            sqlQuery = "SELECT EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?" +
+                    " and fileHash = ? and fileId =? and userEmail = ?)";
+            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId),
+                    fileHash, fileId, userEmail});
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
                 if(result == 1){
@@ -260,7 +296,8 @@ public class DBHelper extends SQLiteOpenHelper {
             }
             cursor.close();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to select from PHOTOS in insertIntoPhotosTable method: " + e.getLocalizedMessage());
+            LogHandler.saveLog("Failed to select from PHOTOS in " +
+                    "insertIntoPhotosTable method: " + e.getLocalizedMessage());
         }
         if(existsInPhotos == false){
             dbWritable.beginTransaction();
@@ -273,11 +310,13 @@ public class DBHelper extends SQLiteOpenHelper {
                         "creationTime, " +
                         "fileHash, " +
                         "baseUrl) VALUES (?,?,?,?,?,?,?)";
-                Object[] values = new Object[]{assetId,fileId,fileName,userEmail,creationTime,fileHash,baseUrl};
+                Object[] values = new Object[]{assetId,fileId,
+                        fileName,userEmail,creationTime,fileHash,baseUrl};
                 dbWritable.execSQL(sqlQuery, values);
                 dbWritable.setTransactionSuccessful();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to save into the database in insertIntoPhotosTable method. "+e.getLocalizedMessage());
+                LogHandler.saveLog("Failed to save into the" +
+                        " database in insertIntoPhotosTable method. "+e.getLocalizedMessage());
             }finally {
                 dbWritable.endTransaction();
             }
@@ -290,8 +329,10 @@ public class DBHelper extends SQLiteOpenHelper {
         String sqlQuery = "";
         Boolean existsInDrive = false;
         try{
-            sqlQuery = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ? and fileHash = ? and fileId =? and userEmail = ?)";
-            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), fileHash, fileId, userEmail});
+            sqlQuery = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ? " +
+                    "and fileHash = ? and fileId =? and userEmail = ?)";
+            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId),
+                    fileHash, fileId, userEmail});
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
                 if(result == 1){
@@ -300,7 +341,8 @@ public class DBHelper extends SQLiteOpenHelper {
             }
             cursor.close();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to select from DRIVE in insertIntoDriveTable method: " + e.getLocalizedMessage());
+            LogHandler.saveLog("Failed to select from DRIVE " +
+                    "in insertIntoDriveTable method: " + e.getLocalizedMessage());
         }
 
         if(existsInDrive == false){
@@ -316,7 +358,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 dbWritable.execSQL(sqlQuery, values);
                 dbWritable.setTransactionSuccessful();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to save into the database in insertIntoDriveTable method. "+e.getLocalizedMessage());
+                LogHandler.saveLog("Failed to save into the database" +
+                        " in insertIntoDriveTable method. "+e.getLocalizedMessage());
             }finally {
                 dbWritable.endTransaction();
             }
@@ -335,17 +378,77 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, new Object[]{source,fileName, destination, assetId, operation, fileHash, timestamp});
             dbWritable.setTransactionSuccessful();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to insert data into ASSET.");
+            LogHandler.saveLog("Failed to insert data into ASSET : " + e.getLocalizedMessage() , true);
         }finally {
             dbWritable.endTransaction();
         }
     }
 
-    public void insertUserProfileData(String userEmail,String type,String refreshToken ,String accessToken,
-                            Double totalStorage , Double usedStorage , Double usedInDriveStorage , Double UsedInGmailAndPhotosStorage) {
+
+    public static void insertIntoProfile(String userName, String password){
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String joined = dateFormat.format(new Date());
         dbWritable.beginTransaction();
         try{
-            String sqlQuery = "INSERT INTO USERPROFILE (" +
+            String sqlQuery = "INSERT INTO ACCOUNTS (" +
+                    "userName, "+
+                    "password," +
+                    "joined) VALUES (?,?,?)";
+            Object[] values = new Object[]{userName,Hash.calculateSHA256(password), joined};
+            dbWritable.execSQL(sqlQuery, values);
+            dbWritable.setTransactionSuccessful();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to save into the database " +
+                    "in insertIntoProfile method : "+e.getLocalizedMessage());
+        }finally {
+            dbWritable.endTransaction();
+        }
+    }
+
+    public static List<String []> getProfile(String[] columns){
+        List<String[]> resultList = new ArrayList<>();
+        String sqlQuery = "SELECT ";
+        for (String column:columns){
+            sqlQuery += column + ", ";
+        }
+        sqlQuery = sqlQuery.substring(0, sqlQuery.length() - 2);
+        sqlQuery += " FROM PROFILE" ;
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
+        if (cursor.moveToFirst()) {
+            do {
+                String[] row = new String[columns.length];
+                for (int i = 0; i < columns.length; i++) {
+                    int columnIndex = cursor.getColumnIndex(columns[i]);
+                    if (columnIndex >= 0) {
+                        row[i] = cursor.getString(columnIndex);
+                    }
+                }
+                resultList.add(row);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return resultList;
+    }
+
+    public void insertIntoAccounts(String userEmail,String type,String refreshToken ,String accessToken,
+                            Double totalStorage , Double usedStorage , Double usedInDriveStorage , Double UsedInGmailAndPhotosStorage) {
+        String[] profile_selected_columns = {"id"};
+        List<String[]> profile_rows = getProfile(profile_selected_columns);
+        String profileId = "";
+        for(String[] profile_row:profile_rows){
+            profileId = profile_row[0];
+            if(profileId != null && !profileId.isEmpty()){
+                break;
+            }
+        }
+        if(profileId == null | profileId.isEmpty()){
+            LogHandler.saveLog("Profile id is empty or null !",true);
+        }
+
+        dbWritable.beginTransaction();
+        try{
+            String sqlQuery = "INSERT INTO ACCOUNTS (" +
+                    "profileId, "+
                     "userEmail," +
                     "type, " +
                     "refreshToken, " +
@@ -353,13 +456,14 @@ public class DBHelper extends SQLiteOpenHelper {
                     "totalStorage," +
                     "usedStorage," +
                     "usedInDriveStorage,"+
-                    "UsedInGmailAndPhotosStorage) VALUES (?,?,?,?,?,?,?,?)";
-            Object[] values = new Object[]{userEmail,type,refreshToken ,accessToken,
+                    "UsedInGmailAndPhotosStorage) VALUES (?,?,?,?,?,?,?,?,?)";
+            Object[] values = new Object[]{userEmail,profileId, type,refreshToken ,accessToken,
                     totalStorage ,usedStorage ,usedInDriveStorage ,UsedInGmailAndPhotosStorage};
             dbWritable.execSQL(sqlQuery, values);
             dbWritable.setTransactionSuccessful();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to save into the database.in insertUserProfileData method. "+e.getLocalizedMessage());
+            LogHandler.saveLog("Failed to save into the database " +
+                    "in insertIntoAccounts method : "+e.getLocalizedMessage());
         }finally {
             dbWritable.endTransaction();
         }
@@ -392,38 +496,12 @@ public class DBHelper extends SQLiteOpenHelper {
         return resultList;
     }
 
-    public static List<String []> getAccounts(String[] columns,boolean allProfile){
-        List<String[]> resultList = new ArrayList<>();
-
-        String sqlQuery = "SELECT ";
-        for (String column:columns){
-            sqlQuery += column + ", ";
-        }
-        sqlQuery = sqlQuery.substring(0, sqlQuery.length() - 2);
-        sqlQuery += " FROM ACCOUNTS" ;
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
-        if (cursor.moveToFirst()) {
-            do {
-                String[] row = new String[columns.length];
-                for (int i = 0; i < columns.length; i++) {
-                    int columnIndex = cursor.getColumnIndex(columns[i]);
-                    if (columnIndex >= 0) {
-                        row[i] = cursor.getString(columnIndex);
-                    }
-                }
-                resultList.add(row);
-            } while (cursor.moveToNext());
-        }
-        cursor.close();
-        return resultList;
-    }
 
 
-
-    public void updateUserProfileData(String userEmail, Map<String, Object> updateValues,String type) {
+    public void updateAccounts(String userEmail, Map<String, Object> updateValues,String type) {
         dbWritable.beginTransaction();
         try {
-            StringBuilder sqlQueryBuilder = new StringBuilder("UPDATE USERPROFILE SET ");
+            StringBuilder sqlQueryBuilder = new StringBuilder("UPDATE ACCOUNTS SET ");
 
             List<Object> valuesList = new ArrayList<>();
             for (Map.Entry<String, Object> entry : updateValues.entrySet()) {
@@ -444,22 +522,21 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, values);
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to update the database in updateUserProfileData method. " + e.getLocalizedMessage());
+            LogHandler.saveLog("Failed to update the database in updateAccounts method : " + e.getLocalizedMessage(), true);
         } finally {
             dbWritable.endTransaction();
         }
     }
 
 
-
-    public void deleteUserProfileData(String userEmail,String type) {
+    public void deleteAccounts(String userEmail,String type) {
         dbWritable.beginTransaction();
         try {
-            String sqlQuery = "DELETE FROM USERPROFILE WHERE userEmail = ? and type = ?";
+            String sqlQuery = "DELETE FROM ACCOUNTS WHERE userEmail = ? and type = ?";
             dbWritable.execSQL(sqlQuery, new Object[]{userEmail,type});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete the database in deleteUserProfileData method. " + e.getLocalizedMessage());
+            LogHandler.saveLog("Failed to delete the database in deleteAccounts method. " + e.getLocalizedMessage());
         } finally {
             dbWritable.endTransaction();
         }
@@ -493,32 +570,11 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-
-
     public void insertIntoAndroidTable(long assetId,String fileName,String filePath,String device,
                                        String fileHash, Double fileSize,String dateModified,String memeType) {
-        if(filePath.equals("/storage/emulated/0/Pictures/Telegram/IMG_20231216_222431_269.jpg")){
-            System.out.println("there  we go");
-        }
-
         fileHash = fileHash.toLowerCase();
         String sqlQuery = "";
-        Boolean existsInAndroid = false;
-        try{
-            sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ? and filePath = ? and fileHash = ? and fileSize = ? and device = ?)";
-            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), filePath, fileHash,
-                    String.valueOf(fileSize), device});
-            if(cursor != null && cursor.moveToFirst()){
-                int result = cursor.getInt(0);
-                if(result == 1){
-                    existsInAndroid = true;
-                }
-            }
-            cursor.close();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to select from ANDROID in insertIntoAndroidTable method: " + e.getLocalizedMessage());
-        }
-
+        boolean existsInAndroid = existsInAndroid(assetId, filePath, device, fileSize, fileHash);
         if(existsInAndroid == false){
             System.out.println("try to insert into android table method : " + fileName + " "+ assetId);
             dbWritable.beginTransaction();
@@ -536,7 +592,6 @@ public class DBHelper extends SQLiteOpenHelper {
                         fileSize,fileHash,dateModified,memeType};
                 dbWritable.execSQL(sqlQuery, values);
                 dbWritable.setTransactionSuccessful();
-                System.out.println("Inserted into android table method : " + fileName + " "+ assetId);
             }catch (Exception e){
                 LogHandler.saveLog("Failed to save into the database.in insertIntoAndroidTable method. "+e.getLocalizedMessage());
             }finally {
@@ -545,27 +600,33 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    private boolean existsInAndroid(long assetId, String filePath, String device,
+                                    Double fileSize, String fileHash){
+        try{
+            String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE" +
+                    " assetId = ? and filePath = ? and fileHash = ? and fileSize = ? and device = ?)";
+            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), filePath, fileHash,
+                    String.valueOf(fileSize), device});
+            if(cursor != null && cursor.moveToFirst()){
+                int result = cursor.getInt(0);
+                if(result == 1){
+                    return true;
+                }
+            }
+            cursor.close();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to check existing in Android : " + e.getLocalizedMessage());
+        }
+        return false;
+    }
+
+
+    //done but to another class delete method
     public void deleteFileFromDriveTable(String fileHash, String id, String assetId, String fileId, String userEmail){
         String sqlQuery  = "DELETE FROM DRIVE WHERE fileHash = ? and id = ? and assetId = ? and fileId = ? and userEmail = ?";
         dbWritable.execSQL(sqlQuery, new String[]{fileHash, id, assetId, fileId, userEmail});
 
-        boolean existsInDatabase = false;
-        try {
-            sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
-                    "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
-                    "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
-            Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId,assetId,assetId});
-            if (cursor != null && cursor.moveToFirst()) {
-                int result = cursor.getInt(0);
-                if (result == 1) {
-                    existsInDatabase = true;
-                }
-            }
-            cursor.close();
-        } catch (Exception e) {
-            LogHandler.saveLog("Failed to check if the data exists in Database in deleteFileFromDriveTable");
-        }
-
+        boolean existsInDatabase = assetExistsInDatabase(assetId);
         if (existsInDatabase == false) {
             dbWritable = getWritableDatabase();
             dbWritable.beginTransaction();
@@ -574,7 +635,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 dbWritable.execSQL(sqlQuery, new Object[]{assetId});
                 dbWritable.setTransactionSuccessful();
             } catch (Exception e) {
-                LogHandler.saveLog("Failed to delete the database in ASSET , deleteFileFromDriveTable method. " + e.getLocalizedMessage());
+                LogHandler.saveLog("Failed to delete the database" +
+                        " in ASSET , deleteFileFromDriveTable method : " + e.getLocalizedMessage());
             } finally {
                 dbWritable.endTransaction();
             }
@@ -951,7 +1013,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public boolean backupAccountExists(){
-        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM USERPROFILE WHERE type = 'backup')";
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ACCOUNTS WHERE type = 'backup')";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
         boolean exists = false;
         if(cursor != null && cursor.moveToFirst()){
@@ -965,41 +1027,26 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-
-
-    public void syncProfileMap(){
-
-    }
-
     public String backUpProfileMap() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<String> uploadTask = () -> {
             String uploadFileId = "";
             try {
                 String driveBackupAccessToken = "";
-                String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
-                List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getAccounts(drive_backup_selected_columns);
-                for (String[] drive_backUp_account : drive_backUp_accounts) {
-                    if (drive_backUp_account[1].equals("backup")) {
-                        driveBackupAccessToken = drive_backUp_account[2];
-                        NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-                        JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-                        String bearerToken = "Bearer " + driveBackupAccessToken;
-                        HttpRequestInitializer requestInitializer = request -> {
-                            request.getHeaders().setAuthorization(bearerToken);
-                            request.getHeaders().setContentType("application/json");
-                        };
+                String[] selected_columns = {"userEmail", "type", "accessToken"};
+                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_columns);
+                for (String[] account_row : account_rows) {
+                    if (account_row[1].equals("backup")) {
+                        driveBackupAccessToken = account_row[2];
 
-                        Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                                .setApplicationName("cso").build();
-
+                        Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                         String folder_name = "stash_user_profile";
                         String folderId = null;
                         com.google.api.services.drive.model.File folder = null;
 
                         FileList fileList = service.files().list()
                                 .setQ("mimeType='application/vnd.google-apps.folder' and name='"
-                                        + folder_name + "'")
+                                        + folder_name + "' and trashed=false")
                                 .setSpaces("drive")
                                 .setFields("files(id)")
                                 .execute();
@@ -1028,7 +1075,6 @@ public class DBHelper extends SQLiteOpenHelper {
                         List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
                         for (com.google.api.services.drive.model.File existingFile : existingFiles) {
                             service.files().delete(existingFile.getId()).execute();
-                            System.out.println("Deleted existing profileMap.txt file with ID: " + existingFile.getId());
                         }
 
                         com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();

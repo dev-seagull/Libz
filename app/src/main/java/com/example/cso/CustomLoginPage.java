@@ -45,7 +45,7 @@ public class CustomLoginPage extends AppCompatActivity {
                 EditText editTextPasswordSignIn = findViewById(R.id.editTextPasswordSignIn);
                 String userName = editTextUsernameSignIn.getText().toString();
                 String earlyPassword = editTextPasswordSignIn.getText().toString();
-                String password = Hash.calculateSHA256(earlyPassword, getApplicationContext());
+                String password = Hash.calculateSHA256(earlyPassword);
                 System.out.println("input userName: " + userName);
                 System.out.println("input password: " + earlyPassword + " h-> " + password);
                 if (userName == null || password == null) {
@@ -64,20 +64,20 @@ public class CustomLoginPage extends AppCompatActivity {
                     return;
                 }
                 JsonObject profileMapContent = Profile.readProfileMapContent(1);
-                if (profileMapContent == null || !profileMapContent.has("userProfile")){
+                if (profileMapContent == null || !profileMapContent.has("profile")){
                     signInStateTextView.setText("No account was found with this Email !");
                     buttonCustomSignIn.setClickable(true);
                     return;
                 }
-                JsonObject userProfileJson = profileMapContent.get("userProfile").getAsJsonObject();
-                if (!userProfileJson.has("userName") || !userProfileJson.has("password")) {
+                JsonObject profileJson = profileMapContent.get("profile").getAsJsonObject();
+                if (!profileJson.has("userName") || !profileJson.has("password")) {
                     signInStateTextView.setText("No username, password was found in this Email !");
                     buttonCustomSignIn.setClickable(true);
                     return;
                 }
                 runOnUiThread(() -> {
-                    String userNameResult = userProfileJson.get("userName").getAsString();
-                    String passwordResult = userProfileJson.get("password").getAsString();
+                    String userNameResult = profileJson.get("userName").getAsString();
+                    String passwordResult = profileJson.get("password").getAsString();
                     if (!userNameResult.equals(userName)) {
                         signInStateTextView.setText("Username Not found !");
                         buttonCustomSignIn.setClickable(true);
@@ -94,7 +94,7 @@ public class CustomLoginPage extends AppCompatActivity {
                         buttonCustomSignIn.setClickable(true);
                         return;
                     }
-                    Profile.insertProfile(userName, password, getApplicationContext());
+                    DBHelper.insertIntoProfile(userName, password);
                     Profile.insertBackupFromMap(profileMapContent.get("backupAccounts").getAsJsonArray());
                     Profile.insertPrimaryFromMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
                     Activity activity = MainActivity.activity;

@@ -72,8 +72,8 @@ public class Upload {
                 List<String[]> android_items = MainActivity.dbHelper.getAndroidTable(selected_android_columns);
 
 
-                String[] selected_userProfile_columns = {"userEmail" , "type"};
-                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_userProfile_columns);
+                String[] selected_columns = {"userEmail" , "type"};
+                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_columns);
 
                 ArrayList<String> androidItemsToUpload_hash = new ArrayList<>();
                 int duplicatedFileIndex = -1;
@@ -276,7 +276,7 @@ public class Upload {
                 String fileId = row[8];
                 System.out.println("File path for restore test: " + filePath + " and user email is: " + userEmail  +  "  and file id" +
                         " is: " + fileId);
-                String accessTokenSqlQuery = "SELECT accessToken from USERPROFILE WHERE USERPROFILE.userEmail = ?";
+                String accessTokenSqlQuery = "SELECT accessToken from ACCOUNTS WHERE ACCOUNTS.userEmail = ?";
                 Cursor accessTokenCursor = MainActivity.dbHelper.dbReadable.rawQuery(accessTokenSqlQuery, new String[]{userEmail});
                 String accessToken = "";
                 if(accessTokenCursor.moveToFirst() && accessTokenCursor != null) {

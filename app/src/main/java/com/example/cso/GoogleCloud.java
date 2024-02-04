@@ -146,7 +146,7 @@
                     authCode = account.getServerAuthCode();
                     tokens = getTokens(authCode);
                     storage = getStorage(tokens);
-                    MainActivity.dbHelper.insertUserProfileData(userEmail,"primary",tokens.getRefreshToken(),tokens.getAccessToken(),
+                    MainActivity.dbHelper.insertIntoAccounts(userEmail,"primary",tokens.getRefreshToken(),tokens.getAccessToken(),
                             storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
                     runOnUiThread(() -> {
                         LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
@@ -177,10 +177,10 @@
                 }
 
                 String[] columnsList = new String[]{"userEmail","type"};
-                List<String[]> userProfileData = MainActivity.dbHelper.getAccounts(columnsList);
+                List<String[]> accounts_rows = MainActivity.dbHelper.getAccounts(columnsList);
                 boolean isInAccounts = false;
 
-                for (String[] row : userProfileData) {
+                for (String[] row : accounts_rows) {
                     if (row.length > 0 && row[0] != null && row[0].equals(userEmail) && row[1].equals("backup")) {
                             isInAccounts = true;
                             runOnUiThread(() -> { // sendToast
@@ -195,7 +195,7 @@
                     tokens = getTokens(authCode);
                     storage = getStorage(tokens);
                     mediaItems = GoogleDrive.getMediaItems(tokens.getAccessToken());
-                    MainActivity.dbHelper.insertUserProfileData(userEmail,"backup",tokens.getRefreshToken(),tokens.getAccessToken(),
+                    MainActivity.dbHelper.insertIntoAccounts(userEmail,"backup",tokens.getRefreshToken(),tokens.getAccessToken(),
                             storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
 
                     for(BackUpAccountInfo.MediaItem mediaItem : mediaItems){
