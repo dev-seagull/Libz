@@ -154,7 +154,7 @@
             dbHelper = new DBHelper(this);
 //            if(dbHelper.DATABASE_VERSION < 11) {
             LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
-            Boolean upgradedFrom1To2 = upgrade.upgradeDataBaseFrom1to2();
+            Boolean upgradedFrom1To2 = Upgrade.upgradeDataBaseFrom1to2();
             if(upgradedFrom1To2){
                 LogHandler.saveLog("Upgraded database from version 1 to version 2", false);
             }else{

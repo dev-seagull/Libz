@@ -48,12 +48,15 @@ public class CustomSignUpPage extends AppCompatActivity{
 
                 EditText editTextUsernameSignUp = findViewById(R.id.editTextUsernameSignUp);
                 EditText editTextPasswordSignUp = findViewById(R.id.editTextPasswordSignUp);
+                EditText editTextPasswordSignUp2 = findViewById(R.id.editTextPasswordSignUp2);
                 String userName = editTextUsernameSignUp.getText().toString();
                 String password = editTextPasswordSignUp.getText().toString();
-                String isCredentialSecure = isCredentialSecure(password, userName);
+                String password2 = editTextPasswordSignUp2.getText().toString();
+                String isCredentialSecure = isCredentialSecure(password, password2, userName);
 
                 if(isCredentialSecure.equals("ok")){
                     DBHelper.insertIntoProfile(userName, password);
+                    Upgrade.updateProfileIdsInAccounts();
                     MainActivity.dbHelper.backUpProfileMap();
 
                     buttonCustomSignUp.setClickable(true);
@@ -78,12 +81,15 @@ public class CustomSignUpPage extends AppCompatActivity{
             }
         });
     }
-    private String isCredentialSecure(String password, String userName) {
+    private String isCredentialSecure(String password, String password2, String userName){
         if(userName.isEmpty() | userName == null){
             return  "Enter your username!";
         }
         if(password.isEmpty() | password == null) {
             return  "Enter your password!";
+        }
+        if(password2.isEmpty() | password2 == null) {
+            return  "Retype Your password again in second field!";
         }
 
         if (userName.length() <= 3) {
@@ -108,6 +114,10 @@ public class CustomSignUpPage extends AppCompatActivity{
         if (containsSpecialCharacters(password) == false) {
             return "Password must contain at least one special character (# or !).";
         }
+        if (!password.equals(password2)) {
+            return "Passwords do not match!";
+        }
+
         if(!recaptchaCheckBox.isChecked()){
             return "Verify you're not a robot!";
         }

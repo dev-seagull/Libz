@@ -1,8 +1,8 @@
 package com.example.cso;
 
+import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
 
-import com.google.api.client.http.ByteArrayContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
 
@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class upgrade {
+public class Upgrade {
 
 
     public static boolean upgradeDataBaseFrom1to2(){
@@ -56,6 +56,30 @@ public class upgrade {
         }
     }
 
+    public static String updateProfileIdsInAccounts(){
+        String profileId = "";
+        try {
+            String getProfileIdQuery = "SELECT id FROM PROFILE limit 1;";
+            Cursor cursor = DBHelper.dbReadable.rawQuery(getProfileIdQuery, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                int idIndex = cursor.getColumnIndex("id");
+                if (idIndex != -1) {
+                    profileId = cursor.getString(idIndex);
+                }
+            }
+            String updateProfileIdQuery = "UPDATE ACCOUNTS SET profileId = ? ;";
+            try {
+                DBHelper.dbWritable.execSQL(updateProfileIdQuery, new String[]{profileId});
+            } catch (SQLiteConstraintException e) {
+                LogHandler.saveLog("Failed to update profileId : " + e.getLocalizedMessage());
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to get profileId from profile  : " + e.getLocalizedMessage());
+        }
+        return profileId;
+    }
+    
+    
     public static String updateLoginAndSignUp(){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<String> uploadTask = () -> {
