@@ -390,7 +390,7 @@ public class DBHelper extends SQLiteOpenHelper {
         String joined = dateFormat.format(new Date());
         dbWritable.beginTransaction();
         try{
-            String sqlQuery = "INSERT INTO ACCOUNTS (" +
+            String sqlQuery = "INSERT INTO PROFILE (" +
                     "userName, "+
                     "password," +
                     "joined) VALUES (?,?,?)";

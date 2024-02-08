@@ -1,27 +1,17 @@
 package com.example.cso;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.safetynet.SafetyNet;
-import com.google.android.gms.safetynet.SafetyNetApi;
 
-
-public class CustomSignUpPage extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks {
+public class CustomSignUpPage extends AppCompatActivity{
     private TextView alreadyHaveAccountTextView;
     private CheckBox recaptchaCheckBox;
 
@@ -32,34 +22,6 @@ public class CustomSignUpPage extends AppCompatActivity implements GoogleApiClie
 
         recaptchaCheckBox = findViewById(R.id.chechBoxSignUp);
 
-        GoogleApiClient googleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(SafetyNet.API)
-                .addConnectionCallbacks(CustomSignUpPage.this)
-                .build();
-        googleApiClient.connect();
-        recaptchaCheckBox.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(recaptchaCheckBox.isChecked()){
-                    SafetyNet.SafetyNetApi.verifyWithRecaptcha(googleApiClient, "6LdddGYpAAAAACYvp5CkJwCRvyuG77FPrUGIGLjU")
-                            .setResultCallback(new ResultCallback<SafetyNetApi.RecaptchaTokenResult>() {
-                                @Override
-                                public void onResult(@NonNull SafetyNetApi.RecaptchaTokenResult recaptchaTokenResult) {
-                                    Status status = recaptchaTokenResult.getStatus();
-                                    if((status != null) && status.isSuccess()){
-                                        System.out.println("success");
-                                        recaptchaCheckBox.setTextColor(Color.GREEN);
-                                    }
-                                }
-                            });
-                }else{
-                    recaptchaCheckBox.setTextColor(Color.BLACK);
-                }
-            }
-        });
-
-
-
         alreadyHaveAccountTextView = findViewById(R.id.alreadyHaveAccount);
         alreadyHaveAccountTextView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -69,7 +31,6 @@ public class CustomSignUpPage extends AppCompatActivity implements GoogleApiClie
                 finish();
             }
         });
-
 
         Button buttonCustomSignUp = findViewById(R.id.buttonCustomSignUp);
         buttonCustomSignUp.setOnClickListener(new View.OnClickListener() {
@@ -89,32 +50,23 @@ public class CustomSignUpPage extends AppCompatActivity implements GoogleApiClie
                 EditText editTextPasswordSignUp = findViewById(R.id.editTextPasswordSignUp);
                 String userName = editTextUsernameSignUp.getText().toString();
                 String password = editTextPasswordSignUp.getText().toString();
-                if(userName != null && !userName.isEmpty() && !password.isEmpty() && password != null){
-                    String isCredentialSecure = isCredentialSecure(password, userName);
-                    if(isCredentialSecure.equals("ok")){
-                        DBHelper.insertIntoProfile(userName, password);
-                        MainActivity.dbHelper.backUpProfileMap();
+                String isCredentialSecure = isCredentialSecure(password, userName);
 
-                        buttonCustomSignUp.setClickable(true);
-                        alreadyHaveAccountTextView.setClickable(true);
-                        finish();
-                        view.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                buttonCustomSignUp.setClickable(true);
-                            }
-                        }, 5000);
-                    }else{
-                        signUpStateTextView.setText(isCredentialSecure);
-                    }
-                }else{
+                if(isCredentialSecure.equals("ok")){
+                    DBHelper.insertIntoProfile(userName, password);
+                    MainActivity.dbHelper.backUpProfileMap();
+
                     buttonCustomSignUp.setClickable(true);
                     alreadyHaveAccountTextView.setClickable(true);
-                    if(userName.isEmpty() | userName == null){
-                        signUpStateTextView.setText("Enter your username!");
-                    }else if(password.isEmpty() | password == null) {
-                        signUpStateTextView.setText("Enter your password!");
-                    }
+                    finish();
+                    view.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            buttonCustomSignUp.setClickable(true);
+                        }
+                    }, 5000);
+                }else{
+                    signUpStateTextView.setText(isCredentialSecure);
                 }
                 view.postDelayed(new Runnable() {
                     @Override
@@ -127,6 +79,13 @@ public class CustomSignUpPage extends AppCompatActivity implements GoogleApiClie
         });
     }
     private String isCredentialSecure(String password, String userName) {
+        if(userName.isEmpty() | userName == null){
+            return  "Enter your username!";
+        }
+        if(password.isEmpty() | password == null) {
+            return  "Enter your password!";
+        }
+
         if (userName.length() <= 3) {
             return "Username must be more than 3 characters.";
         }
@@ -149,6 +108,9 @@ public class CustomSignUpPage extends AppCompatActivity implements GoogleApiClie
         if (containsSpecialCharacters(password) == false) {
             return "Password must contain at least one special character (# or !).";
         }
+        if(!recaptchaCheckBox.isChecked()){
+            return "Verify you're not a robot!";
+        }
         return "ok";
     }
 
@@ -163,15 +125,5 @@ public class CustomSignUpPage extends AppCompatActivity implements GoogleApiClie
 
     private boolean containsSpecialCharacters(String password) {
         return password.matches(".*[#\\!_\\-@$%^&*()+\\-?<>{}\\[\\]].*");
-    }
-
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
     }
 }
