@@ -386,6 +386,9 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
     public static void insertIntoProfile(String userName, String password){
+        if (Profile.profileMapExists(userName,password)){
+            return;
+        }
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String joined = dateFormat.format(new Date());
         dbWritable.beginTransaction();
@@ -434,7 +437,7 @@ public class DBHelper extends SQLiteOpenHelper {
                             Double totalStorage , Double usedStorage , Double usedInDriveStorage , Double UsedInGmailAndPhotosStorage) {
         String[] profile_selected_columns = {"id"};
         List<String[]> profile_rows = getProfile(profile_selected_columns);
-        String profileId = "";
+        String profileId = "0";
         for(String[] profile_row:profile_rows){
             profileId = profile_row[0];
             if(profileId != null && !profileId.isEmpty()){
@@ -457,7 +460,7 @@ public class DBHelper extends SQLiteOpenHelper {
                     "usedStorage," +
                     "usedInDriveStorage,"+
                     "UsedInGmailAndPhotosStorage) VALUES (?,?,?,?,?,?,?,?,?)";
-            Object[] values = new Object[]{userEmail,profileId, type,refreshToken ,accessToken,
+            Object[] values = new Object[]{profileId,userEmail, type,refreshToken ,accessToken,
                     totalStorage ,usedStorage ,usedInDriveStorage ,UsedInGmailAndPhotosStorage};
             dbWritable.execSQL(sqlQuery, values);
             dbWritable.setTransactionSuccessful();

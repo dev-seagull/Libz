@@ -70,6 +70,8 @@ public class CustomSignUpPage extends AppCompatActivity{
                     }, 5000);
                 }else{
                     signUpStateTextView.setText(isCredentialSecure);
+                    buttonCustomSignUp.setClickable(true);
+                    alreadyHaveAccountTextView.setClickable(true);
                 }
                 view.postDelayed(new Runnable() {
                     @Override

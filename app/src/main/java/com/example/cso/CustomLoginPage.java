@@ -47,63 +47,58 @@ public class CustomLoginPage extends AppCompatActivity {
                 String earlyPassword = editTextPasswordSignIn.getText().toString();
                 String password = Hash.calculateSHA256(earlyPassword);
                 System.out.println("input userName: " + userName);
-                System.out.println("input password: " + earlyPassword + " h-> " + password);
-                if (userName == null || password == null) {
-                    signInStateTextView.setText("Please Try Again");//Enter your credential");
-                    buttonCustomSignIn.setClickable(true);
-                    return;
-                }
-                if (userName.isEmpty()) {
-                    signInStateTextView.setText("Enter your username !");
-                    buttonCustomSignIn.setClickable(true);
-                    return;
-                }
-                if (earlyPassword.isEmpty()) {
-                    signInStateTextView.setText("Enter your password !");
-                    buttonCustomSignIn.setClickable(true);
-                    return;
-                }
+                System.out.println("input password: " + earlyPassword + " hash-> " + password);
                 JsonObject profileMapContent = Profile.readProfileMapContent(1);
-                if (profileMapContent == null || !profileMapContent.has("profile")){
-                    signInStateTextView.setText("No account was found with this Email !");
+                String isCredentialsValid = isCredentialsValid(userName,earlyPassword,password,profileMapContent);
+                if (isCredentialsValid.equals("ok")){
                     buttonCustomSignIn.setClickable(true);
-                    return;
-                }
-                JsonObject profileJson = profileMapContent.get("profile").getAsJsonObject();
-                if (!profileJson.has("userName") || !profileJson.has("password")) {
-                    signInStateTextView.setText("No username, password was found in this Email !");
+                    noAccountSignedUpTextView.setClickable(true);
+                    if (Profile.profileMapExists(userName,password)){
+                        DBHelper.insertIntoProfile(userName, password);
+                        Profile.insertBackupFromMap(profileMapContent.get("backupAccounts").getAsJsonArray());
+                        Profile.insertPrimaryFromMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
+                        Upgrade.updateProfileIdsInAccounts();
+                        Activity activity = MainActivity.activity;
+                        if (activity != null) {
+                            MainActivity.reInitializeButtons(activity, MainActivity.googleCloud);
+                        }
+                    }
+                }else{
+                    signInStateTextView.setText(isCredentialsValid);
                     buttonCustomSignIn.setClickable(true);
-                    return;
+                    noAccountSignedUpTextView.setClickable(true);
                 }
-                runOnUiThread(() -> {
-                    String userNameResult = profileJson.get("userName").getAsString();
-                    String passwordResult = profileJson.get("password").getAsString();
-                    if (!userNameResult.equals(userName)) {
-                        signInStateTextView.setText("Username Not found !");
-                        buttonCustomSignIn.setClickable(true);
-                        return;
-                    }
-                    //should compare with signup page
-//                    if (earlyPassword.length() < 8){
-//                        signInStateTextView.setText("Wrong password Format please check again");
-//                        buttonCustomSignIn.setClickable(true);
-//                        return;
-//                    }
-                    if (!passwordResult.equals(password)){
-                        signInStateTextView.setText("Wrong password please check again or ... ");
-                        buttonCustomSignIn.setClickable(true);
-                        return;
-                    }
-                    DBHelper.insertIntoProfile(userName, password);
-                    Profile.insertBackupFromMap(profileMapContent.get("backupAccounts").getAsJsonArray());
-                    Profile.insertPrimaryFromMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
-                    Activity activity = MainActivity.activity;
-                    if (activity != null) {
-                        MainActivity.initializeButtons(activity, MainActivity.googleCloud);
-                    }
-                    finish();
-                });
+                finish();
             }
         });
+    }
+
+    private String isCredentialsValid(String userName , String earlyPassword,String password,JsonObject profileMapContent){
+        if (userName == null || earlyPassword == null) {
+            return "Please Try Again";
+        }
+        if (userName.isEmpty()) {
+            return "Enter your username !";
+        }
+        if (earlyPassword.isEmpty()) {
+            return "Enter your password !";
+        }
+        if (profileMapContent == null || !profileMapContent.has("profile")){
+            return "No account was found with this Email !";
+        }
+        JsonObject profileJson = profileMapContent.get("profile").getAsJsonObject();
+        if (!profileJson.has("userName") || !profileJson.has("password")) {
+            return "No username, password was found for this Email !";
+        }
+        String userNameResult = profileJson.get("userName").getAsString();
+        String passwordResult = profileJson.get("password").getAsString();
+        if (!userNameResult.equals(userName)) {
+            return "Username Not found !";
+        }
+        if (!passwordResult.equals(password)){
+            return "Wrong password please check again or ... ";
+        }
+        return "ok";
+
     }
 }

@@ -37,6 +37,24 @@ public class Profile {
         return exists;
     }
 
+    public static boolean profileMapExists(String userName, String password){
+        boolean exists = false;
+        try{
+            String sqlQuery = "SELECT EXISTS(SELECT 1 FROM PROFILE WHERE userName = ? and password = ?)";
+            Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery, new String[]{userName,password});
+            if(cursor != null && cursor.moveToFirst()){
+                int result = cursor.getInt(0);
+                if(result == 1){
+                    exists = true;
+                }
+            }
+            cursor.close();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to check if profile map exists : " + e.getLocalizedMessage(), true);
+        }
+        return exists;
+    }
+
     public static JsonObject createProfileMapContent(){
         List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
         JsonArray profileJson = new JsonArray();
@@ -101,9 +119,9 @@ public class Profile {
     }
 
 
-    public static JsonObject readProfileMapContent(int number) {
+    public static JsonObject readProfileMapContent(int index_of_main_backup_account) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        final int[] number2 = {number};
+        final int[] numbers = {index_of_main_backup_account};
         Callable<JsonObject> uploadTask = () -> {
             JsonObject result = null;
             String driveBackupAccessToken = "";
@@ -113,12 +131,11 @@ public class Profile {
                 List<String[]> drive_backUp_accounts = DBHelper.getAccounts(drive_backup_selected_columns);
                 for (String[] drive_backUp_account : drive_backUp_accounts) {
                     if (drive_backUp_account[1].equals("backup")) {
-                        number2[0] = number2[0] -1 ;
-                        if (number2[0] == 0){
+                        numbers[0] = numbers[0] -1 ;
+                        if (numbers[0] == 0){
                             driveBackupAccessToken = drive_backUp_account[2];
                             break;
                         }
-
                     }
                 }
             }catch (Exception e){
@@ -147,11 +164,11 @@ public class Profile {
                                     outputStream.close();
                                     if(result != null){
                                         jsonFileExists = true;
-                                        break;
+                                        return result;
                                     }
                                 }
                                 if (jsonFileExists == false) {
-                                    readProfileMapContent(number2[0] + 1 );
+                                    return readProfileMapContent(numbers[0] + 1 );
                                 }
                                 break;
                             }

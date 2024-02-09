@@ -1526,6 +1526,33 @@
             }
         }
 
+        public static void reInitializeButtons(Activity activity,GoogleCloud googleCloud){
+            LinearLayout primaryLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
+            for (int i = 0; i < primaryLinearLayout.getChildCount(); i++) {
+                View child = primaryLinearLayout.getChildAt(i);
+                if (child instanceof Button) {
+                    primaryLinearLayout.removeView(child);
+                    i--;
+                }
+            }
+
+            LinearLayout backupLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+            for (int i = 0; i < backupLinearLayout.getChildCount(); i++) {
+                View child = backupLinearLayout.getChildAt(i);
+                if (child instanceof Button) {
+                    backupLinearLayout.removeView(child);
+                    i--;
+                }
+            }
+
+            initializeButtons(activity,googleCloud);
+
+            Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
+            newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+            Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
+            newBackupLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+
+        }
     }
 
 
