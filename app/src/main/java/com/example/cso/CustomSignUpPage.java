@@ -10,7 +10,6 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-
 public class CustomSignUpPage extends AppCompatActivity{
     private TextView alreadyHaveAccountTextView;
     private CheckBox recaptchaCheckBox;
@@ -50,31 +49,18 @@ public class CustomSignUpPage extends AppCompatActivity{
                 String isCredentialSecure = isCredentialSecure(password, password2, userName);
 
                 if(isCredentialSecure.equals("ok")){
+                    signUpStateTextView.setText("Wait ... ");
                     DBHelper.insertIntoProfile(userName, password);
                     Upgrade.updateProfileIdsInAccounts();
                     MainActivity.dbHelper.backUpProfileMap();
-
                     buttonCustomSignUp.setClickable(true);
                     alreadyHaveAccountTextView.setClickable(true);
                     finish();
-                    view.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            buttonCustomSignUp.setClickable(true);
-                        }
-                    }, 5000);
                 }else{
                     signUpStateTextView.setText(isCredentialSecure);
                     buttonCustomSignUp.setClickable(true);
                     alreadyHaveAccountTextView.setClickable(true);
                 }
-                view.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        buttonCustomSignUp.setClickable(true);
-                    }
-                }, 5000);
-
             }
         });
     }

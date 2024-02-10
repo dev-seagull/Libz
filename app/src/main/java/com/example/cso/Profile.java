@@ -62,22 +62,19 @@ public class Profile {
         JsonArray primaryAccountsJson = new JsonArray();
         JsonArray backUpDBJson = new JsonArray();
         JsonObject resultJson = new JsonObject();
-        String profileSQLQuery = "SELECT * FROM PROFILE";
-        MainActivity.dbHelper.dbReadable.rawQuery(profileSQLQuery,null);
 
         try{
             for (String[] account_row : account_rows){
-                switch (account_row[1]) {
-                    case "backup":
-                        JsonObject backupAccount = new JsonObject();
-                        backupAccount.addProperty("backupEmail", account_row[0]);
-                        backupAccount.addProperty("refreshToken", account_row[2]);
-                        backupAccountsJson.add(backupAccount);
-                    case "primary":
-                        JsonObject primaryAccount = new JsonObject();
-                        primaryAccount.addProperty("primaryEmail", account_row[0]);
-                        primaryAccount.addProperty("refreshToken", account_row[2]);
-                        primaryAccountsJson.add(primaryAccount);
+                if (account_row[1] == "backup") {
+                    JsonObject backupAccount = new JsonObject();
+                    backupAccount.addProperty("backupEmail", account_row[0]);
+                    backupAccount.addProperty("refreshToken", account_row[2]);
+                    backupAccountsJson.add(backupAccount);}
+                else if (account_row[1] == "primary"){
+                    JsonObject primaryAccount = new JsonObject();
+                    primaryAccount.addProperty("primaryEmail", account_row[0]);
+                    primaryAccount.addProperty("refreshToken", account_row[2]);
+                    primaryAccountsJson.add(primaryAccount);
                 }
             }
 

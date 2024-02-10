@@ -1069,7 +1069,6 @@ public class DBHelper extends SQLiteOpenHelper {
                             folderId = folder.getId();
                         }
 
-
                         fileList = service.files().list()
                                 .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
                                 .setSpaces("drive")
