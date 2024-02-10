@@ -39,12 +39,7 @@ public class CustomSignUpPage extends AppCompatActivity{
                 buttonCustomSignUp.setClickable(false);
                 alreadyHaveAccountTextView.setClickable(false);
                 TextView signUpStateTextView = findViewById(R.id.signUpState);
-                view.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        signUpStateTextView.setText(" Wait... ");
-                    }
-                }, 10000);
+                signUpStateTextView.setText(" Wait... ");
 
                 EditText editTextUsernameSignUp = findViewById(R.id.editTextUsernameSignUp);
                 EditText editTextPasswordSignUp = findViewById(R.id.editTextPasswordSignUp);
@@ -100,8 +95,8 @@ public class CustomSignUpPage extends AppCompatActivity{
         if (!userName.matches(".*[a-z].*")) {
             return "Username must contain at least one lowercase letter.";
         }
-        if(password.length() <= 8){
-            return  "Password must be more than 8 characters.";
+        if(password.length() < 8){
+            return  "Password must be at least 8 characters.";
         }
         if (!password.matches(".*[a-z].*")) {
             return "Password must contain at least one lowercase letter.";

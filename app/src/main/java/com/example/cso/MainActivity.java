@@ -721,8 +721,6 @@
                             }
                             updateButtonsListeners();
                         });
-
-
                     }
                 }
             );

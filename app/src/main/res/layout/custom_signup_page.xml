@@ -24,7 +24,7 @@
         android:id="@+id/editTextPasswordSignUp2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Password"
+        android:hint="Retype Password"
         android:inputType="textPassword" />
 
     <CheckBox
@@ -32,7 +32,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/chechBoxSignUp"
         android:text="I am not a robot."
-        android:textSize="25dp"/>
+        android:textSize="15dp"/>
 
     <Button
         android:id="@+id/buttonCustomSignUp"
