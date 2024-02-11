@@ -75,13 +75,16 @@
         Button restoreButton;
         public static String logFileName = "stash_log.txt";
         public static int errorCounter = 0;
-        SharedPreferences preferences;
+        static SharedPreferences preferences;
         public static DBHelper dbHelper;
 
-        private Boolean isFirstTime(SharedPreferences preferences){
-            Boolean isFirstTime = preferences.getBoolean("isFirstTime", true);
-            if(isFirstTime == true){
+        public static boolean isFirstTime(){
+            boolean isFirstTime = preferences.getBoolean("isFirstTime", true);
+            if (isFirstTime) {
                 System.out.println("Welcome the app");
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putBoolean("isFirstTime", false);
+                editor.commit();
             }else{
                 System.out.println("The app has missed you");
             }
@@ -153,7 +156,7 @@
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
 //            if(dbHelper.DATABASE_VERSION < 11) {
-            LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
+//            LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
             Boolean upgradedFrom1To2 = Upgrade.upgradeDataBaseFrom1to2();
             if(upgradedFrom1To2){
                 LogHandler.saveLog("Upgraded database from version 1 to version 2", false);

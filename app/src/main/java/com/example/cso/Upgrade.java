@@ -17,6 +17,10 @@ public class Upgrade {
 
     public static boolean upgradeDataBaseFrom1to2(){
         cutFromUserProfileToAccounts();
+        if (MainActivity.isFirstTime()){
+            deleteProfileTableContent();
+            deleteAccountsTableContent();
+        }
         return true;
     }
 
@@ -28,6 +32,31 @@ public class Upgrade {
         // do version 12 tasks
 //    }
 
+    public static void deleteProfileTableContent(){
+        try{
+            MainActivity.dbHelper.getWritableDatabase().beginTransaction();
+            String deleteProfileContent = "DELETE FROM PROFILE ;";
+            MainActivity.dbHelper.getWritableDatabase().execSQL(deleteProfileContent);
+            MainActivity.dbHelper.getWritableDatabase().setTransactionSuccessful();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to delete profile table because in (deleteProfileTableContent) : " + e.getLocalizedMessage());
+        }finally {
+            MainActivity.dbHelper.getWritableDatabase().endTransaction();
+        }
+    }
+
+    public static void deleteAccountsTableContent(){
+        try{
+            MainActivity.dbHelper.getWritableDatabase().beginTransaction();
+            String deleteAccountsContent = "DELETE FROM ACCOUNTS ;";
+            MainActivity.dbHelper.getWritableDatabase().execSQL(deleteAccountsContent);
+            MainActivity.dbHelper.getWritableDatabase().setTransactionSuccessful();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to delete Accounts table because in (deleteAccountsTableContent) : " + e.getLocalizedMessage());
+        }finally {
+            MainActivity.dbHelper.getWritableDatabase().endTransaction();
+        }
+    }
 
     public static void cutFromUserProfileToAccounts(){
         try{
