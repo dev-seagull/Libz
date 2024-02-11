@@ -65,12 +65,12 @@ public class Profile {
 
         try{
             for (String[] account_row : account_rows){
-                if (account_row[1] == "backup") {
+                if(account_row[1].equals("backup")) {
                     JsonObject backupAccount = new JsonObject();
                     backupAccount.addProperty("backupEmail", account_row[0]);
                     backupAccount.addProperty("refreshToken", account_row[2]);
                     backupAccountsJson.add(backupAccount);}
-                else if (account_row[1] == "primary"){
+                else if (account_row[1].equals("primary")){
                     JsonObject primaryAccount = new JsonObject();
                     primaryAccount.addProperty("primaryEmail", account_row[0]);
                     primaryAccount.addProperty("refreshToken", account_row[2]);
@@ -99,8 +99,10 @@ public class Profile {
                 JsonObject profile = new JsonObject();
                 String userName = profile_row[0];
                 String password = profile_row[1];
+                String joined  = profile_row[2];
                 profile.addProperty("userName", userName);
                 profile.addProperty("password", password);
+                profile.addProperty("joined", joined);
                 profileJson.add(profile);
             }
 
@@ -116,10 +118,12 @@ public class Profile {
     }
 
 
-    public static JsonObject readProfileMapContent(int index_of_main_backup_account) {
+    public static JsonObject readProfileMapContent(int index_of_main_backup_account,
+                                                   String userName, String password) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        final int[] numbers = {index_of_main_backup_account};
+        int[] numbers = {index_of_main_backup_account};
         Callable<JsonObject> uploadTask = () -> {
+            int localNumber = numbers[0];
             JsonObject result = null;
             String driveBackupAccessToken = "";
 
@@ -128,8 +132,9 @@ public class Profile {
                 List<String[]> drive_backUp_accounts = DBHelper.getAccounts(drive_backup_selected_columns);
                 for (String[] drive_backUp_account : drive_backUp_accounts) {
                     if (drive_backUp_account[1].equals("backup")) {
-                        numbers[0] = numbers[0] -1 ;
-                        if (numbers[0] == 0){
+                        localNumber = localNumber - 1;
+                        System.out.println("num is : " + numbers[0]);
+                        if (localNumber == 0){
                             driveBackupAccessToken = drive_backUp_account[2];
                             break;
                         }
@@ -150,25 +155,36 @@ public class Profile {
                 if(!driveFolderId.isEmpty() && driveFolderId != null){
                     if(!files.isEmpty() && files != null){
                         for (com.google.api.services.drive.model.File file : files) {
+                            System.out.println("sss1");
                             if ("application/json".equals(file.getMimeType()) && file.getName().startsWith("profileMap")) {
-
                                 for (int i =0; i<3; i++){
+                                    System.out.println(file.getName());
+                                    System.out.println("sss2");
                                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                                     service.files().get(file.getId())
                                             .executeMediaAndDownloadTo(outputStream);
                                     String jsonString = outputStream.toString();
-                                    result = JsonParser.parseString(jsonString).getAsJsonObject();
+                                    System.out.println(jsonString);
+                                    JsonObject resultJson = JsonParser.parseString(jsonString).getAsJsonObject();
                                     outputStream.close();
-                                    if(result != null){
-                                        jsonFileExists = true;
-                                        return result;
+                                    if(resultJson != null){
+                                        JsonArray profileArray = resultJson.get("profile").getAsJsonArray();
+                                        JsonObject profileJson = profileArray.get(0).getAsJsonObject();
+                                        if (profileJson.has("userName") && profileJson.has("password")) {
+                                            String userNameResult = profileJson.get("userName").getAsString();
+                                            String passwordResult = profileJson.get("password").getAsString();
+                                            if (userNameResult.equals(userName) && passwordResult.equals(password)) {
+                                                jsonFileExists = true;
+                                                result = resultJson;
+                                                return result;
+                                            }
+                                        }
                                     }
                                 }
-                                if (jsonFileExists == false) {
-                                    return readProfileMapContent(numbers[0] + 1 );
-                                }
-                                break;
                             }
+                        }
+                        if (jsonFileExists == false) {
+                            return readProfileMapContent(index_of_main_backup_account + 1 , userName, password);
                         }
                     }
                 }
@@ -222,8 +238,10 @@ public class Profile {
                 JsonObject backupAccount = backupAccounts.get(i).getAsJsonObject();
                 String backupEmail = backupAccount.get("backupEmail").getAsString();
                 String refreshToken = backupAccount.get("refreshToken").getAsString();
-                DBHelper.dbWritable.execSQL(sqlQuery, new String[]{backupEmail, "backup", refreshToken});
-                DBHelper.dbWritable.setTransactionSuccessful();
+                if(!DBHelper.accountExists(backupEmail, "backup")){
+                    DBHelper.dbWritable.execSQL(sqlQuery, new String[]{backupEmail, "backup", refreshToken});
+                    DBHelper.dbWritable.setTransactionSuccessful();
+                }
             } catch (SQLiteConstraintException e) {
                 LogHandler.saveLog("SQLiteConstraintException in insert backup accounts method " + e.getLocalizedMessage(), false);
             } catch (Exception e) {
@@ -241,8 +259,10 @@ public class Profile {
                 JsonObject primaryAccount = primaryAccounts.get(i).getAsJsonObject();
                 String primaryEmail = primaryAccount.get("primaryEmail").getAsString();
                 String refreshToken = primaryAccount.get("refreshToken").getAsString();
-                DBHelper.dbWritable.execSQL(sqlQuery, new String[]{primaryEmail, "primary", refreshToken});
-                DBHelper.dbWritable.setTransactionSuccessful();
+                if(!DBHelper.accountExists(primaryEmail, "primary")){
+                    DBHelper.dbWritable.execSQL(sqlQuery, new String[]{primaryEmail, "primary", refreshToken});
+                    DBHelper.dbWritable.setTransactionSuccessful();
+                }
             } catch (SQLiteConstraintException e) {
                 LogHandler.saveLog("SQLiteConstraintException in insert primary accounts method " + e.getLocalizedMessage(), false);
             } catch (Exception e) {
@@ -251,7 +271,4 @@ public class Profile {
         }
         DBHelper.dbWritable.endTransaction();
     }
-
-
-
 }

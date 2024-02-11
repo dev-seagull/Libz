@@ -408,6 +408,27 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    public static void insertIntoProfile(String userName, String password, String joined){
+        if (Profile.profileMapExists(userName,password)){
+            return;
+        }
+        dbWritable.beginTransaction();
+        try{
+            String sqlQuery = "INSERT INTO PROFILE (" +
+                    "userName, "+
+                    "password," +
+                    "joined) VALUES (?,?,?)";
+            Object[] values = new Object[]{userName,Hash.calculateSHA256(password), joined};
+            dbWritable.execSQL(sqlQuery, values);
+            dbWritable.setTransactionSuccessful();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to save into the database " +
+                    "in insertIntoProfile method : "+e.getLocalizedMessage());
+        }finally {
+            dbWritable.endTransaction();
+        }
+    }
+
     public static List<String []> getProfile(String[] columns){
         List<String[]> resultList = new ArrayList<>();
         String sqlQuery = "SELECT ";
@@ -1029,6 +1050,19 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
+    public static boolean accountExists(String userEmail, String type){
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ACCOUNTS WHERE userEmail = ? and type = ?)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{userEmail, type});
+        boolean exists = false;
+        if(cursor != null && cursor.moveToFirst()){
+            int result = cursor.getInt(0);
+            if(result == 1){
+                exists = true;
+            }
+        }
+        cursor.close();
+        return exists;
+    }
 
     public String backUpProfileMap() {
         ExecutorService executor = Executors.newSingleThreadExecutor();

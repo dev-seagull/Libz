@@ -1,27 +1,32 @@
 package com.example.cso;
 
-import static com.google.android.material.internal.ContextUtils.getActivity;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+
+import org.json.JSONObject;
 
 public class CustomLoginPage extends AppCompatActivity {
     private TextView noAccountSignedUpTextView;
-
+    private CheckBox recaptchaCheckBox;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.custom_login_page);
+
+        recaptchaCheckBox = findViewById(R.id.checkBoxLogin);
+
         noAccountSignedUpTextView = findViewById(R.id.noAccountSignedUp);
         noAccountSignedUpTextView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -46,34 +51,45 @@ public class CustomLoginPage extends AppCompatActivity {
                 String userName = editTextUsernameSignIn.getText().toString();
                 String earlyPassword = editTextPasswordSignIn.getText().toString();
                 String password = Hash.calculateSHA256(earlyPassword);
-                System.out.println("input userName: " + userName);
-                System.out.println("input password: " + earlyPassword + " hash-> " + password);
-                JsonObject profileMapContent = Profile.readProfileMapContent(1);
-                String isCredentialsValid = isCredentialsValid(userName,earlyPassword,password,profileMapContent);
-                if (isCredentialsValid.equals("ok")){
-                    buttonCustomSignIn.setClickable(true);
-                    noAccountSignedUpTextView.setClickable(true);
-                    if (Profile.profileMapExists(userName,password)){
-                        DBHelper.insertIntoProfile(userName, password);
-                        Profile.insertBackupFromMap(profileMapContent.get("backupAccounts").getAsJsonArray());
-                        Profile.insertPrimaryFromMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
-                        Upgrade.updateProfileIdsInAccounts();
-                        Activity activity = MainActivity.activity;
-                        if (activity != null) {
-                            MainActivity.reInitializeButtons(activity, MainActivity.googleCloud);
+                String isCredentialsValid = isCredentialsValid(userName,earlyPassword);
+                if(isCredentialsValid.equals("ok")){
+                    signInStateTextView.setText("Wait...");
+                    JsonObject profileMapContent = Profile.readProfileMapContent(1, userName, password);
+                    String isProfileJsonValid = isProfileJsonValid(profileMapContent);
+                    if (isProfileJsonValid.equals("ok")){
+                        buttonCustomSignIn.setClickable(true);
+                        noAccountSignedUpTextView.setClickable(true);
+                        if (!Profile.profileMapExists(userName,password)){
+                            JsonArray profilesArray = profileMapContent.getAsJsonArray("profile");
+                            JsonObject profile = profilesArray.get(0).getAsJsonObject();
+                            DBHelper.insertIntoProfile(profile.get("userName").getAsString(),
+                                    profile.get("password").getAsString(), profile.get("joined").getAsString());
+                            Profile.insertBackupFromMap(profileMapContent.get("backupAccounts").getAsJsonArray());
+                            Profile.insertPrimaryFromMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
+                            Upgrade.updateProfileIdsInAccounts();
+                            Activity activity = MainActivity.activity;
+                            if (activity != null) {
+                                MainActivity.reInitializeButtons(activity, MainActivity.googleCloud);
+                                finish();
+                            }
+                        }else{
+                            signInStateTextView.setText("Try again!");
                         }
+                    }else{
+                        signInStateTextView.setText(isProfileJsonValid);
+                        buttonCustomSignIn.setClickable(true);
+                        noAccountSignedUpTextView.setClickable(true);
                     }
                 }else{
                     signInStateTextView.setText(isCredentialsValid);
                     buttonCustomSignIn.setClickable(true);
                     noAccountSignedUpTextView.setClickable(true);
                 }
-                finish();
             }
         });
     }
 
-    private String isCredentialsValid(String userName , String earlyPassword,String password,JsonObject profileMapContent){
+    private String isCredentialsValid(String userName , String earlyPassword){
         if (userName == null || earlyPassword == null) {
             return "Please Try Again";
         }
@@ -83,22 +99,16 @@ public class CustomLoginPage extends AppCompatActivity {
         if (earlyPassword.isEmpty()) {
             return "Enter your password !";
         }
-        if (profileMapContent == null || !profileMapContent.has("profile")){
-            return "No account was found with this Email !";
-        }
-        JsonObject profileJson = profileMapContent.get("profile").getAsJsonObject();
-        if (!profileJson.has("userName") || !profileJson.has("password")) {
-            return "No username, password was found for this Email !";
-        }
-        String userNameResult = profileJson.get("userName").getAsString();
-        String passwordResult = profileJson.get("password").getAsString();
-        if (!userNameResult.equals(userName)) {
-            return "Username Not found !";
-        }
-        if (!passwordResult.equals(password)){
-            return "Wrong password please check again or ... ";
+        if(!recaptchaCheckBox.isChecked()){
+            return "Verify you're not a robot!";
         }
         return "ok";
+    }
 
+    private String isProfileJsonValid(JsonObject profileMapContent){
+        if (profileMapContent == null || !profileMapContent.has("profile")){
+            return "No account was found!";
+        }
+        return "ok";
     }
 }

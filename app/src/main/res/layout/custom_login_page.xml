@@ -18,6 +18,13 @@
         android:hint="Password"
         android:inputType="textPassword" />
 
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/checkBoxLogin"
+        android:text="I am not a robot."
+        android:textSize="15dp"/>
+
     <Button
         android:id="@+id/buttonCustomSignIn"
         android:layout_width="match_parent"
