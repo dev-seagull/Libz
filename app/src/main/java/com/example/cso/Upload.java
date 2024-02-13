@@ -6,6 +6,9 @@ import static com.example.cso.GooglePhotos.isVideo;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
 import android.media.MediaScannerConnection;
 import android.os.Environment;
 
@@ -18,6 +21,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,9 +29,11 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -38,6 +44,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 public class Upload {
 
@@ -578,11 +585,20 @@ public class Upload {
                     try {
                         URL url = new URL(photosMediaItem.getBaseUrl() + "=d");
                         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                        HttpURLConnection newConnection = (HttpURLConnection) url.openConnection();
                         connection.setRequestMethod("GET");
+                        newConnection.setRequestMethod("GET");
                         int responseCode = connection.getResponseCode();
                         if (responseCode == HttpURLConnection.HTTP_OK) {
+                            String inputStreamString = "";
                             int contentLength = connection.getContentLength();
                             InputStream inputStream = new BufferedInputStream(connection.getInputStream());
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                                inputStreamString = new BufferedReader(new InputStreamReader(inputStream))
+                                        .lines().collect(Collectors.joining("\n"));
+                            }
+                            inputStream.close();
+                            inputStream = connection.getInputStream();
                             if (!destinationFolder.exists()) {
                                 boolean isFolderCreated = destinationFolder.mkdirs();
                                 if (!isFolderCreated) {
@@ -602,14 +618,25 @@ public class Upload {
                                     while ((bytesRead = inputStream.read(buffer)) != -1) {
                                         outputStream.write(buffer, 0, bytesRead);
                                     }
+                                    String outputStream_string = "";
+                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                                        outputStream_string = new BufferedReader(new InputStreamReader(new FileInputStream(downloadFile)))
+                                                .lines().collect(Collectors.joining("\n"));
+                                    }
                                     if (downloadFile.length() == (long) contentLength) {
-                                        LogHandler.saveLog("downloaded to CSO folder : " + photosMediaItem.getFileName(), false);
-                                        break;
+                                        if (outputStream_string.equals(inputStreamString)){
+                                            InputStream inputStream1 = new FileInputStream(downloadFile);
+                                            System.out.println("i n n ");
+                                            if (decodeIsOk(inputStream1)){
+                                                inputStream1.close();
+                                                LogHandler.saveLog("downloaded to CSO folder : " + photosMediaItem.getFileName(), false);
+                                                break;
+                                            }
+                                        }
                                     } else {
                                         LogHandler.saveLog("Failed to download " + downloadFile.length() + "!=" + contentLength);
                                     }
                                 }
-
                             } catch (IOException e) {
                                 LogHandler.saveLog("Error in file output stream handling: " + e.getLocalizedMessage());
                             } finally {
@@ -668,6 +695,16 @@ public class Upload {
         }
         return out.toByteArray();
     }
+
+    public static boolean decodeIsOk(InputStream input){
+        try{
+            Bitmap bitmap = BitmapFactory.decodeStream(input);
+            return true;
+        }catch (Exception e){
+            return false;
+        }
+    }
+
 }
 
 
