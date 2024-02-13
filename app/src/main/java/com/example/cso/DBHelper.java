@@ -995,7 +995,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
                 com.google.api.services.drive.model.File fileMetadata =
                             new com.google.api.services.drive.model.File();
-                fileMetadata.setName("CSODatabase.db");
+                fileMetadata.setName("StashDatabase.db");
                 fileMetadata.setParents(java.util.Collections.singletonList(folderId));
 
                 File androidFile = new File(dataBasePath);
