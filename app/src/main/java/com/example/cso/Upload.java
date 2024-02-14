@@ -695,7 +695,6 @@ public class Upload {
         }
         return out.toByteArray();
     }
-
     public static boolean decodeIsOk(InputStream input){
         try{
             Bitmap bitmap = BitmapFactory.decodeStream(input);
@@ -704,7 +703,6 @@ public class Upload {
             return false;
         }
     }
-
 }
 
 
