@@ -1,4 +1,4 @@
-package com.example.cso;
+    package com.example.cso;
 
 import static com.example.cso.GooglePhotos.getMemeType;
 import static com.example.cso.GooglePhotos.isImage;
