@@ -99,21 +99,36 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="3dp"
+                        android:layout_marginRight="3dp"
                         android:layout_marginTop="30dp"
                         android:layout_marginBottom="30dp"
-                        android:gravity="left"
+                        android:gravity="center"
                         android:text=""
+                        android:shadowColor="@color/black"
+                        android:shadowDx="2"
+                        android:shadowDy="2"
+                        android:shadowRadius="5"
+                        android:fontFamily="sans-serif-condensed"
+                        android:textColor="@color/white"
                         android:textSize="20sp" />
+
 
                     <TextView
                         android:id="@+id/androidStatistics"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="3dp"
+                        android:layout_marginRight="3dp"
                         android:layout_marginTop="20dp"
                         android:layout_marginBottom="20dp"
-                        android:gravity="left"
+                        android:gravity="center"
                         android:text=""
+                        android:shadowColor="@color/black"
+                        android:shadowDx="2"
+                        android:shadowDy="2"
+                        android:shadowRadius="5"
+                        android:fontFamily="sans-serif-condensed"
+                        android:textColor="@color/white"
                         android:textSize="20sp"
                         android:visibility="gone" />
 
@@ -131,6 +146,31 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:orientation="vertical"></LinearLayout>
+
+                    <TextView
+                        android:id="@+id/syncToBackUpAccountTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=""
+                        android:shadowColor="@color/black"
+                        android:shadowDx="2"
+                        android:shadowDy="2"
+                        android:shadowRadius="5"
+                        android:fontFamily="sans-serif-condensed"
+                        android:textColor="@color/white"/>
+
+                    <TextView
+                        android:id="@+id/restoreTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:shadowColor="@color/black"
+                        android:text=""
+                        android:shadowDx="2"
+                        android:shadowDy="2"
+                        android:shadowRadius="5"
+                        android:fontFamily="sans-serif-condensed"
+                        android:textColor="@color/white"
+                        />
 
                 </LinearLayout>
 
@@ -164,13 +204,13 @@
                         android:elevation="10dp"
                         android:layout_gravity="end"
                         android:text="Sync"
-                        android:textSize="16sp" />
-
-                    <TextView
-                        android:id="@+id/syncToBackUpAccountTextView"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1" />
+                        android:shadowColor="@color/black"
+                        android:shadowDx="2"
+                        android:shadowDy="2"
+                        android:shadowRadius="5"
+                        android:fontFamily="sans-serif-condensed"
+                        android:textColor="@color/white"
+                        android:textSize="20sp" />
 
                 </LinearLayout>
 
@@ -181,6 +221,7 @@
                     android:paddingLeft="10dp"
                     android:gravity="center"
                     android:orientation="vertical">
+
                     <Button
                         android:id="@+id/restoreButton"
                         android:layout_width="160dp"
@@ -190,19 +231,23 @@
                         android:background="@drawable/custom_button2"
                         app:backgroundTint="@null"
                         android:text="Restore"
+                        android:shadowColor="@color/black"
+                        android:shadowDx="2"
+                        android:shadowDy="2"
+                        android:shadowRadius="5"
+                        android:fontFamily="sans-serif-condensed"
+                        android:textColor="@color/white"
                         android:elevation="10dp"
                         android:layout_gravity="left"
-                        android:textSize="16sp"/>
+                        android:textSize="20sp"/>
 
-                    <TextView
-                        android:id="@+id/restoreTextView"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1" />
                 </LinearLayout>
 
 
             </LinearLayout>
+
+
+
         </RelativeLayout>
 
 

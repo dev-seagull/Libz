@@ -352,7 +352,7 @@
                     TextView deviceStorage = findViewById(R.id.deviceStorage);
                     ArrayList<String> storage =  Android.getAndroidDeviceStorage();
                     deviceStorage.setText("Total space: " + storage.get(0) +
-                            "\n" + "free space: " + storage.get(1) + "\n");
+                            "\n" + "Free space: " + storage.get(1) + "\n");
 
                     TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
                     androidStatisticsTextView.setVisibility(View.VISIBLE);
@@ -588,7 +588,7 @@
                             TextView deviceStorage = findViewById(R.id.deviceStorage);
                             ArrayList<String> storage =  Android.getAndroidDeviceStorage();
                             deviceStorage.setText("Total space: " + storage.get(0) +
-                                    "\n" + "free space: " + storage.get(1) + "\n");
+                                    "\n" + "Free space: " + storage.get(1) + "\n");
 
                             TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
                             androidStatisticsTextView.setVisibility(View.VISIBLE);
@@ -1262,7 +1262,7 @@
                             TextView deviceStorage = findViewById(R.id.deviceStorage);
                             ArrayList<String> storage =  Android.getAndroidDeviceStorage();
                             deviceStorage.setText("Total space: " + storage.get(0) +
-                                    "\n" + "free space: " + storage.get(1) + "\n");
+                                    "\n" + "Free space: " + storage.get(1) + "\n");
 
                             TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
                             androidStatisticsTextView.setVisibility(View.VISIBLE);

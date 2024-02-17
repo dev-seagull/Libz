@@ -108,7 +108,7 @@
                         .requestServerAuthCode(activity.getResources().getString(R.string.web_client_id), forceCodeForRefreshToken)
                         .requestEmail()
                         .build();
-
+                
                 googleSignInClient = GoogleSignIn.getClient(activity, googleSignInOptions);
                 googleSignInClient.signOut();
             } catch (Exception e) {
