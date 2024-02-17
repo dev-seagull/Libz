@@ -2,7 +2,9 @@
 
     import android.Manifest;
     import android.app.Activity;
+    import android.app.AlertDialog;
     import android.content.Context;
+    import android.content.DialogInterface;
     import android.content.Intent;
     import android.content.SharedPreferences;
     import android.content.pm.PackageManager;
@@ -39,7 +41,11 @@
     import androidx.drawerlayout.widget.DrawerLayout;
 
     import com.google.android.material.navigation.NavigationView;
+    import com.google.gson.JsonArray;
+    import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
+
+    import org.json.JSONObject;
 
     import java.io.BufferedReader;
     import java.io.File;
@@ -223,57 +229,6 @@
             Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
             newBackupLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
 
-            Thread customLoginThread = new Thread(() ->{
-                synchronized (manageReadAndWritePermissonsThread){
-                    try{
-                        manageReadAndWritePermissonsThread.join();
-                    }catch (Exception e){
-                        LogHandler.saveLog("Failed to join delete duplicated drive " +
-                                "thread in customLoginThread : " + e.getLocalizedMessage(),true);
-                    }
-                }
-
-                Callable<Void> customLoginCallable = new Callable<Void>() {
-                    @Override
-                    public Void call() throws Exception {
-                        Handler handler = new Handler(Looper.getMainLooper());
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                Intent intent = new Intent(MainActivity.this, CustomLoginPage.class);
-                                startActivity(intent);
-                            }
-                        });
-                        return null;
-                    }
-                };
-
-                boolean backUpAccountExists = false;
-                String[] columns = {"type"};
-                List<String[]> backUpAccounts = DBHelper.getAccounts(columns);
-                for(String[] backUpAccount: backUpAccounts){
-                    if(backUpAccount[0].equals("backup")){
-                        backUpAccountExists = true;
-                        break;
-                    }
-                }
-
-                if (!Profile.profileMapExists() && backUpAccountExists == true){
-                    {
-                        FutureTask<Void> futureTask = new FutureTask<>(customLoginCallable);
-                        new Thread(futureTask).start();
-                        try {
-                            futureTask.get();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        } catch (ExecutionException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            });
-
-
             runOnUiThread(() ->{
                 TextView deviceStorageTextView = findViewById(R.id.deviceStorage);
                 deviceStorageTextView.setText("Wait until we get an update of your assets ...");
@@ -411,7 +366,6 @@
             LogHandler.saveLog("--------------------------Start of app----------------------------",false);
 
             manageReadAndWritePermissonsThread.start();
-            customLoginThread.start();
             deleteRedundantAndroidThread.start();
             updateAndroidFilesThread.start();
             deleteRedundantDriveThread.start();
@@ -750,6 +704,14 @@
                                             bt.setText(userEmail);
                                             bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#42A5F5")));
                                         }
+
+                                        JsonObject profileMapContent = Profile.readProfileMapContent(userEmail);
+                                        if (profileMapContent == null || !profileMapContent.has("profile")){
+                                            dbHelper.backUpProfileMap(userEmail);
+                                        }else{
+                                            showAccountsAddPopup(profileMapContent);
+                                        }
+
                                     } else {
                                         LogHandler.saveLog(userEmail + " has logged in to the backup account", false);
                                         childview[0] = backupAccountsButtonsLinearLayout.getChildAt(
@@ -847,50 +809,9 @@
                                 }
                             });
 
-                            Thread customLoginThread = new Thread(() ->{
-                                synchronized (deleteDuplicatedInDrive){
-                                    try{
-                                        deleteDuplicatedInDrive.join();
-                                    }catch (Exception e){
-                                        LogHandler.saveLog("Failed to join delete duplicated drive " +
-                                                "thread in customLoginThread : " + e.getLocalizedMessage(),true);
-                                    }
-                                }
-
-                                Callable<Void> customLoginCallable = new Callable<Void>() {
-                                    @Override
-                                    public Void call() throws Exception {
-                                        Handler handler = new Handler(Looper.getMainLooper());
-                                        handler.post(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Intent intent = new Intent(MainActivity.this, CustomLoginPage.class);
-                                                startActivity(intent);
-                                            }
-                                        });
-                                        return null;
-                                    }
-                                };
-                                if (!Profile.profileMapExists()){
-                                    {
-                                        FutureTask<Void> futureTask = new FutureTask<>(customLoginCallable);
-                                        new Thread(futureTask).start();
-                                        try {
-                                            futureTask.get();
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        } catch (ExecutionException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                }
-                            });
-
                             deleteRedundantDriveThread.start();
                             updateDriveBackUpThread.start();
                             deleteDuplicatedInDrive.start();
-                            customLoginThread.start();
-
                             runOnUiThread(() -> {
                                 childview[0].setClickable(true);
                                 TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
@@ -1553,6 +1474,28 @@
             Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
             newBackupLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
         }
+
+        private void showAccountsAddPopup(JsonObject profileMapContent) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("We found some related accounts. Do you want to add them to your current accounts?")
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            Profile.insertBackupFromMap(profileMapContent.get("backupAccounts").getAsJsonArray());
+                            Profile.insertPrimaryFromMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
+                            reInitializeButtons(activity, googleCloud);
+                            dialog.dismiss();
+                        }
+                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+                        }
+                    });
+
+            AlertDialog alertDialog = builder.create();
+            alertDialog.show();
+        }
+
     }
 
 

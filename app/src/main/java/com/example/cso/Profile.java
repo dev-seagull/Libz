@@ -19,43 +19,8 @@ import java.util.concurrent.Future;
 
 public class Profile {
 
-    public static boolean profileMapExists(){
-        boolean exists = false;
-        try{
-            String sqlQuery = "SELECT EXISTS(SELECT 1 FROM PROFILE)";
-            Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery, null);
-            if(cursor != null && cursor.moveToFirst()){
-                int result = cursor.getInt(0);
-                if(result == 1){
-                    exists = true;
-                }
-            }
-            cursor.close();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to check if profile map exists : " + e.getLocalizedMessage(), true);
-        }
-        return exists;
-    }
 
-    public static boolean profileMapExists(String userName, String password){
-        boolean exists = false;
-        try{
-            String sqlQuery = "SELECT EXISTS(SELECT 1 FROM PROFILE WHERE userName = ? and password = ?)";
-            Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery, new String[]{userName,password});
-            if(cursor != null && cursor.moveToFirst()){
-                int result = cursor.getInt(0);
-                if(result == 1){
-                    exists = true;
-                }
-            }
-            cursor.close();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to check if profile map exists : " + e.getLocalizedMessage(), true);
-        }
-        return exists;
-    }
-
-    public static JsonObject createProfileMapContent(){
+    public static JsonObject createProfileMapContent(String userName){
         List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
         JsonArray profileJson = new JsonArray();
         JsonArray backupAccountsJson = new JsonArray();
@@ -93,18 +58,9 @@ public class Profile {
                 }
             }
 
-            String[] selected_columns = {"userName","password","joined"};
-            List<String[]> profile_rows = MainActivity.dbHelper.getProfile(selected_columns);
-            for(String[] profile_row : profile_rows){
-                JsonObject profile = new JsonObject();
-                String userName = profile_row[0];
-                String password = profile_row[1];
-                String joined  = profile_row[2];
-                profile.addProperty("userName", userName);
-                profile.addProperty("password", password);
-                profile.addProperty("joined", joined);
-                profileJson.add(profile);
-            }
+            JsonObject profile = new JsonObject();
+            profile.addProperty("userName", userName);
+            profileJson.add(profile);
 
             resultJson.add("profile", profileJson);
             resultJson.add("backupAccounts", backupAccountsJson);
@@ -118,26 +74,18 @@ public class Profile {
     }
 
 
-    public static JsonObject readProfileMapContent(int index_of_main_backup_account,
-                                                   String userName, String password) {
+    public static JsonObject readProfileMapContent(String userEmail) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        int[] numbers = {index_of_main_backup_account};
         Callable<JsonObject> uploadTask = () -> {
-            int localNumber = numbers[0];
             JsonObject result = null;
             String driveBackupAccessToken = "";
-
             try{
                 String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
                 List<String[]> drive_backUp_accounts = DBHelper.getAccounts(drive_backup_selected_columns);
                 for (String[] drive_backUp_account : drive_backUp_accounts) {
-                    if (drive_backUp_account[1].equals("backup")) {
-                        localNumber = localNumber - 1;
-                        System.out.println("num is : " + numbers[0]);
-                        if (localNumber == 0){
-                            driveBackupAccessToken = drive_backUp_account[2];
-                            break;
-                        }
+                    if (drive_backUp_account[1].equals("backup") && drive_backUp_account[0].equals(userEmail)) {
+                        driveBackupAccessToken = drive_backUp_account[2];
+                        break;
                     }
                 }
             }catch (Exception e){
@@ -155,36 +103,23 @@ public class Profile {
                 if(!driveFolderId.isEmpty() && driveFolderId != null){
                     if(!files.isEmpty() && files != null){
                         for (com.google.api.services.drive.model.File file : files) {
-                            System.out.println("sss1");
                             if ("application/json".equals(file.getMimeType()) && file.getName().startsWith("profileMap")) {
                                 for (int i =0; i<3; i++){
-                                    System.out.println(file.getName());
-                                    System.out.println("sss2");
                                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                                     service.files().get(file.getId())
                                             .executeMediaAndDownloadTo(outputStream);
                                     String jsonString = outputStream.toString();
-                                    System.out.println(jsonString);
                                     JsonObject resultJson = JsonParser.parseString(jsonString).getAsJsonObject();
                                     outputStream.close();
-                                    if(resultJson != null){
+                                    if(resultJson != null) {
                                         JsonArray profileArray = resultJson.get("profile").getAsJsonArray();
                                         JsonObject profileJson = profileArray.get(0).getAsJsonObject();
-                                        if (profileJson.has("userName") && profileJson.has("password")) {
-                                            String userNameResult = profileJson.get("userName").getAsString();
-                                            String passwordResult = profileJson.get("password").getAsString();
-                                            if (userNameResult.equals(userName) && passwordResult.equals(password)) {
-                                                jsonFileExists = true;
-                                                result = resultJson;
-                                                return result;
-                                            }
-                                        }
+                                        jsonFileExists = true;
+                                        result = resultJson;
+                                        return result;
                                     }
                                 }
                             }
-                        }
-                        if (jsonFileExists == false) {
-                            return readProfileMapContent(index_of_main_backup_account + 1 , userName, password);
                         }
                     }
                 }
@@ -200,7 +135,6 @@ public class Profile {
             future = executor.submit(uploadTask);
         }catch (Exception e){
             LogHandler.saveLog("Failed to submit executor: " + e.getLocalizedMessage(), true);
-
         }
         try {
             resultJson = future.get();

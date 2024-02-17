@@ -386,9 +386,6 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
     public static void insertIntoProfile(String userName, String password){
-        if (Profile.profileMapExists(userName,password)){
-            return;
-        }
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String joined = dateFormat.format(new Date());
         dbWritable.beginTransaction();
@@ -409,9 +406,6 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public static void insertIntoProfile(String userName, String password, String joined){
-        if (Profile.profileMapExists(userName,password)){
-            return;
-        }
         dbWritable.beginTransaction();
         try{
             String sqlQuery = "INSERT INTO PROFILE (" +
@@ -1064,7 +1058,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
-    public String backUpProfileMap() {
+    public String backUpProfileMap(String userEmail) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<String> uploadTask = () -> {
             String uploadFileId = "";
@@ -1117,7 +1111,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         fileMetadata.setName("profileMap.json");
                         fileMetadata.setParents(java.util.Collections.singletonList(folderId));
 
-                        String content = Profile.createProfileMapContent().toString();
+                        String content = Profile.createProfileMapContent(userEmail).toString();
 
                         ByteArrayContent mediaContent = ByteArrayContent.fromString("application/json", content);
 
