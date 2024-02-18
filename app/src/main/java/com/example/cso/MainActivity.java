@@ -84,18 +84,6 @@
         static SharedPreferences preferences;
         public static DBHelper dbHelper;
 
-        public static boolean isFirstTime(){
-            boolean isFirstTime = preferences.getBoolean("isFirstTime", true);
-            if (isFirstTime) {
-                System.out.println("Welcome the app");
-                SharedPreferences.Editor editor = preferences.edit();
-                editor.putBoolean("isFirstTime", false);
-                editor.commit();
-            }else{
-                System.out.println("The app has missed you");
-            }
-            return isFirstTime;
-        }
 
 
         @Override
@@ -163,13 +151,7 @@
             dbHelper = new DBHelper(this);
 //            if(dbHelper.DATABASE_VERSION < 11) {
 //            LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
-            Boolean upgradedFrom1To2 = Upgrade.upgradeDataBaseFrom1to2();
-            if(upgradedFrom1To2){
-                LogHandler.saveLog("Upgraded database from version 1 to version 2", false);
-            }else{
-                LogHandler.saveLog("Failed to upgrade database from version 1 to version 2", true);
-            }
-
+            Upgrade.versionHandler(preferences);
 
             drawerLayout = findViewById(R.id.drawer_layout);
 //            Profile.test();
