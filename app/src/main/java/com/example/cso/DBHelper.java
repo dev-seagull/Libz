@@ -16,9 +16,7 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
@@ -547,7 +545,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-    public void deleteAccounts(String userEmail,String type) {
+    public boolean deleteFromAccountsTable(String userEmail, String type) {
         dbWritable.beginTransaction();
         try {
             String sqlQuery = "DELETE FROM ACCOUNTS WHERE userEmail = ? and type = ?";
@@ -558,7 +556,32 @@ public class DBHelper extends SQLiteOpenHelper {
         } finally {
             dbWritable.endTransaction();
         }
+        if (!accountExists(userEmail,type)){
+            return true;
+        }else{
+            return false;
+        }
+
     }
+
+    public boolean deleteAccountFromDriveTable(String userEmail) {
+        dbWritable.beginTransaction();
+        try {
+            String sqlQuery = "DELETE FROM DRIVE WHERE userEmail = ?";
+            dbWritable.execSQL(sqlQuery, new Object[]{userEmail});
+            dbWritable.setTransactionSuccessful();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to delete from drive in deleteFromDriveTable method. " + e.getLocalizedMessage());
+        } finally {
+            dbWritable.endTransaction();
+        }
+        if(!accountExistsInDriveTable(userEmail)){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
 
 
     public List<String []> getAndroidTable(String[] columns){
@@ -887,6 +910,7 @@ public class DBHelper extends SQLiteOpenHelper {
         String sqlQuery = "SELECT id FROM ASSET";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
         ArrayList<String> assetIds = new ArrayList<>();
+//        boolean isEveryThingOK = true;
         if (cursor.moveToFirst()) {
             do {
                 int assetIdColumnIndex = cursor.getColumnIndex("id");
@@ -919,6 +943,9 @@ public class DBHelper extends SQLiteOpenHelper {
                     sqlQuery = "DELETE FROM ASSET WHERE id = ? ";
                     dbWritable.execSQL(sqlQuery, new Object[]{assetId});
                     dbWritable.setTransactionSuccessful();
+//                    if(assetExistsInAssetTable(assetId)){
+//                        isEveryThingOK = false;
+//                    }
                 } catch (Exception e) {
                     LogHandler.saveLog("Failed to delete the database in ASSET , deleteRedundantPhotos method. " + e.getLocalizedMessage());
                 } finally {
@@ -926,6 +953,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         }
+//        return isEveryThingOK;
     }
 
     public List<String> backUpDataBase(Context context) {
@@ -1058,7 +1086,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
-    public String backUpProfileMap(String userEmail) {
+    public String backUpProfileMap() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<String> uploadTask = () -> {
             String uploadFileId = "";
@@ -1111,7 +1139,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         fileMetadata.setName("profileMap.json");
                         fileMetadata.setParents(java.util.Collections.singletonList(folderId));
 
-                        String content = Profile.createProfileMapContent(userEmail).toString();
+                        String content = Profile.createProfileMapContent(account_row[0]).toString();
 
                         ByteArrayContent mediaContent = ByteArrayContent.fromString("application/json", content);
 
@@ -1144,6 +1172,34 @@ public class DBHelper extends SQLiteOpenHelper {
             System.out.println(e.getLocalizedMessage());
         }
         return uploadFileIdFuture;
+    }
+
+    public static boolean accountExistsInDriveTable(String userEmail){
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE userEmail = ?)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{userEmail});
+        boolean exists = false;
+        if(cursor != null && cursor.moveToFirst()){
+            int result = cursor.getInt(0);
+            if(result == 1){
+                exists = true;
+            }
+        }
+        cursor.close();
+        return exists;
+    }
+
+    public static boolean assetExistsInAssetTable(String assetId){
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ASSET WHERE id = ?)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{assetId});
+        boolean exists = false;
+        if(cursor != null && cursor.moveToFirst()){
+            int result = cursor.getInt(0);
+            if(result == 1){
+                exists = true;
+            }
+        }
+        cursor.close();
+        return exists;
     }
 
 }

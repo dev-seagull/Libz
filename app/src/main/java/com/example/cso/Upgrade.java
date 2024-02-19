@@ -34,6 +34,8 @@ public class Upgrade {
         editor.apply();
     }
 
+
+
     public static void upgrade_14_to_15() {
         dropProfileIdColumn();
         deleteProfileTableContent();

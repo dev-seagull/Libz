@@ -73,7 +73,6 @@ public class Profile {
         return  resultJson;
     }
 
-
     public static JsonObject readProfileMapContent(String userEmail) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<JsonObject> uploadTask = () -> {
@@ -144,7 +143,6 @@ public class Profile {
         return resultJson;
     }
 
-
     private static String get_StashUserProfile_DriveFolderId(Drive service){
         String folderId = null;
         String folder_name = "stash_user_profile";
@@ -204,5 +202,82 @@ public class Profile {
             }
         }
         DBHelper.dbWritable.endTransaction();
+    }
+
+    public static void syncJsonAccounts(String status,String userEmail){
+
+
+        if (status.equals("sign-out")){
+            deleteProfileJson(userEmail);
+            MainActivity.dbHelper.backUpProfileMap();
+        } else if (status.equals("sign-in")) {
+            JsonObject profileMapContent = Profile.readProfileMapContent(userEmail);
+        }
+
+    }
+
+    public static void deleteProfileJson(String userEmail) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Callable<String> uploadTask = () -> {
+            String uploadFileId = "";
+            try {
+                String driveBackupAccessToken = "";
+                String[] selected_columns = {"userEmail", "type", "accessToken"};
+                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_columns);
+                for (String[] account_row : account_rows) {
+                    if (account_row[1].equals("backup") && account_row[0].equals(userEmail)) {
+                        driveBackupAccessToken = account_row[2];
+
+                        Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
+                        String folder_name = "stash_user_profile";
+                        String folderId = null;
+                        com.google.api.services.drive.model.File folder = null;
+
+                        FileList fileList = service.files().list()
+                                .setQ("mimeType='application/vnd.google-apps.folder' and name='"
+                                        + folder_name + "' and trashed=false")
+                                .setSpaces("drive")
+                                .setFields("files(id)")
+                                .execute();
+                        List<com.google.api.services.drive.model.File> driveFolders = fileList.getFiles();
+                        for (com.google.api.services.drive.model.File driveFolder : driveFolders) {
+                            folderId = driveFolder.getId();
+                        }
+
+                        if (folderId == null) {
+                            com.google.api.services.drive.model.File folder_metadata =
+                                    new com.google.api.services.drive.model.File();
+                            folder_metadata.setName(folder_name);
+                            folder_metadata.setMimeType("application/vnd.google-apps.folder");
+                            folder = service.files().create(folder_metadata)
+                                    .setFields("id").execute();
+
+                            folderId = folder.getId();
+                        }
+
+                        fileList = service.files().list()
+                                .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
+                                .setSpaces("drive")
+                                .setFields("files(id)")
+                                .execute();
+                        List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
+                        for (com.google.api.services.drive.model.File existingFile : existingFiles) {
+                            service.files().delete(existingFile.getId()).execute();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LogHandler.saveLog("Failed to upload profileMap from Android to backup : " + e.getLocalizedMessage());
+            }
+            return uploadFileId;
+        };
+
+        Future<String> future = executor.submit(uploadTask);
+        String uploadFileIdFuture = new String();
+        try {
+            uploadFileIdFuture = future.get();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to delete profile Content from account : " + e.getLocalizedMessage());
+        }
     }
 }

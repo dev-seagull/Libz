@@ -1,5 +1,7 @@
     package com.example.cso;
 
+    import static com.example.cso.SharedPreferencesHandler.displayDialogForRestoreAccountsDecision;
+
     import android.Manifest;
     import android.app.Activity;
     import android.app.AlertDialog;
@@ -14,8 +16,6 @@
     import android.os.Build;
     import android.os.Bundle;
     import android.os.Environment;
-    import android.os.Handler;
-    import android.os.Looper;
     import android.provider.Settings;
     import android.text.Layout;
     import android.text.Spannable;
@@ -41,11 +41,8 @@
     import androidx.drawerlayout.widget.DrawerLayout;
 
     import com.google.android.material.navigation.NavigationView;
-    import com.google.gson.JsonArray;
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
-
-    import org.json.JSONObject;
 
     import java.io.BufferedReader;
     import java.io.File;
@@ -59,11 +56,8 @@
     import java.util.HashMap;
     import java.util.List;
     import java.util.Map;
-    import java.util.concurrent.Callable;
-    import java.util.concurrent.ExecutionException;
     import java.util.concurrent.Executor;
     import java.util.concurrent.Executors;
-    import java.util.concurrent.FutureTask;
 
 
     public class MainActivity extends AppCompatActivity {
@@ -76,7 +70,6 @@
         ActivityResultLauncher<Intent> signInToBackUpLauncher;
         GooglePhotos googlePhotos;
         HashMap<String, PrimaryAccountInfo> primaryAccountHashMap = new HashMap<>();
-        HashMap<String, BackUpAccountInfo> backUpAccountHashMap = new HashMap<>();
         public static String androidDeviceName;
         Button restoreButton;
         public static String logFileName = "stash_log.txt";
@@ -139,9 +132,8 @@
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-
-
             LogHandler.CreateLogFile();
+
             googleCloud = new GoogleCloud(this);
 //            LogHandler.saveLog("--------------------------new run----------------------------",false);
 //            LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
@@ -608,7 +600,7 @@
             }catch (Exception e){
                 LogHandler.saveLog("failed to initialize the classes: " + e.getLocalizedMessage());
             }
-
+            displayDialogForRestoreAccountsDecision(preferences);
             signInToPrimaryLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if(result.getResultCode() == RESULT_OK){
@@ -689,7 +681,7 @@
 
                                         JsonObject profileMapContent = Profile.readProfileMapContent(userEmail);
                                         if (profileMapContent == null || !profileMapContent.has("profile")){
-                                            dbHelper.backUpProfileMap(userEmail);
+                                            dbHelper.backUpProfileMap();
                                         }else{
                                             showAccountsAddPopup(profileMapContent);
                                         }
@@ -1312,7 +1304,7 @@
                                     popupMenu.setOnMenuItemClickListener(item -> {
                                         if (item.getItemId() == R.id.sign_out) {
                                             googleCloud.signOut();
-                                            dbHelper.deleteAccounts(buttonText,"primary");
+                                            dbHelper.deleteFromAccountsTable(buttonText,"primary");
                                             String sqlQuery = "DELETE FROM photos WHERE userEmail = ?";
                                             dbHelper.dbWritable.execSQL(sqlQuery, new String[] {buttonText});
                                             dbHelper.deleteRedundantAsset();
@@ -1371,26 +1363,15 @@
                                     }
                                     popupMenu.setOnMenuItemClickListener(item -> {
                                         if (item.getItemId() == R.id.sign_out) {
-                                            googleCloud.signOut();
-                                            dbHelper.deleteAccounts(buttonText,"backup");
-                                            String sqlQuery = "DELETE FROM drive WHERE userEmail = ?";
-                                            dbHelper.dbWritable.execSQL(sqlQuery, new String[] {buttonText});
+                                            boolean isDeletedFromAccounts = dbHelper.deleteFromAccountsTable(buttonText,"backup");
+                                            boolean isAccountDeletedFromDriveTable = dbHelper.deleteAccountFromDriveTable(buttonText);
+
                                             dbHelper.deleteRedundantAsset();
 
+                                            Profile.syncJsonAccounts("sign-out",buttonText);
                                             ViewGroup parentView = (ViewGroup) button.getParent();
-                                            for (Map.Entry<String, BackUpAccountInfo> backUpAccountEntrySet :
-                                                    backUpAccountHashMap.entrySet()) {
-                                                if (backUpAccountEntrySet.getKey().equals(buttonText)) {
-                                                    String entry = backUpAccountEntrySet.getKey();
-                                                    backUpAccountHashMap.remove(
-                                                            backUpAccountEntrySet.getKey());
-                                                    LogHandler.saveLog("successfully logged out from "+
-                                                            entry + " in backup accounts",false);
-                                                    LogHandler.saveLog("Number of backup accounts : " + backUpAccountHashMap.size(),false);
-                                                    break;
-                                                }
-                                            }
                                             parentView.removeView(button);
+                                            googleCloud.signOut();
                                         }
                                         return true;
                                     });
@@ -1457,11 +1438,13 @@
             newBackupLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
         }
 
-        private void showAccountsAddPopup(JsonObject profileMapContent) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        public static void showAccountsAddPopup(JsonObject profileMapContent) {
+            SharedPreferencesHandler.setDisplayDialogForRestoreAccountsDecision(preferences,true);
+            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
             builder.setMessage("We found some related accounts. Do you want to add them to your current accounts?")
                     .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
+                            SharedPreferencesHandler.setDisplayDialogForRestoreAccountsDecision(preferences,false);
                             Profile.insertBackupFromMap(profileMapContent.get("backupAccounts").getAsJsonArray());
                             Profile.insertPrimaryFromMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
                             reInitializeButtons(activity, googleCloud);
@@ -1470,9 +1453,10 @@
                     })
                     .setNegativeButton("No", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
+                            SharedPreferencesHandler.setDisplayDialogForRestoreAccountsDecision(preferences,false);
                             dialog.dismiss();
                         }
-                    });
+                    }).setCancelable(false);
 
             AlertDialog alertDialog = builder.create();
             alertDialog.show();
