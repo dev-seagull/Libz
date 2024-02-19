@@ -28,7 +28,7 @@
         android:background="@drawable/round_button"
         android:text="i"
         android:textAllCaps="false"
-        android:textColor="@color/black"
+        android:textColor="#A8A1A1"
         tools:ignore="HardcodedText">
     </androidx.appcompat.widget.AppCompatButton>
 
