@@ -84,13 +84,13 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="20dp"
                         app:backgroundTint="@null"
-                        android:background="@drawable/custom_button3"
+                        android:background="@drawable/gradient_gray"
                         android:clickable="false"
                         android:drawableLeft="@drawable/android_device_icon"
                         android:foregroundGravity="center"
                         android:gravity="center"
                         android:paddingRight="84dp"
-                        android:textColor="@color/black"
+                        android:textColor="@color/white"
                         android:textSize="18dp" />
 
 
