@@ -1,5 +1,8 @@
     package com.example.cso;
 
+    import static com.google.api.client.googleapis.testing.auth.oauth2.MockGoogleCredential.ACCESS_TOKEN;
+    import static com.google.api.client.googleapis.testing.auth.oauth2.MockGoogleCredential.REFRESH_TOKEN;
+
     import android.app.Activity;
     import android.content.Intent;
     import android.content.res.ColorStateList;
@@ -12,6 +15,11 @@
     import android.widget.LinearLayout;
     import android.widget.Toast;
 
+    import com.google.api.client.http.GenericUrl;
+    import com.google.api.client.http.HttpRequest;
+    import com.google.api.client.http.HttpRequestFactory;
+    import com.google.api.client.http.HttpResponse;
+    import com.google.api.client.json.JsonFactory;
     import androidx.activity.result.ActivityResultLauncher;
     import androidx.appcompat.app.AppCompatActivity;
     import androidx.fragment.app.FragmentActivity;
@@ -23,16 +31,20 @@
     import com.google.android.gms.common.api.ApiException;
     import com.google.android.gms.common.api.Scope;
     import com.google.android.gms.tasks.Task;
+    import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
     import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
     import com.google.api.client.http.HttpRequestInitializer;
+    import com.google.api.client.http.HttpTransport;
     import com.google.api.client.http.javanet.NetHttpTransport;
     import com.google.api.client.json.JsonFactory;
     import com.google.api.client.json.gson.GsonFactory;
     import com.google.api.services.drive.Drive;
+    import com.google.auth.oauth2.GoogleCredentials;
 
     import org.json.JSONObject;
 
     import java.io.BufferedReader;
+    import java.io.IOException;
     import java.io.InputStreamReader;
     import java.io.OutputStream;
     import java.net.HttpURLConnection;
@@ -69,20 +81,19 @@
             return formattedResult;
         }
 
-
         public void signInToGoogleCloud(ActivityResultLauncher<Intent> signInLauncher) {
             boolean forceCodeForRefreshToken = true;
 
             try {
-                        GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .requestScopes(new Scope("https://www.googleapis.com/auth/drive"),
-                                new Scope("https://www.googleapis.com/auth/photoslibrary.readonly"),
-                                new Scope("https://www.googleapis.com/auth/drive.file"),
-                                new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly")
-                                )
-                        .requestServerAuthCode(activity.getResources().getString(R.string.web_client_id), forceCodeForRefreshToken)
-                        .requestEmail()
-                         .build();
+                    GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestScopes(new Scope("https://www.googleapis.com/auth/drive"),
+                            new Scope("https://www.googleapis.com/auth/photoslibrary.readonly"),
+                            new Scope("https://www.googleapis.com/auth/drive.file"),
+                            new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly")
+                            )
+                    .requestServerAuthCode(activity.getResources().getString(R.string.web_client_id), forceCodeForRefreshToken)
+                    .requestEmail()
+                     .build();
 
                 googleSignInClient = GoogleSignIn.getClient(activity, googleSignInOptions);
 
@@ -95,26 +106,97 @@
             }
         }
 
+//        public boolean signOut(String userEmail){
+//            String accessToken = MainActivity.dbHelper.getAccessToken(userEmail);
+//            HttpTransport httpTransport = new NetHttpTransport();
+//            HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
+//            try {
+//                GenericUrl revokeUrl = new GenericUrl("https://accounts.google.com/o/oauth2/revoke?token=" + accessToken);
+//                HttpRequest revokeRequest = requestFactory.buildGetRequest(revokeUrl);
+//                HttpResponse revokeResponse = revokeRequest.execute();
+//                revokeResponse.disconnect();
+//                boolean isAccessTokenValid = isAccessTokenValid(accessToken);
+//                if (!isAccessTokenValid) {
+//                    System.out.println("Tokens revoked successfully.");
+//                    httpTransport.shutdown();
+//                    return true;
+//                }
+//            } catch (IOException e) {
+//                LogHandler.saveLog("Error revoking tokens: " + e.getLocalizedMessage());
+//            }finally {
+//                try {
+//                    httpTransport.shutdown();
+//                }catch (Exception e){
+//                    LogHandler.saveLog("Failed to shutdown http transport: " + e.getLocalizedMessage());
+//                }
+//            }
+//            return false;
+//        }
 
-        public void signOut(){
-            boolean forceCodeForRefreshToken = true;
+        public boolean signOut(String userEmail) {
+
+            // get new access token and check if it is valid so try to revoke it
+
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Callable<Boolean> callableTask = () -> {
+                String accessToken = MainActivity.dbHelper.getAccessToken(userEmail);
+                HttpTransport httpTransport = new NetHttpTransport();
+                HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
+                try {
+                    GenericUrl revokeUrl = new GenericUrl("https://accounts.google.com/o/oauth2/revoke?token=" + accessToken);
+                    HttpRequest revokeRequest = requestFactory.buildGetRequest(revokeUrl);
+                    HttpResponse revokeResponse = revokeRequest.execute();
+                    revokeResponse.disconnect();
+                    boolean isAccessTokenValid = isAccessTokenValid(accessToken);
+                    if (!isAccessTokenValid) {
+                        System.out.println("Tokens revoked successfully.");
+                        return true;
+                    }
+                } catch (IOException e) {
+                    LogHandler.saveLog("Error revoking tokens: " + e.getLocalizedMessage());
+                } finally {
+                    try {
+                        httpTransport.shutdown();
+                    } catch (Exception e) {
+                        LogHandler.saveLog("Failed to shutdown http transport: " + e.getLocalizedMessage());
+                    }
+                }
+                return false;
+            };
+            Future<Boolean> future = executor.submit(callableTask);
+            Boolean isSignedOut = false;
+            try{
+                isSignedOut = future.get();
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to get the sign out future: " + e.getLocalizedMessage());
+            }
+            return isSignedOut;
+        }
+
+
+        private static boolean isAccessTokenValid(String accessToken) throws IOException {
+            // callable task
+            String tokenInfoUrl = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=" + accessToken;
+
+            URL url = new URL(tokenInfoUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
             try {
-                GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .requestScopes(new Scope("https://www.googleapis.com/auth/photoslibrary.readonly"),
-                                new Scope("https://www.googleapis.com/auth/drive"),
-                                new Scope("https://www.googleapis.com/auth/drive.file"),
-                                new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly")
-                        )
-                        .requestServerAuthCode(activity.getResources().getString(R.string.web_client_id), forceCodeForRefreshToken)
-                        .requestEmail()
-                        .build();
-                
-                googleSignInClient = GoogleSignIn.getClient(activity, googleSignInOptions);
-                googleSignInClient.signOut();
-            } catch (Exception e) {
-                LogHandler.saveLog("sign out from account failed");
+                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                System.out.println("access token validity " + response.toString());
+                return !response.toString().toLowerCase().contains("error");
+            } finally {
+                connection.disconnect();
             }
         }
+
+
 
         public String handleSignInToPrimaryResult(Intent data){
             String userEmail = "";
@@ -124,7 +206,6 @@
             try{
                 Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
                 GoogleSignInAccount account = googleSignInTask.getResult(ApiException.class);
-
                 userEmail = account.getEmail();
                 if (userEmail != null && userEmail.toLowerCase().endsWith("@gmail.com")) {
                     userEmail = account.getEmail();
@@ -139,7 +220,7 @@
                             CharSequence text = "This Account Already Exists !";
                             Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
                         });
-                        userEmail =  "f";
+                        userEmail = "f";
                     }
                 }
                 if (isInAccounts == false){

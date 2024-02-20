@@ -40,6 +40,11 @@
     import androidx.core.view.GravityCompat;
     import androidx.drawerlayout.widget.DrawerLayout;
 
+    import com.google.android.gms.auth.api.signin.GoogleSignIn;
+    import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+    import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+    import com.google.android.gms.common.api.Scope;
+    import com.google.android.gms.tasks.Task;
     import com.google.android.material.navigation.NavigationView;
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
@@ -58,6 +63,8 @@
     import java.util.Map;
     import java.util.concurrent.Executor;
     import java.util.concurrent.Executors;
+
+    import io.grpc.alts.internal.TsiPeer;
 
 
     public class MainActivity extends AppCompatActivity {
@@ -1303,7 +1310,8 @@
                                     }
                                     popupMenu.setOnMenuItemClickListener(item -> {
                                         if (item.getItemId() == R.id.sign_out) {
-                                            googleCloud.signOut();
+                                            boolean isSignedout = googleCloud.signOut(buttonText);
+                                            System.out.println("boolean isSignedout : " + isSignedout);
                                             dbHelper.deleteFromAccountsTable(buttonText,"primary");
                                             String sqlQuery = "DELETE FROM photos WHERE userEmail = ?";
                                             dbHelper.dbWritable.execSQL(sqlQuery, new String[] {buttonText});
@@ -1371,7 +1379,7 @@
                                             Profile.syncJsonAccounts("sign-out",buttonText);
                                             ViewGroup parentView = (ViewGroup) button.getParent();
                                             parentView.removeView(button);
-                                            googleCloud.signOut();
+                                            googleCloud.signOut(buttonText);
                                         }
                                         return true;
                                     });
@@ -1461,6 +1469,7 @@
             AlertDialog alertDialog = builder.create();
             alertDialog.show();
         }
+
 
     }
 

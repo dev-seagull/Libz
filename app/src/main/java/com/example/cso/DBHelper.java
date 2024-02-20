@@ -1202,4 +1202,20 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
+    public static String getAccessToken(String userEmail){
+        String sqlQuery = "SELECT accessToken FROM ACCOUNTS WHERE userEmail = ?";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{userEmail});
+        String accessToken = "";
+        if(cursor != null && cursor.moveToFirst()){
+            int result = cursor.getColumnIndex("accessToken");
+            if(result >= 0){
+                accessToken = cursor.getString(result);
+            }
+        }
+        cursor.close();
+        return accessToken;
+    }
+
+
+
 }
