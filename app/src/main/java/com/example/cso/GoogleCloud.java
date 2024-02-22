@@ -1,8 +1,5 @@
     package com.example.cso;
 
-    import static com.google.api.client.googleapis.testing.auth.oauth2.MockGoogleCredential.ACCESS_TOKEN;
-    import static com.google.api.client.googleapis.testing.auth.oauth2.MockGoogleCredential.REFRESH_TOKEN;
-
     import android.app.Activity;
     import android.content.Intent;
     import android.content.res.ColorStateList;
@@ -15,11 +12,6 @@
     import android.widget.LinearLayout;
     import android.widget.Toast;
 
-    import com.google.api.client.http.GenericUrl;
-    import com.google.api.client.http.HttpRequest;
-    import com.google.api.client.http.HttpRequestFactory;
-    import com.google.api.client.http.HttpResponse;
-    import com.google.api.client.json.JsonFactory;
     import androidx.activity.result.ActivityResultLauncher;
     import androidx.appcompat.app.AppCompatActivity;
     import androidx.fragment.app.FragmentActivity;
@@ -31,15 +23,17 @@
     import com.google.android.gms.common.api.ApiException;
     import com.google.android.gms.common.api.Scope;
     import com.google.android.gms.tasks.Task;
-    import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
     import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+    import com.google.api.client.http.GenericUrl;
+    import com.google.api.client.http.HttpRequest;
+    import com.google.api.client.http.HttpRequestFactory;
     import com.google.api.client.http.HttpRequestInitializer;
+    import com.google.api.client.http.HttpResponse;
     import com.google.api.client.http.HttpTransport;
     import com.google.api.client.http.javanet.NetHttpTransport;
     import com.google.api.client.json.JsonFactory;
     import com.google.api.client.json.gson.GsonFactory;
     import com.google.api.services.drive.Drive;
-    import com.google.auth.oauth2.GoogleCredentials;
 
     import org.json.JSONObject;
 
@@ -52,9 +46,7 @@
     import java.nio.charset.StandardCharsets;
     import java.text.DecimalFormat;
     import java.util.ArrayList;
-    import java.util.HashMap;
     import java.util.List;
-    import java.util.Map;
     import java.util.concurrent.Callable;
     import java.util.concurrent.ExecutorService;
     import java.util.concurrent.Executors;
@@ -134,32 +126,33 @@
 //        }
 
         public boolean signOut(String userEmail) {
-
-            // get new access token and check if it is valid so try to revoke it
-
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<Boolean> callableTask = () -> {
                 String accessToken = MainActivity.dbHelper.getAccessToken(userEmail);
-                HttpTransport httpTransport = new NetHttpTransport();
-                HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
                 try {
-                    GenericUrl revokeUrl = new GenericUrl("https://accounts.google.com/o/oauth2/revoke?token=" + accessToken);
-                    HttpRequest revokeRequest = requestFactory.buildGetRequest(revokeUrl);
-                    HttpResponse revokeResponse = revokeRequest.execute();
-                    revokeResponse.disconnect();
+                    String revokeUrl = "https://accounts.google.com/o/oauth2/revoke";
+                    URL url = new URL(revokeUrl);
+
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("POST");
+                    connection.setDoOutput(true);
+                    String requestBody = "token=" + accessToken;
+                    try (OutputStream os = connection.getOutputStream()) {
+                        byte[] input = requestBody.getBytes("utf-8");
+                        os.write(input, 0, input.length);
+                    }
+                    int responseCode = connection.getResponseCode();
+                    connection.disconnect();
+
                     boolean isAccessTokenValid = isAccessTokenValid(accessToken);
                     if (!isAccessTokenValid) {
                         System.out.println("Tokens revoked successfully.");
                         return true;
+                    }else{
+                        System.out.println("Tokens revoked not successfully.");
                     }
                 } catch (IOException e) {
                     LogHandler.saveLog("Error revoking tokens: " + e.getLocalizedMessage());
-                } finally {
-                    try {
-                        httpTransport.shutdown();
-                    } catch (Exception e) {
-                        LogHandler.saveLog("Failed to shutdown http transport: " + e.getLocalizedMessage());
-                    }
                 }
                 return false;
             };
@@ -175,25 +168,34 @@
 
 
         private static boolean isAccessTokenValid(String accessToken) throws IOException {
-            // callable task
-            String tokenInfoUrl = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=" + accessToken;
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Callable<Boolean> callableTask = () -> {
+                String tokenInfoUrl = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=" + accessToken;
+                System.out.println("tokenInfoUrl " + tokenInfoUrl);
+                URL url = new URL(tokenInfoUrl);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                try {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
 
-            URL url = new URL(tokenInfoUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-            try {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                StringBuilder response = new StringBuilder();
-                String line;
-
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    System.out.println("access token validity " + response.toString());
+                    return !response.toString().toLowerCase().contains("error");
+                } finally {
+                    connection.disconnect();
                 }
-                System.out.println("access token validity " + response.toString());
-                return !response.toString().toLowerCase().contains("error");
-            } finally {
-                connection.disconnect();
+            };
+            Future<Boolean> future = executor.submit(callableTask);
+            Boolean isValid = false;
+            try{
+                isValid = future.get();
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to check validity from future: " + e.getLocalizedMessage());
             }
+            return isValid;
         }
 
 

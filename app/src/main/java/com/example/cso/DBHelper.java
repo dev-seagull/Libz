@@ -582,6 +582,23 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    public boolean deleteAccountFromPhotosTable(String userEmail) {
+        dbWritable.beginTransaction();
+        try {
+            String sqlQuery = "DELETE FROM PHOTOS WHERE userEmail = ?";
+            dbWritable.execSQL(sqlQuery, new Object[]{userEmail});
+            dbWritable.setTransactionSuccessful();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to delete from photos in deleteFromPhotosTable method. " + e.getLocalizedMessage());
+        } finally {
+            dbWritable.endTransaction();
+        }
+        if(!accountExistsInPhotosTable(userEmail)){
+            return true;
+        }else{
+            return false;
+        }
+    }
 
 
     public List<String []> getAndroidTable(String[] columns){
@@ -1188,6 +1205,20 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
+    public static boolean accountExistsInPhotosTable(String userEmail){
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM PHOTOS WHERE userEmail = ?)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{userEmail});
+        boolean exists = false;
+        if(cursor != null && cursor.moveToFirst()){
+            int result = cursor.getInt(0);
+            if(result == 1){
+                exists = true;
+            }
+        }
+        cursor.close();
+        return exists;
+    }
+
     public static boolean assetExistsInAssetTable(String assetId){
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ASSET WHERE id = ?)";
         Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{assetId});
@@ -1213,6 +1244,7 @@ public class DBHelper extends SQLiteOpenHelper {
             }
         }
         cursor.close();
+        System.out.println("getting accsess token for the tset: " + accessToken);
         return accessToken;
     }
 

@@ -40,11 +40,6 @@
     import androidx.core.view.GravityCompat;
     import androidx.drawerlayout.widget.DrawerLayout;
 
-    import com.google.android.gms.auth.api.signin.GoogleSignIn;
-    import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-    import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-    import com.google.android.gms.common.api.Scope;
-    import com.google.android.gms.tasks.Task;
     import com.google.android.material.navigation.NavigationView;
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
@@ -63,8 +58,7 @@
     import java.util.Map;
     import java.util.concurrent.Executor;
     import java.util.concurrent.Executors;
-
-    import io.grpc.alts.internal.TsiPeer;
+    import java.util.concurrent.atomic.AtomicBoolean;
 
 
     public class MainActivity extends AppCompatActivity {
@@ -1309,29 +1303,50 @@
                                         popupMenu.setGravity(Gravity.CENTER);
                                     }
                                     popupMenu.setOnMenuItemClickListener(item -> {
+//                                        item.setEnabled(false);
                                         if (item.getItemId() == R.id.sign_out) {
-                                            boolean isSignedout = googleCloud.signOut(buttonText);
-                                            System.out.println("boolean isSignedout : " + isSignedout);
-                                            dbHelper.deleteFromAccountsTable(buttonText,"primary");
-                                            String sqlQuery = "DELETE FROM photos WHERE userEmail = ?";
-                                            dbHelper.dbWritable.execSQL(sqlQuery, new String[] {buttonText});
-                                            dbHelper.deleteRedundantAsset();
-
-                                            ViewGroup parentView = (ViewGroup) button.getParent();
-                                            for (Map.Entry<String, PrimaryAccountInfo> primaryAccountEntrySet :
-                                                    primaryAccountHashMap.entrySet()) {
-                                                if (primaryAccountEntrySet.getKey().equals(buttonText)) {
-                                                    String entry = primaryAccountEntrySet.getKey();
-                                                    primaryAccountHashMap.remove(
-                                                            primaryAccountEntrySet.getKey());
-                                                    LogHandler.saveLog("successfully logged out from "+
-                                                            entry + " in primary accounts",false);
-                                                    LogHandler.saveLog("Number of primary accounts : " + primaryAccountHashMap.size(),false);
-                                                    break;
+                                            final boolean[] isSignedout = {false};
+                                            Thread signoutThread = new Thread() {
+                                                @Override
+                                                public void run() {
+                                                    isSignedout[0] = googleCloud.signOut(buttonText);
+                                                    if(isSignedout[0]){
+                                                        MainActivity.dbHelper
+                                                                .deleteFromAccountsTable(buttonText,"primary");
+                                                        MainActivity.dbHelper
+                                                                .deleteAccountFromPhotosTable(buttonText);
+                                                        dbHelper.deleteRedundantAsset();
+                                                    }
+                                                    synchronized (this){
+                                                        notify();
+                                                    }
                                                 }
-                                            }
+                                            };
 
-                                            parentView.removeView(button);
+                                            Thread uiAfterSignoutThread = new Thread(){
+                                                @Override
+                                                public void run() {
+                                                    synchronized (signoutThread){
+                                                        try{
+                                                            signoutThread.join();
+                                                        }catch (Exception e){
+                                                            LogHandler.saveLog(
+                                                                  "Failed to join signoutThread : " + e.getLocalizedMessage());
+                                                        }
+                                                    }
+                                                    runOnUiThread( () -> {
+                                                        System.out.println("isSigned" + isSignedout[0]);
+                                                        if(isSignedout[0] == true){
+                                                            ViewGroup parentView = (ViewGroup) button.getParent();
+                                                            parentView.removeView(button);
+                                                        }else{
+//                                                          item.setEnabled(true);
+                                                        }
+                                                    });
+                                                }
+                                            };
+                                            signoutThread.start();
+                                            uiAfterSignoutThread.start();
                                         }
                                         return true;
                                     });
@@ -1341,7 +1356,6 @@
                                 restoreButton.setClickable(true);
                             }
                         );
-
                 }
             }
         }
