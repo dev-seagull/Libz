@@ -56,8 +56,12 @@
     import java.util.HashMap;
     import java.util.List;
     import java.util.Map;
+    import java.util.concurrent.Callable;
+    import java.util.concurrent.CompletableFuture;
     import java.util.concurrent.Executor;
+    import java.util.concurrent.ExecutorService;
     import java.util.concurrent.Executors;
+    import java.util.concurrent.Future;
     import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -1306,9 +1310,9 @@
 //                                        item.setEnabled(false);
                                         if (item.getItemId() == R.id.sign_out) {
                                             final boolean[] isSignedout = {false};
-                                            Thread signoutThread = new Thread() {
-                                                @Override
-                                                public void run() {
+                                            ExecutorService executor = Executors.newSingleThreadExecutor();
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                                CompletableFuture.supplyAsync(() -> {
                                                     isSignedout[0] = googleCloud.signOut(buttonText);
                                                     if(isSignedout[0]){
                                                         MainActivity.dbHelper
@@ -1317,36 +1321,22 @@
                                                                 .deleteAccountFromPhotosTable(buttonText);
                                                         dbHelper.deleteRedundantAsset();
                                                     }
-                                                    synchronized (this){
-                                                        notify();
-                                                    }
-                                                }
-                                            };
-
-                                            Thread uiAfterSignoutThread = new Thread(){
-                                                @Override
-                                                public void run() {
-                                                    synchronized (signoutThread){
-                                                        try{
-                                                            signoutThread.join();
-                                                        }catch (Exception e){
-                                                            LogHandler.saveLog(
-                                                                  "Failed to join signoutThread : " + e.getLocalizedMessage());
-                                                        }
-                                                    }
-                                                    runOnUiThread( () -> {
+                                                    return isSignedout[0];
+                                                }).thenAcceptAsync(result -> {
+                                                    runOnUiThread(() -> {
                                                         System.out.println("isSigned" + isSignedout[0]);
-                                                        if(isSignedout[0] == true){
-                                                            ViewGroup parentView = (ViewGroup) button.getParent();
-                                                            parentView.removeView(button);
-                                                        }else{
-//                                                          item.setEnabled(true);
+                                                        if (isSignedout[0]) {
+                                                            try{
+                                                                item.setEnabled(false);
+                                                                ViewGroup parentView = (ViewGroup) button.getParent();
+                                                                parentView.removeView(button);
+                                                            }catch (Exception e){}
+                                                        } else {
+                                                            // item.setEnabled(true);
                                                         }
                                                     });
-                                                }
-                                            };
-                                            signoutThread.start();
-                                            uiAfterSignoutThread.start();
+                                                }, Executors.newSingleThreadExecutor());
+                                            }
                                         }
                                         return true;
                                     });
