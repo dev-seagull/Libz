@@ -199,8 +199,22 @@
         }
 
 
+        public class signInResult{
+            private String userEmail;
+            private boolean isHandled;
+            signInResult(String userEmail, boolean isHandled){
+                this.userEmail = userEmail;
+                this.isHandled = isHandled;
+            }
 
-        public String handleSignInToPrimaryResult(Intent data){
+            public String getUserEmail() {return userEmail;}
+            public boolean getHandleStatus() {return isHandled;}
+
+        }
+
+        public signInResult handleSignInToPrimaryResult(Intent data){
+            final boolean[] isHandled = {false};
+            boolean isInAccounts = false;
             String userEmail = "";
             String authCode;
             PrimaryAccountInfo.Tokens tokens = null;
@@ -214,36 +228,40 @@
                     userEmail = userEmail.replace("@gmail.com", "");
                 }
                 List<String[]> userAccounts = MainActivity.dbHelper.getAccounts(new String[]{"userEmail","type"});
-                boolean isInAccounts = false;
                 for (String[] row : userAccounts) {
-                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail) && row[1].equals("primary")) {
+                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
                         isInAccounts = true;
-                        runOnUiThread(() -> { // sendToast
+                        runOnUiThread(() -> {
                             CharSequence text = "This Account Already Exists !";
                             Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
                         });
-                        userEmail = "f";
                     }
                 }
                 if (isInAccounts == false){
                     authCode = account.getServerAuthCode();
                     tokens = getTokens(authCode);
                     storage = getStorage(tokens);
-                    MainActivity.dbHelper.insertIntoAccounts(userEmail,"primary",tokens.getRefreshToken(),tokens.getAccessToken(),
-                            storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
+                    MainActivity.dbHelper.insertIntoAccounts(userEmail,"primary"
+                            ,tokens.getRefreshToken(),tokens.getAccessToken(),
+                            storage.getTotalStorage(),storage.getUsedStorage(),
+                            storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
                     runOnUiThread(() -> {
                         LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
                         Button newGoogleLoginButton = createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
                         newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
                     });
+                    if(userEmail!= null && tokens.getRefreshToken() != null && tokens.getAccessToken() != null){
+                        isHandled[0] = true;
+                    }
                 }
             }catch (Exception e){
                 LogHandler.saveLog("handle primary sign in result failed: " + e.getLocalizedMessage());
             }
-            return userEmail;
+            return new signInResult(userEmail, isHandled[0]);
         }
 
-        public String handleSignInToBackupResult(Intent data){
+        public signInResult handleSignInToBackupResult(Intent data){
+            final boolean[] isHandled = {false};
             String userEmail = "";
             String authCode;
             PrimaryAccountInfo.Tokens tokens = null;
@@ -262,16 +280,14 @@
                 String[] columnsList = new String[]{"userEmail","type"};
                 List<String[]> accounts_rows = MainActivity.dbHelper.getAccounts(columnsList);
                 boolean isInAccounts = false;
-
                 for (String[] row : accounts_rows) {
-                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail) && row[1].equals("backup")) {
-                            isInAccounts = true;
-                            runOnUiThread(() -> { // sendToast
-                                CharSequence text = "This Account Already Exists !";
-                                Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
-                            });
-                            userEmail =  "f";
-                        }
+                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
+                        isInAccounts = true;
+                        runOnUiThread(() -> {
+                            CharSequence text = "This Account Already Exists !";
+                            Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
+                        });
+                    }
                 }
                 if (isInAccounts == false){
                     authCode = account.getServerAuthCode();
@@ -295,14 +311,15 @@
                         LinearLayout backupAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
                         Button newGoogleLoginButton = createBackUpLoginButton(backupAccountsButtonsLinearLayout);
                         newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-
                     });
-
+                    if (userEmail != null && tokens.getRefreshToken() != null && tokens.getAccessToken() != null) {
+                        isHandled[0] = true;
+                    }
                 }
             }catch (Exception e){
                 LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage());
             }
-            return userEmail;
+            return new signInResult(userEmail, isHandled[0]);
         }
 
 

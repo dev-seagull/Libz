@@ -14,6 +14,10 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
+import org.checkerframework.checker.units.qual.A;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -1103,18 +1107,30 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
-    public String backUpProfileMap() {
+    public boolean backUpProfileMap() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Callable<String> uploadTask = () -> {
-            String uploadFileId = "";
+        final boolean[] isBackedUp = {false};
+        Callable<Boolean> uploadTask = () -> {
             try {
                 String driveBackupAccessToken = "";
                 String[] selected_columns = {"userEmail", "type", "accessToken"};
                 List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_columns);
+//                ArrayList<String> backupAccountsDb = new ArrayList<>();
+//                ArrayList<String> primaryAccountsDb  = new ArrayList<>();
+//                for(String[] account_row: account_rows){
+//                    if (account_row[1].equals("backup")) {
+//                        primaryAccountsDb.add(account_row[1]);
+//                    }else if(account_row[1].equals("primary")){
+//                        primaryAccountsDb.add(account_row[1]);
+//                    }
+//                }
+
+                int backUpAccountCounts = 0;
                 for (String[] account_row : account_rows) {
                     if (account_row[1].equals("backup")) {
+                        backUpAccountCounts ++;
                         driveBackupAccessToken = account_row[2];
-
+//                        String userEmail = account_row[0];
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                         String folder_name = "stash_user_profile";
                         String folderId = null;
@@ -1172,23 +1188,54 @@ public class DBHelper extends SQLiteOpenHelper {
                         }
                         if (uploadedFileId == null | uploadedFileId.isEmpty()) {
                             LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
+                        }else{
+                            isBackedUp[0] = true;
                         }
+//                        JsonObject profileMapContent = Profile.readProfileMapContent(userEmail);
+//                        JsonArray backupAccounts = profileMapContent.get("backupAccounts").getAsJsonArray();
+//                        ArrayList<String> backUpUserEmails = new ArrayList<>();
+//                        for (int i = 0; i < backupAccounts.size(); i++) {
+//                            try {
+//                                JsonObject backupAccount = backupAccounts.get(i).getAsJsonObject();
+//                                String backupEmail = backupAccount.get("backupEmail").getAsString();
+//                                backUpUserEmails.add(backupEmail);
+//                            }catch (Exception e){}
+//                        }
+//                        JsonArray primaryAccounts = profileMapContent.get("backupAccounts").getAsJsonArray();
+//                        ArrayList<String> primaryUserEmails = new ArrayList<>();
+//                        for (int i = 0; i < primaryAccounts.size(); i++) {
+//                            try {
+//                                JsonObject primaryAccount = primaryAccounts.get(i).getAsJsonObject();
+//                                String primaryEmail = primaryAccount.get("primaryEmail").getAsString();
+//                                primaryUserEmails.add(primaryEmail);
+//                            }catch (Exception e){}
+//                        }
+//
+//                        System.out.println("pp is " + (primaryUserEmails.containsAll(primaryAccountsDb)));
+//                        System.out.println("pp is " + (backUpUserEmails.containsAll(backupAccountsDb)));
+//                        if(primaryUserEmails.containsAll(primaryAccountsDb) && backUpUserEmails.containsAll(backupAccountsDb)){
+//                            isBackedUp = true;
+//                        }
                     }
+                }
+                System.out.println("num of backups " + backUpAccountCounts);
+                if(backUpAccountCounts == 0){
+                    isBackedUp[0] = true;
                 }
             } catch (Exception e) {
                 LogHandler.saveLog("Failed to upload profileMap from Android to backup : " + e.getLocalizedMessage());
             }
-            return uploadFileId;
+            return isBackedUp[0];
         };
 
-        Future<String> future = executor.submit(uploadTask);
-        String uploadFileIdFuture = new String();
+        Future<Boolean> future = executor.submit(uploadTask);
+        boolean isBackedUpFuture = false;
         try{
-            uploadFileIdFuture = future.get();
+            isBackedUpFuture = future.get();
         }catch (Exception e){
             System.out.println(e.getLocalizedMessage());
         }
-        return uploadFileIdFuture;
+        return isBackedUpFuture;
     }
 
     public static boolean accountExistsInDriveTable(String userEmail){

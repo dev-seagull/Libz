@@ -1,8 +1,8 @@
 package com.example.cso;
 
-import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
+import android.os.Build;
 
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
@@ -13,9 +13,11 @@ import com.google.gson.JsonParser;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Profile {
 
@@ -204,27 +206,46 @@ public class Profile {
         DBHelper.dbWritable.endTransaction();
     }
 
-    public static void syncJsonAccounts(String status,String userEmail){
-
-
+    public boolean syncJsonAccounts(String status, String userEmail){
         if (status.equals("sign-out")){
-            deleteProfileJson(userEmail);
-            MainActivity.dbHelper.backUpProfileMap();
+            final boolean[] isDeleted = {false};
+                Thread deleteJsonThread = new Thread(() -> {
+                    isDeleted[0] = deleteProfileJson(userEmail);
+                    synchronized (this){
+                        notify();
+                    }
+                });
+
+                Thread backUpJsonThread = new Thread(() -> {
+                    synchronized (isDeleted){
+                        try {
+                            deleteJsonThread.join();
+                        } catch (InterruptedException e) {
+                            LogHandler.saveLog("Failed to join deleteJsonThread: " + e.getLocalizedMessage());
+                        }
+                        if(isDeleted[0]){
+                            boolean isBackedUp = MainActivity.dbHelper.backUpProfileMap();
+                        }
+                    }
+                });
+                deleteJsonThread.start();
+                backUpJsonThread.start();
         } else if (status.equals("sign-in")) {
             JsonObject profileMapContent = Profile.readProfileMapContent(userEmail);
         }
-
+        return true;
     }
 
-    public static void deleteProfileJson(String userEmail) {
+    public static boolean deleteProfileJson(String userEmail) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Callable<String> uploadTask = () -> {
-            String uploadFileId = "";
+        final boolean[] isDeleted = {false};
+        Callable<Boolean> uploadTask = () -> {
             try {
                 String driveBackupAccessToken = "";
                 String[] selected_columns = {"userEmail", "type", "accessToken"};
                 List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_columns);
                 for (String[] account_row : account_rows) {
+                    System.out.println("lmn " + account_row[0]);
                     if (account_row[1].equals("backup") && account_row[0].equals(userEmail)) {
                         driveBackupAccessToken = account_row[2];
 
@@ -264,20 +285,32 @@ public class Profile {
                         for (com.google.api.services.drive.model.File existingFile : existingFiles) {
                             service.files().delete(existingFile.getId()).execute();
                         }
+
+                        fileList = service.files().list()
+                                .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
+                                .setSpaces("drive")
+                                .setFields("files(id)")
+                                .execute();
+                        existingFiles = fileList.getFiles();
+                        System.out.println("fsize " + existingFiles.size());
+                        if(existingFiles.size() == 0){
+                            isDeleted[0] = true;
+                        }
                     }
                 }
             } catch (Exception e) {
                 LogHandler.saveLog("Failed to upload profileMap from Android to backup : " + e.getLocalizedMessage());
             }
-            return uploadFileId;
+            return isDeleted[0];
         };
 
-        Future<String> future = executor.submit(uploadTask);
-        String uploadFileIdFuture = new String();
+        Future<Boolean> future = executor.submit(uploadTask);
+        boolean isDeletedFuture = false;
         try {
-            uploadFileIdFuture = future.get();
+            isDeletedFuture = future.get();
         } catch (Exception e) {
             LogHandler.saveLog("Failed to delete profile Content from account : " + e.getLocalizedMessage());
         }
+        return isDeletedFuture;
     }
 }
