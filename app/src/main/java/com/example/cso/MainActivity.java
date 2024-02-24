@@ -838,7 +838,7 @@
                             List<String[]> account_rows = dbHelper.getAccounts(columns);
                             File destinationFolder = new File(Environment
                                     .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator
-                                    + "cso");
+                                    + "stash");
                             for(String[] account_row : account_rows) {
                                 String type = account_row[2];
                                 if(type.equals("primary")){
@@ -846,6 +846,7 @@
                                     String accessToken = account_row[0];
                                     ArrayList<GooglePhotos.MediaItem> photosMediaItems =
                                             GooglePhotos.getGooglePhotosMediaItems(accessToken);
+                                    System.out.println("media itemsssss size : " + photosMediaItems.size());
                                     ArrayList<String> fileIds = new ArrayList<>();
                                     for(GooglePhotos.MediaItem photosMediaItem: photosMediaItems){
                                         fileIds.add(photosMediaItem.getId());
@@ -900,6 +901,7 @@
                                         String type = selectedRow[1];
                                         String accessToken = selectedRow[2];
                                         if(type.equals("backup")){
+                                            System.out.println("here ready to upload to drive ");
                                             Upload upload = new Upload();
                                             upload.uploadPhotosToDrive(destinationUserEmail,accessToken);
                                             break;
@@ -1176,8 +1178,8 @@
                                     int responseCode = 0;
                                     try {
                                         responseCode = connection.getResponseCode();
-                                    } catch (IOException e) {
-                                        LogHandler.saveLog("failed to get response code of deleting backup database");
+                                    } catch (Exception e) {
+                                        LogHandler.saveLog("failed to get response code of deleting backup database : " + e.getLocalizedMessage());
                                     }
                                     LogHandler.saveLog("responseCode of deleting duplicate drive : " + responseCode,false);
                                     if(responseCode == HttpURLConnection.HTTP_NO_CONTENT){
@@ -1190,19 +1192,16 @@
                                             bufferedReader = new BufferedReader(
                                                     new InputStreamReader(connection.getInputStream() != null ? connection.getErrorStream() : connection.getInputStream())
                                             );
-                                        } catch (IOException e) {
-                                            throw new RuntimeException(e);
+                                        } catch (Exception e) {
+                                            LogHandler.saveLog("Failed to work with bufferReader in deleting backup database : " + e.getLocalizedMessage());
                                         }
                                         StringBuilder responseBuilder = new StringBuilder();
-                                        String line;
-                                        while (true) {
-                                            try {
-                                                if (!((line = bufferedReader.readLine()) != null))
-                                                    break;
-                                            } catch (IOException e) {
-                                                throw new RuntimeException(e);
-                                            }
-                                            responseBuilder.append(line);
+                                        String line = null;
+                                        try {
+                                            if (!((line = bufferedReader.readLine()) != null))
+                                                responseBuilder.append(line);
+                                        } catch (Exception e) {
+                                            LogHandler.saveLog("Failed to work with bufferReader to line in deleting backup database : " + e.getLocalizedMessage());
                                         }
                                         String response = responseBuilder.toString();
                                         System.out.println(response);

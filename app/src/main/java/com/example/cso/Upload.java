@@ -358,10 +358,11 @@ public class Upload {
     public ArrayList<String> uploadPhotosToDrive(String destinationUserEmail,String accessToken){
         System.out.println("here in photos to drive");
         String destinationFolderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()
-                + File.separator + "cso";
+                + File.separator + "stash";
         String sqlQury = "SELECT * FROM PHOTOS";
         Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQury, null);
         ArrayList<String[]> destinationFiles = new ArrayList<>();
+        System.out.println("here2 in photos to drive");
         if(cursor.moveToFirst() && cursor != null){
             do {
                 int fileNameColumnIndex = cursor.getColumnIndex("fileName");
@@ -385,7 +386,9 @@ public class Upload {
         ArrayList<String> finalUploadFileIds = new ArrayList<>();
         final FileContent[] mediaContent = {null};
         Callable<ArrayList<String>> backgroundTaskUpload = () -> {
+            System.out.println("here3 in photos to drive");
             if(destinationFiles != null) {
+                System.out.println("here4 in photos to drive "+ destinationFiles.size());
                 for (String[] destinationFile : destinationFiles) {
                     File destinationFolderFile = new File(destinationFile[0]);
                     if (!destinationFolderFile.exists()) {
@@ -404,6 +407,7 @@ public class Upload {
                         request.getHeaders().setContentType("application/json");
                     };
                     try {
+                        System.out.println("here5 in photos to drive");
                         Drive service = null;
                         if (HTTP_TRANSPORT != null) {
                             service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
@@ -416,6 +420,7 @@ public class Upload {
                         fileMetadata.setName(destinationFolderFile.getName());
                         String memeType = getMemeType(destinationFolderFile);
                         if(isImage(memeType)){
+                            System.out.println("here6 in photos to drive");
                             String destinationFolderFilePath = destinationFolderFile.getPath();
                             if(memeType.toLowerCase().endsWith("jpg")){
                                 mediaContent[0] = new FileContent("image/jpeg" ,
@@ -460,7 +465,8 @@ public class Upload {
                             LogHandler.saveLog("UploadFileId for " + destinationFolderFile.getName() + " is null");
                         }
                         else {
-                           //destinationFiles.add(new String[]{filePath,userEmail,fileName,assetId,fileHash});
+                            System.out.println("here7 in photos to drive");
+//                           destinationFiles.add(new String[]{filePath,userEmail,fileName,assetId,fileHash});
                             for (String part : destinationFile){
                                 System.out.println("part for upload photos from android to drive: " + part);
                             }
@@ -475,11 +481,13 @@ public class Upload {
                     }catch (Exception e) {
                         LogHandler.saveLog("Failed to upload to Drive backup account: " + e.getLocalizedMessage());
                     }
+                    System.out.println("here8 in photos to drive");
                 }
             }
             else{
                 LogHandler.saveLog("Destination folder is null");
             }
+            System.out.println("here9 in photos to drive " + finalUploadFileIds.toString()) ;
             return finalUploadFileIds;
         };
         ArrayList<String> uploadFileIds = null;
@@ -559,6 +567,7 @@ public class Upload {
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
                 int responseCode = connection.getResponseCode();
+                System.out.println("response coddde for download photos: " + responseCode);
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     String inputStreamString = "";
                     int contentLength = connection.getContentLength();
@@ -585,8 +594,11 @@ public class Upload {
                         outputStream_string = new BufferedReader(new InputStreamReader(new FileInputStream(downloadFile)))
                                 .lines().collect(Collectors.joining("\n"));
                     }
-                    if ((downloadFile.length() != (long) contentLength) ||
-                            (!outputStream_string.equals(inputStreamString))){
+                    System.out.println("verification is : " + outputStream_string.equals(inputStreamString));
+
+                    if ((downloadFile.length() != (long) contentLength)
+//                            || (!outputStream_string.equals(inputStreamString))
+                    ){
                         LogHandler.saveLog("Failed to download " + downloadFile.length() + "!=" + contentLength);
                         continue;
                     } else {

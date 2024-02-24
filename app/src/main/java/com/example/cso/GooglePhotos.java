@@ -87,6 +87,7 @@ public class GooglePhotos {
                     httpURLConnection.setRequestProperty("Content-type", "application/json");
                     httpURLConnection.setRequestProperty("Authorization", "Bearer " + finalAccessToken);
                     int responseCode = httpURLConnection.getResponseCode();
+                    System.out.println("photos response code : " + responseCode);
                     if (responseCode == HttpURLConnection.HTTP_OK) {
                         InputStreamReader inputStreamReader = new InputStreamReader(httpURLConnection.getInputStream());
                         BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
@@ -97,8 +98,10 @@ public class GooglePhotos {
                         }
                         bufferedReader.close();
                         String response = responseStringBuilder.toString();
+                        System.out.println("photos response result : " + response);
                         responseJson = new JSONObject(response);
                         JSONArray mediaItemsResponse = responseJson.getJSONArray("mediaItems");
+                        System.out.println("photos response json : " + mediaItemsResponse.toString());
                         for (int i = 0; i < mediaItemsResponse.length(); i++) {
                             JSONObject mediaItemJsonObject = mediaItemsResponse.getJSONObject(i);
                             String filename = mediaItemJsonObject.getString("filename");
