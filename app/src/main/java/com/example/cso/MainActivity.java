@@ -612,18 +612,62 @@
                         try {
                             Runnable backgroundTask = () -> {
                                 GoogleCloud.signInResult signInResult = googleCloud.handleSignInToPrimaryResult(result.getData());
-                                runOnUiThread(() -> {
-                                    if (signInResult.getHandleStatus() == true) {
-                                        childview[0] = primaryAccountsButtonsLinearLayout.getChildAt(
-                                                primaryAccountsButtonsLinearLayout.getChildCount() - 2);
-                                        LogHandler.saveLog(signInResult.getUserEmail()
-                                                + " has logged in to the primary account", false);
-                                        if (childview[0] instanceof Button) {
-                                            Button bt = (Button) childview[0];
-                                            bt.setText(signInResult.getUserEmail());
-                                            bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
+
+                                if (signInResult.getHandleStatus() == true) {
+                                    boolean[] isBackedUp = {false};
+                                    Thread backUpJsonThread = new Thread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            try {
+                                                dbHelper.insertIntoAccounts(signInResult.getUserEmail(), "primary"
+                                                        , signInResult.getTokens().getRefreshToken(), signInResult.getTokens().getAccessToken(),
+                                                        signInResult.getStorage().getTotalStorage(), signInResult.getStorage().getUsedStorage(),
+                                                        signInResult.getStorage().getUsedInDriveStorage(), signInResult.getStorage().getUsedInGmailAndPhotosStorage());
+
+                                                isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(false,"");
+                                                System.out.println("isBackedUp "+isBackedUp[0]);
+                                            }catch (Exception e){
+                                                LogHandler.saveLog("failed to back up profile map in primary account: " + e.getLocalizedMessage());
+                                            }
+                                            synchronized (this){
+                                                notify();
+                                            }
                                         }
-                                    }else{
+                                    });
+
+                                    Thread UIThread = new Thread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            synchronized (backUpJsonThread){
+                                                try{
+                                                    backUpJsonThread.join();
+                                                }catch (Exception e){
+                                                    LogHandler.saveLog("failed to join backUpJsonThread in primary account: " + e.getLocalizedMessage());
+                                                }
+                                            }
+                                            if (isBackedUp[0] == true) {
+                                                runOnUiThread(() -> {
+                                                    Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
+                                                    newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+                                                    childview[0] = primaryAccountsButtonsLinearLayout.getChildAt(
+                                                            primaryAccountsButtonsLinearLayout.getChildCount() - 2);
+                                                    LogHandler.saveLog(signInResult.getUserEmail()
+                                                            + " has logged in to the primary account", false);
+
+                                                    if (childview[0] instanceof Button) {
+                                                        Button bt = (Button) childview[0];
+                                                        bt.setText(signInResult.getUserEmail());
+                                                        bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
+                                                    }
+                                                    updateButtonsListeners();
+                                                });
+                                            }
+                                        }
+                                    });
+                                    backUpJsonThread.start();
+                                    UIThread.start();
+                                }else{
+                                    runOnUiThread(() -> {
                                             LogHandler.saveLog("login with launcher failed");
                                             LinearLayout primaryAccountsButtonsLinearLayout2 =
                                                     findViewById(R.id.primaryAccountsButtons);
@@ -633,9 +677,9 @@
                                                 Button bt = (Button) childview2;
                                                 bt.setText("ADD A PRIMARY ACCOUNT");
                                             }
-                                    }
                                     updateButtonsListeners();
-                                });
+                                    });
+                                }
                             };
                             signInExecutor.execute(backgroundTask);
                             runOnUiThread(() -> childview[0].setClickable(true));
@@ -663,142 +707,224 @@
                         LinearLayout backupButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
                         View[] child = {backupButtonsLinearLayout.getChildAt(
                                 backupButtonsLinearLayout.getChildCount() - 1)};
-                        runOnUiThread(() -> child[0].setClickable(false));
+                        runOnUiThread(() -> {child[0].setClickable(false);});
+
                         Executor signInToBackupExecutor = Executors.newSingleThreadExecutor();
                         try{
+                            GoogleCloud.signInResult signInResult = googleCloud.handleSignInToBackupResult(result.getData());
+                            boolean[] isBackedUp = {false};
+
                             Runnable backgroundTask = () -> {
-                                GoogleCloud.signInResult signInResult = googleCloud.handleSignInToBackupResult(result.getData());
-                                runOnUiThread(() -> {
-                                    if (signInResult.getHandleStatus() == true) {
-                                        LogHandler.saveLog(signInResult.getUserEmail()
-                                                + " has logged in to the backup account", false);
-                                        child[0] = backupButtonsLinearLayout.getChildAt(
-                                                backupButtonsLinearLayout.getChildCount() - 2);
-                                        if (child[0] instanceof Button) {
-                                            Button bt = (Button) child[0];
-                                            bt.setText(signInResult.getUserEmail());
-                                            bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#42A5F5")));
+                                if (signInResult.getHandleStatus() == true) {
+
+                                    Thread backUpJsonThread = new Thread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            try{
+                                                dbHelper.insertIntoAccounts(signInResult.getUserEmail(), "backup"
+                                                        , signInResult.getTokens().getRefreshToken(), signInResult.getTokens().getAccessToken(),
+                                                        signInResult.getStorage().getTotalStorage(), signInResult.getStorage().getUsedStorage(),
+                                                        signInResult.getStorage().getUsedInDriveStorage(), signInResult.getStorage().getUsedInGmailAndPhotosStorage());
+
+                                                isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(false,"");
+                                                System.out.println("isBackedUp "+isBackedUp[0]);
+                                            }catch (Exception e){
+                                                LogHandler.saveLog("failed to back up profile map in backup account: " + e.getLocalizedMessage());
+                                            }
+                                            synchronized (this){
+                                                try {
+                                                    notify();
+                                                } catch (Exception e) {
+                                                    LogHandler.saveLog("failed to notify in backUpJsonThread in backup account: " + e.getLocalizedMessage());
+                                                }
+                                            }
+                                        }
+                                    });
+
+                                    Thread firstUiThread = new Thread(() -> {
+                                        synchronized (backUpJsonThread){
+                                            try {
+                                                backUpJsonThread.join();
+                                            } catch (Exception e) {
+                                                LogHandler.saveLog("failed to join backUpJsonThread in backup account: " + e.getLocalizedMessage());
+                                            }
+                                        }
+                                        if (isBackedUp[0] == true) {
+                                            runOnUiThread(() -> {
+                                                Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupButtonsLinearLayout);
+                                                newBackupLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+                                                child[0] = backupButtonsLinearLayout.getChildAt(
+                                                        backupButtonsLinearLayout.getChildCount() - 2);
+                                                LogHandler.saveLog(signInResult.getUserEmail()
+                                                        + " has logged in to the backup account", false);
+
+                                                if (child[0] instanceof Button) {
+                                                    Button bt = (Button) child[0];
+                                                    bt.setText(signInResult.getUserEmail());
+                                                    bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
+                                                }
+                                                updateButtonsListeners();
+                                            });
+                                        }
+                                    });
+
+                                    Thread insertMediaItemsThread = new Thread(() -> {
+                                        synchronized (firstUiThread){
+                                            try {
+                                                firstUiThread.join();
+                                            } catch (Exception e) {
+                                                LogHandler.saveLog("failed to join backUpJsonThread in backup account: " + e.getLocalizedMessage());
+                                            }
+                                        }
+                                        try{
+                                            for(BackUpAccountInfo.MediaItem mediaItem : signInResult.getMediaItems()){
+                                                Long last_insertId = MainActivity.dbHelper.insertAssetData(mediaItem.getHash());
+                                                if (last_insertId != -1) {
+                                                    MainActivity.dbHelper.insertIntoDriveTable(last_insertId, mediaItem.getId(), mediaItem.getFileName(),
+                                                            mediaItem.getHash(), signInResult.getUserEmail());
+                                                } else {
+                                                    LogHandler.saveLog("Failed to insert file into drive table: " + mediaItem.getFileName());
+                                                }
+                                            }
+                                        }catch (Exception e){
+                                            LogHandler.saveLog("failed to insert media items into drive table : " + e.getLocalizedMessage());
+                                        }
+                                    });
+
+                                    Thread deleteRedundantDriveThread = new Thread(() -> {
+                                        synchronized (insertMediaItemsThread){
+                                            try {
+                                                insertMediaItemsThread.join();
+                                            } catch (Exception e) {
+                                                LogHandler.saveLog("failed to join insertMediaItemsThread in backup account: " + e.getLocalizedMessage());
+                                            }
+                                        }
+                                        try{
+                                            String[] columns = {"accessToken","userEmail", "type"};
+                                            List<String[]> accounts_rows = dbHelper.getAccounts(columns);
+
+                                            for(String[] account_row : accounts_rows) {
+                                                String type = account_row[2];
+                                                if(type.equals("backup")){
+                                                    String userEmail = account_row[1];
+                                                    String accessToken = account_row[0];
+                                                    ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                                                    ArrayList<String> driveFileIds = new ArrayList<>();
+
+                                                    for (BackUpAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+                                                        String fileId = driveMediaItem.getId();
+                                                        driveFileIds.add(fileId);
+                                                    }
+                                                    dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
+                                                }
+                                            }
+                                        }catch (Exception e){
+                                            LogHandler.saveLog("failed in deleteRedundantDriveThread : " + e.getLocalizedMessage());
+                                        }
+                                    });
+
+                                    Thread updateDriveBackUpThread = new Thread(() -> {
+                                        synchronized (deleteRedundantDriveThread){
+                                            try {
+                                                deleteRedundantDriveThread.join();
+                                            } catch (Exception e) {
+                                                LogHandler.saveLog("failed to join deleteRedundantDrive thread: " + e.getLocalizedMessage());
+                                            }
                                         }
 
-                                        JsonObject profileMapContent = Profile.readProfileMapContent(signInResult.getUserEmail());
-                                        if (profileMapContent == null || !profileMapContent.has("profile")){
-                                            dbHelper.backUpProfileMap();
-                                        }else{
-                                            showAccountsAddPopup(profileMapContent);
+                                        String[] columns = {"accessToken", "userEmail","type"};
+                                        List<String[]> account_rows = dbHelper.getAccounts(columns);
+
+                                        for(String[] account_row : account_rows){
+                                            String type = account_row[2];
+                                            if (type.equals("backup")){
+                                                String accessToken = account_row[0];
+                                                String userEmail = account_row[1];
+                                                ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                                                for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
+                                                    Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
+                                                    if (last_insertId != -1) {
+                                                        MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
+                                                                driveMediaItem.getHash(), userEmail);
+                                                    } else {
+                                                        LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                                                    }
+                                                }
+                                            }
                                         }
-                                    } else {
+                                    });
+
+                                    Thread deleteDuplicatedInDrive = new Thread(() -> {
+                                        synchronized (updateDriveBackUpThread){
+                                            try {
+                                                updateDriveBackUpThread.join();
+                                            }catch (Exception e){
+                                                LogHandler.saveLog("failed to join driveBackUpThread : " + e.getLocalizedMessage());
+                                            }
+                                        }
+
+                                        String[] columns = {"accessToken","userEmail", "type"};
+                                        List<String[]> account_rows = dbHelper.getAccounts(columns);
+
+                                        for(String[] account_row : account_rows) {
+                                            String type = account_row[2];
+                                            if(type.equals("backup")){
+                                                String userEmail = account_row[1];
+                                                String accessToken = account_row[0];
+                                                GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
+                                            }
+                                        }
+                                    });
+
+                                    Thread secondUiThread = new Thread(() -> {
+                                        synchronized (deleteDuplicatedInDrive){
+                                            try {
+                                                deleteDuplicatedInDrive.join();
+                                            }catch (Exception e){
+                                                LogHandler.saveLog("failed to join androidUploadThread : "  + e.getLocalizedMessage());
+                                            }
+                                        }
+
+                                        runOnUiThread(() -> {
+                                            child[0].setClickable(true);
+                                            TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
+                                            androidStatisticsTextView.setVisibility(View.VISIBLE);
+                                            int total_androidAssets_count = dbHelper.countAndroidAssets();
+                                            androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
+                                                    "\n" + "synced android assets: " +
+                                                    dbHelper.countAndroidSyncedAssets());
+
+                                        });
+
+                                    });
+
+                                    backUpJsonThread.start();
+                                    firstUiThread.start();
+                                    insertMediaItemsThread.start();
+                                    deleteRedundantDriveThread.start();
+                                    updateDriveBackUpThread.start();
+                                    deleteDuplicatedInDrive.start();
+                                    secondUiThread.start();
+                                }
+                                else {
+                                    runOnUiThread(() -> {
                                         LogHandler.saveLog("login with back up launcher failed with response code :" + result.getResultCode());
                                         View child2 = backupButtonsLinearLayout.getChildAt(
                                                 backupButtonsLinearLayout.getChildCount() - 1);
                                         if(child2 instanceof Button){
-                                            Button bt = (Button) child2;
-                                            bt.setText("ADD A BACK UP ACCOUNT");
-                                        }
+                                        Button bt = (Button) child2;
+                                        bt.setText("ADD A BACK UP ACCOUNT");
                                     }
-                                    updateButtonsListeners();
-                                });
+                                        updateButtonsListeners();
+                                    });
+                                }
                             };
                             signInToBackupExecutor.execute(backgroundTask);
-
-                            Thread deleteRedundantDriveThread = new Thread(() -> {
-                                synchronized (this){
-                                    notify();
-                                }
-
-                                try{
-                                    String[] columns = {"accessToken","userEmail", "type"};
-                                    List<String[]> accounts_rows = dbHelper.getAccounts(columns);
-
-                                    for(String[] account_row : accounts_rows) {
-                                        String type = account_row[2];
-                                        if(type.equals("backup")){
-                                            String userEmail = account_row[1];
-                                            String accessToken = account_row[0];
-                                            ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
-                                            ArrayList<String> driveFileIds = new ArrayList<>();
-
-                                            for (BackUpAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
-                                                String fileId = driveMediaItem.getId();
-                                                driveFileIds.add(fileId);
-                                            }
-                                            dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
-                                        }
-                                    }
-                                }catch (Exception e){
-                                    LogHandler.saveLog("failed in deleteRedundantDriveThread : " + e.getLocalizedMessage());
-                                }
-                            });
-
-                            Thread updateDriveBackUpThread = new Thread(() -> {
-                                synchronized (deleteRedundantDriveThread){
-                                    try {
-                                        deleteRedundantDriveThread.join();
-                                    } catch (Exception e) {
-                                        LogHandler.saveLog("failed to join deleteRedundantDrive thread: " + e.getLocalizedMessage());
-                                    }
-                                }
-
-                                String[] columns = {"accessToken", "userEmail","type"};
-                                List<String[]> account_rows = dbHelper.getAccounts(columns);
-
-                                for(String[] account_row : account_rows){
-                                    String type = account_row[2];
-                                    if (type.equals("backup")){
-                                        String accessToken = account_row[0];
-                                        String userEmail = account_row[1];
-                                        ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
-                                        for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
-                                            Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
-                                            if (last_insertId != -1) {
-                                                MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
-                                                        driveMediaItem.getHash(), userEmail);
-                                            } else {
-                                                LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-
-                            Thread deleteDuplicatedInDrive = new Thread(() -> {
-                                synchronized (updateDriveBackUpThread){
-                                    try {
-                                        updateDriveBackUpThread.join();
-                                    }catch (Exception e){
-                                        LogHandler.saveLog("failed to join driveBackUpThread : " + e.getLocalizedMessage());
-                                    }
-                                }
-
-                                String[] columns = {"accessToken","userEmail", "type"};
-                                List<String[]> account_rows = dbHelper.getAccounts(columns);
-
-                                for(String[] account_row : account_rows) {
-                                    String type = account_row[2];
-                                    if(type.equals("backup")){
-                                        String userEmail = account_row[1];
-                                        String accessToken = account_row[0];
-                                        GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
-                                    }
-                                }
-                            });
-
-                            deleteRedundantDriveThread.start();
-                            updateDriveBackUpThread.start();
-                            deleteDuplicatedInDrive.start();
-                            runOnUiThread(() -> {
-                                child[0].setClickable(true);
-                                TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
-                                androidStatisticsTextView.setVisibility(View.VISIBLE);
-                                int total_androidAssets_count = dbHelper.countAndroidAssets();
-                                androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
-                                        "\n" + "synced android assets: " +
-                                        dbHelper.countAndroidSyncedAssets());
-
-                            });
                         }catch (Exception e){
                             LogHandler.saveLog("Failed to sign in to backup : "  + e.getLocalizedMessage());
                         }
-                    }else{
+                    }
+                    else{
                         runOnUiThread(() -> {
                             LogHandler.saveLog("login with back up launcher failed with response code :" + result.getResultCode());
                             LinearLayout backupAccountsButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
@@ -1267,9 +1393,6 @@
             });
         }
 
-
-
-
         private void updateButtonsListeners() {
             updatePrimaryButtonsListener();
             updateBackupButtonsListener();
@@ -1326,18 +1449,16 @@
                                                 public void run() {
                                                     synchronized (signOutThread){
                                                         try {
+                                                            MainActivity.dbHelper.deleteFromAccountsTable(buttonText, "primary");
+                                                            MainActivity.dbHelper.deleteAccountFromPhotosTable(buttonText);
+                                                            dbHelper.deleteRedundantAsset();
                                                             signOutThread.join();
                                                         } catch (InterruptedException e) {
                                                             throw new RuntimeException(e);
                                                         }
                                                     }
-                                                    if(isSignedout[0] ){
-                                                        MainActivity.dbHelper.deleteFromAccountsTable(buttonText, "primary");
-                                                        MainActivity.dbHelper.deleteAccountFromPhotosTable(buttonText);
-                                                        dbHelper.deleteRedundantAsset();
-                                                    }
                                                     if (isSignedout[0]) {
-                                                        isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap();
+                                                        isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(true,buttonText);
                                                     }
                                                     System.out.println("isBackedUp " + isBackedUp[0]);
                                                 }
@@ -1444,13 +1565,11 @@
                                                             throw new RuntimeException(e);
                                                         }
                                                     }
-                                                    if(isDeleted[0]){
+                                                    if (isDeleted[0]) {
                                                         MainActivity.dbHelper.deleteFromAccountsTable(buttonText, "backup");
                                                         MainActivity.dbHelper.deleteAccountFromDriveTable(buttonText);
                                                         dbHelper.deleteRedundantAsset();
-                                                    }
-                                                    if (isDeleted[0]) {
-                                                        isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap();
+                                                        isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(true,buttonText);
                                                     }
                                                     System.out.println("isBackedUp " + isBackedUp[0]);
                                                 }
@@ -1599,7 +1718,7 @@
                             Thread backUpProfile = new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    dbHelper.backUpProfileMap();
+                                    dbHelper.backUpProfileMap(false,"");
                                 }
                             });
                             backUpProfile.start();

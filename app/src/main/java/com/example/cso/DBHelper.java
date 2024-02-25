@@ -1107,7 +1107,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
-    public boolean backUpProfileMap() {
+    public boolean backUpProfileMap(boolean hasRemoved,String signedEmail) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final boolean[] isBackedUp = {false};
         Callable<Boolean> uploadTask = () -> {
@@ -1127,7 +1127,11 @@ public class DBHelper extends SQLiteOpenHelper {
 
                 int backUpAccountCounts = 0;
                 for (String[] account_row : account_rows) {
-                    if (account_row[1].equals("backup")) {
+                    if (hasRemoved == true && account_row[0].equals(signedEmail)) {
+                        continue;
+                    }
+                    if (account_row[1].equals("backup")){
+
                         backUpAccountCounts ++;
                         driveBackupAccessToken = account_row[2];
 //                        String userEmail = account_row[0];

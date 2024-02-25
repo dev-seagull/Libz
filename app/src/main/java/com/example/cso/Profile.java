@@ -224,7 +224,7 @@ public class Profile {
                             LogHandler.saveLog("Failed to join deleteJsonThread: " + e.getLocalizedMessage());
                         }
                         if(isDeleted[0]){
-                            boolean isBackedUp = MainActivity.dbHelper.backUpProfileMap();
+                            boolean isBackedUp = MainActivity.dbHelper.backUpProfileMap(false,"");
                         }
                     }
                 });
@@ -275,26 +275,29 @@ public class Profile {
 
                             folderId = folder.getId();
                         }
+                        try {
+                            fileList = service.files().list()
+                                    .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
+                                    .setSpaces("drive")
+                                    .setFields("files(id)")
+                                    .execute();
+                            List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
+                            for (com.google.api.services.drive.model.File existingFile : existingFiles) {
+                                service.files().delete(existingFile.getId()).execute();
+                            }
 
-                        fileList = service.files().list()
-                                .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
-                                .setSpaces("drive")
-                                .setFields("files(id)")
-                                .execute();
-                        List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
-                        for (com.google.api.services.drive.model.File existingFile : existingFiles) {
-                            service.files().delete(existingFile.getId()).execute();
-                        }
-
-                        fileList = service.files().list()
-                                .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
-                                .setSpaces("drive")
-                                .setFields("files(id)")
-                                .execute();
-                        existingFiles = fileList.getFiles();
-                        System.out.println("fsize " + existingFiles.size());
-                        if(existingFiles.size() == 0){
-                            isDeleted[0] = true;
+                            fileList = service.files().list()
+                                    .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
+                                    .setSpaces("drive")
+                                    .setFields("files(id)")
+                                    .execute();
+                            existingFiles = fileList.getFiles();
+                            System.out.println("fsize " + existingFiles.size());
+                            if (existingFiles.size() == 0) {
+                                isDeleted[0] = true;
+                            }
+                        }catch (Exception e){
+                            LogHandler.saveLog("Failed to delete profileMap from backup : " + e.getLocalizedMessage() , true);
                         }
                     }
                 }

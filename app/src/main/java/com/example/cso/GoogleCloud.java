@@ -136,14 +136,15 @@
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("POST");
                     connection.setDoOutput(true);
-                    String requestBody = "token=" + accessToken;
-                    try (OutputStream os = connection.getOutputStream()) {
-                        byte[] input = requestBody.getBytes("utf-8");
-                        os.write(input, 0, input.length);
+                    if (accessToken != null) {
+                        String requestBody = "token=" + accessToken;
+                        try (OutputStream os = connection.getOutputStream()) {
+                            byte[] input = requestBody.getBytes("utf-8");
+                            os.write(input, 0, input.length);
+                        }
+                        int responseCode = connection.getResponseCode();
                     }
-                    int responseCode = connection.getResponseCode();
                     connection.disconnect();
-
                     boolean isAccessTokenValid = isAccessTokenValid(accessToken);
                     if (!isAccessTokenValid) {
                         System.out.println("Tokens revoked successfully.");
@@ -202,13 +203,29 @@
         public class signInResult{
             private String userEmail;
             private boolean isHandled;
-            signInResult(String userEmail, boolean isHandled){
+            private PrimaryAccountInfo.Tokens tokens;
+            private PrimaryAccountInfo.Storage storage;
+
+            private ArrayList<BackUpAccountInfo.MediaItem> mediaItems;
+
+            private signInResult(String userEmail, boolean isHandled, boolean isInAccounts,
+                         PrimaryAccountInfo.Tokens tokens,PrimaryAccountInfo.Storage storage,ArrayList<BackUpAccountInfo.MediaItem> mediaItems) {
                 this.userEmail = userEmail;
                 this.isHandled = isHandled;
+                this.tokens = tokens;
+                this.storage = storage;
+                this.mediaItems = mediaItems;
             }
 
             public String getUserEmail() {return userEmail;}
             public boolean getHandleStatus() {return isHandled;}
+
+            public PrimaryAccountInfo.Tokens getTokens() {return tokens;}
+            public PrimaryAccountInfo.Storage getStorage() {return storage;}
+
+            public ArrayList<BackUpAccountInfo.MediaItem> getMediaItems() {return mediaItems;}
+
+
 
         }
 
@@ -241,15 +258,6 @@
                     authCode = account.getServerAuthCode();
                     tokens = getTokens(authCode);
                     storage = getStorage(tokens);
-                    MainActivity.dbHelper.insertIntoAccounts(userEmail,"primary"
-                            ,tokens.getRefreshToken(),tokens.getAccessToken(),
-                            storage.getTotalStorage(),storage.getUsedStorage(),
-                            storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
-                    runOnUiThread(() -> {
-                        LinearLayout primaryAccountsButtonsLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
-                        Button newGoogleLoginButton = createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
-                        newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-                    });
                     if(userEmail!= null && tokens.getRefreshToken() != null && tokens.getAccessToken() != null){
                         isHandled[0] = true;
                     }
@@ -257,13 +265,14 @@
             }catch (Exception e){
                 LogHandler.saveLog("handle primary sign in result failed: " + e.getLocalizedMessage());
             }
-            return new signInResult(userEmail, isHandled[0]);
+            return new signInResult(userEmail, isHandled[0], isInAccounts, tokens, storage,new ArrayList<>());
         }
 
         public signInResult handleSignInToBackupResult(Intent data){
             final boolean[] isHandled = {false};
             String userEmail = "";
             String authCode;
+            boolean isInAccounts = false;
             PrimaryAccountInfo.Tokens tokens = null;
             PrimaryAccountInfo.Storage storage = null;
             ArrayList<BackUpAccountInfo.MediaItem> mediaItems  = null;
@@ -279,7 +288,7 @@
 
                 String[] columnsList = new String[]{"userEmail","type"};
                 List<String[]> accounts_rows = MainActivity.dbHelper.getAccounts(columnsList);
-                boolean isInAccounts = false;
+                isInAccounts = false;
                 for (String[] row : accounts_rows) {
                     if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
                         isInAccounts = true;
@@ -294,24 +303,6 @@
                     tokens = getTokens(authCode);
                     storage = getStorage(tokens);
                     mediaItems = GoogleDrive.getMediaItems(tokens.getAccessToken());
-                    MainActivity.dbHelper.insertIntoAccounts(userEmail,"backup",tokens.getRefreshToken(),tokens.getAccessToken(),
-                            storage.getTotalStorage(),storage.getUsedStorage(),storage.getUsedInDriveStorage(),storage.getUsedInGmailAndPhotosStorage());
-
-                    for(BackUpAccountInfo.MediaItem mediaItem : mediaItems){
-                        Long last_insertId = MainActivity.dbHelper.insertAssetData(mediaItem.getHash());
-                        if (last_insertId != -1) {
-                            MainActivity.dbHelper.insertIntoDriveTable(last_insertId, mediaItem.getId(), mediaItem.getFileName(),
-                                    mediaItem.getHash(), userEmail);
-                        } else {
-                            LogHandler.saveLog("Failed to insert file into drive table: " + mediaItem.getFileName());
-                        }
-                    }
-
-                    runOnUiThread(() -> {
-                        LinearLayout backupAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-                        Button newGoogleLoginButton = createBackUpLoginButton(backupAccountsButtonsLinearLayout);
-                        newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-                    });
                     if (userEmail != null && tokens.getRefreshToken() != null && tokens.getAccessToken() != null) {
                         isHandled[0] = true;
                     }
@@ -319,7 +310,7 @@
             }catch (Exception e){
                 LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage());
             }
-            return new signInResult(userEmail, isHandled[0]);
+            return new signInResult(userEmail, isHandled[0], isInAccounts, tokens, storage,mediaItems);
         }
 
 
