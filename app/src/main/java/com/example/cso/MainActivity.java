@@ -218,44 +218,50 @@
                 }
             });
 
-            Thread updateAndroidFilesThread = new Thread(() -> {
-                synchronized (deleteRedundantAndroidThread){
-                    try{
-                        deleteRedundantAndroidThread.join();
-                    }catch (Exception e){
-                        LogHandler.saveLog("failed to join deleteRedundantAndroidThread thread: "  + e.getLocalizedMessage());
+            Thread updateAndroidFilesThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    synchronized (deleteRedundantAndroidThread){
+                        try{
+                            deleteRedundantAndroidThread.join();
+                        }catch (Exception e){
+                            LogHandler.saveLog("failed to join deleteRedundantAndroidThread thread: "  + e.getLocalizedMessage());
+                        }
                     }
+                    Android.getGalleryMediaItems(MainActivity.this);
+                    LogHandler.saveLog("End of getting files from your android device when starting the app.",false);
                 }
-                Android.getGalleryMediaItems(MainActivity.this);
-                LogHandler.saveLog("End of getting files from your android device when starting the app.",false);
             });
 
 
-            Thread deleteRedundantDriveThread = new Thread(() -> {
-                synchronized (updateAndroidFilesThread){
-                    try{
-                        updateAndroidFilesThread.join();
-                    }catch (Exception e){
-                        LogHandler.saveLog("failed to join updateAndroidFilesThread : " + e.getLocalizedMessage());
-                    }
-                }
-
-                String[] columns = {"accessToken","userEmail", "type"};
-                List<String[]> account_rows = dbHelper.getAccounts(columns);
-
-                for(String[] account_row : account_rows) {
-                    String type = account_row[2];
-                    if(type.equals("backup")){
-                        String userEmail = account_row[1];
-                        String accessToken = account_row[0];
-                        ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
-                        ArrayList<String> driveFileIds = new ArrayList<>();
-
-                        for (BackUpAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
-                            String fileId = driveMediaItem.getId();
-                            driveFileIds.add(fileId);
+            Thread deleteRedundantDriveThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    synchronized (updateAndroidFilesThread){
+                        try{
+                            updateAndroidFilesThread.join();
+                        }catch (Exception e){
+                            LogHandler.saveLog("failed to join updateAndroidFilesThread : " + e.getLocalizedMessage());
                         }
-                        dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
+                    }
+
+                    String[] columns = {"accessToken","userEmail", "type"};
+                    List<String[]> account_rows = dbHelper.getAccounts(columns);
+
+                    for(String[] account_row : account_rows) {
+                        String type = account_row[2];
+                        if(type.equals("backup")){
+                            String userEmail = account_row[1];
+                            String accessToken = account_row[0];
+                            ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                            ArrayList<String> driveFileIds = new ArrayList<>();
+
+                            for (BackUpAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+                                String fileId = driveMediaItem.getId();
+                                driveFileIds.add(fileId);
+                            }
+                            dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
+                        }
                     }
                 }
             });
@@ -321,33 +327,14 @@
                         LogHandler.saveLog("failed to join androidUploadThread : "  + e.getLocalizedMessage());
                     }
                 }
-                runOnUiThread(() -> {
-                    TextView deviceStorage = findViewById(R.id.deviceStorage);
-                    ArrayList<String> storage =  Android.getAndroidDeviceStorage();
-                    deviceStorage.setText("Total space: " + storage.get(0) +
-                            "\n" + "Free space: " + storage.get(1) + "\n");
-                    dbHelper.insertIntoDeviceTable(androidDeviceName, storage.get(0), storage.get(1));
-                    TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
-                    androidStatisticsTextView.setVisibility(View.VISIBLE);
-                    int total_androidAssets_count = dbHelper.countAndroidAssets();
-                    androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
-                            "\n" + "synced android assets: " +
-                            dbHelper.countAndroidSyncedAssets());
-                });
-            });
-
-            LogHandler.saveLog("--------------------------Start of app----------------------------",false);
-//            startFreeSpaceChecker();
-
-            new Timer().scheduleAtFixedRate(new TimerTask() {
-                @Override
-                public void run() {
+                try{
                     runOnUiThread(() -> {
                         TextView deviceStorage = findViewById(R.id.deviceStorage);
                         ArrayList<String> storage =  Android.getAndroidDeviceStorage();
                         deviceStorage.setText("Total space: " + storage.get(0) +
-                                "\n" + "Free space: " + storage.get(1) + "\n");
-                        dbHelper.updateDeviceTable(androidDeviceName, storage.get(0), storage.get(1));
+                                "\n" + "Free space: " + storage.get(1) + "\n" +
+                                "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n");
+                        dbHelper.insertIntoDeviceTable(androidDeviceName, storage.get(0), storage.get(1));
                         TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
                         androidStatisticsTextView.setVisibility(View.VISIBLE);
                         int total_androidAssets_count = dbHelper.countAndroidAssets();
@@ -355,8 +342,12 @@
                                 "\n" + "synced android assets: " +
                                 dbHelper.countAndroidSyncedAssets());
                     });
+                }catch (Exception e){
+                    LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
                 }
-            }, 0, 15000);
+            });
+
+            LogHandler.saveLog("--------------------------Start of app----------------------------",false);
 
             manageReadAndWritePermissonsThread.start();
             deleteRedundantAndroidThread.start();
@@ -365,6 +356,53 @@
             updateDriveBackUpThread.start();
             deleteDuplicatedInDrive.start();
             updateUIThread.start();
+
+            new Timer().scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    Thread redundantAndroidThread = new Thread(deleteRedundantAndroidThread);
+                    Thread updateFilesThread = new Thread(updateAndroidFilesThread);
+                    try{
+                        if(!redundantAndroidThread.isAlive()){
+                            if(deleteRedundantDriveThread != null){
+                                if(!deleteRedundantAndroidThread.isAlive()){
+                                    redundantAndroidThread.start();
+                                }
+                            }else{
+                                redundantAndroidThread.start();
+                            }
+                        }
+                        if(!updateFilesThread.isAlive()){
+                            if(updateAndroidFilesThread != null){
+                                if(!updateAndroidFilesThread.isAlive()){
+                                    updateFilesThread.start();
+                                }
+                            }else{
+                                updateFilesThread.start();
+                            }
+                        }
+                        runOnUiThread(() -> {
+                            TextView deviceStorage = findViewById(R.id.deviceStorage);
+                            ArrayList<String> storage =  Android.getAndroidDeviceStorage();
+                            System.out.println(("Total space: " + storage.get(0) +
+                                    "\n" + "Free space: " + storage.get(1) + "\n" +
+                                    "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n"));
+                            deviceStorage.setText("Total space: " + storage.get(0) +
+                                    "\n" + "Free space: " + storage.get(1) + "\n" +
+                                    "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n");
+                            dbHelper.updateDeviceTable(androidDeviceName, storage.get(0), storage.get(1));
+                            TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
+                            androidStatisticsTextView.setVisibility(View.VISIBLE);
+                            int total_androidAssets_count = dbHelper.countAndroidAssets();
+                            androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
+                                    "\n" + "synced android assets: " +
+                                    dbHelper.countAndroidSyncedAssets());
+                        });
+                    }catch (Exception e){
+                        LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
+                    }
+                }
+            }, 0, 15000);
 
 //            if(errorCounter == 0){
 //                LogHandler.deleteLogFile();
@@ -1090,16 +1128,19 @@
                         }
                     });
 
-                    Thread updateAndroidFilesThread = new Thread(() -> {
-                        synchronized (deleteRedundantAndroidThread){
-                            try{
-                                deleteRedundantAndroidThread.join();
-                            }catch (Exception e){
-                                LogHandler.saveLog("failed to join deleteRedundantAndroidThread thread: "  + e.getLocalizedMessage());
+                    Thread updateAndroidFilesThread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            synchronized (deleteRedundantAndroidThread){
+                                try{
+                                    deleteRedundantAndroidThread.join();
+                                }catch (Exception e){
+                                    LogHandler.saveLog("failed to join deleteRedundantAndroidThread thread: "  + e.getLocalizedMessage());
+                                }
                             }
+                            Android.getGalleryMediaItems(MainActivity.this);
+                            LogHandler.saveLog("End of getting files from your android device",false);
                         }
-                        Android.getGalleryMediaItems(MainActivity.this);
-                        LogHandler.saveLog("End of getting files from your android device",false);
                     });
 
 

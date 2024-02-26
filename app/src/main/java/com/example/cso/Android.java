@@ -63,29 +63,35 @@ public class Android {
                File androidFile = new File(mediaItemPath);
                if(androidFile.exists()){
                    galleryItems++;
-                   String fileHash = "";
-                   try {
-                       fileHash = Hash.calculateHash(androidFile);
+                   if(!MainActivity.dbHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidDeviceName,
+                           mediaItemDateModified, mediaItemSize)){
+                       String fileHash = "";
+                       try {
+                           fileHash = Hash.calculateHash(androidFile);
 
-                   } catch (Exception e) {
-                       LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
-                   }
-                   long lastInsertedId =
-                           MainActivity.dbHelper.insertAssetData(fileHash);
-                   if(lastInsertedId != -1){
-                       MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
-                               fileHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
-                       LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
-                   }else{
-                       LogHandler.saveLog("Failed to insert file into android table: " + mediaItemFile.getName());
+                       } catch (Exception e) {
+                           LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage());
+                       }
+                       long lastInsertedId =
+                               MainActivity.dbHelper.insertAssetData(fileHash);
+                       if(lastInsertedId != -1){
+                           MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,
+                                   mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                                   fileHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
+                           LogHandler.saveLog("File was detected in android device: " + mediaItemFile.getName(),false);
+                       }else{
+                           LogHandler.saveLog("Failed to insert file into android table: " + mediaItemFile.getName());
+                       }
                    }
                }
            }
-           cursor.close();
+            if (cursor != null) {
+                cursor.close();
+            }
        }catch (Exception e){
             LogHandler.saveLog("Failed to get gallery files: " + e.getLocalizedMessage());
        }
-        try{
+       try{
             if(galleryItems == 0){
                 LogHandler.saveLog("The Gallery was not found, " +
                         "So it's starting to get the files from the file manager",false);
@@ -127,21 +133,24 @@ public class Android {
                                     String mediaItemMemeType = GooglePhotos.getMemeType(mediaItemFile);
                                     if(mediaItemFile.exists()){
                                         fileManagerItems++;
-                                        String mediaItemHash = "";
-                                        try {
-                                            mediaItemHash = Hash.calculateHash(mediaItemFile);
-                                        } catch (Exception e) {
-                                            LogHandler.saveLog("Failed to calculate hash in file manager: " + e.getLocalizedMessage());
-                                        }
-                                        long lastInsertedId =
-                                                MainActivity.dbHelper.insertAssetData(mediaItemHash);
-                                        if(lastInsertedId != -1){
+                                        if(!MainActivity.dbHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidDeviceName,
+                                                mediaItemDateModified, mediaItemSize)){
+                                            String mediaItemHash = "";
+                                            try {
+                                                mediaItemHash = Hash.calculateHash(mediaItemFile);
+                                            } catch (Exception e) {
+                                                LogHandler.saveLog("Failed to calculate hash in file manager: " + e.getLocalizedMessage());
+                                            }
+                                            long lastInsertedId =
+                                                    MainActivity.dbHelper.insertAssetData(mediaItemHash);
+                                            if(lastInsertedId != -1){
 
-                                            MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
-                                                    mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
-                                            LogHandler.saveLog("File was detected in file manager: " + mediaItemFile.getName(),false);
-                                        }else{
-                                            LogHandler.saveLog("Failed to insert file into android table in file manager : " + mediaItemFile.getName());
+                                                MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                                                        mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
+                                                LogHandler.saveLog("File was detected in file manager: " + mediaItemFile.getName(),false);
+                                            }else{
+                                                LogHandler.saveLog("Failed to insert file into android table in file manager : " + mediaItemFile.getName());
+                                            }
                                         }
                                     }
                                 }

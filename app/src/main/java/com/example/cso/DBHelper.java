@@ -4,6 +4,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Environment;
+import android.os.StatFs;
 import android.view.View;
 import android.widget.TextView;
 
@@ -684,6 +686,26 @@ public class DBHelper extends SQLiteOpenHelper {
         return false;
     }
 
+    public boolean existsInAndroidWithoutHash(String filePath, String device,String date,
+                                    Double fileSize){
+        try{
+            String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE" +
+                    " filePath = ? and fileSize = ? and device = ? and dateModified = ?)";
+            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{filePath,
+                    String.valueOf(fileSize), device, date});
+            if(cursor != null && cursor.moveToFirst()){
+                int result = cursor.getInt(0);
+                if(result == 1){
+                    return true;
+                }
+            }
+            cursor.close();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to check existing in Android : " + e.getLocalizedMessage());
+        }
+        return false;
+    }
+
 
     //done but to another class delete method
     public void deleteFileFromDriveTable(String fileHash, String id, String assetId, String fileId, String userEmail){
@@ -1334,5 +1356,34 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    public String getPhotosAndVideosStorage(){
+        createIndex();
+        double sum = 0.0;
+        SQLiteDatabase db = getReadableDatabase();
+        String query = "SELECT SUM(fileSize) FROM ANDROID";
+        Cursor cursor = db.rawQuery(query, null);
+
+        try {
+            if (cursor.moveToFirst()) {
+                sum = cursor.getDouble(0) / Math.pow(10, 3);
+            }
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to get storage of videos and photos : " + e.getLocalizedMessage(), true);
+        } finally {
+            cursor.close();
+        }
+
+        return String.format("%.2f GB", sum);
+    }
+
+    public void createIndex() {
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            System.out.println("helllo");
+            db.execSQL("CREATE INDEX IF NOT EXISTS fileSize_index ON ANDROID(fileSize)");
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to create index: " + e.getLocalizedMessage(), true);
+        }
+    }
 
 }
