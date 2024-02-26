@@ -4,6 +4,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.view.View;
+import android.widget.TextView;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.ByteArrayContent;
@@ -1299,6 +1301,38 @@ public class DBHelper extends SQLiteOpenHelper {
         return accessToken;
     }
 
+    public static boolean insertIntoDeviceTable(String deviceName,String totalSpace,String freeSpace){
+        dbWritable.beginTransaction();
+        try{
+            String sqlQuery = "INSERT INTO DEVICE (" +
+                    "deviceName," +
+                    "totalStorage," +
+                    "freeStorage) VALUES (?,?,?)";
+            dbWritable.execSQL(sqlQuery, new Object[]{deviceName,totalSpace,freeSpace});
+            dbWritable.setTransactionSuccessful();
+            return true;
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to insert into DEVICE table : " + e.getLocalizedMessage());
+            return false;
+        }finally {
+            dbWritable.endTransaction();
+        }
+    }
+
+    public static boolean updateDeviceTable(String deviceName,String totalSpace,String freeSpace){
+        dbWritable.beginTransaction();
+        try{
+            String sqlQuery = "UPDATE DEVICE SET totalStorage = ?, freeStorage = ? WHERE deviceName = ?";
+            dbWritable.execSQL(sqlQuery, new Object[]{totalSpace,freeSpace,deviceName});
+            dbWritable.setTransactionSuccessful();
+            return true;
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to update DEVICE table : " + e.getLocalizedMessage());
+            return false;
+        }finally {
+            dbWritable.endTransaction();
+        }
+    }
 
 
 }

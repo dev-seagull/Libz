@@ -1,7 +1,5 @@
     package com.example.cso;
 
-    import static com.example.cso.SharedPreferencesHandler.displayDialogForRestoreAccountsDecision;
-
     import android.Manifest;
     import android.app.Activity;
     import android.app.AlertDialog;
@@ -57,6 +55,8 @@
     import java.util.HashMap;
     import java.util.List;
     import java.util.Map;
+    import java.util.Timer;
+    import java.util.TimerTask;
     import java.util.concurrent.Executor;
     import java.util.concurrent.Executors;
 
@@ -77,8 +77,6 @@
         public static int errorCounter = 0;
         static SharedPreferences preferences;
         public static DBHelper dbHelper;
-
-
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -328,7 +326,7 @@
                     ArrayList<String> storage =  Android.getAndroidDeviceStorage();
                     deviceStorage.setText("Total space: " + storage.get(0) +
                             "\n" + "Free space: " + storage.get(1) + "\n");
-
+                    dbHelper.insertIntoDeviceTable(androidDeviceName, storage.get(0), storage.get(1));
                     TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
                     androidStatisticsTextView.setVisibility(View.VISIBLE);
                     int total_androidAssets_count = dbHelper.countAndroidAssets();
@@ -339,6 +337,26 @@
             });
 
             LogHandler.saveLog("--------------------------Start of app----------------------------",false);
+//            startFreeSpaceChecker();
+
+            new Timer().scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    runOnUiThread(() -> {
+                        TextView deviceStorage = findViewById(R.id.deviceStorage);
+                        ArrayList<String> storage =  Android.getAndroidDeviceStorage();
+                        deviceStorage.setText("Total space: " + storage.get(0) +
+                                "\n" + "Free space: " + storage.get(1) + "\n");
+                        dbHelper.updateDeviceTable(androidDeviceName, storage.get(0), storage.get(1));
+                        TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
+                        androidStatisticsTextView.setVisibility(View.VISIBLE);
+                        int total_androidAssets_count = dbHelper.countAndroidAssets();
+                        androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
+                                "\n" + "synced android assets: " +
+                                dbHelper.countAndroidSyncedAssets());
+                    });
+                }
+            }, 0, 15000);
 
             manageReadAndWritePermissonsThread.start();
             deleteRedundantAndroidThread.start();
@@ -347,6 +365,7 @@
             updateDriveBackUpThread.start();
             deleteDuplicatedInDrive.start();
             updateUIThread.start();
+
 //            if(errorCounter == 0){
 //                LogHandler.deleteLogFile();
 //            }
@@ -590,6 +609,7 @@
                 }
             });
         }
+
 
         @Override
         protected void onStart(){
@@ -1807,8 +1827,6 @@
             AlertDialog alertDialog = builder.create();
             alertDialog.show();
         }
-
-
     }
 
 
