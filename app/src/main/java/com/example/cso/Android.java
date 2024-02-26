@@ -174,6 +174,13 @@ public class Android {
         return storage;
     }
 
+
+    private String freeStorageChecker(){
+        String freeStorage = new String();
+
+        return "";
+    }
+
 }
 
 
