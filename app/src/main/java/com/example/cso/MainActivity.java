@@ -104,9 +104,8 @@
                                         System.out.println("here " + Environment.isExternalStorageManager());
                                         try {
                                             Thread.sleep(1000);
-                                        } catch (InterruptedException e) {
-                                            throw new RuntimeException(e);
-
+                                        } catch (Exception e) {
+                                            LogHandler.saveLog("Couldn't sleep the thread. " + e.getLocalizedMessage());
                                         }
                                     }
                                 }
@@ -129,7 +128,7 @@
                 manageAccessThread.join();
 
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                LogHandler.saveLog("Failed to join manage access thread. " + e.getLocalizedMessage());
             }
             LogHandler.CreateLogFile();
 
@@ -563,7 +562,7 @@
                                                     System.out.println("... " + Environment.isExternalStorageManager());
                                                 } catch (InterruptedException e) {
                                                     System.out.println("here2" + Environment.isExternalStorageManager());
-                                                    throw new RuntimeException(e);
+                                                    LogHandler.saveLog("Failed to sleep the thread : " + e.getLocalizedMessage(), true);
 
                                                 }
                                             }
@@ -1068,9 +1067,9 @@
                                             try {
                                                 Thread.sleep(500);
                                                 System.out.println("... " + Environment.isExternalStorageManager());
-                                            } catch (InterruptedException e) {
+                                            } catch (Exception e) {
                                                 System.out.println("here2" + Environment.isExternalStorageManager());
-                                                throw new RuntimeException(e);
+                                                LogHandler.saveLog("Failed to sleep the thread: " + e.getLocalizedMessage());
 
                                             }
                                         }
@@ -1520,7 +1519,8 @@
                                                             dbHelper.deleteRedundantAsset();
                                                             signOutThread.join();
                                                         } catch (InterruptedException e) {
-                                                            throw new RuntimeException(e);
+                                                            LogHandler.saveLog("Failed to join the signout thread" +
+                                                                    " + " + e.getLocalizedMessage(), true);
                                                         }
                                                     }
                                                     if (isSignedout[0]) {
@@ -1628,8 +1628,10 @@
                                                     synchronized (deleteProfileJsonThread){
                                                         try {
                                                             deleteProfileJsonThread.join();
-                                                        } catch (InterruptedException e) {
-                                                            throw new RuntimeException(e);
+                                                        } catch (Exception e) {
+                                                            LogHandler.saveLog("Failed to join the delete" +
+                                                                    " profile json thread : " +
+                                                                     e.getLocalizedMessage(), true);
                                                         }
                                                     }
                                                     if (isDeleted[0]) {
@@ -1649,7 +1651,8 @@
                                                         try {
                                                             backUpJsonThread.join();
                                                         } catch (InterruptedException e) {
-                                                            throw new RuntimeException(e);
+                                                            LogHandler.saveLog("Failed to join " +
+                                                                    " backup json thread : "  +e.getLocalizedMessage(), true);
                                                         }
                                                     }
                                                     if(isBackedUp[0]){
@@ -1813,7 +1816,8 @@
                                                     try {
                                                         backUpJsonThread.join();
                                                     } catch (InterruptedException e) {
-                                                        throw new RuntimeException(e);
+                                                        LogHandler.saveLog("Failed to join back up json thread : "
+                                                         + e.getLocalizedMessage(), true);
                                                     }
                                                 }
 //                                                if(isBackedUp[0]){
