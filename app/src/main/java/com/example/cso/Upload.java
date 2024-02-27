@@ -274,6 +274,9 @@ public class Upload {
                 resultList.add(row);
             } while (cursor.moveToNext());
         }
+        if(cursor != null){
+            cursor.close();
+        }
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final boolean[] isFinished = {false};
@@ -292,6 +295,9 @@ public class Upload {
                     if (accessTokenColumnIndex >= 0) {
                         accessToken = accessTokenCursor.getString(accessTokenColumnIndex);
                     }
+                }
+                if(accessTokenCursor != null){
+                    accessTokenCursor.close();
                 }
                 if(!accessToken.isEmpty() && accessToken != null){
                     NetHttpTransport HTTP_TRANSPORT = null;
@@ -343,7 +349,6 @@ public class Upload {
                     );
                 }
             }
-            cursor.close();
 
            return isFinished[0];
         };
@@ -380,6 +385,9 @@ public class Upload {
                     System.out.println("File name for upload photos from android to drive: " + fileName);
                 }
             }while (cursor.moveToNext());
+        }
+        if(cursor != null){
+            cursor.close();
         }
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -547,7 +555,13 @@ public class Upload {
                         return true;
                     }
                 }
+                if(cursor2 != null){
+                    cursor2.close();
+                }
             }
+        }
+        if(cursor != null){
+            cursor.close();
         }
         return false;
     }

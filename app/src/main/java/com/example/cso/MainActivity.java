@@ -228,7 +228,8 @@
                             LogHandler.saveLog("failed to join deleteRedundantAndroidThread thread: "  + e.getLocalizedMessage());
                         }
                     }
-                    Android.getGalleryMediaItems(MainActivity.this);
+                    System.out.println(" here running updateAndroidFilesThread" );
+                    int galleryItems = Android.getGalleryMediaItems(MainActivity.this);
                     LogHandler.saveLog("End of getting files from your android device when starting the app.",false);
                 }
             });
@@ -357,29 +358,23 @@
             deleteDuplicatedInDrive.start();
             updateUIThread.start();
 
+            final Thread[] updateAndroidFilesThread2 = {new Thread(updateAndroidFilesThread)};
+            final Thread[] deleteRedundantAndroidThread2 = {new Thread(deleteRedundantDriveThread)};
+
             new Timer().scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
-                    Thread redundantAndroidThread = new Thread(deleteRedundantAndroidThread);
-                    Thread updateFilesThread = new Thread(updateAndroidFilesThread);
                     try{
-                        if(!redundantAndroidThread.isAlive()){
-                            if(deleteRedundantDriveThread != null){
-                                if(!deleteRedundantAndroidThread.isAlive()){
-                                    redundantAndroidThread.start();
-                                }
-                            }else{
-                                redundantAndroidThread.start();
-                            }
+                        System.out.println("is alive: " + updateAndroidFilesThread.isAlive() + updateAndroidFilesThread2[0].isAlive());
+                        if(!deleteRedundantAndroidThread.isAlive()){
+                            deleteRedundantAndroidThread2[0] = new Thread(deleteRedundantAndroidThread);
+                            System.out.println("here running 1.1");
+                            deleteRedundantAndroidThread2[0].start();
                         }
-                        if(!updateFilesThread.isAlive()){
-                            if(updateAndroidFilesThread != null){
-                                if(!updateAndroidFilesThread.isAlive()){
-                                    updateFilesThread.start();
-                                }
-                            }else{
-                                updateFilesThread.start();
-                            }
+                        if(!updateAndroidFilesThread.isAlive() && !updateAndroidFilesThread2[0].isAlive()){
+                            updateAndroidFilesThread2[0] = new Thread(updateAndroidFilesThread);
+                            System.out.println("here running 2.1");
+                            updateAndroidFilesThread2[0].start();
                         }
                         runOnUiThread(() -> {
                             TextView deviceStorage = findViewById(R.id.deviceStorage);
@@ -1399,6 +1394,9 @@
                                     }
                                 }
                             }
+                        }
+                        if(cursor != null){
+                            cursor.close();
                         }
 
                         List<String> result = dbHelper.backUpDataBase(getApplicationContext());

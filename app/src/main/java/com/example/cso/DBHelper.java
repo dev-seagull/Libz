@@ -174,21 +174,22 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public long insertAssetData(String fileHash) {
         long lastInsertedId = -1;
-        String sqlQuery;
-
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ASSET WHERE fileHash = ?)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{fileHash});
         Boolean existsInAsset = false;
         try{
-           sqlQuery = "SELECT EXISTS(SELECT 1 FROM ASSET WHERE fileHash = ?)";
-           Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{fileHash});
            if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
                 if(result == 1){
                     existsInAsset = true;
                 }
             }
-           cursor.close();
         }catch (Exception e){
             LogHandler.saveLog("Failed to select from ASSET in insertAssetData method: " + e.getLocalizedMessage());
+        }finally {
+            if(cursor != null){
+                cursor.close();
+            }
         }
 
         if(existsInAsset == false){
@@ -204,13 +205,13 @@ public class DBHelper extends SQLiteOpenHelper {
             }
         }
         sqlQuery = "SELECT id FROM ASSET WHERE fileHash = ?;";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{fileHash});
-        if(cursor != null && cursor.moveToFirst()){
-            lastInsertedId = cursor.getInt(0);
+        Cursor cursor2 = dbReadable.rawQuery(sqlQuery, new String[]{fileHash});
+        if(cursor2 != null && cursor2.moveToFirst()){
+            lastInsertedId = cursor2.getInt(0);
         }else{
             LogHandler.saveLog("Failed to find the existing file id in Asset database.", true);
         }
-        cursor.close();
+        cursor2.close();
         return lastInsertedId;
     }
 
@@ -268,11 +269,11 @@ public class DBHelper extends SQLiteOpenHelper {
 
     private boolean assetExistsInDatabase(String assetId){
         boolean existsInDatabase = false;
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
+                "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
+                "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId, assetId, assetId});
         try {
-            String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
-                    "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
-                    "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
-            Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId, assetId, assetId});
             if (cursor != null && cursor.moveToFirst()) {
                 int result = cursor.getInt(0);
                 if (result == 1) {
@@ -281,6 +282,10 @@ public class DBHelper extends SQLiteOpenHelper {
             }
         } catch (Exception e) {
             LogHandler.saveLog("Failed to check if the data exists in Database : " + e.getLocalizedMessage());
+        }finally {
+            if(cursor != null){
+                cursor.close();
+            }
         }
         return existsInDatabase;
     }
@@ -289,21 +294,22 @@ public class DBHelper extends SQLiteOpenHelper {
                                      String userEmail, String creationTime, String baseUrl){
         String sqlQuery = "";
         Boolean existsInPhotos = false;
+        sqlQuery = "SELECT EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?" +
+                " and fileHash = ? and fileId =? and userEmail = ?)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId),
+                fileHash, fileId, userEmail});
         try{
-            sqlQuery = "SELECT EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?" +
-                    " and fileHash = ? and fileId =? and userEmail = ?)";
-            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId),
-                    fileHash, fileId, userEmail});
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
                 if(result == 1){
                     existsInPhotos = true;
                 }
             }
-            cursor.close();
         }catch (Exception e){
             LogHandler.saveLog("Failed to select from PHOTOS in " +
                     "insertIntoPhotosTable method: " + e.getLocalizedMessage());
+        }finally {
+            cursor.close();
         }
         if(existsInPhotos == false){
             dbWritable.beginTransaction();
@@ -334,21 +340,24 @@ public class DBHelper extends SQLiteOpenHelper {
     public void insertIntoDriveTable(Long assetId, String fileId,String fileName, String fileHash,String userEmail){
         String sqlQuery = "";
         Boolean existsInDrive = false;
+        sqlQuery = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ? " +
+                "and fileHash = ? and fileId =? and userEmail = ?)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId),
+                fileHash, fileId, userEmail});
         try{
-            sqlQuery = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ? " +
-                    "and fileHash = ? and fileId =? and userEmail = ?)";
-            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId),
-                    fileHash, fileId, userEmail});
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
                 if(result == 1){
                     existsInDrive = true;
                 }
             }
-            cursor.close();
         }catch (Exception e){
             LogHandler.saveLog("Failed to select from DRIVE " +
                     "in insertIntoDriveTable method: " + e.getLocalizedMessage());
+        }finally {
+            if(cursor != null){
+                cursor.close();
+            }
         }
 
         if(existsInDrive == false){
@@ -668,40 +677,46 @@ public class DBHelper extends SQLiteOpenHelper {
 
     private boolean existsInAndroid(long assetId, String filePath, String device,
                                     Double fileSize, String fileHash){
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE" +
+                " assetId = ? and filePath = ? and fileHash = ? and fileSize = ? and device = ?)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), filePath, fileHash,
+                String.valueOf(fileSize), device});
         try{
-            String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE" +
-                    " assetId = ? and filePath = ? and fileHash = ? and fileSize = ? and device = ?)";
-            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), filePath, fileHash,
-                    String.valueOf(fileSize), device});
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
                 if(result == 1){
                     return true;
                 }
             }
-            cursor.close();
         }catch (Exception e){
             LogHandler.saveLog("Failed to check existing in Android : " + e.getLocalizedMessage());
+        }finally {
+            if(cursor != null){
+                cursor.close();
+            }
         }
         return false;
     }
 
     public boolean existsInAndroidWithoutHash(String filePath, String device,String date,
                                     Double fileSize){
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE" +
+                " filePath = ? and fileSize = ? and device = ? and dateModified = ?)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{filePath,
+                String.valueOf(fileSize), device, date});
         try{
-            String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE" +
-                    " filePath = ? and fileSize = ? and device = ? and dateModified = ?)";
-            Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{filePath,
-                    String.valueOf(fileSize), device, date});
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
                 if(result == 1){
                     return true;
                 }
             }
-            cursor.close();
         }catch (Exception e){
             LogHandler.saveLog("Failed to check existing in Android : " + e.getLocalizedMessage());
+        }finally {
+            if(cursor != null){
+                cursor.close();
+            }
         }
         return false;
     }
@@ -855,11 +870,11 @@ public class DBHelper extends SQLiteOpenHelper {
                     }
 
                     boolean existsInDatabase = false;
+                    sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
+                            "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
+                            "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
+                    Cursor cursor2 = dbReadable.rawQuery(sqlQuery, new String[]{assetId,assetId,assetId});
                     try{
-                        sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
-                                "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
-                                "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
-                        Cursor cursor2 = dbReadable.rawQuery(sqlQuery, new String[]{assetId,assetId,assetId});
                         if(cursor2 != null && cursor2.moveToFirst()){
                             int result = cursor2.getInt(0);
                             if(result == 1){
@@ -868,6 +883,10 @@ public class DBHelper extends SQLiteOpenHelper {
                         }
                     }catch (Exception e){
                         LogHandler.saveLog("Failed to check if the data exists in Database in deleteRedundantAndroid");
+                    }finally {
+                        if(cursor2 != null){
+                            cursor2.close();
+                        }
                     }
 
                     if(existsInDatabase == false){
@@ -968,11 +987,11 @@ public class DBHelper extends SQLiteOpenHelper {
 
         for (String assetId : assetIds){
             boolean existsInDatabase = false;
+            sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
+                    "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
+                    "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
+            Cursor cursor2 = dbReadable.rawQuery(sqlQuery, new String[]{assetId, assetId, assetId});
             try {
-                sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
-                        "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
-                        "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
-                Cursor cursor2 = dbReadable.rawQuery(sqlQuery, new String[]{assetId, assetId, assetId});
                 if (cursor2 != null && cursor2.moveToFirst()) {
                     int result = cursor2.getInt(0);
                     if (result == 1) {
@@ -981,6 +1000,10 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             } catch (Exception e) {
                 LogHandler.saveLog("Failed to check if the data exists in Database in deleteRedundantPhotos");
+            }finally {
+                if(cursor2 != null){
+                    cursor2.close();
+                }
             }
             if (existsInDatabase == false) {
                 dbWritable.beginTransaction();
@@ -998,6 +1021,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         }
+        cursor.close();
 //        return isEveryThingOK;
     }
 

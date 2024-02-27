@@ -30,6 +30,8 @@ public class Profile {
         JsonArray backUpDBJson = new JsonArray();
         JsonObject resultJson = new JsonObject();
 
+        String sqlQuery = "SELECT * FROM BACKUPDB";
+        Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery, null);
         try{
             for (String[] account_row : account_rows){
                 if(account_row[1].equals("backup")) {
@@ -45,8 +47,6 @@ public class Profile {
                 }
             }
 
-            String sqlQuery = "SELECT * FROM BACKUPDB";
-            Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery, null);
             if(cursor != null && cursor.moveToFirst()){
                 int userEmailColumnIndex = cursor.getColumnIndex("userEmail");
                 int fileIdColumnIndex = cursor.getColumnIndex("fileId");
@@ -68,9 +68,12 @@ public class Profile {
             resultJson.add("backupAccounts", backupAccountsJson);
             resultJson.add("primaryAccounts", primaryAccountsJson);
             resultJson.add("backUpDB", backUpDBJson);
-            cursor.close();
         }catch (Exception e){
             LogHandler.saveLog("Failed to create profile map content : " + e.getLocalizedMessage() , true);
+        }finally {
+            if(cursor != null){
+                cursor.close();
+            }
         }
         return  resultJson;
     }

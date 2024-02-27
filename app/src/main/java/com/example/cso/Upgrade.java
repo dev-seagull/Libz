@@ -142,6 +142,10 @@ public class Upgrade {
                 DBHelper.dbWritable.execSQL(updateProfileIdQuery, new String[]{profileId});
             } catch (SQLiteConstraintException e) {
                 LogHandler.saveLog("Failed to update profileId : " + e.getLocalizedMessage());
+            }finally {
+                if(cursor != null){
+                    cursor.close();
+                }
             }
         }catch (Exception e){
             LogHandler.saveLog("Failed to get profileId from profile  : " + e.getLocalizedMessage());
