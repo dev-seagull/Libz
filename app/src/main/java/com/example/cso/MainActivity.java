@@ -105,7 +105,7 @@
                                         try {
                                             Thread.sleep(1000);
                                         } catch (Exception e) {
-                                            LogHandler.saveLog("Couldn't sleep the thread. " + e.getLocalizedMessage());
+                                            e.printStackTrace();
                                         }
                                     }
                                 }
@@ -113,11 +113,10 @@
                         }
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             if (Environment.isExternalStorageManager()) {
-                                LogHandler.saveLog("Starting to get access files from your android device",false);
                                 System.out.println("Starting to get access from your android device");
                             }}
                     } catch (Exception e) {
-                        LogHandler.saveLog("Failed to get manage external storage when on create thread: " + e.getLocalizedMessage());
+                        e.printStackTrace();
                     }
                 }
             };
@@ -127,8 +126,8 @@
             try {
                 manageAccessThread.join();
 
-            } catch (InterruptedException e) {
-                LogHandler.saveLog("Failed to join manage access thread. " + e.getLocalizedMessage());
+            } catch (Exception e) {
+                e.printStackTrace();
             }
             LogHandler.CreateLogFile();
 
@@ -1618,6 +1617,7 @@
                                             final boolean[] isDeleted = {false};
                                             final boolean[] isBackedUp = {false};
 
+
                                             Thread deleteProfileJsonThread = new Thread(new Runnable() {
                                                 @Override
                                                 public void run() {
@@ -1629,19 +1629,36 @@
                                                 }
                                             });
 
+                                            Thread signOutThread = new Thread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    try {
+                                                        deleteProfileJsonThread.join();
+                                                    } catch (Exception e) {
+                                                        LogHandler.saveLog("Failed to join " +
+                                                                " delete json thread : "  +e.getLocalizedMessage(), true);
+                                                    }
+                                                    if(isDeleted[0]){
+                                                        isSignedout[0] = googleCloud.signOut(buttonText);
+                                                        System.out.println("isSignedOut " + isSignedout[0]);
+                                                    }
+                                                }
+                                            });
+
+
                                             Thread backUpJsonThread = new Thread(new Runnable() {
                                                 @Override
                                                 public void run() {
-                                                    synchronized (deleteProfileJsonThread){
+                                                    synchronized (signOutThread){
                                                         try {
-                                                            deleteProfileJsonThread.join();
+                                                            signOutThread.join();
                                                         } catch (Exception e) {
-                                                            LogHandler.saveLog("Failed to join the delete" +
-                                                                    " profile json thread : " +
+                                                            LogHandler.saveLog("Failed to join the" +
+                                                                    " signout thread : " +
                                                                      e.getLocalizedMessage(), true);
                                                         }
                                                     }
-                                                    if (isDeleted[0]) {
+                                                    if (isSignedout[0]) {
                                                         MainActivity.dbHelper.deleteFromAccountsTable(buttonText, "backup");
                                                         MainActivity.dbHelper.deleteAccountFromDriveTable(buttonText);
                                                         dbHelper.deleteRedundantAsset();
@@ -1651,33 +1668,14 @@
                                                 }
                                             });
 
-                                            Thread signOutThread = new Thread(new Runnable() {
+                                            Thread uiThread = new Thread(new Runnable() {
                                                 @Override
                                                 public void run() {
                                                     synchronized (backUpJsonThread){
                                                         try {
                                                             backUpJsonThread.join();
-                                                        } catch (InterruptedException e) {
-                                                            LogHandler.saveLog("Failed to join " +
-                                                                    " backup json thread : "  +e.getLocalizedMessage(), true);
-                                                        }
-                                                    }
-                                                    if(isBackedUp[0]){
-                                                        isSignedout[0] = googleCloud.signOut(buttonText);
-                                                        System.out.println("isSignedOut " + isSignedout[0]);
-                                                    }
-                                                }
-                                            });
-
-
-                                            Thread uiThread = new Thread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    synchronized (signOutThread){
-                                                        try {
-                                                            signOutThread.join();
                                                         } catch (Exception e) {
-                                                            LogHandler.saveLog("Failed to join sign out thread : " +
+                                                            LogHandler.saveLog("Failed to join backup json thread : " +
                                                                     e.getLocalizedMessage(), true);
                                                         }
                                                     }
@@ -1708,8 +1706,8 @@
                                             });
 
                                             deleteProfileJsonThread.start();
-                                            backUpJsonThread.start();
                                             signOutThread.start();
+                                            backUpJsonThread.start();
                                             uiThread.start();
 //                                            boolean isDeletedFromAccounts = dbHelper.deleteFromAccountsTable(buttonText,"backup");
 //                                            boolean isAccountDeletedFromDriveTable = dbHelper.deleteAccountFromDriveTable(buttonText);
