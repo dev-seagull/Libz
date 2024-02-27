@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+import android.widget.Toast;
 
 public class Upgrade {
 
@@ -21,12 +22,17 @@ public class Upgrade {
             if(savedVersionCode == 13) {
                 upgrade_13_to_14();
                 upgrade_14_to_15();
+                upgrade_15_to_16();
             }
             if (savedVersionCode == 14){
                 upgrade_14_to_15();
+                upgrade_15_to_16();
+            }
+            if (savedVersionCode == 15){
+                upgrade_15_to_16();
             }
         } else if (savedVersionCode > currentVersionCode) {
-            // popup -> please install last version of apk
+            Toast.makeText(MainActivity.activity, "Please install last version of App", Toast.LENGTH_SHORT).show();
         }
 
         SharedPreferences.Editor editor = preferences.edit();
@@ -34,7 +40,11 @@ public class Upgrade {
         editor.apply();
     }
 
+    public static void upgrade_15_to_16() {
 
+        Toast.makeText(MainActivity.activity, "you are upgraded from version 15 to version 16 by Upgrader", Toast.LENGTH_SHORT).show();
+
+    }
 
     public static void upgrade_14_to_15() {
         dropProfileIdColumn();
@@ -74,9 +84,18 @@ public class Upgrade {
             db.endTransaction();
         }
     }
-
-
-
+    public static void deleteAndroidTableContent(){
+        try{
+            MainActivity.dbHelper.getWritableDatabase().beginTransaction();
+            String deleteAndroidContent = "DELETE FROM ANDROID ;";
+            MainActivity.dbHelper.getWritableDatabase().execSQL(deleteAndroidContent);
+            MainActivity.dbHelper.getWritableDatabase().setTransactionSuccessful();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to delete Android table because in (deleteAndroidTableContent) : " + e.getLocalizedMessage());
+        }finally {
+            MainActivity.dbHelper.getWritableDatabase().endTransaction();
+        }
+    }
 
     public static void deleteProfileTableContent(){
         try{
