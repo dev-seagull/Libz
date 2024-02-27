@@ -202,6 +202,11 @@
             Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
             newBackupLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
 
+            TextView androidLoadTextView = findViewById(R.id.androidLoadTextView);
+            TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
+            TextView deviceStorage = findViewById(R.id.deviceStorage);
+
+
             runOnUiThread(() ->{
                 TextView deviceStorageTextView = findViewById(R.id.deviceStorage);
                 deviceStorageTextView.setText("Wait until we get an update of your assets ...");
@@ -330,13 +335,11 @@
                 }
                 try{
                     runOnUiThread(() -> {
-                        TextView deviceStorage = findViewById(R.id.deviceStorage);
                         ArrayList<String> storage =  Android.getAndroidDeviceStorage();
                         deviceStorage.setText("Total space: " + storage.get(0) +
                                 "\n" + "Free space: " + storage.get(1) + "\n" +
                                 "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n");
                         dbHelper.insertIntoDeviceTable(androidDeviceName, storage.get(0), storage.get(1));
-                        TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
                         androidStatisticsTextView.setVisibility(View.VISIBLE);
                         int total_androidAssets_count = dbHelper.countAndroidAssets();
                         androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
@@ -365,6 +368,26 @@
                 @Override
                 public void run() {
                     try{
+                        if(!updateAndroidFilesThread.isAlive() && !updateAndroidFilesThread2[0].isAlive()){
+                            runOnUiThread(() -> {
+                                TextView deviceStorage = findViewById(R.id.deviceStorage);
+                                ArrayList<String> storage =  Android.getAndroidDeviceStorage();
+                                System.out.println(("Total space: " + storage.get(0) +
+                                        "\n" + "Free space: " + storage.get(1) + "\n" +
+                                        "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n"));
+                                deviceStorage.setText("Total space: " + storage.get(0) +
+                                        "\n" + "Free space: " + storage.get(1) + "\n" +
+                                        "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n");
+                                dbHelper.updateDeviceTable(androidDeviceName, storage.get(0), storage.get(1));
+                                TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
+                                androidStatisticsTextView.setVisibility(View.VISIBLE);
+                                int total_androidAssets_count = dbHelper.countAndroidAssets();
+                                androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
+                                        "\n" + "synced android assets: " +
+                                        dbHelper.countAndroidSyncedAssets());
+                            });
+                        }
+
                         System.out.println("is alive: " + updateAndroidFilesThread.isAlive() + updateAndroidFilesThread2[0].isAlive());
                         if(!deleteRedundantAndroidThread.isAlive()){
                             deleteRedundantAndroidThread2[0] = new Thread(deleteRedundantAndroidThread);
@@ -376,28 +399,11 @@
                             System.out.println("here running 2.1");
                             updateAndroidFilesThread2[0].start();
                         }
-                        runOnUiThread(() -> {
-                            TextView deviceStorage = findViewById(R.id.deviceStorage);
-                            ArrayList<String> storage =  Android.getAndroidDeviceStorage();
-                            System.out.println(("Total space: " + storage.get(0) +
-                                    "\n" + "Free space: " + storage.get(1) + "\n" +
-                                    "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n"));
-                            deviceStorage.setText("Total space: " + storage.get(0) +
-                                    "\n" + "Free space: " + storage.get(1) + "\n" +
-                                    "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n");
-                            dbHelper.updateDeviceTable(androidDeviceName, storage.get(0), storage.get(1));
-                            TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
-                            androidStatisticsTextView.setVisibility(View.VISIBLE);
-                            int total_androidAssets_count = dbHelper.countAndroidAssets();
-                            androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
-                                    "\n" + "synced android assets: " +
-                                    dbHelper.countAndroidSyncedAssets());
-                        });
                     }catch (Exception e){
                         LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
                     }
                 }
-            }, 0, 15000);
+            }, 15000, 10000);
 
 //            if(errorCounter == 0){
 //                LogHandler.deleteLogFile();
