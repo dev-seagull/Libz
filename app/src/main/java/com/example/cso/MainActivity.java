@@ -1492,7 +1492,8 @@
                                             try {
                                                 button.setText("Wait...");
                                             } catch (Exception e) {
-                                                e.printStackTrace();
+                                                LogHandler.saveLog("Failed to set text to wait : " +
+                                                e.getLocalizedMessage(), true);
                                             }
 
                                             final boolean[] isSignedout = {false};
@@ -1537,7 +1538,8 @@
                                                         try {
                                                             backUpJsonThread.join();
                                                         } catch (InterruptedException e) {
-                                                            e.printStackTrace();
+                                                            LogHandler.saveLog("Failed to join " +
+                                                                    " back up json thread : " + e.getLocalizedMessage(), true);
                                                         }
                                                     }
                                                     runOnUiThread(() -> {
@@ -1548,13 +1550,18 @@
                                                                 ViewGroup parentView = (ViewGroup) button.getParent();
                                                                 parentView.removeView(button);
                                                             } catch (Exception e) {
-                                                                e.printStackTrace();
+                                                                LogHandler.saveLog(
+                                                                        "Failed to handle ui after signout : "
+                                                                        + e.getLocalizedMessage(), true
+                                                                );
                                                             }
                                                         } else {
                                                             try {
                                                                 button.setText(buttonText);
                                                             } catch (Exception e) {
-                                                                e.printStackTrace();
+                                                                LogHandler.saveLog(" Failed to set text " +
+                                                                        " to button text  : " + e.getLocalizedMessage()
+                                                                , true);
                                                             }
                                                         }
                                                     });
@@ -1669,8 +1676,9 @@
                                                     synchronized (signOutThread){
                                                         try {
                                                             signOutThread.join();
-                                                        } catch (InterruptedException e) {
-                                                            e.printStackTrace();
+                                                        } catch (Exception e) {
+                                                            LogHandler.saveLog("Failed to join sign out thread : " +
+                                                                    e.getLocalizedMessage(), true);
                                                         }
                                                     }
                                                     runOnUiThread(() -> {
@@ -1680,13 +1688,19 @@
                                                                 ViewGroup parentView = (ViewGroup) button.getParent();
                                                                 parentView.removeView(button);
                                                             } catch (Exception e) {
-                                                                e.printStackTrace();
+                                                                LogHandler.saveLog(
+                                                                        "Failed to handle ui after signout : "
+                                                                        + e.getLocalizedMessage(), true
+                                                                );
                                                             }
                                                         } else {
                                                             try {
                                                                 button.setText(buttonText);
                                                             } catch (Exception e) {
-                                                                e.printStackTrace();
+                                                                LogHandler.saveLog(
+                                                                        "Failed to handle ui when signout : "
+                                                                                + e.getLocalizedMessage(), true
+                                                                );
                                                             }
                                                         }
                                                     });
@@ -1834,8 +1848,11 @@
                                                 synchronized (signOutThread){
                                                     try {
                                                         signOutThread.join();
-                                                    } catch (InterruptedException e) {
-                                                        e.printStackTrace();
+                                                    } catch (Exception e) {
+                                                        LogHandler.saveLog(
+                                                                "Failed to join sign out thread : "
+                                                                + e.getLocalizedMessage(), true
+                                                        );
                                                     }
                                                 }
 //                                                runOnUiThread(() -> {
