@@ -104,7 +104,7 @@ public class GoogleDrive {
         ArrayList<BackUpAccountInfo.MediaItem> uploadFileIDs_fromFuture = null;
         try {
             uploadFileIDs_fromFuture = future.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (Exception e) {
             LogHandler.saveLog("Error when trying to get drive files from future: " + e.getLocalizedMessage());
         } finally {
             executor.shutdown();
