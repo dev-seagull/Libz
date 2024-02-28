@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Environment;
+import android.os.Looper;
 import android.os.StatFs;
 import android.view.View;
 import android.widget.TextView;
@@ -1101,10 +1102,10 @@ public class DBHelper extends SQLiteOpenHelper {
                         service.files().create(fileMetadata, mediaContent).setFields("id").execute();
                 uploadFileId[0] = uploadFile.getId();
                 System.out.println("upload id is " + uploadFileId[0]);
-                while (uploadFileId[0] == null) {
-                    wait();
-                    System.out.println("waiting ... ");
-                }
+//                while (uploadFileId[0] == null) {
+//                    wait();
+//                    System.out.println("waiting ... ");
+//                }
                 if (uploadFileId[0] == null | uploadFileId[0].isEmpty()) {
                     LogHandler.saveLog("Failed to upload database from Android to backup because it's null");
                 } else {
@@ -1234,10 +1235,10 @@ public class DBHelper extends SQLiteOpenHelper {
 
                         String uploadedFileId = uploadedFile.getId();
 
-                        while (uploadedFileId == null) {
-                            wait();
-                            System.out.println("waiting for profile map backup... ");
-                        }
+//                        while (uploadedFileId == null) {
+//                            this.wait();
+//                            System.out.println("waiting for profile map backup... ");
+//                        }
                         if (uploadedFileId == null | uploadedFileId.isEmpty()) {
                             LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
                         }else{

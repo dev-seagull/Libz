@@ -106,8 +106,6 @@ public class GoogleDrive {
             uploadFileIDs_fromFuture = future.get();
         } catch (Exception e) {
             LogHandler.saveLog("Error when trying to get drive files from future: " + e.getLocalizedMessage());
-        } finally {
-            executor.shutdown();
         }
         return uploadFileIDs_fromFuture;
     }

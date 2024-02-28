@@ -5,6 +5,7 @@
     import android.content.res.ColorStateList;
     import android.graphics.Color;
     import android.graphics.drawable.Drawable;
+    import android.os.Looper;
     import android.view.Gravity;
     import android.view.View;
     import android.view.ViewGroup;
@@ -280,6 +281,9 @@
                 Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
                 GoogleSignInAccount account = googleSignInTask.getResult(ApiException.class);
 
+                if(Looper.myLooper() == Looper.getMainLooper()) {
+                    System.out.println("this is main thread88.");
+                }
                 userEmail = account.getEmail();
                 if (userEmail != null && userEmail.toLowerCase().endsWith("@gmail.com")) {
                     userEmail = account.getEmail();
