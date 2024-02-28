@@ -17,42 +17,63 @@ public class Upgrade {
             deleteProfileTableContent();
             deleteAccountsTableContent();
         }
-        else if (savedVersionCode < currentVersionCode) {
-            // This means this is a new install or an upgrade. Perform necessary data migration.
-            if(savedVersionCode == 13) {
-                upgrade_13_to_14();
-                upgrade_14_to_15();
-                upgrade_15_to_16();
-            }
-            if (savedVersionCode == 14){
-                upgrade_14_to_15();
-                upgrade_15_to_16();
-            }
-            if (savedVersionCode == 15){
-                upgrade_15_to_16();
+        else if (savedVersionCode <= currentVersionCode) {
+            switch (savedVersionCode){
+                case 13:
+                    upgrade_13_to_14();
+                    break;
+                case 14:
+                    upgrade_14_to_15();
+                    break;
+                case 15:
+                    upgrade_15_to_16();
+                    break;
+                case 16:
+                    upgrade_16_to_17();
+                    break;
+                default:
+                    lastVersion();
             }
         } else if (savedVersionCode > currentVersionCode) {
             Toast.makeText(MainActivity.activity, "Please install last version of App", Toast.LENGTH_SHORT).show();
         }
-
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("currentVersionCode", currentVersionCode);
         editor.apply();
     }
 
+
+    public static void lastVersion() {
+        MainActivity.activity.runOnUiThread(() -> {
+            Toast.makeText(MainActivity.activity, "You are upgraded to last version", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+
+    public static void upgrade_16_to_17() {
+        MainActivity.activity.runOnUiThread(() -> {
+            Toast.makeText(MainActivity.activity, "you are upgraded from version 15 to version 16 by Upgrader", Toast.LENGTH_SHORT).show();
+            deleteDeviceTableContent();
+        });
+
+    }
+
     public static void upgrade_15_to_16() {
-
-        Toast.makeText(MainActivity.activity, "you are upgraded from version 15 to version 16 by Upgrader", Toast.LENGTH_SHORT).show();
-
+        MainActivity.activity.runOnUiThread(() -> {
+            Toast.makeText(MainActivity.activity, "you are upgraded from version 15 to version 16 by Upgrader", Toast.LENGTH_SHORT).show();
+        });
+        upgrade_16_to_17();
     }
 
     public static void upgrade_14_to_15() {
         dropProfileIdColumn();
         deleteProfileTableContent();
+        upgrade_15_to_16();
     }
 
     public static void upgrade_13_to_14(){
         cutFromUserProfileToAccounts();
+        upgrade_14_to_15();
     }
 
     public static void dropProfileIdColumn() {
@@ -170,5 +191,19 @@ public class Upgrade {
             LogHandler.saveLog("Failed to get profileId from profile  : " + e.getLocalizedMessage());
         }
         return profileId;
+    }
+
+
+    public static void deleteDeviceTableContent(){
+        try{
+            MainActivity.dbHelper.getWritableDatabase().beginTransaction();
+            String deleteDeviceContent = "DELETE FROM DEVICE ;";
+            MainActivity.dbHelper.getWritableDatabase().execSQL(deleteDeviceContent);
+            MainActivity.dbHelper.getWritableDatabase().setTransactionSuccessful();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to delete Device table because in (deleteDeviceTableContent) : " + e.getLocalizedMessage());
+        }finally {
+            MainActivity.dbHelper.getWritableDatabase().endTransaction();
+        }
     }
 }

@@ -194,29 +194,6 @@ public class Android {
         return fileManagerItems;
     }
 
-
-    public static ArrayList<String> getAndroidDeviceStorage(){
-        String externalStorageDirectory = Environment.getExternalStorageDirectory().getPath();
-        StatFs statFs = new StatFs(externalStorageDirectory);
-        long blockSize = statFs.getBlockSizeLong();
-        long totalBlocks = statFs.getBlockCountLong();
-        long availableBlocks = statFs.getAvailableBlocksLong();
-
-        double totalSpaceGB = (totalBlocks * blockSize) / (1024.0 * 1024.0 * 1024.0);
-        double freeSpaceGB = (availableBlocks * blockSize) / (1024.0 * 1024.0 * 1024.0);
-        ArrayList<String> storage = new ArrayList<>();
-        storage.add(String.format("%.2f GB", totalSpaceGB));
-        storage.add(String.format("%.2f GB", freeSpaceGB));
-        return storage;
-    }
-
-
-    private String freeStorageChecker(){
-        String freeStorage = new String();
-
-        return "";
-    }
-
 }
 
 

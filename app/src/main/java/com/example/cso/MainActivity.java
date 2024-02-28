@@ -57,7 +57,6 @@
     import java.util.HashMap;
     import java.util.List;
     import java.util.Map;
-    import java.util.Set;
     import java.util.Timer;
     import java.util.TimerTask;
     import java.util.concurrent.Executor;
@@ -80,6 +79,8 @@
         public static int errorCounter = 0;
         static SharedPreferences preferences;
         public static DBHelper dbHelper;
+
+        public static StorageHandler storageHandler;
         public Thread firstUiThread;
         public Thread secondUiThread;
         public static Thread backUpJsonThread;
@@ -150,6 +151,8 @@
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
+            androidDeviceName = DeviceName.getDeviceName();
+            storageHandler = new StorageHandler();
 //            if(dbHelper.DATABASE_VERSION < 11) {
 //            LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
             Upgrade.versionHandler(preferences);
@@ -199,7 +202,7 @@
 
             syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
 
-            androidDeviceName = DeviceName.getDeviceName();
+
             Button androidDeviceButton = findViewById(R.id.androidDeviceButton);
             androidDeviceButton.setText(androidDeviceName);
 
@@ -344,16 +347,14 @@
                 }
                 try{
                     runOnUiThread(() -> {
-
-                        ArrayList<String> storage =  Android.getAndroidDeviceStorage();
-                        deviceStorage.setText("Total space: " + storage.get(0) +
-                                "\n" + "Free space: " + storage.get(1) + "\n" +
+                        storageHandler.storageUpdater();
+                        deviceStorage.setText("Total space: " + storageHandler.getTotalStorage()+
+                                " GB\n" + "Free space: " + storageHandler.getFreeSpace()+ " GB\n" +
                                 "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n");
-                        dbHelper.insertIntoDeviceTable(androidDeviceName, storage.get(0), storage.get(1));
                         androidStatisticsTextView.setVisibility(View.VISIBLE);
                         int total_androidAssets_count = dbHelper.countAndroidAssets();
                         androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
-                                "\n" + "synced android assets: " +
+                                "\n" + "Synced android assets: " +
                                 dbHelper.countAndroidSyncedAssets());
                     });
                 }catch (Exception e){
@@ -398,20 +399,16 @@
                         if(!updateAndroidFilesThread.isAlive() && !updateAndroidFilesThread2[0].isAlive()){
                             if(!anyThreadAlive){
                                 runOnUiThread(() -> {
+                                    storageHandler.storageUpdater();
                                     TextView deviceStorage = findViewById(R.id.deviceStorage);
-                                    ArrayList<String> storage =  Android.getAndroidDeviceStorage();
-                                    System.out.println(("Total space: " + storage.get(0) +
-                                            "\n" + "Free space: " + storage.get(1) + "\n" +
-                                            "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n"));
-                                    deviceStorage.setText("Total space: " + storage.get(0) +
-                                            "\n" + "Free space: " + storage.get(1) + "\n" +
+                                    deviceStorage.setText("Total space: " + storageHandler.getTotalStorage()+
+                                            " GB\n" + "Free space: " + storageHandler.getFreeSpace()+ " GB\n" +
                                             "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n");
-                                    dbHelper.updateDeviceTable(androidDeviceName, storage.get(0), storage.get(1));
                                     TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
                                     androidStatisticsTextView.setVisibility(View.VISIBLE);
                                     int total_androidAssets_count = dbHelper.countAndroidAssets();
                                     androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
-                                            "\n" + "synced android assets: " +
+                                            "\n" + "Synced android assets: " +
                                             dbHelper.countAndroidSyncedAssets());
                                 });
                             }

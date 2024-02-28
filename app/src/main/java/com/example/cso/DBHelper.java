@@ -4,11 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Environment;
-import android.os.Looper;
-import android.os.StatFs;
-import android.view.View;
-import android.widget.TextView;
+import android.database.sqlite.SQLiteConstraintException;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.ByteArrayContent;
@@ -19,10 +15,6 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-
-import org.checkerframework.checker.units.qual.A;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,6 +27,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -1350,13 +1343,17 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public static boolean insertIntoDeviceTable(String deviceName,String totalSpace,String freeSpace){
         dbWritable.beginTransaction();
-        try{
+        try {
             String sqlQuery = "INSERT INTO DEVICE (" +
                     "deviceName," +
                     "totalStorage," +
                     "freeStorage) VALUES (?,?,?)";
-            dbWritable.execSQL(sqlQuery, new Object[]{deviceName,totalSpace,freeSpace});
+            dbWritable.execSQL(sqlQuery, new Object[]{deviceName, totalSpace, freeSpace});
             dbWritable.setTransactionSuccessful();
+            return true;
+        }catch (SQLiteConstraintException e1){
+            updateDeviceTable(deviceName, totalSpace, freeSpace);
+            e1.printStackTrace();
             return true;
         }catch (Exception e){
             LogHandler.saveLog("Failed to insert into DEVICE table : " + e.getLocalizedMessage());
@@ -1366,11 +1363,11 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public static boolean updateDeviceTable(String deviceName,String totalSpace,String freeSpace){
+    public static boolean updateDeviceTable(String deviceName,String freeSpace){
         dbWritable.beginTransaction();
         try{
-            String sqlQuery = "UPDATE DEVICE SET totalStorage = ?, freeStorage = ? WHERE deviceName = ?";
-            dbWritable.execSQL(sqlQuery, new Object[]{totalSpace,freeSpace,deviceName});
+            String sqlQuery = "UPDATE DEVICE SET freeStorage = ? WHERE deviceName = ?";
+            dbWritable.execSQL(sqlQuery, new Object[]{freeSpace,deviceName});
             dbWritable.setTransactionSuccessful();
             return true;
         }catch (Exception e){
@@ -1380,6 +1377,22 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.endTransaction();
         }
     }
+
+    public static boolean updateDeviceTable(String deviceName,String totalStorage,String freeSpace){
+        dbWritable.beginTransaction();
+        try{
+            String sqlQuery = "UPDATE DEVICE SET totalStorage = ? and freeStorage = ? WHERE deviceName = ?";
+            dbWritable.execSQL(sqlQuery, new Object[]{totalStorage,freeSpace ,deviceName ,});
+            dbWritable.setTransactionSuccessful();
+            return true;
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to update DEVICE table : " + e.getLocalizedMessage());
+            return false;
+        }finally {
+            dbWritable.endTransaction();
+        }
+    }
+
 
     public String getPhotosAndVideosStorage(){
         createIndex();
