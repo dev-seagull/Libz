@@ -88,6 +88,7 @@
         public Thread deleteRedundantDriveThread;
         public Thread updateDriveBackUpThread;
         public Thread deleteDuplicatedInDrive;
+
         List<Thread> threads = new ArrayList<>(Arrays.asList(firstUiThread, secondUiThread,
                 backUpJsonThread, insertMediaItemsThread, deleteRedundantDriveThread, updateDriveBackUpThread, deleteDuplicatedInDrive));
 
@@ -372,68 +373,73 @@
             deleteDuplicatedInDrive.start();
             updateUIThread.start();
 
-            final Thread[] updateAndroidFilesThread2 = {new Thread(updateAndroidFilesThread)};
-            final Thread[] deleteRedundantAndroidThread2 = {new Thread(deleteRedundantDriveThread)};
+//            final Thread[] updateAndroidFilesThread2 = {new Thread(updateAndroidFilesThread)};
+//            final Thread[] deleteRedundantAndroidThread2 = {new Thread(deleteRedundantDriveThread)};
+//            final Thread[] storageUpdaterThread = {new Thread(() -> {storageHandler.storageUpdater();})};
 
-            new Timer().scheduleAtFixedRate(new TimerTask() {
-                public void run() {
-                    boolean anyThreadAlive = false;
-                    try{
-//                        Set<Thread> threadss = Thread.getAllStackTraces().keySet();
-//                        System.out.println("start to threads : ");
-//                        System.out.printf("%-15s \t %-15s \t %-15s \t %s\n", "Name", "State", "Priority", "isDaemon");
-//                        for (Thread t : threadss) {
-//                            System.out.printf("%-15s \t %-15s \t %-15d \t %s\n", t.getName(), t.getState(), t.getPriority(), t.isDaemon());
+
+////          Timer with UI
+//            new Timer().scheduleAtFixedRate(new TimerTask() {
+//                public void run() {
+//                    boolean anyThreadAlive = false;
+//                    try{
+//                        for(Thread thread : threads ){
+//                            if(thread != null){
+//                                System.out.println(thread.getId());
+//                                System.out.println("Name : " + thread.getName() + " is " + thread.isAlive());
+//                            }
+//                            if (thread != null && thread.isAlive()) {
+//                                anyThreadAlive = true;
+//                                break;
+//                            }
 //                        }
-                        for(Thread thread : threads ){
-                            if(thread != null){
-                                System.out.println(thread.getId());
-                                System.out.println("Name : " + thread.getName() + " is " + thread.isAlive());
-                            }
-                            if (thread != null && thread.isAlive()) {
-                                anyThreadAlive = true;
-                                break;
-                            }
-                        }
-                        System.out.println("should run : " + !anyThreadAlive);
-                        if(!updateAndroidFilesThread.isAlive() && !updateAndroidFilesThread2[0].isAlive()){
-                            if(!anyThreadAlive){
-                                runOnUiThread(() -> {
-                                    storageHandler.storageUpdater();
-                                    TextView deviceStorage = findViewById(R.id.deviceStorage);
-                                    deviceStorage.setText("Total space: " + storageHandler.getTotalStorage()+
-                                            " GB\n" + "Free space: " + storageHandler.getFreeSpace()+ " GB\n" +
-                                            "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n");
-                                    TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
-                                    androidStatisticsTextView.setVisibility(View.VISIBLE);
-                                    int total_androidAssets_count = dbHelper.countAndroidAssets();
-                                    androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
-                                            "\n" + "Synced android assets: " +
-                                            dbHelper.countAndroidSyncedAssets());
-                                });
-                            }
-                        }
+//                        System.out.println("should run : " + !anyThreadAlive);
+//                        if(!updateAndroidFilesThread.isAlive() && !updateAndroidFilesThread2[0].isAlive()){
+//                            if(!anyThreadAlive){
+//
+//                                if (!storageUpdaterThread[0].isAlive()) {
+//                                    Thread storageUpdaterThreadTemp = new Thread(storageUpdaterThread[0]);
+//                                    storageUpdaterThreadTemp.start();
+//                                }
+//                                runOnUiThread(() -> {
+//                                    TextView deviceStorage = findViewById(R.id.deviceStorage);
+//                                    deviceStorage.setText("Total space: " + storageHandler.getTotalStorage()+
+//                                            " GB\n" + "Free space: " + storageHandler.getFreeSpace()+ " GB\n" +
+//                                            "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n");
+//                                    TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
+//                                    androidStatisticsTextView.setVisibility(View.VISIBLE);
+//                                    int total_androidAssets_count = dbHelper.countAndroidAssets();
+//                                    androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
+//                                            "\n" + "Synced android assets: " +
+//                                            dbHelper.countAndroidSyncedAssets());
+//                                });
+//                            }
+//                        }
+//
+//                        System.out.println("is alive: " + updateAndroidFilesThread.isAlive() + updateAndroidFilesThread2[0].isAlive());
+//                        if(!deleteRedundantAndroidThread.isAlive() && !anyThreadAlive){
+//                            deleteRedundantAndroidThread2[0] = new Thread(deleteRedundantAndroidThread);
+//                            System.out.println("here running 1.1");
+//                            deleteRedundantAndroidThread2[0].start();
+//                        }
+//                        if(!updateAndroidFilesThread.isAlive() && !updateAndroidFilesThread2[0].isAlive() && !anyThreadAlive){
+//                            updateAndroidFilesThread2[0] = new Thread(updateAndroidFilesThread);
+//                            System.out.println("here running 2.1");
+//                            updateAndroidFilesThread2[0].start();
+//                        }
+//                    }catch (Exception e){
+//                        LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
+//                    }
+//                }
+//            }, 15000, 15000);
+//
 
-                        System.out.println("is alive: " + updateAndroidFilesThread.isAlive() + updateAndroidFilesThread2[0].isAlive());
-                        if(!deleteRedundantAndroidThread.isAlive() && !anyThreadAlive){
-                            deleteRedundantAndroidThread2[0] = new Thread(deleteRedundantAndroidThread);
-                            System.out.println("here running 1.1");
-                            deleteRedundantAndroidThread2[0].start();
-                        }
-                        if(!updateAndroidFilesThread.isAlive() && !updateAndroidFilesThread2[0].isAlive() && !anyThreadAlive){
-                            updateAndroidFilesThread2[0] = new Thread(updateAndroidFilesThread);
-                            System.out.println("here running 2.1");
-                            updateAndroidFilesThread2[0].start();
-                        }
-                    }catch (Exception e){
-                        LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
-                    }
-                }
-            }, 15000, 15000);
+            Intent serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
+            this.getApplicationContext().startService(serviceIntent);
 
-//            if(errorCounter == 0){
-//                LogHandler.deleteLogFile();
-//            }
+//            Intent stopServiceIntent = new Intent(this.getApplicationContext(), TimerService.class);
+//            this.getApplicationContext().stopService(stopServiceIntent);
+
 
             System.out.println(" here 1 : " +  errorCounter );
             LogHandler.saveLog("--------------------------first threads were finished----------------------------",false);

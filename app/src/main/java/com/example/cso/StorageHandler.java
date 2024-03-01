@@ -8,6 +8,7 @@ import android.os.StatFs;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 public class StorageHandler {
 
@@ -63,6 +64,7 @@ public class StorageHandler {
         this.blockSize = getDeviceBlockSize();
         this.totalStorage = getDeviceTotalStorage();
         this.optimizedFreeSpace = this.totalStorage * optimizedPercent;
+        System.out.println("optimizedFreeSpace is : " + optimizedFreeSpace);
         this.freeSpace = getDeviceFreeStorage();
         MainActivity.dbHelper.insertIntoDeviceTable(MainActivity.androidDeviceName,
                 String.format("%.3f", this.totalStorage), String.format("%.3f", this.freeSpace));
@@ -74,7 +76,10 @@ public class StorageHandler {
         MainActivity.dbHelper.updateDeviceTable(MainActivity.androidDeviceName,String.valueOf(this.freeSpace));
         amountSpaceToFreeUp = amountSpaceToFreeUp();
         if (amountSpaceToFreeUp != 0){
-            //freeSpace();
+            Upload upload = new Upload();
+            double netSpeed = 0.5;// base on Mb
+            double periodTime = 10;//in sec
+            upload.limitedUploadAndroidToDrive(netSpeed * periodTime);
         }else{
             System.out.println("No need to free up space");
         }
@@ -83,8 +88,8 @@ public class StorageHandler {
     }
 
 
-
     public double amountSpaceToFreeUp() {
+        return 3.3;/*
         String sqlQuery = "SELECT freeStorage FROM DEVICE WHERE deviceName = ?;";//where device name
         Cursor cursor = MainActivity.dbHelper.getReadableDatabase().rawQuery(sqlQuery,new String[]{MainActivity.androidDeviceName});
         try{
@@ -104,8 +109,7 @@ public class StorageHandler {
         if (this.freeSpace <= optimizedFreeSpace) {
             return optimizedFreeSpace - this.freeSpace;
         }
-        return 0.0;
-
+        return 0.0;*/
     }
 
 

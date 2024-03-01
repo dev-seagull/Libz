@@ -13,6 +13,8 @@
     <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <application android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
         android:name=".LogHandler"
@@ -50,13 +52,15 @@
 
         <activity android:name=".GoogleCloud"
             tools:ignore="Instantiatable" />
+        <service android:name=".TimerService" />
 
 
-        <activity android:name=".CustomLoginPage"
-            android:theme="@style/AppTheme.Dialog" />
 
-        <activity android:name=".CustomSignUpPage"
-            android:theme="@style/AppTheme.Dialog" />
+<!--        <activity android:name=".CustomLoginPage"-->
+<!--            android:theme="@style/AppTheme.Dialog" />-->
+
+<!--        <activity android:name=".CustomSignUpPage"-->
+<!--            android:theme="@style/AppTheme.Dialog" />-->
     </application>
 
 
