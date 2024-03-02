@@ -71,10 +71,10 @@ public class StorageHandler {
     }
 
     public void storageUpdater(){
-        double amountSpaceToFreeUp = 0 ;
+        double amountSpaceToFreeUp = 0;
         this.freeSpace = getDeviceFreeStorage();
         MainActivity.dbHelper.updateDeviceTable(MainActivity.androidDeviceName,String.valueOf(this.freeSpace));
-        amountSpaceToFreeUp = amountSpaceToFreeUp();
+        amountSpaceToFreeUp = getAmountSpaceToFreeUp();
         if (amountSpaceToFreeUp != 0){
             Upload upload = new Upload();
             double netSpeed = 0.5;// base on Mb
@@ -88,10 +88,10 @@ public class StorageHandler {
     }
 
 
-    public double amountSpaceToFreeUp() {
-        return 3.3;/*
-        String sqlQuery = "SELECT freeStorage FROM DEVICE WHERE deviceName = ?;";//where device name
-        Cursor cursor = MainActivity.dbHelper.getReadableDatabase().rawQuery(sqlQuery,new String[]{MainActivity.androidDeviceName});
+    public double getAmountSpaceToFreeUp() {
+        String sqlQuery = "SELECT freeStorage FROM DEVICE WHERE deviceName = ?;";
+        Cursor cursor = MainActivity.dbHelper.getReadableDatabase()
+                .rawQuery(sqlQuery,new String[]{MainActivity.androidDeviceName});
         try{
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
@@ -109,7 +109,7 @@ public class StorageHandler {
         if (this.freeSpace <= optimizedFreeSpace) {
             return optimizedFreeSpace - this.freeSpace;
         }
-        return 0.0;*/
+        return 0.0;
     }
 
 
