@@ -281,9 +281,6 @@
                 Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
                 GoogleSignInAccount account = googleSignInTask.getResult(ApiException.class);
 
-                if(Looper.myLooper() == Looper.getMainLooper()) {
-                    System.out.println("this is main thread88.");
-                }
                 userEmail = account.getEmail();
                 if (userEmail != null && userEmail.toLowerCase().endsWith("@gmail.com")) {
                     userEmail = account.getEmail();

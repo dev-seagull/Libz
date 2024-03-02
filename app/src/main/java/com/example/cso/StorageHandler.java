@@ -4,6 +4,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Looper;
 import android.os.StatFs;
 
 import java.util.ArrayList;
@@ -75,16 +76,19 @@ public class StorageHandler {
         this.freeSpace = getDeviceFreeStorage();
         MainActivity.dbHelper.updateDeviceTable(MainActivity.androidDeviceName,String.valueOf(this.freeSpace));
         amountSpaceToFreeUp = getAmountSpaceToFreeUp();
+
         if (amountSpaceToFreeUp != 0){
+            if(Looper.myLooper() == Looper.getMainLooper()) {
+                System.out.println("this is main thread in amount free space up.");
+            }
             Upload upload = new Upload();
             double netSpeed = 0.5;
-            double periodTime = 10; 
+            double periodTime = 10;
             upload.limitedUploadAndroidToDrive(netSpeed * periodTime);
             LogHandler.saveLog("Free up space for " + amountSpaceToFreeUp, false);
         }else{
             LogHandler.saveLog("No need to free up space.",  false);
         }
-
     }
 
 

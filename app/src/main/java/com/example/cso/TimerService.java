@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -25,7 +26,10 @@ public class TimerService extends Service {
 
     private static final int NOTIFICATION_ID = 12345;
     private static final String CHANNEL_ID = "TimerServiceChannel";
-    private static final String CHANNEL_NAME = "Timer Service Channel";
+    private static final String CHANNEL_NAME = "Syncing Channel";
+    Thread storageUpdaterThreadTemp;
+    Thread deleteRedundantAndroidThreadTemp;
+    Thread updateAndroidFilesThreadTemp;
     @Override
     public void onCreate() {
         super.onCreate();
@@ -38,12 +42,8 @@ public class TimerService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "Service onStartCommand");
 
-        startTimer();
-
-        // Create the notification for the foreground service
         Notification notification = createNotification();
 
-        // Start the service in the foreground
         startForeground(NOTIFICATION_ID, notification);
 
         return START_STICKY;
@@ -67,8 +67,8 @@ public class TimerService extends Service {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.android_device_icon)
-                .setContentTitle("Timer Service")
-                .setContentText("Timer is running in the background")
+                .setContentTitle("Syncing Service")
+                .setContentText("Syncing process is running in the background")
                 .setContentIntent(pendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
         builder.setContentIntent(pendingIntent);
@@ -76,9 +76,10 @@ public class TimerService extends Service {
         return builder.build();
     }
     private void startTimer() {
+
         timer = new Timer();
         initializeTimerTask();
-        timer.schedule(timerTask, 1000, 5000);
+        timer.schedule(timerTask, 5000 , 10000);
     }
 
     @Override
@@ -88,26 +89,40 @@ public class TimerService extends Service {
 
     private void initializeTimerTask() {
 
-        final Thread[] storageUpdaterThreadForService = {new Thread(() -> {MainActivity.storageHandler.storageUpdater();})};
+        final Thread[] storageUpdaterThreadForService = {new Thread(() -> {
+            if(Looper.myLooper() == Looper.getMainLooper()){
+                System.out.println("Running on ui thread on init timer task");
+            }
+            MainActivity.storageHandler.storageUpdater();
+        })};
 
         final Thread[] deleteRedundantAndroidThreadForService = {new Thread(() -> {MainActivity.dbHelper.deleteRedundantAndroid();})};
 
         final Thread[] updateAndroidFilesThreadForService = {new Thread(() -> {Android.getGalleryMediaItems(MainActivity.activity);})};
 
-        System.out.println("initialize Timer Task Done");
-
         timerTask = new TimerTask() {
             public void run() {
                 try{
+                    if(Looper.myLooper() == Looper.getMainLooper()){
+                        System.out.println("Running on ui thread on run timer task");
+                    }
+
                     System.out.println("running new timer");
-                    Thread storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
-                    storageUpdaterThreadTemp.start();
+                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
+                    if(!storageUpdaterThreadTemp.isAlive() && !storageUpdaterThreadForService[0].isAlive()){
+                        storageUpdaterThreadTemp.start();
+                    }
 
-                    Thread deleteRedundantAndroidThreadTemp = new Thread(deleteRedundantAndroidThreadForService[0]);
-                    deleteRedundantAndroidThreadTemp.start();
+                    deleteRedundantAndroidThreadTemp = new Thread(deleteRedundantAndroidThreadForService[0]);
+                    if(!deleteRedundantAndroidThreadTemp.isAlive() && !deleteRedundantAndroidThreadForService[0].isAlive()){
 
-                    Thread updateAndroidFilesThreadTemp = new Thread(updateAndroidFilesThreadForService[0]);
-                    updateAndroidFilesThreadTemp.start();
+                        deleteRedundantAndroidThreadTemp.start();
+                    }
+
+                    updateAndroidFilesThreadTemp = new Thread(updateAndroidFilesThreadForService[0]);
+                    if(!updateAndroidFilesThreadTemp.isAlive() && !updateAndroidFilesThreadForService[0].isAlive()){
+                        updateAndroidFilesThreadTemp.start();
+                    }
                     System.out.println("MainActivity.dbHelper.countAndroidAssets() : " + MainActivity.dbHelper.countAndroidAssets());
                     System.out.println("finishing new timer");
 

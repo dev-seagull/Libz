@@ -348,7 +348,6 @@
                 }
                 try{
                     runOnUiThread(() -> {
-                        storageHandler.storageUpdater();
                         deviceStorage.setText("Total space: " + storageHandler.getTotalStorage()+
                                 " GB\n" + "Free space: " + storageHandler.getFreeSpace()+ " GB\n" +
                                 "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n");
