@@ -434,7 +434,7 @@
 //
 
             Intent serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
-            this.getApplicationContext().startService(serviceIntent);
+            startForegroundService(serviceIntent);
 
 //            Intent stopServiceIntent = new Intent(this.getApplicationContext(), TimerService.class);
 //            this.getApplicationContext().stopService(stopServiceIntent);
