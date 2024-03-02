@@ -1,5 +1,7 @@
     package com.example.cso;
 
+    import static androidx.core.app.ServiceCompat.stopForeground;
+
     import android.Manifest;
     import android.app.Activity;
     import android.app.AlertDialog;
@@ -185,16 +187,16 @@
                                     "thread in customLoginThread : " + e.getLocalizedMessage(),true);
                         }
                     }
-                    boolean isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
-                            (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
+                    boolean isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
+                            (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
                     while(!isWriteAndReadPermissionGranted){
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                                (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED |
-                                        ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)) {
+                                (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED |
+                                        ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)) {
                             ActivityCompat.requestPermissions(MainActivity.this, permissions, requestCode);
                         }
-                        isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
-                                (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
+                        isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
+                                (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
                     }
                 }
             };
@@ -434,10 +436,10 @@
 //
 
             Intent serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
-            startForegroundService(serviceIntent);
-
-//            Intent stopServiceIntent = new Intent(this.getApplicationContext(), TimerService.class);
-//            this.getApplicationContext().stopService(stopServiceIntent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            }
+            stopService(serviceIntent);
 
 
             System.out.println(" here 1 : " +  errorCounter );
@@ -1472,9 +1474,14 @@
                         });
                     });
 
+
+
                     deleteRedundantAndUpdatePhotos.start();
                     uploadPhotosToDriveThread.start();
                     deletePhotosFromAndroidThread.start();
+
+
+
                     deleteRedundantAndroidThread.start();
                     updateAndroidFilesThread.start();
                     deleteRedundantDriveThread.start();

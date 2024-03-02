@@ -902,7 +902,6 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
     }
 
-
     public List<String[]> getDriveTable(String[] columns, String userEmail){
         List<String[]> resultList = new ArrayList<>();
 

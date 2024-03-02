@@ -263,6 +263,7 @@ public class Upload {
                 List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_columns);
 
                 ArrayList<String> androidItemsToUpload_hash = new ArrayList<>();
+                System.out.println("android_items.size() : " + android_items.size());
                 int duplicatedFileIndex = -1;
                 for (int j=0 ; j < android_items.size(); j++) {
                     System.out.println("Uploaded size is : " + uploadedSize[0]);
@@ -284,6 +285,7 @@ public class Upload {
                         for(String[] account_row : account_rows){
                             String userEmail = account_row[0];
                             String type = account_row[1];
+                            System.out.println("type.equals(backup) : " + type.equals("backup"));
                             if(type.equals("backup")){
                                 String[] selected_drive_columns = {"id", "assetId", "fileId", "fileName",
                                         "userEmail","fileHash"};

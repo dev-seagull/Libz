@@ -93,6 +93,8 @@ public class StorageHandler {
 
 
     public double getAmountSpaceToFreeUp() {
+        return 3.3;
+        /*
         String sqlQuery = "SELECT freeStorage FROM DEVICE WHERE deviceName = ?;";
         Cursor cursor = MainActivity.dbHelper.getReadableDatabase()
                 .rawQuery(sqlQuery,new String[]{MainActivity.androidDeviceName});
@@ -114,6 +116,7 @@ public class StorageHandler {
             return optimizedFreeSpace - this.freeSpace;
         }
         return 0.0;
+        */
     }
 
 
