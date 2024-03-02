@@ -77,13 +77,13 @@ public class StorageHandler {
         amountSpaceToFreeUp = getAmountSpaceToFreeUp();
         if (amountSpaceToFreeUp != 0){
             Upload upload = new Upload();
-            double netSpeed = 0.5;// base on Mb
-            double periodTime = 10;//in sec
+            double netSpeed = 0.5;
+            double periodTime = 10; 
             upload.limitedUploadAndroidToDrive(netSpeed * periodTime);
+            LogHandler.saveLog("Free up space for " + amountSpaceToFreeUp, false);
         }else{
-            System.out.println("No need to free up space");
+            LogHandler.saveLog("No need to free up space.",  false);
         }
-        System.out.println("Amount of space to free up: " + amountSpaceToFreeUp);
 
     }
 
