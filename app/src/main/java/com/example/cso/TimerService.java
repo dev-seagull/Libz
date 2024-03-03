@@ -195,7 +195,8 @@ public class TimerService extends Service {
                     try {
                         deleteRedundantAndroidThreadTemp.join();
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        LogHandler.saveLog("Failed to join delete redundant temp : "  +
+                                e.getLocalizedMessage(), true);
                     }
 
                     updateAndroidFilesThreadTemp = new Thread(updateAndroidFilesThreadForService[0]);
@@ -203,7 +204,8 @@ public class TimerService extends Service {
                     try{
                         updateAndroidFilesThreadTemp.join();
                     }catch (InterruptedException e){
-                        e.printStackTrace();
+                        LogHandler.saveLog("Failed to join update android temp : "  +
+                                e.getLocalizedMessage(), true);
                     }
 
                     storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
@@ -211,7 +213,8 @@ public class TimerService extends Service {
                     try{
                         storageUpdaterThreadTemp.join();
                     }catch (InterruptedException e){
-                        e.printStackTrace();
+                        LogHandler.saveLog("Failed to join storage update temp : "  +
+                                e.getLocalizedMessage(), true);
                     }
 
                     System.out.println("Android Status is up-to-date");
@@ -222,7 +225,8 @@ public class TimerService extends Service {
                     try{
                         deleteRedundantDriveThreadTemp.join();
                     }catch (InterruptedException e){
-                        e.printStackTrace();
+                        LogHandler.saveLog("Failed to join delete redundant drive temp : "  +
+                                e.getLocalizedMessage(), true);
                     }
 
                     updateDriveFilesThreadTemp = new Thread(updateDriveFilesThreadForService[0]);
@@ -230,7 +234,8 @@ public class TimerService extends Service {
                     try{
                         updateDriveFilesThreadTemp.join();
                     }catch (InterruptedException e){
-                        e.printStackTrace();
+                        LogHandler.saveLog("Failed to join update drive temp : "  +
+                                e.getLocalizedMessage(), true);
                     }
 
                     System.out.println("Drive Status is up-to-date");
@@ -241,7 +246,8 @@ public class TimerService extends Service {
                     try{
                         deleteDuplicatedInDriveTemp.join();
                     }catch (InterruptedException e){
-                        e.printStackTrace();
+                        LogHandler.saveLog("Failed to join delete duplicated drive temp : "  +
+                                e.getLocalizedMessage(), true);
                     }
 
                     System.out.println("Drive Optimization is done");
