@@ -132,6 +132,26 @@
                         android:textSize="20sp"
                         android:visibility="gone" />
 
+                    <TextView
+                        android:id="@+id/androidSyncStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="3dp"
+                        android:layout_marginRight="3dp"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginBottom="20dp"
+                        android:gravity="center"
+                        android:text=""
+                        android:shadowColor="@color/black"
+                        android:shadowDx="2"
+                        android:shadowDy="2"
+                        android:shadowRadius="5"
+                        android:fontFamily="sans-serif-condensed"
+                        android:textColor="@color/white"
+                        android:textSize="20sp"
+                        android:visibility="visible" />
+
+
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="5dp"
