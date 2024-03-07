@@ -71,7 +71,7 @@ public class StorageHandler {
                 String.format("%.3f", this.totalStorage), String.format("%.3f", this.freeSpace));
     }
 
-    public void storageUpdater(){
+    public void storageOptimizer(){
         double amountSpaceToFreeUp = 0;
         this.freeSpace = getDeviceFreeStorage();
         MainActivity.dbHelper.updateDeviceTable(MainActivity.androidDeviceName,String.valueOf(this.freeSpace));
