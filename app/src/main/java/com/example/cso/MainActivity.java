@@ -371,7 +371,7 @@
             final Thread[] deleteRedundantAndroidThread2 = {new Thread(deleteRedundantDriveThread)};
             final Thread[] storageUpdaterThread = {new Thread(() -> {storageHandler.storageOptimizer();})};
 
-            
+
             new Timer().scheduleAtFixedRate(new TimerTask() {
                 public void run() {
                     boolean anyThreadAlive = false;
