@@ -208,16 +208,16 @@ public class TimerService extends Service {
                     }
                     System.out.println("updateAndroidFilesThreadTemp is done");
 
-                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
-                    storageUpdaterThreadTemp.start();
-                    try{
-                        System.out.println("storageUpdaterThreadTemp is running");
-                        storageUpdaterThreadTemp.join();
-                    }catch (InterruptedException e) {
-                        LogHandler.saveLog("Failed to join storage update temp : " +
-                                e.getLocalizedMessage(), true);
-                    }
-                    System.out.println("Android Status is up-to-date and storageUpdaterThreadTemp is done");
+//                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
+//                    storageUpdaterThreadTemp.start();
+//                    try{
+//                        System.out.println("storageUpdaterThreadTemp is running");
+//                        storageUpdaterThreadTemp.join();
+//                    }catch (InterruptedException e) {
+//                        LogHandler.saveLog("Failed to join storage update temp : " +
+//                                e.getLocalizedMessage(), true);
+//                    }
+//                    System.out.println("Android Status is up-to-date and storageUpdaterThreadTemp is done");
 
                     deleteRedundantDriveThreadTemp = new Thread(deleteRedundantDriveThreadForService[0]);
                     deleteRedundantDriveThreadTemp.start();
