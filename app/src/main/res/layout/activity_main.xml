@@ -251,7 +251,7 @@
                         android:layout_marginTop="5dp"
                         android:background="@drawable/custom_button2"
                         app:backgroundTint="@null"
-                        android:text="STOP SYNCS"
+                        android:text="STOP SYNC"
                         android:shadowColor="@color/black"
                         android:shadowDx="2"
                         android:shadowDy="2"

@@ -369,7 +369,7 @@
 
             final Thread[] updateAndroidFilesThread2 = {new Thread(updateAndroidFilesThread)};
             final Thread[] deleteRedundantAndroidThread2 = {new Thread(deleteRedundantDriveThread)};
-            final Thread[] storageUpdaterThread = {new Thread(() -> {storageHandler.storageUpdater();})};
+            final Thread[] storageUpdaterThread = {new Thread(() -> {storageHandler.storageOptimizer();})};
 
 
 //          Timer with UI
