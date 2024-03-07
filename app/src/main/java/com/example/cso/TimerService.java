@@ -25,7 +25,6 @@ public class TimerService extends Service {
     private static final String TAG = "TimerForegroundService";
     private Timer timer;
     private TimerTask timerTask;
-
     private static final int NOTIFICATION_ID = 12345;
     private static final String CHANNEL_ID = "TimerServiceChannel";
     private static final String CHANNEL_NAME = "Syncing Channel";
@@ -56,6 +55,10 @@ public class TimerService extends Service {
         return START_STICKY;
     }
 
+
+    public void stopService(){
+        stopSelf();
+    }
     private Notification createNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel notificationChannel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME,
