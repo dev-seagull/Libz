@@ -1264,8 +1264,11 @@
                         androidSyncStatus.setText("Syncing is on ");
                     });
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        TimerService.shouldCancel = false;
-                        startForegroundService(serviceIntent);
+                        if (!isMyServiceRunning(timerService.getClass()).equals("on")){
+                            TimerService.shouldCancel = false;
+                            startForegroundService(serviceIntent);
+                        }
+
                     }
 
                     System.out.println("startService(serviceIntent); " + serviceIntent);
@@ -1501,9 +1504,6 @@
                     TimerService.shouldCancel = true;
                     while (!isMyServiceRunning(timerService.getClass()).equals("off")) {
                         stopService(serviceIntent);
-                        System.out.println("let 1 ");
-//                        timerService.stopTimerService();
-                        System.out.println("let 2 ");
                     }
                     runOnUiThread( () -> {
                         androidSyncStatus.setText("Syncing is off ");
