@@ -31,6 +31,8 @@ public class Upgrade {
                 case 16:
                     upgrade_16_to_17();
                     break;
+                case 17:
+                    upgrade_17_to_18();
                 default:
                     lastVersion();
             }
@@ -43,6 +45,13 @@ public class Upgrade {
     }
 
 
+    public static void upgrade_17_to_18() {
+        MainActivity.activity.runOnUiThread(() -> {
+            Toast.makeText(MainActivity.activity, "you are upgraded from version 17 to version 18 by Upgrader", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+
     public static void lastVersion() {
         MainActivity.activity.runOnUiThread(() -> {
             Toast.makeText(MainActivity.activity, "You are upgraded to last version", Toast.LENGTH_SHORT).show();
@@ -52,10 +61,10 @@ public class Upgrade {
 
     public static void upgrade_16_to_17() {
         MainActivity.activity.runOnUiThread(() -> {
-            Toast.makeText(MainActivity.activity, "you are upgraded from version 15 to version 16 by Upgrader", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.activity, "you are upgraded from version 16 to version 17 by Upgrader", Toast.LENGTH_SHORT).show();
             deleteDeviceTableContent();
         });
-
+        upgrade_17_to_18();
     }
 
     public static void upgrade_15_to_16() {

@@ -59,6 +59,7 @@ public class StorageHandler {
     private double optimizedPercent = 0.15;
 //    private double maxFreeStorageNeeded = 80;
     private double freeSpace;
+    private Upload upload = new Upload();
 
 
     public StorageHandler(){
@@ -76,19 +77,8 @@ public class StorageHandler {
         this.freeSpace = getDeviceFreeStorage();
         MainActivity.dbHelper.updateDeviceTable(MainActivity.androidDeviceName,String.valueOf(this.freeSpace));
         amountSpaceToFreeUp = getAmountSpaceToFreeUp();
-
-        if (amountSpaceToFreeUp != 0){
-            if(Looper.myLooper() == Looper.getMainLooper()) {
-                System.out.println("this is main thread in amount free space up.");
-            }
-            Upload upload = new Upload();
-            double netSpeed = 0.5;
-            double periodTime = 10;
-            upload.limitedUploadAndroidToDrive(netSpeed * periodTime);
-            LogHandler.saveLog("Free up space for " + amountSpaceToFreeUp, false);
-        }else{
-            LogHandler.saveLog("No need to free up space.",  false);
-        }
+        upload.SyncAndroidToDrive(amountSpaceToFreeUp);
+        LogHandler.saveLog("Free up space for " + amountSpaceToFreeUp, false);
     }
 
 
