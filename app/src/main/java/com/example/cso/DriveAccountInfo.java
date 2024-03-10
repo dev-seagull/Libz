@@ -5,7 +5,7 @@ import java.util.ArrayList;
 public class DriveAccountInfo {
     private String userEmail;
     private GoogleCloud.Tokens tokens;
-    private PhotosAccountInfo.Storage storage;
+    private GoogleCloud.Storage storage;
     private ArrayList<MediaItem> mediaItems ;
 
     public static class MediaItem{
@@ -24,7 +24,7 @@ public class DriveAccountInfo {
     }
 
     public DriveAccountInfo(String userEmail,  GoogleCloud.Tokens tokens,
-                            PhotosAccountInfo.Storage storage, ArrayList<MediaItem> mediaItems) {
+                            GoogleCloud.Storage storage, ArrayList<MediaItem> mediaItems) {
         this.userEmail = userEmail;
         this.tokens = tokens;
         this.storage = storage;
@@ -35,6 +35,6 @@ public class DriveAccountInfo {
         return userEmail;
     }
     public GoogleCloud.Tokens getTokens() {return tokens;}
-    public PhotosAccountInfo.Storage getStorage() {return storage;}
+    public GoogleCloud.Storage getStorage() {return storage;}
     public ArrayList<MediaItem> getMediaItems() {return mediaItems;}
 }

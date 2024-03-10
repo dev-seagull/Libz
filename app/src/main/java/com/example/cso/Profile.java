@@ -2,7 +2,6 @@ package com.example.cso;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
-import android.os.Build;
 
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
@@ -13,11 +12,9 @@ import com.google.gson.JsonParser;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Profile {
 

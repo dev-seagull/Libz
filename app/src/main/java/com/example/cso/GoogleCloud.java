@@ -199,12 +199,12 @@
             private String userEmail;
             private boolean isHandled;
             private GoogleCloud.Tokens tokens;
-            private PhotosAccountInfo.Storage storage;
+            private Storage storage;
 
             private ArrayList<DriveAccountInfo.MediaItem> mediaItems;
 
             private signInResult(String userEmail, boolean isHandled, boolean isInAccounts,
-                                 GoogleCloud.Tokens tokens, PhotosAccountInfo.Storage storage, ArrayList<DriveAccountInfo.MediaItem> mediaItems) {
+                                 GoogleCloud.Tokens tokens, Storage storage, ArrayList<DriveAccountInfo.MediaItem> mediaItems) {
                 this.userEmail = userEmail;
                 this.isHandled = isHandled;
                 this.tokens = tokens;
@@ -216,7 +216,7 @@
             public boolean getHandleStatus() {return isHandled;}
 
             public GoogleCloud.Tokens getTokens() {return tokens;}
-            public PhotosAccountInfo.Storage getStorage() {return storage;}
+            public Storage getStorage() {return storage;}
 
             public ArrayList<DriveAccountInfo.MediaItem> getMediaItems() {return mediaItems;}
 
@@ -230,7 +230,7 @@
             String userEmail = "";
             String authCode;
             GoogleCloud.Tokens tokens = null;
-            PhotosAccountInfo.Storage storage = null;
+            Storage storage = null;
             try{
                 Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
                 GoogleSignInAccount account = googleSignInTask.getResult(ApiException.class);
@@ -269,7 +269,7 @@
             String authCode;
             boolean isInAccounts = false;
             GoogleCloud.Tokens tokens = null;
-            PhotosAccountInfo.Storage storage = null;
+            Storage storage = null;
             ArrayList<DriveAccountInfo.MediaItem> mediaItems  = null;
             try{
                 Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
@@ -492,17 +492,17 @@
             return memeType;
         }
 
-        public PhotosAccountInfo.Storage getStorage(GoogleCloud.Tokens tokens){
+        public Storage getStorage(GoogleCloud.Tokens tokens){
             ExecutorService executor = Executors.newSingleThreadExecutor();
             String refreshToken = tokens.getRefreshToken();
             String accessToken = tokens.getAccessToken();
-            final PhotosAccountInfo.Storage[] storage = new PhotosAccountInfo.Storage[1];
+            final Storage[] storage = new Storage[1];
             final Double[] totalStorage = new Double[1];
             final Double[] usedStorage = new Double[1];
             final Double[] usedInDriveStorage = new Double[1];
 
             try{
-                Callable<PhotosAccountInfo.Storage> backgroundTask = () -> {
+                Callable<Storage> backgroundTask = () -> {
                     final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
                     final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
                     HttpRequestInitializer httpRequestInitializer = request -> {
@@ -525,7 +525,7 @@
                             .setFields("user, storageQuota")
                             .execute().getStorageQuota().getUsageInDrive());
 
-                    storage[0] = new PhotosAccountInfo.Storage(totalStorage[0], usedStorage[0],usedInDriveStorage[0]);
+                    storage[0] = new Storage(totalStorage[0], usedStorage[0],usedInDriveStorage[0]);
                     LogHandler.saveLog("Account total storage: " + totalStorage[0],false);
                     LogHandler.saveLog("Account used storage: "  + usedStorage[0],false);
                     LogHandler.saveLog("Account used in drive storage: " + usedInDriveStorage[0],false);
@@ -533,7 +533,7 @@
 
                     return storage[0];
                 };
-                Future<PhotosAccountInfo.Storage> future = executor.submit(backgroundTask);
+                Future<Storage> future = executor.submit(backgroundTask);
                 storage[0] = future.get();
             }catch (Exception e){
                 LogHandler.saveLog("Failed to get the storage: " + e.getLocalizedMessage());
@@ -568,6 +568,26 @@
             }
         }
 
+
+        public static class Storage{
+            private Double totalStorage;
+            private Double usedStorage;
+            private Double usedInDriveStorage;
+            private Double UsedInGmailAndPhotosStorage;
+
+
+            public Storage(Double totalStorage, Double usedStorage,
+                           Double usedInDriveStorage){
+                this.totalStorage = totalStorage * 1000;
+                this.usedStorage = usedStorage * 1000;
+                this.usedInDriveStorage = usedInDriveStorage * 1000;
+                this.UsedInGmailAndPhotosStorage = usedStorage - usedInDriveStorage;
+            }
+            public Double getUsedInDriveStorage() {return usedInDriveStorage;}
+            public Double getUsedInGmailAndPhotosStorage() {return UsedInGmailAndPhotosStorage;}
+            public Double getTotalStorage() {return totalStorage;}
+            public Double getUsedStorage() {return usedStorage;}
+        }
     }
 
 
