@@ -1,6 +1,5 @@
 package com.example.cso;
 
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -12,17 +11,13 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
-import org.checkerframework.checker.units.qual.A;
-
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -51,10 +46,10 @@ public class GoogleDrive {
     }
 
 
-    public static ArrayList<BackUpAccountInfo.MediaItem> getMediaItems(String accessToken) {
+    public static ArrayList<DriveAccountInfo.MediaItem> getMediaItems(String accessToken) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        final ArrayList<BackUpAccountInfo.MediaItem> mediaItems = new ArrayList<>();
-        Callable<ArrayList<BackUpAccountInfo.MediaItem>> backgroundTask = () -> {
+        final ArrayList<DriveAccountInfo.MediaItem> mediaItems = new ArrayList<>();
+        Callable<ArrayList<DriveAccountInfo.MediaItem>> backgroundTask = () -> {
             try {
                 final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
                 final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
@@ -78,7 +73,7 @@ public class GoogleDrive {
                         for (File file : files) {
                             if (GooglePhotos.isVideo(GoogleCloud.getMemeType(file.getName())) |
                                     GooglePhotos.isImage(GoogleCloud.getMemeType(file.getName()))){
-                                BackUpAccountInfo.MediaItem mediaItem = new BackUpAccountInfo.MediaItem(file.getName(),
+                                DriveAccountInfo.MediaItem mediaItem = new DriveAccountInfo.MediaItem(file.getName(),
                                         file.getSha256Checksum().toLowerCase(), file.getId());
                                 mediaItems.add(mediaItem);
                             }else{
@@ -100,8 +95,8 @@ public class GoogleDrive {
             }
             return mediaItems;
         };
-        Future<ArrayList<BackUpAccountInfo.MediaItem>> future = executor.submit(backgroundTask);
-        ArrayList<BackUpAccountInfo.MediaItem> uploadFileIDs_fromFuture = null;
+        Future<ArrayList<DriveAccountInfo.MediaItem>> future = executor.submit(backgroundTask);
+        ArrayList<DriveAccountInfo.MediaItem> uploadFileIDs_fromFuture = null;
         try {
             uploadFileIDs_fromFuture = future.get();
         } catch (Exception e) {

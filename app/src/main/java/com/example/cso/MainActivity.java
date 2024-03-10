@@ -64,7 +64,7 @@
         ActivityResultLauncher<Intent> signInToPrimaryLauncher;
         ActivityResultLauncher<Intent> signInToBackUpLauncher;
         GooglePhotos googlePhotos;
-        HashMap<String, PrimaryAccountInfo> primaryAccountHashMap = new HashMap<>();
+        HashMap<String, PhotosAccountInfo> primaryAccountHashMap = new HashMap<>();
         public static String androidDeviceName;
         Button restoreButton;
         public static String logFileName = "stash_log.txt";
@@ -267,10 +267,10 @@
                         if(type.equals("backup")){
                             String userEmail = account_row[1];
                             String accessToken = account_row[0];
-                            ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                            ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
                             ArrayList<String> driveFileIds = new ArrayList<>();
 
-                            for (BackUpAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+                            for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
                                 String fileId = driveMediaItem.getId();
                                 driveFileIds.add(fileId);
                             }
@@ -297,8 +297,8 @@
                     if (type.equals("backup")){
                         String accessToken = account_row[0];
                         String userEmail = account_row[1];
-                        ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
-                        for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
+                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                        for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
                             Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
                             if (last_insertId != -1) {
                                 MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
@@ -655,7 +655,7 @@
                                                 }
                                             }
                                             try{
-                                                for(BackUpAccountInfo.MediaItem mediaItem : signInResult[0].getMediaItems()){
+                                                for(DriveAccountInfo.MediaItem mediaItem : signInResult[0].getMediaItems()){
                                                     Long last_insertId = MainActivity.dbHelper.insertAssetData(mediaItem.getHash());
                                                     if (last_insertId != -1) {
                                                         MainActivity.dbHelper.insertIntoDriveTable(last_insertId, mediaItem.getId(), mediaItem.getFileName(),
@@ -689,10 +689,10 @@
                                                     if(type.equals("backup")){
                                                         String userEmail = account_row[1];
                                                         String accessToken = account_row[0];
-                                                        ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                                                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
                                                         ArrayList<String> driveFileIds = new ArrayList<>();
 
-                                                        for (BackUpAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+                                                        for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
                                                             String fileId = driveMediaItem.getId();
                                                             driveFileIds.add(fileId);
                                                         }
@@ -724,8 +724,8 @@
                                                 if (type.equals("backup")){
                                                     String accessToken = account_row[0];
                                                     String userEmail = account_row[1];
-                                                    ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
-                                                    for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
+                                                    ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                                                    for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
                                                         Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
                                                         if (last_insertId != -1) {
                                                             MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
@@ -1803,7 +1803,7 @@
                 String userEmail = account_row[0];
                 String type = account_row[1];
                 String refreshToken = account_row[2];
-                PrimaryAccountInfo.Tokens tokens = googleCloud.requestAccessToken(refreshToken);
+                GoogleCloud.Tokens tokens = googleCloud.requestAccessToken(refreshToken);
                 Map<String, Object> updatedValues = new HashMap<String, Object>(){{
                     put("accessToken", tokens.getAccessToken());
                 }};

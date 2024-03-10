@@ -7,7 +7,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
@@ -116,10 +115,10 @@ public class TimerService extends Service {
                 if(type.equals("backup")){
                     String userEmail = account_row[1];
                     String accessToken = account_row[0];
-                    ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                    ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
                     ArrayList<String> driveFileIds = new ArrayList<>();
 
-                    for (BackUpAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+                    for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
                         String fileId = driveMediaItem.getId();
                         driveFileIds.add(fileId);
                     }
@@ -138,8 +137,8 @@ public class TimerService extends Service {
                 if (type.equals("backup")){
                     String accessToken = account_row[0];
                     String userEmail = account_row[1];
-                    ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
-                    for(BackUpAccountInfo.MediaItem driveMediaItem: driveMediaItems){
+                    ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                    for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
                         Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
                         if (last_insertId != -1) {
                             MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),

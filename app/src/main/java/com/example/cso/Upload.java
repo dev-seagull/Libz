@@ -407,9 +407,9 @@ public class Upload {
                                             " from android into backup account uploadId : " + uploadFileId, false);
 
                                     try {
-                                        ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems =
+                                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems =
                                                 GoogleDrive.getMediaItems(driveBackupAccessToken);
-                                        for (BackUpAccountInfo.MediaItem mediaItem : driveMediaItems) {
+                                        for (DriveAccountInfo.MediaItem mediaItem : driveMediaItems) {
                                             if (mediaItem.getHash().equals(fileHash)) {
                                                 isUploadValid[0] = true;
                                                 break;

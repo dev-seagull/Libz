@@ -5,7 +5,6 @@
     import android.content.res.ColorStateList;
     import android.graphics.Color;
     import android.graphics.drawable.Drawable;
-    import android.os.Looper;
     import android.view.Gravity;
     import android.view.View;
     import android.view.ViewGroup;
@@ -25,12 +24,7 @@
     import com.google.android.gms.common.api.Scope;
     import com.google.android.gms.tasks.Task;
     import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-    import com.google.api.client.http.GenericUrl;
-    import com.google.api.client.http.HttpRequest;
-    import com.google.api.client.http.HttpRequestFactory;
     import com.google.api.client.http.HttpRequestInitializer;
-    import com.google.api.client.http.HttpResponse;
-    import com.google.api.client.http.HttpTransport;
     import com.google.api.client.http.javanet.NetHttpTransport;
     import com.google.api.client.json.JsonFactory;
     import com.google.api.client.json.gson.GsonFactory;
@@ -204,13 +198,13 @@
         public class signInResult{
             private String userEmail;
             private boolean isHandled;
-            private PrimaryAccountInfo.Tokens tokens;
-            private PrimaryAccountInfo.Storage storage;
+            private GoogleCloud.Tokens tokens;
+            private PhotosAccountInfo.Storage storage;
 
-            private ArrayList<BackUpAccountInfo.MediaItem> mediaItems;
+            private ArrayList<DriveAccountInfo.MediaItem> mediaItems;
 
             private signInResult(String userEmail, boolean isHandled, boolean isInAccounts,
-                         PrimaryAccountInfo.Tokens tokens,PrimaryAccountInfo.Storage storage,ArrayList<BackUpAccountInfo.MediaItem> mediaItems) {
+                                 GoogleCloud.Tokens tokens, PhotosAccountInfo.Storage storage, ArrayList<DriveAccountInfo.MediaItem> mediaItems) {
                 this.userEmail = userEmail;
                 this.isHandled = isHandled;
                 this.tokens = tokens;
@@ -221,10 +215,10 @@
             public String getUserEmail() {return userEmail;}
             public boolean getHandleStatus() {return isHandled;}
 
-            public PrimaryAccountInfo.Tokens getTokens() {return tokens;}
-            public PrimaryAccountInfo.Storage getStorage() {return storage;}
+            public GoogleCloud.Tokens getTokens() {return tokens;}
+            public PhotosAccountInfo.Storage getStorage() {return storage;}
 
-            public ArrayList<BackUpAccountInfo.MediaItem> getMediaItems() {return mediaItems;}
+            public ArrayList<DriveAccountInfo.MediaItem> getMediaItems() {return mediaItems;}
 
 
 
@@ -235,8 +229,8 @@
             boolean isInAccounts = false;
             String userEmail = "";
             String authCode;
-            PrimaryAccountInfo.Tokens tokens = null;
-            PrimaryAccountInfo.Storage storage = null;
+            GoogleCloud.Tokens tokens = null;
+            PhotosAccountInfo.Storage storage = null;
             try{
                 Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
                 GoogleSignInAccount account = googleSignInTask.getResult(ApiException.class);
@@ -274,9 +268,9 @@
             String userEmail = "";
             String authCode;
             boolean isInAccounts = false;
-            PrimaryAccountInfo.Tokens tokens = null;
-            PrimaryAccountInfo.Storage storage = null;
-            ArrayList<BackUpAccountInfo.MediaItem> mediaItems  = null;
+            GoogleCloud.Tokens tokens = null;
+            PhotosAccountInfo.Storage storage = null;
+            ArrayList<DriveAccountInfo.MediaItem> mediaItems  = null;
             try{
                 Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
                 GoogleSignInAccount account = googleSignInTask.getResult(ApiException.class);
@@ -375,9 +369,9 @@
             return newLoginButton;
         }
 
-        private PrimaryAccountInfo.Tokens getTokens(String authCode){
+        private GoogleCloud.Tokens getTokens(String authCode){
             ExecutorService executor = Executors.newSingleThreadExecutor();
-            Callable<PrimaryAccountInfo.Tokens> backgroundTokensTask = () -> {
+            Callable<GoogleCloud.Tokens> backgroundTokensTask = () -> {
                 String accessToken = null;
                 String refreshToken = null;
                 try {
@@ -420,10 +414,10 @@
                 } catch (Exception e) {
                     LogHandler.saveLog("Getting tokens failed: " + e.getLocalizedMessage());
                 }
-                return new PrimaryAccountInfo.Tokens(accessToken, refreshToken);
+                return new GoogleCloud.Tokens(accessToken, refreshToken);
             };
-            Future<PrimaryAccountInfo.Tokens> future = executor.submit(backgroundTokensTask);
-            PrimaryAccountInfo.Tokens tokens_fromFuture = null;
+            Future<GoogleCloud.Tokens> future = executor.submit(backgroundTokensTask);
+            GoogleCloud.Tokens tokens_fromFuture = null;
             try {
                 tokens_fromFuture = future.get();
             }catch (Exception e){
@@ -434,9 +428,9 @@
             return tokens_fromFuture;
         }
 
-        protected PrimaryAccountInfo.Tokens requestAccessToken(final String refreshToken){
+        protected Tokens requestAccessToken(final String refreshToken){
             ExecutorService executor = Executors.newSingleThreadExecutor();
-            Callable<PrimaryAccountInfo.Tokens> backgroundTokensTask = () -> {
+            Callable<GoogleCloud.Tokens> backgroundTokensTask = () -> {
                 String accessToken = null;
                 try {
                     URL googleAPITokenUrl = new URL("https://www.googleapis.com/oauth2/v4/token");
@@ -475,10 +469,10 @@
                 } catch (Exception e) {
                     LogHandler.saveLog("Getting access token failed: " + e.getLocalizedMessage());
                 }
-                return new PrimaryAccountInfo.Tokens(accessToken, refreshToken);
+                return new GoogleCloud.Tokens(accessToken, refreshToken);
             };
-            Future<PrimaryAccountInfo.Tokens> future = executor.submit(backgroundTokensTask);
-            PrimaryAccountInfo.Tokens tokens_fromFuture = null;
+            Future<GoogleCloud.Tokens> future = executor.submit(backgroundTokensTask);
+            GoogleCloud.Tokens tokens_fromFuture = null;
             try {
                 tokens_fromFuture = future.get();
             }catch (Exception e){
@@ -498,17 +492,17 @@
             return memeType;
         }
 
-        public PrimaryAccountInfo.Storage getStorage(PrimaryAccountInfo.Tokens tokens){
+        public PhotosAccountInfo.Storage getStorage(GoogleCloud.Tokens tokens){
             ExecutorService executor = Executors.newSingleThreadExecutor();
             String refreshToken = tokens.getRefreshToken();
             String accessToken = tokens.getAccessToken();
-            final PrimaryAccountInfo.Storage[] storage = new PrimaryAccountInfo.Storage[1];
+            final PhotosAccountInfo.Storage[] storage = new PhotosAccountInfo.Storage[1];
             final Double[] totalStorage = new Double[1];
             final Double[] usedStorage = new Double[1];
             final Double[] usedInDriveStorage = new Double[1];
 
             try{
-                Callable<PrimaryAccountInfo.Storage> backgroundTask = () -> {
+                Callable<PhotosAccountInfo.Storage> backgroundTask = () -> {
                     final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
                     final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
                     HttpRequestInitializer httpRequestInitializer = request -> {
@@ -531,7 +525,7 @@
                             .setFields("user, storageQuota")
                             .execute().getStorageQuota().getUsageInDrive());
 
-                    storage[0] = new PrimaryAccountInfo.Storage(totalStorage[0], usedStorage[0],usedInDriveStorage[0]);
+                    storage[0] = new PhotosAccountInfo.Storage(totalStorage[0], usedStorage[0],usedInDriveStorage[0]);
                     LogHandler.saveLog("Account total storage: " + totalStorage[0],false);
                     LogHandler.saveLog("Account used storage: "  + usedStorage[0],false);
                     LogHandler.saveLog("Account used in drive storage: " + usedInDriveStorage[0],false);
@@ -539,7 +533,7 @@
 
                     return storage[0];
                 };
-                Future<PrimaryAccountInfo.Storage> future = executor.submit(backgroundTask);
+                Future<PhotosAccountInfo.Storage> future = executor.submit(backgroundTask);
                 storage[0] = future.get();
             }catch (Exception e){
                 LogHandler.saveLog("Failed to get the storage: " + e.getLocalizedMessage());
@@ -547,6 +541,34 @@
             executor.shutdown();
             return storage[0];
         }
+
+        public static class Tokens {
+            private String refreshToken;
+            private String accessToken;
+
+            public Tokens(String accessToken, String refreshToken) {
+                this.accessToken = accessToken;
+                this.refreshToken = refreshToken;
+            }
+
+            public void setAccessToken(String accessToken) {
+                this.accessToken = accessToken;
+            }
+
+            public void setRefreshToken(String refreshToken) {
+                this.refreshToken= refreshToken;
+            }
+
+            public String getAccessToken() {
+                return accessToken;
+            }
+
+            public String getRefreshToken() {
+                return refreshToken;
+            }
+        }
+
     }
+
 
 

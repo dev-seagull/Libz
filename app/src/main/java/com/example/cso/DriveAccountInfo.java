@@ -2,10 +2,10 @@ package com.example.cso;
 
 import java.util.ArrayList;
 
-public class BackUpAccountInfo {
+public class DriveAccountInfo {
     private String userEmail;
-    private com.example.cso.PrimaryAccountInfo.Tokens tokens;
-    private com.example.cso.PrimaryAccountInfo.Storage storage;
+    private GoogleCloud.Tokens tokens;
+    private PhotosAccountInfo.Storage storage;
     private ArrayList<MediaItem> mediaItems ;
 
     public static class MediaItem{
@@ -23,8 +23,8 @@ public class BackUpAccountInfo {
         public String getId() {return fileId;}
     }
 
-    public BackUpAccountInfo(String userEmail, PrimaryAccountInfo.Tokens tokens,
-                             PrimaryAccountInfo.Storage storage, ArrayList<MediaItem> mediaItems) {
+    public DriveAccountInfo(String userEmail,  GoogleCloud.Tokens tokens,
+                            PhotosAccountInfo.Storage storage, ArrayList<MediaItem> mediaItems) {
         this.userEmail = userEmail;
         this.tokens = tokens;
         this.storage = storage;
@@ -34,7 +34,7 @@ public class BackUpAccountInfo {
     public String getUserEmail() {
         return userEmail;
     }
-    public com.example.cso.PrimaryAccountInfo.Tokens getTokens() {return tokens;}
-    public com.example.cso.PrimaryAccountInfo.Storage getStorage() {return storage;}
+    public GoogleCloud.Tokens getTokens() {return tokens;}
+    public PhotosAccountInfo.Storage getStorage() {return storage;}
     public ArrayList<MediaItem> getMediaItems() {return mediaItems;}
 }
