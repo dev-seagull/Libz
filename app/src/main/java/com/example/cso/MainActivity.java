@@ -369,7 +369,7 @@
 
             final Thread[] updateAndroidFilesThread2 = {new Thread(updateAndroidFilesThread)};
             final Thread[] deleteRedundantAndroidThread2 = {new Thread(deleteRedundantDriveThread)};
-            final Thread[] storageUpdaterThread = {new Thread(() -> {storageHandler.storageOptimizer();})};
+//            final Thread[] storageUpdaterThread = {new Thread(() -> {storageHandler.storageOptimizer();})};
 
 
             new Timer().scheduleAtFixedRate(new TimerTask() {
@@ -808,9 +808,9 @@
                 }
             });
 
-            syncToBackUpAccountButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
+//            syncToBackUpAccountButton.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View view) {
 
 //                    if (!dbHelper.backupAccountExists()){
 //                        runOnUiThread(() ->{
@@ -1257,19 +1257,26 @@
 //                    driveBackUpThread2.start();
 //                    deleteDuplicatedInDrive2.start();
 //                    updateUIThread.start();
-
+            syncToBackUpAccountButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    runOnUiThread( () -> {
+                        androidSyncStatus.setText("Syncing is on ");
+                    });
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        startForegroundService(serviceIntent);
+                        if (!isMyServiceRunning(timerService.getClass()).equals("on")){
+                            TimerService.shouldCancel = false;
+                            startForegroundService(serviceIntent);
+                        }
+
                     }
+
                     System.out.println("startService(serviceIntent); " + serviceIntent);
 
                 }
             });
 
-            restoreButton = findViewById(R.id.restoreButton);
-            restoreButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
+
 //                    int buildSdkInt = Build.VERSION.SDK_INT;
 //                    if (!dbHelper.backupAccountExists()){
 //                        runOnUiThread(() ->{
@@ -1490,15 +1497,20 @@
 //                    updateUIThread.start();
 //                    stopService(serviceIntent);
 //                    serviceIntent = new Intent(activity,timerService.getClass());
-
+            restoreButton = findViewById(R.id.restoreButton);
+            restoreButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    TimerService.shouldCancel = true;
                     while (!isMyServiceRunning(timerService.getClass()).equals("off")) {
                         stopService(serviceIntent);
                     }
+                    runOnUiThread( () -> {
+                        androidSyncStatus.setText("Syncing is off ");
+                    });
+
                 }
             });
-
-
-
         }
 
         private String isMyServiceRunning(Class<?> serviceClass) {

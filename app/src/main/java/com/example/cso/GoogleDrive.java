@@ -82,7 +82,7 @@ public class GoogleDrive {
                                         file.getSha256Checksum().toLowerCase(), file.getId());
                                 mediaItems.add(mediaItem);
                             }else{
-                                System.out.println("File " + file.getName() + " is not a media item 000000000000000000000000000000000000000");
+//                                System.out.println("File " + file.getName() + " is not a media item 000000000000000000000000000000000000000");
                             }
                         }
                     }    nextPageToken = result.getNextPageToken();
@@ -124,9 +124,9 @@ public class GoogleDrive {
             }
         }
 
-        for (Map.Entry<String, Integer> entry : assetIdCount.entrySet()) {
-            LogHandler.saveLog("assetId: " + entry.getKey() + ", Count: " + entry.getValue(),false);
-        }
+//        for (Map.Entry<String, Integer> entry : assetIdCount.entrySet()) {
+//            LogHandler.saveLog("assetId: " + entry.getKey() + ", Count: " + entry.getValue(),false);
+//        }
 
         ArrayList<String> fileHashChecker = new ArrayList<>();
         for(String[] drive_row: drive_rows){

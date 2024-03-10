@@ -23,15 +23,16 @@ public class TimerService extends Service {
 
 
     private static final String TAG = "TimerForegroundService";
-    private Timer timer;
-    private TimerTask timerTask;
+    public Timer timer;
+    public static boolean shouldCancel = false;
+    public TimerTask timerTask;
     private static final int NOTIFICATION_ID = 12345;
     private static final String CHANNEL_ID = "TimerServiceChannel";
     private static final String CHANNEL_NAME = "Syncing Channel";
     Thread storageUpdaterThreadTemp;
     Thread deleteRedundantAndroidThreadTemp;
     Thread updateAndroidFilesThreadTemp;
-
+    Thread syncAndroidToDriveThreadTemp;
     Thread deleteRedundantDriveThreadTemp;
 
     Thread updateDriveFilesThreadTemp;
@@ -51,12 +52,17 @@ public class TimerService extends Service {
         Notification notification = createNotification();
 
         startForeground(NOTIFICATION_ID, notification);
-//        stopForeground(NOTIFICATION_ID);
+
         return START_STICKY;
     }
 
+    private void startTimer() {
+        timer = new Timer();
+        initializeTimerTask();
+        timer.schedule(timerTask, 5000 , 1000);
+    }
 
-    public void stopService(){
+    public void stopTimerService(){
         stopSelf();
     }
     private Notification createNotification() {
@@ -82,20 +88,14 @@ public class TimerService extends Service {
                 .setContentIntent(pendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
         builder.setContentIntent(pendingIntent);
-
         return builder.build();
-    }
-    private void startTimer() {
-
-        timer = new Timer();
-        initializeTimerTask();
-        timer.schedule(timerTask, 5000 , 1000);
     }
 
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
+
 
     private void initializeTimerTask() {
 
@@ -104,7 +104,7 @@ public class TimerService extends Service {
 
         final Thread[] updateAndroidFilesThreadForService = {new Thread(() -> {Android.getGalleryMediaItems(MainActivity.activity);})};
 
-        final Thread[] storageUpdaterThreadForService = {new Thread(() -> {MainActivity.storageHandler.storageOptimizer();})};
+        final Thread[] storageUpdaterThreadForService = {new Thread(() -> {MainActivity.storageHandler.storageUpdater();})};
 
         final Thread[] deleteRedundantDriveThreadForService = {new Thread(() -> {
 
@@ -167,9 +167,19 @@ public class TimerService extends Service {
             }
         })};
 
+        final Thread[] syncAndroidToDriveThreadForService = {new Thread( () -> {
+                MainActivity.storageHandler.syncAndroidToDrive();
+        })};
+
+
         timerTask = new TimerTask() {
             public void run() {
                 try{
+                    if (shouldCancel == true){
+                        timer.cancel();
+                        timer.purge();
+                        return;
+                    }
                     if(Looper.myLooper() == Looper.getMainLooper()){
                         System.out.println("Running on ui thread on run timer task");
                     }
@@ -182,58 +192,49 @@ public class TimerService extends Service {
                                     (updateDriveFilesThreadTemp != null && updateDriveFilesThreadTemp.isAlive()) ||
                                     (deleteDuplicatedInDriveTemp != null && deleteDuplicatedInDriveTemp.isAlive())
                     ){
-                        System.out.println("timer is running");
                         return;
                     }
-
                     deleteRedundantAndroidThreadTemp = new Thread(deleteRedundantAndroidThreadForService[0]);
                     deleteRedundantAndroidThreadTemp.start();
                     try {
-                        System.out.println("deleteRedundantAndroidThreadTemp is running");
                         deleteRedundantAndroidThreadTemp.join();
                     } catch (InterruptedException e) {
                         LogHandler.saveLog("Failed to join delete redundant temp : "  +
                                 e.getLocalizedMessage(), true);
                     }
-                    System.out.println("deleteRedundantAndroidThreadTemp is done");
 
                     updateAndroidFilesThreadTemp = new Thread(updateAndroidFilesThreadForService[0]);
                     updateAndroidFilesThreadTemp.start();
                     try{
-                        System.out.println("updateAndroidFilesThreadTemp is running");
                         updateAndroidFilesThreadTemp.join();
                     }catch (InterruptedException e){
                         LogHandler.saveLog("Failed to join update android temp : "  +
                                 e.getLocalizedMessage(), true);
                     }
-                    System.out.println("updateAndroidFilesThreadTemp is done");
 
-//                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
-//                    storageUpdaterThreadTemp.start();
-//                    try{
-//                        System.out.println("storageUpdaterThreadTemp is running");
-//                        storageUpdaterThreadTemp.join();
-//                    }catch (InterruptedException e) {
-//                        LogHandler.saveLog("Failed to join storage update temp : " +
-//                                e.getLocalizedMessage(), true);
-//                    }
-//                    System.out.println("Android Status is up-to-date and storageUpdaterThreadTemp is done");
+                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
+                    storageUpdaterThreadTemp.start();
+                    try{
+                        storageUpdaterThreadTemp.join();
+                    }catch (InterruptedException e) {
+                        LogHandler.saveLog("Failed to join storage update temp : " +
+                                e.getLocalizedMessage(), true);
+                    }
+                    System.out.println("Android Status is up-to-date and storageUpdaterThreadTemp is done");
+
 
                     deleteRedundantDriveThreadTemp = new Thread(deleteRedundantDriveThreadForService[0]);
                     deleteRedundantDriveThreadTemp.start();
                     try{
-                        System.out.println("deleteRedundantDriveThreadTemp is running");
                         deleteRedundantDriveThreadTemp.join();
                     }catch (InterruptedException e){
                         LogHandler.saveLog("Failed to join delete redundant drive temp : "  +
                                 e.getLocalizedMessage(), true);
                     }
-                    System.out.println("deleteRedundantDriveThreadTemp is done");
 
                     updateDriveFilesThreadTemp = new Thread(updateDriveFilesThreadForService[0]);
                     updateDriveFilesThreadTemp.start();
                     try{
-                        System.out.println("updateDriveFilesThreadTemp is running");
                         updateDriveFilesThreadTemp.join();
                     }catch (InterruptedException e){
                         LogHandler.saveLog("Failed to join update drive temp : "  +
@@ -243,13 +244,20 @@ public class TimerService extends Service {
                     deleteDuplicatedInDriveTemp = new Thread(deleteDuplicatedInDriveForService[0]);
                     deleteDuplicatedInDriveTemp.start();
                     try{
-                        System.out.println("deleteDuplicatedInDriveTemp Optimization is running");
                         deleteDuplicatedInDriveTemp.join();
                     }catch (InterruptedException e){
                         LogHandler.saveLog("Failed to join delete duplicated drive temp : "  +
                                 e.getLocalizedMessage(), true);
                     }
-                    System.out.println("deleteDuplicatedInDriveTemp Optimization is done");
+
+                    syncAndroidToDriveThreadTemp = new Thread(syncAndroidToDriveThreadForService[0]);
+                    syncAndroidToDriveThreadTemp.start();
+                    try{
+                        syncAndroidToDriveThreadTemp.join();
+                    }catch (Exception e){
+                        LogHandler.saveLog("Failed to join syncAndroidToDrive thread in timer :" +
+                                e.getLocalizedMessage(),true);
+                    }
 
                     // need to free up ?
                         //if duplicate in android -> delete the duplicate
@@ -257,8 +265,6 @@ public class TimerService extends Service {
                         //else first upload then delete the duplicate in android
 
                     System.out.println("MainActivity.dbHelper.countAndroidAssets() : " + MainActivity.dbHelper.countAndroidAssets());
-                    System.out.println("finishing new timer");
-
                 }catch (Exception e){
                     LogHandler.saveLog("Failed to run timer in service" + e.getLocalizedMessage() , true);
                 }

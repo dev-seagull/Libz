@@ -1,15 +1,8 @@
 package com.example.cso;
 
-import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.os.Build;
 import android.os.Environment;
-import android.os.Looper;
 import android.os.StatFs;
-
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
 public class StorageHandler {
 
@@ -59,6 +52,7 @@ public class StorageHandler {
     private double optimizedPercent = 0.15;
 //    private double maxFreeStorageNeeded = 80;
     private double freeSpace;
+    private Upload upload = new Upload();
 
 
     public StorageHandler(){
@@ -71,30 +65,21 @@ public class StorageHandler {
                 String.format("%.3f", this.totalStorage), String.format("%.3f", this.freeSpace));
     }
 
-    public void storageOptimizer(){
-        double amountSpaceToFreeUp = 0;
+    public void storageUpdater(){
         this.freeSpace = getDeviceFreeStorage();
         MainActivity.dbHelper.updateDeviceTable(MainActivity.androidDeviceName,String.valueOf(this.freeSpace));
-        amountSpaceToFreeUp = getAmountSpaceToFreeUp();
+    }
 
-        if (amountSpaceToFreeUp != 0){
-            if(Looper.myLooper() == Looper.getMainLooper()) {
-                System.out.println("this is main thread in amount free space up.");
-            }
-            Upload upload = new Upload();
-            double netSpeed = 0.5;
-            double periodTime = 10;
-            upload.limitedUploadAndroidToDrive(netSpeed * periodTime);
-            LogHandler.saveLog("Free up space for " + amountSpaceToFreeUp, false);
-        }else{
-            LogHandler.saveLog("No need to free up space.",  false);
-        }
+
+    public void syncAndroidToDrive(){
+        double amountSpaceToFreeUp = 0;
+        amountSpaceToFreeUp = getAmountSpaceToFreeUp();
+        upload.syncAndroidToDrive(amountSpaceToFreeUp);
+        LogHandler.saveLog("Free up space for " + amountSpaceToFreeUp, false);
     }
 
 
     public double getAmountSpaceToFreeUp() {
-        return 3.3;
-        /*
         String sqlQuery = "SELECT freeStorage FROM DEVICE WHERE deviceName = ?;";
         Cursor cursor = MainActivity.dbHelper.getReadableDatabase()
                 .rawQuery(sqlQuery,new String[]{MainActivity.androidDeviceName});
@@ -116,7 +101,6 @@ public class StorageHandler {
             return optimizedFreeSpace - this.freeSpace;
         }
         return 0.0;
-        */
     }
 
 

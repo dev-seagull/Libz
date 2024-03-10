@@ -106,7 +106,6 @@ public class Upload {
                                 List<String[]> drive_items = MainActivity.dbHelper.getDriveTable(selected_drive_columns, userEmail);
                                 for(String[] drive_item : drive_items){
                                     String driveFileHash = drive_item[5];
-                                    System.out.println("Drive file hash for test: " + driveFileHash);
                                     if(driveFileHash.equals(fileHash)){
                                         isInDrive = true;
                                         break driveLoop;
@@ -203,7 +202,6 @@ public class Upload {
                                         " from android into backup account uploadId : " + uploadFileId,false);
                                 //date //id
 
-                                System.out.println("assetId for " + fileName + " is : " + assetId);
                                 MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
                                         drive_backUp_accounts.get(0)[0], assetId, "sync" , fileHash);
                             }
@@ -216,8 +214,6 @@ public class Upload {
                     }
                     else{
                         LogHandler.saveLog("Duplicated file in android was found: " + fileName,false);
-
-                        System.out.println("assetId for " + fileName + " is : " + assetId);
                         if(isDuplicated == true){
                             MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
                                     String.valueOf(android_items.get(duplicatedFileIndex)[0])
@@ -248,44 +244,27 @@ public class Upload {
     }
 
 
-    public boolean limitedUploadAndroidToDrive(double limitSize){
+    public boolean syncAndroidToDrive(double neededFreeSpace){
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        final double[] uploadedSize = {0.0};
+        final double[] neededFreeSpaceSize = {neededFreeSpace};
         final boolean[] isEnough = {false};
-        System.out.println("limited size for upload is : " + limitSize);
+        final boolean[] isUploadValid = {false};
+        System.out.println("needed free space size for upload is : " + neededFreeSpaceSize[0]);
         Callable<Boolean> uploadTask = () -> {
             try {
                 String[] selected_android_columns = {"id", "fileName", "filePath", "device",
                         "fileSize", "fileHash", "dateModified", "memeType","assetId"};
                 List<String[]> android_items = MainActivity.dbHelper.getAndroidTable(selected_android_columns);
 
-                Collections.sort(android_items, new Comparator<String[]>() {
-                    @Override
-                    public int compare(String[] item1, String[] item2) {
-                        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy");
-                        try {
-                            Date date1 = dateFormat.parse(item1[6]);
-                            Date date2 = dateFormat.parse(item2[6]);
-                            return date2.compareTo(date1);
-                        } catch (Exception e) {
-                            LogHandler.saveLog("Failed to sort android media items: " + e.getLocalizedMessage(),true);
-                            return 0;
-                        }
-                    }
-                });
-
-                for(int i = 0 ; i < 5 ; i++){
-                    System.out.println("Sorted one is " + android_items.get(i)[6]);
-                }
-
                 String[] selected_columns = {"userEmail" , "type"};
                 List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_columns);
+                android_items = sort(android_items);
 
                 ArrayList<String> androidItemsToUpload_hash = new ArrayList<>();
                 System.out.println("android_items.size() : " + android_items.size());
                 int duplicatedFileIndex = -1;
                 for (int j=0 ; j < android_items.size(); j++) {
-                    System.out.println("Uploaded size is : " + uploadedSize[0]);
+                    isUploadValid[0] = false;
                     Long fileId = Long.valueOf(android_items.get(j)[0]);
                     String fileName = android_items.get(j)[1];
                     String filePath = android_items.get(j)[2];
@@ -295,27 +274,6 @@ public class Upload {
                     String memeType = android_items.get(j)[7];
                     String assetId = android_items.get(j)[8];
 
-                    Boolean isInDrive = false;
-                    driveLoop:{
-                        for(String[] account_row : account_rows){
-                            String userEmail = account_row[0];
-                            String type = account_row[1];
-                            System.out.println("type.equals(backup) : " + type.equals("backup"));
-                            if(type.equals("backup")){
-                                String[] selected_drive_columns = {"id", "assetId", "fileId", "fileName",
-                                        "userEmail","fileHash"};
-                                List<String[]> drive_items = MainActivity.dbHelper.getDriveTable(selected_drive_columns, userEmail);
-                                for(String[] drive_item : drive_items){
-                                    String driveFileHash = drive_item[5];
-                                    System.out.println("Drive file hash for test: " + driveFileHash);
-                                    if(driveFileHash.equals(fileHash)){
-                                        isInDrive = true;
-                                        break driveLoop;
-                                    }
-                                }
-                            }
-                        }
-                    }
 
                     boolean isDuplicated = false;
                     androidDuplicateLoop:{
@@ -327,8 +285,36 @@ public class Upload {
                         }
                     }
 
-                    if( (isDuplicated == false) && (isInDrive == false)){
-                        System.out.println("Uploaded size in if is : " + uploadedSize[0]);
+//                    if (neededFreeSpaceSize[0] > 0){
+//                        androidFile.delete();
+//                            neededFreeSpaceSize[0] = neededFreeSpaceSize[0] -  fileSize;
+//                        continue;
+//                    }
+
+
+                    Boolean isInDrive = false;
+                    driveLoop:{
+                        for(String[] account_row : account_rows){
+                            String userEmail = account_row[0];
+                            String type = account_row[1];
+                            if(type.equals("backup")){
+                                String[] selected_drive_columns = {"id", "assetId", "fileId", "fileName",
+                                        "userEmail","fileHash"};
+                                List<String[]> drive_items = MainActivity.dbHelper.getDriveTable(selected_drive_columns, userEmail);
+                                for(String[] drive_item : drive_items){
+                                    String driveFileHash = drive_item[5];
+                                    if(driveFileHash.equals(fileHash)){
+                                        isInDrive = true;
+                                        break driveLoop;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    System.out.println("before neededFreeSpaceSize[0] : " + neededFreeSpaceSize[0] + " isUploadValid[0] : " + isUploadValid[0] + " isEnough[0] : " + isEnough[0]);
+                    if(//(isDuplicated == false) &&
+                             (isInDrive == false)){
                         androidItemsToUpload_hash.add(fileHash);
                         try {
                             NetHttpTransport HTTP_TRANSPORT = null;
@@ -343,12 +329,16 @@ public class Upload {
                             String driveBackupAccessToken = "";
                             String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
                             List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getAccounts(drive_backup_selected_columns);
-                            for (String[] drive_backUp_account : drive_backUp_accounts) {
-                                if (drive_backUp_account[1].equals("backup")) {
-                                    driveBackupAccessToken = drive_backUp_account[2];
-                                    break;
-                                }
+                            try {
+                                for (String[] drive_backUp_account : drive_backUp_accounts) {
+                                    if (drive_backUp_account[1].equals("backup")) {
+                                        driveBackupAccessToken = drive_backUp_account[2];
+                                        break;
+                                    }
 
+                                }
+                            }catch (Exception e){
+                                LogHandler.saveLog("error in getting backup accounts from db : " + e.getLocalizedMessage());
                             }
                             String bearerToken = "Bearer " + driveBackupAccessToken;
                             System.out.println("access token to upload is " + driveBackupAccessToken);
@@ -356,7 +346,6 @@ public class Upload {
                                 request.getHeaders().setAuthorization(bearerToken);
                                 request.getHeaders().setContentType("application/json");
                             };
-
                             Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
                                     .setApplicationName("cso")
                                     .build();
@@ -392,7 +381,7 @@ public class Upload {
                                     LogHandler.saveLog("The android file " + fileName + " doesn't exists in upload method");
                                 }
                             }
-                            if (!isVideo(memeType)) {
+//                            if (!isVideo(memeType)) {
                                 HttpResponse uploadFile =
                                         service.files().create(fileMetadata, mediaContent)
                                                 .setFields("id")
@@ -407,43 +396,42 @@ public class Upload {
                                 while (uploadFileId == null) {
                                     wait();
                                 }
-
-                                try {
-                                    ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems =
-                                            GoogleDrive.getMediaItems(driveBackupAccessToken);
-                                    for (BackUpAccountInfo.MediaItem mediaItem : driveMediaItems) {
-                                        if (mediaItem.getHash().equals(fileHash)) {
-                                            isEnough[0] = true;
-                                            break;
-                                        }
-                                    }
-                                    System.out.println("is backed up check after upload: " + isEnough[0]);
-                                } catch (Exception e) {
-                                    LogHandler.saveLog("Failed to check if upload is done properly : " + e.getLocalizedMessage());
-                                }
+//                                if (uploadStatus != HttpURLConnection.HTTP_OK){
+//                                    continue;
+//                                }
 
                                 if (uploadFileId == null | uploadFileId.isEmpty()) {
                                     LogHandler.saveLog("Failed to upload " + fileName + " from Android to backup because it's null");
                                 } else {
                                     LogHandler.saveLog("Uploading " + fileName +
                                             " from android into backup account uploadId : " + uploadFileId, false);
-                                    //date //id
-                                    uploadedSize[0] = uploadedSize[0] + Double.valueOf(fileSize);
-                                    System.out.println("assetId for " + fileName + " is : " + assetId);
+
+                                    try {
+                                        ArrayList<BackUpAccountInfo.MediaItem> driveMediaItems =
+                                                GoogleDrive.getMediaItems(driveBackupAccessToken);
+                                        for (BackUpAccountInfo.MediaItem mediaItem : driveMediaItems) {
+                                            if (mediaItem.getHash().equals(fileHash)) {
+                                                isUploadValid[0] = true;
+                                                break;
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        LogHandler.saveLog("Failed to check if upload is done properly : " + e.getLocalizedMessage());
+                                    }
+
+
                                     MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
                                             drive_backUp_accounts.get(0)[0], assetId, "sync", fileHash);
                                 }
-                            }
+//                            }
 //                                  test[0]--;
                             } catch(Exception e){
-                                System.out.println("Uploading android error: " + e.getMessage());
+                                System.out.println("Uploading android error: " + e.getLocalizedMessage());
                                 LogHandler.saveLog("Uploading android error: " + e.getMessage());
                             }
                     }
                     else{
                         LogHandler.saveLog("Duplicated file in android was found: " + fileName,false);
-
-                        System.out.println("assetId for " + fileName + " is : " + assetId);
                         if(isDuplicated == true){
                             MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
                                     String.valueOf(android_items.get(duplicatedFileIndex)[0])
@@ -454,9 +442,29 @@ public class Upload {
                             System.out.println("Duplicated file " + fileName + " in android was found with a drive file." );
                         }
                     }
+                    System.out.println("after neededFreeSpaceSize[0] : " + neededFreeSpaceSize[0] + " isUploadValid[0] : " + isUploadValid[0] + "isEnough[0] : " + isEnough[0]);
+                    if (neededFreeSpaceSize[0] > 0){
+                        if (isInDrive == true || isUploadValid[0] == true){
+                            try{
+                                while (androidFile.exists()){
+                                    androidFile.delete();
+                                }
+                            }catch (Exception e){
+                                LogHandler.saveLog("cant delete android file in syncAndroidToDrive : " + e.getLocalizedMessage());
+                            }
+                            if (!androidFile.exists()){
+                                neededFreeSpaceSize[0] = neededFreeSpaceSize[0] - Double.valueOf(fileSize);
+                            }
+                        }
+                    }
+                    if (neededFreeSpaceSize[0] <= 0){
+                        isEnough[0] = true;
+                    }else{
+                        isEnough[0] = false;
+                    }
+                    System.out.println("end neededFreeSpaceSize[0] : " + neededFreeSpaceSize[0] + " isUploadValid[0] : " + isUploadValid[0] + "isEnough[0] : " + isEnough[0]);
                 }
                 return isEnough[0];
-                //}
             } catch (Exception e){
                 System.out.println("Uploading android error: " + e.getMessage());
                 LogHandler.saveLog("Uploading android error: " + e.getMessage());
@@ -892,6 +900,23 @@ public class Upload {
         }
     }
 
+    public static List<String[]> sort(List<String[]> android_items){
+        Collections.sort(android_items, new Comparator<String[]>() {
+            @Override
+            public int compare(String[] item1, String[] item2) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy");
+                try {
+                    Date date1 = dateFormat.parse(item1[6]);
+                    Date date2 = dateFormat.parse(item2[6]);
+                    return date1.compareTo(date2);
+                } catch (Exception e) {
+                    LogHandler.saveLog("Failed to sort android media items: " + e.getLocalizedMessage(),true);
+                    return 0;
+                }
+            }
+        });
+        return android_items;
+    }
 
 }
 
