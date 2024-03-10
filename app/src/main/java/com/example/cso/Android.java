@@ -7,8 +7,6 @@ import android.provider.MediaStore;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -16,10 +14,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import android.os.StatFs;
-
-import com.google.gson.JsonObject;
 
 public class Android {
 

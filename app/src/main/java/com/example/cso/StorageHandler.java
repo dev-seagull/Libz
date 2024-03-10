@@ -74,7 +74,7 @@ public class StorageHandler {
     public void syncAndroidToDrive(){
         double amountSpaceToFreeUp = 0;
         amountSpaceToFreeUp = getAmountSpaceToFreeUp();
-        upload.SyncAndroidToDrive(amountSpaceToFreeUp);
+        upload.syncAndroidToDrive(amountSpaceToFreeUp);
         LogHandler.saveLog("Free up space for " + amountSpaceToFreeUp, false);
     }
 
