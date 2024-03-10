@@ -137,7 +137,7 @@ public class Android {
                 ".gif", ".mp4", ".mkv", ".webm"};
         int fileManagerItems = 0;
         File rootDirectory = Environment.getExternalStorageDirectory();
-        Queue<File> queue = new LinkedList<>();
+           Queue<File> queue = new LinkedList<>();
         try{
             queue.add(rootDirectory);
             while (!queue.isEmpty()){
@@ -148,52 +148,71 @@ public class Android {
                 }
                 if(currentFiles != null){
                     for(File currentFile: currentFiles){
-                        if(currentFile.isFile()){
-                            for(String extension: extensions){
-                                if(currentFile.getName().toLowerCase().endsWith(extension)){
-                                    String mediaItemPath = currentFile.getPath();
-                                    File mediaItemFile = new File(mediaItemPath);
-                                    String mediaItemName = currentFile.getName();
-                                    Double mediaItemSize = Double.valueOf(currentFile.length() / (Math.pow(10,6)));
-                                    SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy");
-                                    String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));
-                                    String mediaItemMemeType = GooglePhotos.getMemeType(mediaItemFile);
-                                    if(mediaItemFile.exists()){
-                                        fileManagerItems++;
-                                        if(!MainActivity.dbHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidDeviceName,
-                                                mediaItemDateModified, mediaItemSize)){
-                                            String mediaItemHash = "";
-                                            try {
-                                                mediaItemHash = Hash.calculateHash(mediaItemFile);
-                                            } catch (Exception e) {
-                                                LogHandler.saveLog("Failed to calculate hash in file manager: " + e.getLocalizedMessage());
-                                            }
-                                            long lastInsertedId =
-                                                    MainActivity.dbHelper.insertAssetData(mediaItemHash);
-                                            if(lastInsertedId != -1){
-
-                                                MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
-                                                        mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
-                                                LogHandler.saveLog("File was detected in file manager: " + mediaItemFile.getName(),false);
-                                            }else{
-                                                LogHandler.saveLog("Failed to insert file into android table in file manager : " + mediaItemFile.getName());
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }else if(currentFile.isDirectory()){
-                            queue.add(currentFile);
-                        }
+                        fileManagerItems = processFileManagerFile(currentFile, extensions, queue);
                     }
                 }
             }
         }catch (Exception e){
             LogHandler.saveLog("failed to get files from file manager: " + e.getLocalizedMessage());
         }
+        LogHandler.saveLog("",false);
         return fileManagerItems;
     }
 
+
+    private static boolean hasValidExtension(File file, String[] extensions) {
+        for (String extension : extensions) {
+            if (file.getName().toLowerCase().endsWith(extension)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private static int processFileManagerFile(File currentFile, String[] extensions, Queue<File> queue){
+        int fileManagerItems = 0;
+        if(currentFile.isFile() && hasValidExtension(currentFile, extensions)){
+            String mediaItemPath = currentFile.getPath();
+            File mediaItemFile = new File(mediaItemPath);
+            String mediaItemName = currentFile.getName();
+            Double mediaItemSize = Double.valueOf(currentFile.length() / (Math.pow(10,6)));
+            SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy");
+            String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));
+            String mediaItemMimeType = GooglePhotos.getMemeType(mediaItemFile);
+            if(mediaItemFile.exists()){
+                fileManagerItems++;
+                if(!MainActivity.dbHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidDeviceName,
+                        mediaItemDateModified, mediaItemSize)){
+                    processFileManagerItem(mediaItemFile, mediaItemName, mediaItemPath, mediaItemSize,
+                            mediaItemDateModified, mediaItemMimeType);
+                }
+            }
+        }else if(currentFile.isDirectory()){
+            queue.add(currentFile);
+        }
+        return fileManagerItems;
+    }
+
+    private static void processFileManagerItem(File mediaItemFile, String mediaItemName, String mediaItemPath,
+                                               Double mediaItemSize, String mediaItemDateModified, String mediaItemMimeType){
+        String mediaItemHash = "";
+        try {
+            mediaItemHash = Hash.calculateHash(mediaItemFile);
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to calculate hash in file manager: " + e.getLocalizedMessage());
+        }
+        long lastInsertedId =
+                MainActivity.dbHelper.insertAssetData(mediaItemHash);
+        if(lastInsertedId != -1){
+
+            MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                    mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMimeType);
+            LogHandler.saveLog("File was detected in file manager: " + mediaItemFile.getName(),false);
+        }else{
+            LogHandler.saveLog("Failed to insert file into android table in file manager : " + mediaItemFile.getName());
+        }
+    }
 }
 
 
