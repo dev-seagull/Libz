@@ -39,7 +39,6 @@
     import java.net.HttpURLConnection;
     import java.net.URL;
     import java.nio.charset.StandardCharsets;
-    import java.text.DecimalFormat;
     import java.util.ArrayList;
     import java.util.List;
     import java.util.concurrent.Callable;
@@ -49,7 +48,7 @@
 
 
     public class GoogleCloud extends AppCompatActivity {
-        private Activity activity;
+        private final Activity activity;
         private GoogleSignInClient googleSignInClient;
 
 
@@ -57,16 +56,6 @@
             this.activity = activity;
         }
 
-
-        public double convertStorageToGigaByte(float storage){
-            double divider = (Math.pow(1024,3));
-            double result = storage / divider;
-
-            DecimalFormat decimalFormat = new DecimalFormat("#.##");
-            Double formattedResult = Double.parseDouble(decimalFormat.format(result));
-
-            return formattedResult;
-        }
 
         public void signInToGoogleCloud(ActivityResultLauncher<Intent> signInLauncher) {
             boolean forceCodeForRefreshToken = true;
@@ -178,7 +167,7 @@
                     while ((line = reader.readLine()) != null) {
                         response.append(line);
                     }
-                    System.out.println("access token validity " + response.toString());
+                    System.out.println("access token validity " + response);
                     return !response.toString().toLowerCase().contains("error");
                 } finally {
                     connection.disconnect();
@@ -513,15 +502,15 @@
                     Drive driveService = new Drive.Builder(netHttpTransport, jsonFactory, httpRequestInitializer)
                             .setApplicationName("cso").build();
 
-                    totalStorage[0] = convertStorageToGigaByte(driveService.about().get()
+                    totalStorage[0] = StorageHandler.convertStorageToGigaByte(driveService.about().get()
                             .setFields("user, storageQuota")
                             .execute().getStorageQuota().getLimit());
 
-                    usedStorage[0] = convertStorageToGigaByte(driveService.about().get()
+                    usedStorage[0] = StorageHandler.convertStorageToGigaByte(driveService.about().get()
                             .setFields("user, storageQuota")
                             .execute().getStorageQuota().getUsage());
 
-                    usedInDriveStorage[0] = convertStorageToGigaByte(driveService.about().get()
+                    usedInDriveStorage[0] = StorageHandler.convertStorageToGigaByte(driveService.about().get()
                             .setFields("user, storageQuota")
                             .execute().getStorageQuota().getUsageInDrive());
 

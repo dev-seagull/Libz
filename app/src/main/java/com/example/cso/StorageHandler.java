@@ -4,6 +4,8 @@ import android.database.Cursor;
 import android.os.Environment;
 import android.os.StatFs;
 
+import java.text.DecimalFormat;
+
 public class StorageHandler {
 
     public double getTotalStorage() {
@@ -126,4 +128,14 @@ public class StorageHandler {
         return Double.valueOf(String.format("%.3f", freeSpaceGB));
     }
 
+
+    public static  double convertStorageToGigaByte(float storage){
+        double divider = (Math.pow(1024,3));
+        double result = storage / divider;
+
+        DecimalFormat decimalFormat = new DecimalFormat("#.###");
+        Double formattedResult = Double.parseDouble(decimalFormat.format(result));
+
+        return formattedResult;
+    }
 }

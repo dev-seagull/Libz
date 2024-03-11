@@ -619,7 +619,7 @@ public class DBHelper extends SQLiteOpenHelper {
             sqlQuery += column + ", ";
         }
         sqlQuery = sqlQuery.substring(0, sqlQuery.length() - 2);
-        sqlQuery += " FROM ANDROID" ;
+        sqlQuery += " FROM ANDROID ORDER BY dateModified ASC" ;
         Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
         if (cursor.moveToFirst()) {
             do {

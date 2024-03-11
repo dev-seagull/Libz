@@ -17,11 +17,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class Android {
-
+    static int[] galleryItems = {0};
     public static int getGalleryMediaItems(Activity activity) {
+        galleryItems[0] = 0;
+
         LogHandler.saveLog("Started to get android files from your device.", false);
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        final int[] galleryItems = {0};
 
         Callable<Integer> backgroundTask = () -> {
             try (Cursor cursor = createAndroidCursor(activity)) {
@@ -31,7 +32,7 @@ public class Android {
                     int columnIndexMimeType = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MIME_TYPE);
 
                     while (cursor.moveToNext()) {
-                        processGalleryItem(cursor, galleryItems[0], columnIndexPath, columnIndexSize, columnIndexMimeType);
+                        processGalleryItem(cursor, columnIndexPath, columnIndexSize, columnIndexMimeType);
                     }
                 }
             } catch (Exception e) {
@@ -152,7 +153,7 @@ public class Android {
         }
     }
 
-    private static void processGalleryItem(Cursor cursor, int galleryItems ,int columnIndexPath, int columnIndexSize
+    private static void processGalleryItem(Cursor cursor,int columnIndexPath, int columnIndexSize
                                            ,int columnIndexMimeType){
         String mediaItemPath = cursor.getString(columnIndexPath);
         File mediaItemFile = new File(mediaItemPath);
@@ -164,7 +165,7 @@ public class Android {
         File androidFile = new File(mediaItemPath);
 
         if(androidFile.exists()){
-            galleryItems++;
+            galleryItems[0]++;
             if(!MainActivity.dbHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidDeviceName,
                     mediaItemDateModified, mediaItemSize)){
                 String fileHash = "";
@@ -199,7 +200,7 @@ public class Android {
                     MediaStore.Files.FileColumns.MEDIA_TYPE + "=?";
             String[] selectionArgs = {String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE),
                     String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO)};
-            String sortOrder = MediaStore.Images.Media.DATE_MODIFIED + " DESC";
+            String sortOrder = MediaStore.Images.Media.DATE_MODIFIED + " ASC";
 
             return activity.getContentResolver().query(
                     MediaStore.Files.getContentUri("external"),
