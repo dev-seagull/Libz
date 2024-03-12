@@ -216,7 +216,7 @@
                     }
                 }
             }catch (Exception e){
-                LogHandler.saveLog("handle primary sign in result failed: " + e.getLocalizedMessage());
+                LogHandler.saveLog("handle primary sign in result failed: " + e.getLocalizedMessage(), true);
             }
             return new signInResult(userEmail, isHandled[0], isInAccounts, tokens, storage,new ArrayList<>());
         }
@@ -261,7 +261,7 @@
                     }
                 }
             }catch (Exception e){
-                LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage());
+                LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
             }
             return new signInResult(userEmail, isHandled[0], isInAccounts, tokens, storage,mediaItems);
         }
@@ -292,7 +292,7 @@
             if(linearLayout != null){
                 linearLayout.addView(newLoginButton);
             }else{
-                LogHandler.saveLog("Creating a new login button failed");
+                LogHandler.saveLog("Creating a new login button failed", true);
             }
             return newLoginButton;
         }
@@ -322,7 +322,7 @@
             if(linearLayout != null){
                 linearLayout.addView(newLoginButton);
             }else{
-                LogHandler.saveLog("Creating a new login button failed");
+                LogHandler.saveLog("Creating a new login button failed", true);
             }
             return newLoginButton;
         }
@@ -367,10 +367,10 @@
                         accessToken = responseJSONObject.getString("access_token");
                         refreshToken = responseJSONObject.getString("refresh_token");
                     }else {
-                        LogHandler.saveLog("Getting tokens failed");
+                        LogHandler.saveLog("Getting tokens failed with response code of " + responseCode, true);
                     }
                 } catch (Exception e) {
-                    LogHandler.saveLog("Getting tokens failed: " + e.getLocalizedMessage());
+                    LogHandler.saveLog("Getting tokens failed: " + e.getLocalizedMessage(), true);
                 }
                 return new GoogleCloud.Tokens(accessToken, refreshToken);
             };
@@ -379,7 +379,7 @@
             try {
                 tokens_fromFuture = future.get();
             }catch (Exception e){
-                LogHandler.saveLog("failed to get tokens from the future: " + e.getLocalizedMessage());
+                LogHandler.saveLog("failed to get tokens from the future: " + e.getLocalizedMessage(), true);
             }finally {
                 executor.shutdown();
             }
@@ -422,10 +422,10 @@
                         JSONObject responseJSONObject = new JSONObject(response);
                         accessToken = responseJSONObject.getString("access_token");
                     }else {
-                        LogHandler.saveLog("Getting access token failed with response code of " + responseCode);
+                        LogHandler.saveLog("Getting access token failed with response code of " + responseCode, true);
                     }
                 } catch (Exception e) {
-                    LogHandler.saveLog("Getting access token failed: " + e.getLocalizedMessage());
+                    LogHandler.saveLog("Getting access token failed: " + e.getLocalizedMessage(), true);
                 }
                 return new GoogleCloud.Tokens(accessToken, refreshToken);
             };
@@ -434,7 +434,7 @@
             try {
                 tokens_fromFuture = future.get();
             }catch (Exception e){
-                LogHandler.saveLog("failed to get access token from the future: " + e.getLocalizedMessage());
+                LogHandler.saveLog("failed to get access token from the future: " + e.getLocalizedMessage(), true);
             }finally {
                 executor.shutdown();
             }
