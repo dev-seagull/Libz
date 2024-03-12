@@ -82,33 +82,6 @@
             }
         }
 
-//        public boolean signOut(String userEmail){
-//            String accessToken = MainActivity.dbHelper.getAccessToken(userEmail);
-//            HttpTransport httpTransport = new NetHttpTransport();
-//            HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-//            try {
-//                GenericUrl revokeUrl = new GenericUrl("https://accounts.google.com/o/oauth2/revoke?token=" + accessToken);
-//                HttpRequest revokeRequest = requestFactory.buildGetRequest(revokeUrl);
-//                HttpResponse revokeResponse = revokeRequest.execute();
-//                revokeResponse.disconnect();
-//                boolean isAccessTokenValid = isAccessTokenValid(accessToken);
-//                if (!isAccessTokenValid) {
-//                    System.out.println("Tokens revoked successfully.");
-//                    httpTransport.shutdown();
-//                    return true;
-//                }
-//            } catch (IOException e) {
-//                LogHandler.saveLog("Error revoking tokens: " + e.getLocalizedMessage());
-//            }finally {
-//                try {
-//                    httpTransport.shutdown();
-//                }catch (Exception e){
-//                    LogHandler.saveLog("Failed to shutdown http transport: " + e.getLocalizedMessage());
-//                }
-//            }
-//            return false;
-//        }
-
         public boolean signOut(String userEmail) {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<Boolean> callableTask = () -> {
@@ -126,18 +99,17 @@
                             byte[] input = requestBody.getBytes("utf-8");
                             os.write(input, 0, input.length);
                         }
-                        int responseCode = connection.getResponseCode();
                     }
                     connection.disconnect();
                     boolean isAccessTokenValid = isAccessTokenValid(accessToken);
                     if (!isAccessTokenValid) {
-                        System.out.println("Tokens revoked successfully.");
+                        LogHandler.saveLog("Tokens revoked successfully.", false);
                         return true;
                     }else{
-                        System.out.println("Tokens revoked not successfully.");
+                        LogHandler.saveLog("Tokens revoked not successfully.", false);
                     }
                 } catch (IOException e) {
-                    LogHandler.saveLog("Error revoking tokens: " + e.getLocalizedMessage());
+                    LogHandler.saveLog("Error revoking tokens: " + e.getLocalizedMessage() ,true);
                 }
                 return false;
             };
@@ -146,7 +118,7 @@
             try{
                 isSignedOut = future.get();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to get the sign out future: " + e.getLocalizedMessage());
+                LogHandler.saveLog("Failed to get the sign out future: " + e.getLocalizedMessage(), true);
             }
             return isSignedOut;
         }
@@ -156,7 +128,6 @@
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<Boolean> callableTask = () -> {
                 String tokenInfoUrl = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=" + accessToken;
-                System.out.println("tokenInfoUrl " + tokenInfoUrl);
                 URL url = new URL(tokenInfoUrl);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 try {
@@ -167,7 +138,7 @@
                     while ((line = reader.readLine()) != null) {
                         response.append(line);
                     }
-                    System.out.println("access token validity " + response);
+                    LogHandler.saveLog("access token validity " + response, false);
                     return !response.toString().toLowerCase().contains("error");
                 } finally {
                     connection.disconnect();
@@ -178,7 +149,7 @@
             try{
                 isValid = future.get();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to check validity from future: " + e.getLocalizedMessage());
+                LogHandler.saveLog("Failed to check validity from future: " + e.getLocalizedMessage(),true);
             }
             return isValid;
         }
@@ -187,6 +158,7 @@
         public class signInResult{
             private String userEmail;
             private boolean isHandled;
+            private boolean isInAccounts;
             private GoogleCloud.Tokens tokens;
             private Storage storage;
 
@@ -199,18 +171,15 @@
                 this.tokens = tokens;
                 this.storage = storage;
                 this.mediaItems = mediaItems;
+                this.isInAccounts = isInAccounts;
             }
 
             public String getUserEmail() {return userEmail;}
             public boolean getHandleStatus() {return isHandled;}
-
             public GoogleCloud.Tokens getTokens() {return tokens;}
             public Storage getStorage() {return storage;}
-
+            public boolean getIsInAccounts() {return isInAccounts;}
             public ArrayList<DriveAccountInfo.MediaItem> getMediaItems() {return mediaItems;}
-
-
-
         }
 
         public signInResult handleSignInToPrimaryResult(Intent data){

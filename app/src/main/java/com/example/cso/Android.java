@@ -41,7 +41,7 @@ public class Android {
 
             try{
                 if(galleryItems[0] == 0){
-                    galleryItems[0] = getFileManagerMediaItems();
+                    getFileManagerMediaItems();
                 }
             }catch (Exception e){
                 LogHandler.saveLog("Getting device files failed: " + e.getLocalizedMessage(), true);
@@ -70,33 +70,31 @@ public class Android {
     }
 
 
-    public static int getFileManagerMediaItems(){
+    public static void getFileManagerMediaItems(){
         LogHandler.saveLog("Did not found any files in your gallery, so " +
                 "it started to get files from file manager." , false);
         String[] extensions = {".jpg", ".jpeg", ".png", ".webp",
                 ".gif", ".mp4", ".mkv", ".webm"};
-        int fileManagerItems = 0;
+        galleryItems[0] = 0;
         File rootDirectory = Environment.getExternalStorageDirectory();
-           Queue<File> queue = new LinkedList<>();
+        Queue<File> queue = new LinkedList<>();
         try{
             queue.add(rootDirectory);
             while (!queue.isEmpty()){
                 File currentDirectory = queue.poll();
                 File[] currentFiles = new File[0];
-                if (currentDirectory != null) {
+                if (currentDirectory != null && !currentDirectory.isHidden()) {
                     currentFiles = currentDirectory.listFiles();
                 }
                 if(currentFiles != null){
                     for(File currentFile: currentFiles){
-                        fileManagerItems = processFileManagerFile(currentFile, extensions, queue);
+                        processFileManagerFile(currentFile, extensions, queue);
                     }
                 }
             }
         }catch (Exception e){
             LogHandler.saveLog("Failed to get files from file manager: " + e.getLocalizedMessage(), true);
         }
-
-        return fileManagerItems;
     }
 
 
@@ -110,8 +108,7 @@ public class Android {
     }
 
 
-    private static int processFileManagerFile(File currentFile, String[] extensions, Queue<File> queue){
-        int fileManagerItems = 0;
+    private static void processFileManagerFile(File currentFile, String[] extensions, Queue<File> queue){
         if(currentFile.isFile() && hasValidExtension(currentFile, extensions)){
             String mediaItemPath = currentFile.getPath();
             File mediaItemFile = new File(mediaItemPath);
@@ -121,17 +118,16 @@ public class Android {
             String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));
             String mediaItemMimeType = GooglePhotos.getMemeType(mediaItemFile);
             if(mediaItemFile.exists()){
-                fileManagerItems++;
+                galleryItems[0]++;
                 if(!MainActivity.dbHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidDeviceName,
                         mediaItemDateModified, mediaItemSize)){
                     processFileManagerItem(mediaItemFile, mediaItemName, mediaItemPath, mediaItemSize,
                             mediaItemDateModified, mediaItemMimeType);
                 }
             }
-        }else if(currentFile.isDirectory()){
+        }else if(currentFile.isDirectory() && !currentFile.isHidden()){
             queue.add(currentFile);
         }
-        return fileManagerItems;
     }
 
     private static void processFileManagerItem(File mediaItemFile, String mediaItemName, String mediaItemPath,

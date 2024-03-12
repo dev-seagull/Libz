@@ -223,7 +223,6 @@
             Thread deleteRedundantAndroidThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    LogHandler.saveLog("Activity started : Starting to get files from you android device when starting the app",false);
                     dbHelper.deleteRedundantAndroid();
                     synchronized (this){
                         notify();
