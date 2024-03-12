@@ -3,14 +3,14 @@ package com.example.cso;
 import java.util.ArrayList;
 
 public class DriveAccountInfo {
-    private String userEmail;
+    private final String userEmail;
     private GoogleCloud.Tokens tokens;
     private GoogleCloud.Storage storage;
     private ArrayList<MediaItem> mediaItems ;
 
     public static class MediaItem{
         private String fileName;
-        private String hash;
+        private final String hash;
         private String fileId;
 
         public MediaItem(String fileName, String hash, String fileId) {

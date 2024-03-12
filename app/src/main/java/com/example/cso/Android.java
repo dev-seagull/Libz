@@ -18,6 +18,11 @@ import java.util.concurrent.Future;
 
 public class Android {
     static int[] galleryItems = {0};
+    static String[] forbiddenFolders = {"/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Private",
+        "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Stickers",
+        "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video/Private",
+        "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Animated Gifs/Private",
+        "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents/Private"};
     public static int getGalleryMediaItems(Activity activity) {
         galleryItems[0] = 0;
 
@@ -126,7 +131,17 @@ public class Android {
                 }
             }
         }else if(currentFile.isDirectory() && !currentFile.isHidden()){
-            queue.add(currentFile);
+            boolean isForbidden = false;
+            String directoryPath = currentFile.getPath();
+            for (String forbiddenFolder: forbiddenFolders){
+                if(directoryPath.equals(Environment.getExternalStorageDirectory() + forbiddenFolder)){
+                    isForbidden = true;
+                    break;
+                }
+            }
+            if(!isForbidden){
+                queue.add(currentFile);
+            }
         }
     }
 

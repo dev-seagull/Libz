@@ -644,7 +644,6 @@ public class DBHelper extends SQLiteOpenHelper {
         String sqlQuery = "";
         boolean existsInAndroid = existsInAndroid(assetId, filePath, device, fileSize, fileHash);
         if(existsInAndroid == false){
-            System.out.println("try to insert into android table method : " + fileName + " "+ assetId);
             dbWritable.beginTransaction();
             try{
                 sqlQuery = "INSERT INTO ANDROID (" +
