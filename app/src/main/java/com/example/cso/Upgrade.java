@@ -49,6 +49,7 @@ public class Upgrade {
         MainActivity.activity.runOnUiThread(() -> {
             Toast.makeText(MainActivity.activity, "you are upgraded from version 17 to version 18 by Upgrader", Toast.LENGTH_SHORT).show();
         });
+        deleteAccountsTableContent();
     }
 
 

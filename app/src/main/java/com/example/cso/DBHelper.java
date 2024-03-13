@@ -60,6 +60,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "usedStorage REAL," +
                 "usedInDriveStorage REAL,"+
                 "UsedInGmailAndPhotosStorage REAL," +
+                "folderId TEXT DEFAULT NULL," +
                 "FOREIGN KEY (profileId) REFERENCES PROFILE(id));";
         sqLiteDatabase.execSQL(ACCOUNTS);
 

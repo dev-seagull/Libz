@@ -14,6 +14,7 @@ import com.google.api.services.drive.model.FileList;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,12 +46,117 @@ public class GoogleDrive {
         public String getMediaItemHash() {return mediaItemHash;}
     }
 
+    public static String[] goodEmailAccount(){
+        // some check like capacity
+        String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken","folderId"};
+        List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getAccounts(drive_backup_selected_columns);
+        try {
+            for (String[] drive_backUp_account : drive_backUp_accounts) {
+                if (drive_backUp_account[1].equals("backup")) {
+                    return  drive_backUp_account;
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("error in getting backup accounts from db : " + e.getLocalizedMessage());
+        }
+        return null;
+    }
+    public static void createUploadFolderInGoogleDrive(){
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Callable<Boolean> createFolderTask = () -> {
+            String[] selected_columns = {"userEmail","type","accessToken","folderId"};
+            List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_columns);
+            for (String[] account_row : account_rows){
+                if (!account_row[1].equals("backup")){
+                    continue;
+                }
+                String driveBackupAccessToken = account_row[2];
+                if (driveBackupAccessToken == null){
+                    continue;
+                }
+                if (account_row[3] != null){
+                    continue;
+                }
+                try {
+                    System.out.println("until here alive in createUploadFolderInGoogleDrive getAccessToken: " + driveBackupAccessToken);
+                    NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();;
+                    final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+                    String bearerToken = "Bearer " + driveBackupAccessToken;
+                    System.out.println("access token to upload is " + driveBackupAccessToken);
+                    HttpRequestInitializer requestInitializer = request -> {
+                        request.getHeaders().setAuthorization(bearerToken);
+                        request.getHeaders().setContentType("application/json");
+                    };
+
+                    Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
+                            .setApplicationName("cso")
+                            .build();
+                    String folder_name = "Stash_Folder";
+                    String folderId = null;
+                    com.google.api.services.drive.model.File folder = null;
+
+                    FileList fileList = service.files().list()
+                            .setQ("mimeType='application/vnd.google-apps.folder' and name='"
+                                    + folder_name + "'")
+                            .setSpaces("drive")
+                            .setFields("files(id)")
+                            .execute();
+                    List<com.google.api.services.drive.model.File> driveFolders = fileList.getFiles();
+                    for(com.google.api.services.drive.model.File driveFolder: driveFolders){
+                        folderId = driveFolder.getId();
+                    }
+
+                    if (folderId == null) {
+                        com.google.api.services.drive.model.File folder_metadata =
+                                new com.google.api.services.drive.model.File();
+                        folder_metadata.setName(folder_name);
+                        folder_metadata.setMimeType("application/vnd.google-apps.folder");
+                        folder = service.files().create(folder_metadata)
+                                .setFields("id").execute();
+
+                        folderId = folder.getId();
+                    }
+                    if (folderId == null){
+                        LogHandler.saveLog("Failed to create folder in google drive " + account_row[0],true);
+                    }
+                    String insertFolderIdIntoAccounts = "UPDATE ACCOUNTS SET folderId = ? WHERE userEmail = ?";
+                    MainActivity.dbHelper.getWritableDatabase().beginTransaction();
+                    MainActivity.dbHelper.getWritableDatabase().execSQL(insertFolderIdIntoAccounts,new String[]{folderId,account_row[0]});
+                    MainActivity.dbHelper.getWritableDatabase().setTransactionSuccessful();
+                    MainActivity.dbHelper.getWritableDatabase().endTransaction();
+                } catch (Exception e) {
+                    System.out.println("error in creating folder in google drive" + e.getLocalizedMessage());
+                }
+            }
+            return true;
+        };
+        Future<Boolean> future = executor.submit(createFolderTask);
+        boolean listOfAllFoldersCreated = false;
+        try{
+            listOfAllFoldersCreated = future.get();
+        }catch (Exception e){
+            System.out.println(e.getLocalizedMessage());
+        }
+    }
 
     public static ArrayList<DriveAccountInfo.MediaItem> getMediaItems(String accessToken) {
+
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final ArrayList<DriveAccountInfo.MediaItem> mediaItems = new ArrayList<>();
         Callable<ArrayList<DriveAccountInfo.MediaItem>> backgroundTask = () -> {
             try {
+                String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken","folderId"};
+                String folderId ="";
+                List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getAccounts(drive_backup_selected_columns);
+                for (String[] account_row:drive_backUp_accounts){
+                    if (account_row[2].equals(accessToken)){
+                        folderId = account_row[3];
+                    }
+                }
+                if (folderId == null){
+                    LogHandler.saveLog("No folder was found in Google Drive back up account",false);
+                    return mediaItems;
+                }
                 final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
                 final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
                 HttpRequestInitializer httpRequestInitializer = request -> {
@@ -66,18 +172,22 @@ public class GoogleDrive {
                     System.out.println("page token is: " + nextPageToken);
                     FileList result = driveService.files().list()
                             .setFields("files(id, name, sha256Checksum),nextPageToken")
+                            .setQ("'" +folderId + "' in parents")
                             .setPageToken(nextPageToken)
                             .execute();
-                    List<File> files = result.getFiles();
+                    System.out.println("checking folderId : "+ folderId + " and trashed = false" +
+                            "files Are : ");
+                    List<com.google.api.services.drive.model.File> files = result.getFiles();
                     if (files != null && !files.isEmpty()) {
                         for (File file : files) {
+                            System.out.println("File " + file.getName());
                             if (GooglePhotos.isVideo(GoogleCloud.getMemeType(file.getName())) |
                                     GooglePhotos.isImage(GoogleCloud.getMemeType(file.getName()))){
                                 DriveAccountInfo.MediaItem mediaItem = new DriveAccountInfo.MediaItem(file.getName(),
                                         file.getSha256Checksum().toLowerCase(), file.getId());
                                 mediaItems.add(mediaItem);
                             }else{
-//                                System.out.println("File " + file.getName() + " is not a media item 000000000000000000000000000000000000000");
+                                System.out.println("File " + file.getName() + " is not a media item 000000000000000000000000000000000000000");
                             }
                         }
                     }    nextPageToken = result.getNextPageToken();
