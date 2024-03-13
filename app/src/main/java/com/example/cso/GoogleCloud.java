@@ -85,7 +85,7 @@
         public boolean signOut(String userEmail) {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<Boolean> callableTask = () -> {
-                String accessToken = MainActivity.dbHelper.getAccessToken(userEmail);
+                String accessToken = DBHelper.getAccessToken(userEmail);
                 try {
                     String revokeUrl = "https://accounts.google.com/o/oauth2/revoke";
                     URL url = new URL(revokeUrl);
@@ -96,7 +96,7 @@
                     if (accessToken != null) {
                         String requestBody = "token=" + accessToken;
                         try (OutputStream os = connection.getOutputStream()) {
-                            byte[] input = requestBody.getBytes("utf-8");
+                            byte[] input = requestBody.getBytes(StandardCharsets.UTF_8);
                             os.write(input, 0, input.length);
                         }
                     }
@@ -155,8 +155,8 @@
         }
 
 
-        public class signInResult{
-            private String userEmail;
+        public static class signInResult{
+            private final String userEmail;
             private boolean isHandled;
             private boolean isInAccounts;
             private GoogleCloud.Tokens tokens;
@@ -197,7 +197,7 @@
                     userEmail = account.getEmail();
                     userEmail = userEmail.replace("@gmail.com", "");
                 }
-                List<String[]> userAccounts = MainActivity.dbHelper.getAccounts(new String[]{"userEmail","type"});
+                List<String[]> userAccounts = DBHelper.getAccounts(new String[]{"userEmail","type"});
                 for (String[] row : userAccounts) {
                     if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
                         isInAccounts = true;
@@ -207,7 +207,7 @@
                         });
                     }
                 }
-                if (isInAccounts == false){
+                if (!isInAccounts){
                     authCode = account.getServerAuthCode();
                     tokens = getTokens(authCode);
                     storage = getStorage(tokens);
@@ -218,7 +218,7 @@
             }catch (Exception e){
                 LogHandler.saveLog("handle primary sign in result failed: " + e.getLocalizedMessage(), true);
             }
-            return new signInResult(userEmail, isHandled[0], isInAccounts, tokens, storage,new ArrayList<>());
+            return new signInResult(userEmail, isHandled[0], isInAccounts, tokens, storage, new ArrayList<>());
         }
 
         public signInResult handleSignInToBackupResult(Intent data){
@@ -240,8 +240,7 @@
                 }
 
                 String[] columnsList = new String[]{"userEmail","type"};
-                List<String[]> accounts_rows = MainActivity.dbHelper.getAccounts(columnsList);
-                isInAccounts = false;
+                List<String[]> accounts_rows = DBHelper.getAccounts(columnsList);
                 for (String[] row : accounts_rows) {
                     if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
                         isInAccounts = true;
@@ -251,7 +250,7 @@
                         });
                     }
                 }
-                if (isInAccounts == false){
+                if (!isInAccounts){
                     authCode = account.getServerAuthCode();
                     tokens = getTokens(authCode);
                     storage = getStorage(tokens);
@@ -263,7 +262,7 @@
             }catch (Exception e){
                 LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
             }
-            return new signInResult(userEmail, isHandled[0], isInAccounts, tokens, storage,mediaItems);
+            return new signInResult(userEmail, isHandled[0], isInAccounts, tokens, storage, mediaItems);
         }
 
 
@@ -452,7 +451,6 @@
 
         public Storage getStorage(GoogleCloud.Tokens tokens){
             ExecutorService executor = Executors.newSingleThreadExecutor();
-            String refreshToken = tokens.getRefreshToken();
             String accessToken = tokens.getAccessToken();
             final Storage[] storage = new Storage[1];
             final Double[] totalStorage = new Double[1];
@@ -484,17 +482,12 @@
                             .execute().getStorageQuota().getUsageInDrive());
 
                     storage[0] = new Storage(totalStorage[0], usedStorage[0],usedInDriveStorage[0]);
-                    LogHandler.saveLog("Account total storage: " + totalStorage[0],false);
-                    LogHandler.saveLog("Account used storage: "  + usedStorage[0],false);
-                    LogHandler.saveLog("Account used in drive storage: " + usedInDriveStorage[0],false);
-                    LogHandler.saveLog("Used in Gmail and Photos is : " + (usedStorage[0] - usedInDriveStorage[0]),false);
-
                     return storage[0];
                 };
                 Future<Storage> future = executor.submit(backgroundTask);
                 storage[0] = future.get();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to get the storage: " + e.getLocalizedMessage());
+                LogHandler.saveLog("Failed to get the storage: " + e.getLocalizedMessage(), true);
             }
             executor.shutdown();
             return storage[0];
@@ -512,15 +505,12 @@
             public void setAccessToken(String accessToken) {
                 this.accessToken = accessToken;
             }
-
             public void setRefreshToken(String refreshToken) {
                 this.refreshToken= refreshToken;
             }
-
             public String getAccessToken() {
                 return accessToken;
             }
-
             public String getRefreshToken() {
                 return refreshToken;
             }
