@@ -14,8 +14,8 @@ public class Upgrade {
         int savedVersionCode = preferences.getInt("currentVersionCode", -1); // Default to -1 if not found
         int currentVersionCode = BuildConfig.VERSION_CODE;
         if (savedVersionCode == -1){
-            deleteProfileTableContent();
-            deleteAccountsTableContent();
+//            deleteProfileTableContent();
+//            deleteAccountsTableContent();
         }
         else if (savedVersionCode <= currentVersionCode) {
             switch (savedVersionCode){
@@ -49,7 +49,7 @@ public class Upgrade {
         MainActivity.activity.runOnUiThread(() -> {
             Toast.makeText(MainActivity.activity, "you are upgraded from version 17 to version 18 by Upgrader", Toast.LENGTH_SHORT).show();
         });
-        deleteAccountsTableContent();
+//        deleteAccountsTableContent();
     }
 
 
@@ -57,6 +57,7 @@ public class Upgrade {
         MainActivity.activity.runOnUiThread(() -> {
             Toast.makeText(MainActivity.activity, "You are upgraded to last version", Toast.LENGTH_SHORT).show();
         });
+//        deleteAccountsTableContent();
     }
 
 
@@ -144,7 +145,7 @@ public class Upgrade {
     public static void deleteAccountsTableContent(){
         try{
             MainActivity.dbHelper.getWritableDatabase().beginTransaction();
-            String deleteAccountsContent = "DELETE FROM ACCOUNTS ;";
+            String deleteAccountsContent = "DROP TABLE IF EXISTS ACCOUNTS ;";
             MainActivity.dbHelper.getWritableDatabase().execSQL(deleteAccountsContent);
             MainActivity.dbHelper.getWritableDatabase().setTransactionSuccessful();
         }catch (Exception e){

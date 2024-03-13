@@ -52,7 +52,7 @@ public class TimerService extends Service {
 
         startForeground(NOTIFICATION_ID, notification);
 
-        return START_STICKY;
+        return Service.START_REDELIVER_INTENT;
     }
 
     private void startTimer() {
@@ -85,7 +85,7 @@ public class TimerService extends Service {
                 .setContentTitle("Syncing Service")
                 .setContentText("Syncing process is running in the background")
                 .setContentIntent(pendingIntent)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                .setPriority(NotificationCompat.PRIORITY_MAX);
         builder.setContentIntent(pendingIntent);
         return builder.build();
     }
@@ -97,7 +97,6 @@ public class TimerService extends Service {
 
 
     private void initializeTimerTask() {
-
 
         final Thread[] deleteRedundantAndroidThreadForService = {new Thread(() -> {MainActivity.dbHelper.deleteRedundantAndroid();})};
 
@@ -174,6 +173,7 @@ public class TimerService extends Service {
         timerTask = new TimerTask() {
             public void run() {
                 try{
+                    Log.d(TAG, "my service is run like");
                     if (shouldCancel == true){
                         timer.cancel();
                         timer.purge();

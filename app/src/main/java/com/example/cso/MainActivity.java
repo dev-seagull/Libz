@@ -1267,9 +1267,7 @@
                             TimerService.shouldCancel = false;
                             startForegroundService(serviceIntent);
                         }
-
                     }
-
                     System.out.println("startService(serviceIntent); " + serviceIntent);
 
                 }
