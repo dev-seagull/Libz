@@ -22,7 +22,8 @@ public class Android {
         "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Stickers",
         "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video/Private",
         "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Animated Gifs/Private",
-        "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents/Private"};
+        "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents/Private",
+        "/Telegram/Telegram Documents"};
     public static int getGalleryMediaItems(Activity activity) {
         galleryItems[0] = 0;
 

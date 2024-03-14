@@ -14,7 +14,6 @@ import com.google.api.services.drive.model.FileList;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +62,7 @@ public class GoogleDrive {
     }
 
 
-    public static void createUploadFolderInGoogleDrive(){
+    public static void createStashSyncedAssetsFolderInDrive(){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<Boolean> createFolderTask = () -> {
             String[] selected_columns = {"userEmail","type","accessToken","folderId"};
@@ -72,62 +71,52 @@ public class GoogleDrive {
                 if (!account_row[1].equals("backup")){
                     continue;
                 }
-                String driveBackupAccessToken = account_row[2];
-                if (driveBackupAccessToken == null){
-                    continue;
-                }
                 if (account_row[3] != null){
                     continue;
-                }
-                try {
-                    System.out.println("until here alive in createUploadFolderInGoogleDrive getAccessToken: " + driveBackupAccessToken);
-                    NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();;
-                    final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-                    String bearerToken = "Bearer " + driveBackupAccessToken;
-                    System.out.println("access token to upload is " + driveBackupAccessToken);
-                    HttpRequestInitializer requestInitializer = request -> {
-                        request.getHeaders().setAuthorization(bearerToken);
-                        request.getHeaders().setContentType("application/json");
-                    };
+                    //check exists
+                }else{
+                    try{
+                        String driveBackupAccessToken = account_row[2];
+                        Drive service = initializeDrive(driveBackupAccessToken);
 
-                    Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                            .setApplicationName("cso")
-                            .build();
-                    String folder_name = "Stash_Folder";
-                    String folderId = null;
-                    com.google.api.services.drive.model.File folder = null;
+                        String folder_name = "stash_synced_assets";
+                        String folderId = null;
+                        com.google.api.services.drive.model.File folder = null;
 
-                    FileList fileList = service.files().list()
-                            .setQ("mimeType='application/vnd.google-apps.folder' and name='"
-                                    + folder_name + "'")
-                            .setSpaces("drive")
-                            .setFields("files(id)")
-                            .execute();
-                    List<com.google.api.services.drive.model.File> driveFolders = fileList.getFiles();
-                    for(com.google.api.services.drive.model.File driveFolder: driveFolders){
-                        folderId = driveFolder.getId();
+                        FileList fileList = service.files().list()
+                                .setQ("mimeType='application/vnd.google-apps.folder' and name='"
+                                        + folder_name + "'")
+                                .setSpaces("drive")
+                                .setFields("files(id)")
+                                .execute();
+                        List<com.google.api.services.drive.model.File> driveFolders = fileList.getFiles();
+                        for(com.google.api.services.drive.model.File driveFolder: driveFolders){
+                            folderId = driveFolder.getId();
+                        }
+
+                        if (folderId == null) {
+                            com.google.api.services.drive.model.File folder_metadata =
+                                    new com.google.api.services.drive.model.File();
+                            folder_metadata.setName(folder_name);
+                            folder_metadata.setMimeType("application/vnd.google-apps.folder");
+                            folder = service.files().create(folder_metadata)
+                                    .setFields("id").execute();
+
+                            folderId = folder.getId();
+                        }
+                        if (folderId == null){
+                            LogHandler.saveLog("Failed to create folder in google drive " + account_row[0],true);
+                        }
+                        String insertFolderIdIntoAccounts = "UPDATE ACCOUNTS SET folderId = ? WHERE userEmail = ?";
+                        MainActivity.dbHelper.getWritableDatabase().beginTransaction();
+                        MainActivity.dbHelper.getWritableDatabase().execSQL(insertFolderIdIntoAccounts,new String[]{folderId,account_row[0]});
+                        MainActivity.dbHelper.getWritableDatabase().setTransactionSuccessful();
+                        MainActivity.dbHelper.getWritableDatabase().endTransaction();
+
+                    }catch (Exception e){
+                        LogHandler.saveLog("Failed to create stash synced assets folders in drive : " +
+                                e.getLocalizedMessage(), true);
                     }
-
-                    if (folderId == null) {
-                        com.google.api.services.drive.model.File folder_metadata =
-                                new com.google.api.services.drive.model.File();
-                        folder_metadata.setName(folder_name);
-                        folder_metadata.setMimeType("application/vnd.google-apps.folder");
-                        folder = service.files().create(folder_metadata)
-                                .setFields("id").execute();
-
-                        folderId = folder.getId();
-                    }
-                    if (folderId == null){
-                        LogHandler.saveLog("Failed to create folder in google drive " + account_row[0],true);
-                    }
-                    String insertFolderIdIntoAccounts = "UPDATE ACCOUNTS SET folderId = ? WHERE userEmail = ?";
-                    MainActivity.dbHelper.getWritableDatabase().beginTransaction();
-                    MainActivity.dbHelper.getWritableDatabase().execSQL(insertFolderIdIntoAccounts,new String[]{folderId,account_row[0]});
-                    MainActivity.dbHelper.getWritableDatabase().setTransactionSuccessful();
-                    MainActivity.dbHelper.getWritableDatabase().endTransaction();
-                } catch (Exception e) {
-                    System.out.println("error in creating folder in google drive" + e.getLocalizedMessage());
                 }
             }
             return true;
