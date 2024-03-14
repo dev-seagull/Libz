@@ -21,7 +21,6 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.model.FileList;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -39,12 +38,10 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -258,7 +255,7 @@ public class Upload {
         System.out.println("needed free space size for upload is : " + neededFreeSpaceSize[0]);
         Callable<Boolean> uploadTask = () -> {
             try {
-                GoogleDrive.createUploadFolderInGoogleDrive();
+                GoogleDrive.createStashSyncedAssetsFolderInDrive();
                 String[] selected_android_columns = {"id", "fileName", "filePath", "device",
                         "fileSize", "fileHash", "dateModified", "memeType","assetId"};
                 List<String[]> android_items = MainActivity.dbHelper.getAndroidTable(selected_android_columns);

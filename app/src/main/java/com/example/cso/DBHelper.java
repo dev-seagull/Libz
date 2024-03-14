@@ -17,9 +17,6 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,11 +34,8 @@ public class DBHelper extends SQLiteOpenHelper {
     public static SQLiteDatabase dbReadable;
     public static SQLiteDatabase dbWritable;
 
-    private Context context;
-
     public DBHelper(Context context) {
         super(context, OLD_DATABASE_NAME, null, DATABASE_VERSION);
-        this.context = context;
         dbReadable = getReadableDatabase();
         dbWritable = getWritableDatabase();
         onCreate(getWritableDatabase());
@@ -52,7 +46,7 @@ public class DBHelper extends SQLiteOpenHelper {
         String ACCOUNTS = "CREATE TABLE IF NOT EXISTS ACCOUNTS("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 +"profileId INTEGER ,"
-                + "userEmail TEXT ," +
+                +"userEmail TEXT ," +
                 "type TEXT CHECK (type IN ('primary','backup')), " +
                 "refreshToken TEXT, " +
                 "accessToken TEXT, " +
@@ -144,25 +138,6 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
 
-    }
-
-    private void copyDatabase(Context context, String oldDatabaseName, String newDatabaseName) {
-        try {
-            InputStream inputStream = context.getAssets().open(oldDatabaseName);
-            OutputStream outputStream = new FileOutputStream(new File
-                    (context.getDatabasePath(newDatabaseName).getPath()));
-
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = inputStream.read(buffer)) > 0) {
-                outputStream.write(buffer, 0, length);
-            }
-            outputStream.flush();
-            outputStream.close();
-            inputStream.close();
-        } catch (Exception e) {
-            LogHandler.saveLog("Failed to copy database from csoDatabase : " +  e.getLocalizedMessage());
-        }
     }
 
 

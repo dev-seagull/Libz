@@ -16,12 +16,12 @@ public class MyWidget extends AppWidgetProvider {
 
             Intent syncIntent = new Intent(context, MyWidget.class);
             syncIntent.setAction("SYNC_ACTION");
-            PendingIntent syncPendingIntent = PendingIntent.getBroadcast(context, 0, syncIntent, 0);
+            PendingIntent syncPendingIntent = PendingIntent.getBroadcast(context, 0, syncIntent, PendingIntent.FLAG_IMMUTABLE);
             views.setOnClickPendingIntent(R.id.syncToBackUpAccountButton, syncPendingIntent);
 
             Intent restoreIntent = new Intent(context, MyWidget.class);
             restoreIntent.setAction("RESTORE_ACTION");
-            PendingIntent restorePendingIntent = PendingIntent.getBroadcast(context, 0, restoreIntent, 0);
+            PendingIntent restorePendingIntent = PendingIntent.getBroadcast(context, 0, restoreIntent, PendingIntent.FLAG_IMMUTABLE);
             views.setOnClickPendingIntent(R.id.restoreButton, restorePendingIntent);
 
             appWidgetManager.updateAppWidget(appWidgetId, views);
