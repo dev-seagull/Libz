@@ -4,6 +4,7 @@
     import android.app.Activity;
     import android.app.ActivityManager;
     import android.app.AlertDialog;
+    import android.content.ComponentName;
     import android.content.Context;
     import android.content.DialogInterface;
     import android.content.Intent;
@@ -16,6 +17,7 @@
     import android.os.Environment;
     import android.os.Looper;
     import android.provider.Settings;
+    import android.service.quicksettings.TileService;
     import android.text.Layout;
     import android.text.Spannable;
     import android.text.SpannableString;
@@ -81,7 +83,7 @@
         public Thread updateDriveBackUpThread;
         public Thread deleteDuplicatedInDrive;
         TextView androidSyncStatus;
-        TimerService timerService;
+        public  static TimerService timerService;
 
         List<Thread> threads = new ArrayList<>(Arrays.asList(firstUiThread, secondUiThread,
                 backUpJsonThread, insertMediaItemsThread, deleteRedundantDriveThread, updateDriveBackUpThread, deleteDuplicatedInDrive));
@@ -404,7 +406,7 @@
                                     androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
                                             "\n" + "Synced android assets: " +
                                             dbHelper.countAndroidSyncedAssets());
-                                    androidSyncStatus.setText("Syncing is " + isMyServiceRunning(timerService.getClass()));
+                                    androidSyncStatus.setText("Syncing is " + isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()));
                                 });
                             }
                         }
@@ -1263,7 +1265,7 @@
                         androidSyncStatus.setText("Syncing is on ");
                     });
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        if (!isMyServiceRunning(timerService.getClass()).equals("on")){
+                        if (!isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("on")){
                             TimerService.shouldCancel = false;
                             startForegroundService(serviceIntent);
                         }
@@ -1499,7 +1501,7 @@
                 @Override
                 public void onClick(View view) {
                     TimerService.shouldCancel = true;
-                    while (!isMyServiceRunning(timerService.getClass()).equals("off")) {
+                    while (!isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("off")) {
                         stopService(serviceIntent);
                     }
                     runOnUiThread( () -> {
@@ -1510,8 +1512,8 @@
             });
         }
 
-        private String isMyServiceRunning(Class<?> serviceClass) {
-            ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        public static String isMyServiceRunning(Context context,Class<?> serviceClass) {
+            ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
             for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
                 if (serviceClass.getName().equals(service.service.getClassName())) {
                     System.out.println("isMyServiceRunning : true");
