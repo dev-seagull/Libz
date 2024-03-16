@@ -41,6 +41,7 @@ public class TimerService extends Service {
         super.onCreate();
         Log.d(TAG, "Service onCreate");
         startTimer();
+
     }
 
 

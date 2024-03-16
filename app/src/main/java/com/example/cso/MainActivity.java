@@ -42,6 +42,7 @@
     import androidx.drawerlayout.widget.DrawerLayout;
 
     import com.google.android.material.navigation.NavigationView;
+    import com.google.android.material.switchmaterial.SwitchMaterial;
     import com.google.gson.JsonArray;
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
@@ -58,9 +59,8 @@
 
 
     public class MainActivity extends AppCompatActivity {
-
         private DrawerLayout drawerLayout;
-        Button syncToBackUpAccountButton;
+
         public static Activity activity ;
         static GoogleCloud googleCloud;
         ActivityResultLauncher<Intent> signInToPrimaryLauncher;
@@ -68,7 +68,6 @@
         GooglePhotos googlePhotos;
         HashMap<String, PhotosAccountInfo> primaryAccountHashMap = new HashMap<>();
         public static String androidDeviceName;
-        Button restoreButton;
         public static String logFileName = "stash_log.txt";
         public static int errorCounter = 0;
         static SharedPreferences preferences;
@@ -82,7 +81,8 @@
         public Thread deleteRedundantDriveThread;
         public Thread updateDriveBackUpThread;
         public Thread deleteDuplicatedInDrive;
-        TextView androidSyncStatus;
+
+        SwitchMaterial syncSwitchMaterialButton;
         public  static TimerService timerService;
 
         List<Thread> threads = new ArrayList<>(Arrays.asList(firstUiThread, secondUiThread,
@@ -197,8 +197,6 @@
 
             initializeButtons(this,googleCloud);
 
-            syncToBackUpAccountButton = findViewById(R.id.syncToBackUpAccountButton);
-
 
             Button androidDeviceButton = findViewById(R.id.androidDeviceButton);
             androidDeviceButton.setText(androidDeviceName);
@@ -214,12 +212,19 @@
 
             TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
             TextView deviceStorage = findViewById(R.id.deviceStorage);
-            androidSyncStatus = findViewById(R.id.androidSyncStatus);
             timerService = new TimerService();
 
             runOnUiThread(() ->{
                 TextView deviceStorageTextView = findViewById(R.id.deviceStorage);
                 deviceStorageTextView.setText("Wait until we get an update of your assets ...");
+                syncSwitchMaterialButton = findViewById(R.id.syncSwitchMaterial);
+                if (isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("on")){
+                    runOnUiThread(() -> {
+                        syncSwitchMaterialButton.setChecked(true);
+                        syncSwitchMaterialButton.setThumbTintList(ColorStateList.valueOf(Color.GREEN));
+                        syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.GREEN));
+                    });
+                }
             });
 
             Thread deleteRedundantAndroidThread = new Thread(new Runnable() {
@@ -370,12 +375,23 @@
 
             final Thread[] updateAndroidFilesThread2 = {new Thread(updateAndroidFilesThread)};
             final Thread[] deleteRedundantAndroidThread2 = {new Thread(deleteRedundantDriveThread)};
-//            final Thread[] storageUpdaterThread = {new Thread(() -> {storageHandler.storageOptimizer();})};
-
-
             new Timer().scheduleAtFixedRate(new TimerTask() {
                 public void run() {
                     boolean anyThreadAlive = false;
+                    if (!isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("on")){
+                        runOnUiThread(() -> {
+                            syncSwitchMaterialButton.setChecked(false);
+                            syncSwitchMaterialButton.setThumbTintList(ColorStateList.valueOf(Color.parseColor("#BF2C2C")));
+                            syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.parseColor("#850808")));
+                        });
+                    }else{
+                        runOnUiThread(() -> {
+                            syncSwitchMaterialButton.setChecked(true);
+                            syncSwitchMaterialButton.setThumbTintList(ColorStateList.valueOf(Color.GREEN));
+                            syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.GREEN));
+                        });
+                    }
+
                     try{
                         for(Thread thread : threads ){
                             if(thread != null){
@@ -406,7 +422,6 @@
                                     androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
                                             "\n" + "Synced android assets: " +
                                             dbHelper.countAndroidSyncedAssets());
-                                    androidSyncStatus.setText("Syncing is " + isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()));
                                 });
                             }
                         }
@@ -1258,22 +1273,52 @@
 //                    driveBackUpThread2.start();
 //                    deleteDuplicatedInDrive2.start();
 //                    updateUIThread.start();
-            syncToBackUpAccountButton.setOnClickListener(new View.OnClickListener() {
+
+            syncSwitchMaterialButton = findViewById(R.id.syncSwitchMaterial);
+            syncSwitchMaterialButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    runOnUiThread( () -> {
-                        androidSyncStatus.setText("Syncing is on ");
-                    });
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        if (!isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("on")){
-                            TimerService.shouldCancel = false;
-                            startForegroundService(serviceIntent);
+                    if(syncSwitchMaterialButton.isChecked()){
+                        runOnUiThread( () -> {
+                            syncSwitchMaterialButton.setThumbTintList(ColorStateList.valueOf(Color.GREEN));
+                            syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.GREEN));
+                        });
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            if (!isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("on")){
+                                TimerService.shouldCancel = false;
+                                startForegroundService(serviceIntent);
+                            }
                         }
-                    }
-                    System.out.println("startService(serviceIntent); " + serviceIntent);
+                        System.out.println("startService(serviceIntent); " + serviceIntent);
+                    }else{
+                        runOnUiThread( () -> {
+                            syncSwitchMaterialButton.setThumbTintList(ColorStateList.valueOf(Color.parseColor("#BF2C2C")));
+                            syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.parseColor("#850808")));
+                        });
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            if (isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("on")){
+                                TimerService.shouldCancel = true;
+                                stopService(serviceIntent);
+                            }
+                        }
 
+                    }
                 }
             });
+//
+//            syncToBackUpAccountButton.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View view) {
+//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//                        if (!isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("on")){
+//                            TimerService.shouldCancel = false;
+//                            startForegroundService(serviceIntent);
+//                        }
+//                    }
+//                    System.out.println("startService(serviceIntent); " + serviceIntent);
+//
+//                }
+//            });
 
 
 //                    int buildSdkInt = Build.VERSION.SDK_INT;
@@ -1496,20 +1541,16 @@
 //                    updateUIThread.start();
 //                    stopService(serviceIntent);
 //                    serviceIntent = new Intent(activity,timerService.getClass());
-            restoreButton = findViewById(R.id.restoreButton);
-            restoreButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    TimerService.shouldCancel = true;
-                    while (!isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("off")) {
-                        stopService(serviceIntent);
-                    }
-                    runOnUiThread( () -> {
-                        androidSyncStatus.setText("Syncing is off ");
-                    });
 
-                }
-            });
+//            restoreButton.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View view) {
+//                    TimerService.shouldCancel = true;
+//                    while (!isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("off")) {
+//                        stopService(serviceIntent);
+//                    }
+//                }
+//            });
         }
 
         public static String isMyServiceRunning(Context context,Class<?> serviceClass) {
@@ -1536,8 +1577,8 @@
                     Button button = (Button) childView;
                     button.setOnClickListener(
                             view -> {
-                                syncToBackUpAccountButton.setClickable(false);
-                                restoreButton.setClickable(false);
+//                                syncToBackUpAccountButton.setClickable(false);
+//                                restoreButton.setClickable(false);
                                 String buttonText = button.getText().toString().toLowerCase();
                                 if (buttonText.equals("add a primary account")){
                                     button.setText("Wait");
@@ -1642,8 +1683,8 @@
                                     });
                                     popupMenu.show();
                                 }
-                                syncToBackUpAccountButton.setClickable(true);
-                                restoreButton.setClickable(true);
+//                                syncToBackUpAccountButton.setClickable(true);
+//                                restoreButton.setClickable(true);
                             }
                         );
                 }
@@ -1657,8 +1698,8 @@
                     Button button = (Button) childView;
                     button.setOnClickListener(
                             view -> {
-                                syncToBackUpAccountButton.setClickable(false);
-                                restoreButton.setClickable(false);
+//                                syncToBackUpAccountButton.setClickable(false);
+//                                restoreButton.setClickable(false);
                                 String buttonText = button.getText().toString().toLowerCase();
                                 if (buttonText.equals("add a back up account")) {
                                     button.setText("Wait");
@@ -1787,8 +1828,8 @@
                                     });
                                     popupMenu.show();
                                 }
-                                syncToBackUpAccountButton.setClickable(true);
-                                restoreButton.setClickable(true);
+//                                syncToBackUpAccountButton.setClickable(true);
+//                                restoreButton.setClickable(true);
                             }
                     );
                 }
