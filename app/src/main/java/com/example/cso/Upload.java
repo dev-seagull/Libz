@@ -921,6 +921,63 @@ public class Upload {
         return android_items;
     }
 
+    private void syncAndroidFiles(ArrayList<File> androidFiles){
+        String[] selected_android_columns = {"id", "fileName", "filePath", "device",
+                "fileSize", "fileHash", "dateModified", "memeType","assetId"};
+        List<String[]> android_rows =  MainActivity.dbHelper.getAndroidTable(selected_android_columns);
+
+        for(String[] android_row: android_rows){
+            if(!androidExistsInDrive(Long.valueOf(android_row[8]),android_row[5])){
+//                syncAndroidToDrive(2);
+            }else{
+            }
+            //thread should be handled
+            optimizeStorage(Long.valueOf(2), android_row[2]);
+        }
+
+    }
+
+    private boolean androidExistsInDrive(Long assetId,String fileHash){
+        Boolean existsInDrive = false;
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ? " +
+                "and fileHash = ?)";
+        Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), fileHash});
+        try{
+            if(cursor != null && cursor.moveToFirst()){
+                int result = cursor.getInt(0);
+                if(result == 1){
+                    existsInDrive = true;
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to select from DRIVE " +
+                    "in insertIntoDriveTable method: " + e.getLocalizedMessage());
+        }finally {
+            if(cursor != null){
+                cursor.close();
+            }
+        }
+        return existsInDrive;
+    }
+
+    private boolean optimizeStorage(Long essentialFreeSpace, String androidFilePath){
+        boolean isOptmizied = false;
+        //        freespacegetter
+        if(2 <= essentialFreeSpace){
+            File androidFile = new File(androidFilePath);
+            //checker in drive
+            androidFile.delete();
+            if(!androidFile.exists()){
+                isOptmizied = true;
+            }
+        }else{
+            isOptmizied = true;
+        }
+        return isOptmizied;
+    }
+
 }
+
+
 
 
