@@ -227,6 +227,20 @@ public class Android {
         }
     }
 
+    public static boolean deleteAndroidFile(String androidFilePath, String assetId, String fileHash, String fileSize, String fileName){
+        boolean isDeleted = false;
+        try{
+            File androidFile = new File(androidFilePath);
+            androidFile.delete();
+            if(!androidFile.exists()) {
+                isDeleted = MainActivity.dbHelper.deleteFromAndroidTable(assetId, fileSize, androidFilePath, fileName, fileHash);
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to delete android file : " + e.getLocalizedMessage(), true);
+        }
+        return isDeleted;
+    }
+
 }
 
 

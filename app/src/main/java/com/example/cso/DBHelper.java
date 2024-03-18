@@ -161,7 +161,7 @@ public class DBHelper extends SQLiteOpenHelper {
             }
         }
 
-        if(existsInAsset == false){
+        if(!existsInAsset){
             try{
                 dbWritable.beginTransaction();
                 sqlQuery = "INSERT INTO ASSET(fileHash) VALUES (?);";
@@ -306,7 +306,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
 
-    public void insertIntoDriveTable(Long assetId, String fileId,String fileName, String fileHash,String userEmail){
+    public static void insertIntoDriveTable(Long assetId, String fileId,String fileName, String fileHash,String userEmail){
         String sqlQuery = "";
         Boolean existsInDrive = false;
         sqlQuery = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ? " +
@@ -641,6 +641,28 @@ public class DBHelper extends SQLiteOpenHelper {
                 dbWritable.endTransaction();
             }
         }
+    }
+
+    public boolean deleteFromAndroidTable(String assetId,String fileSize, String filePath, String fileName, String fileHash){
+        String sqlQuery = "DELETE FROM ANDROID WHERE fileSize = ?  and fileHash = ? and fileName =  ? and filePath = ?";
+        dbWritable.beginTransaction();
+        try {
+            Object[] values = new Object[]{fileSize,fileHash,fileName,filePath};
+            dbWritable.execSQL(sqlQuery, values);
+            dbWritable.setTransactionSuccessful();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to delete from the database in deleteFromAndroidTable method. "
+                    + e.getLocalizedMessage(), true);
+        } finally {
+            dbWritable.endTransaction();
+        }
+
+        boolean existsInAndroid = existsInAndroid(Long.valueOf(assetId), filePath, MainActivity.androidDeviceName,
+                Double.valueOf(fileSize), fileHash);
+        if(!existsInAndroid){
+            return true;
+        }
+        return false;
     }
 
     private boolean existsInAndroid(long assetId, String filePath, String device,
@@ -1396,5 +1418,41 @@ public class DBHelper extends SQLiteOpenHelper {
             LogHandler.saveLog("Failed to create index: " + e.getLocalizedMessage(), true);
         }
     }
+
+
+    public static boolean androidFileExistsInDrive(Long assetId,String fileHash){
+        Boolean existsInDrive = false;
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ? " +
+                "and fileHash = ?)";
+        Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), fileHash});
+        try{
+            if(cursor != null && cursor.moveToFirst()){
+                int result = cursor.getInt(0);
+                if(result == 1){
+                    existsInDrive = true;
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to check if android file exists in drive : " +  e.getLocalizedMessage(), true);
+        }finally {
+            if(cursor != null){
+                cursor.close();
+            }
+        }
+        return existsInDrive;
+    }
+
+    public static void updateFileIdInAccounts(String folderId, String userEmail){
+        try{
+            String insertFolderIdIntoAccounts = "UPDATE ACCOUNTS SET folderId = ? WHERE userEmail = ?";
+            MainActivity.dbHelper.getWritableDatabase().beginTransaction();
+            MainActivity.dbHelper.getWritableDatabase().execSQL(insertFolderIdIntoAccounts,new String[]{folderId, userEmail});
+            MainActivity.dbHelper.getWritableDatabase().setTransactionSuccessful();
+            MainActivity.dbHelper.getWritableDatabase().endTransaction();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to update fileId in account: " + e.getLocalizedMessage(), true);
+        }
+    }
+
 
 }

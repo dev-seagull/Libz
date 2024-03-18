@@ -82,27 +82,28 @@ public class StorageHandler {
 
 
     public double getAmountSpaceToFreeUp() {
-        String sqlQuery = "SELECT freeStorage FROM DEVICE WHERE deviceName = ?;";
-        Cursor cursor = MainActivity.dbHelper.getReadableDatabase()
-                .rawQuery(sqlQuery,new String[]{MainActivity.androidDeviceName});
-        try{
-            if(cursor != null && cursor.moveToFirst()){
-                int result = cursor.getInt(0);
-                if(result == 1){
-                    this.freeSpace = cursor.getDouble(1);
-                }
-            }
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to read free space from database method: " + e.getLocalizedMessage());
-        }finally {
-            if(cursor != null){
-                cursor.close();
-            }
-        }
-        if (this.freeSpace <= optimizedFreeSpace) {
-            return optimizedFreeSpace - this.freeSpace;
-        }
-        return 0.0;
+        return 3.3;
+//        String sqlQuery = "SELECT freeStorage FROM DEVICE WHERE deviceName = ?;";
+//        Cursor cursor = MainActivity.dbHelper.getReadableDatabase()
+//                .rawQuery(sqlQuery,new String[]{MainActivity.androidDeviceName});
+//        try{
+//            if(cursor != null && cursor.moveToFirst()){
+//                int result = cursor.getInt(0);
+//                if(result == 1){
+//                    this.freeSpace = cursor.getDouble(1);
+//                }
+//            }
+//        }catch (Exception e){
+//            LogHandler.saveLog("Failed to read free space from database method: " + e.getLocalizedMessage());
+//        }finally {
+//            if(cursor != null){
+//                cursor.close();
+//            }
+//        }
+//        if (this.freeSpace <= optimizedFreeSpace) {
+//            return optimizedFreeSpace - this.freeSpace;
+//        }
+//        return 0.0;
     }
 
 
