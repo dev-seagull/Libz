@@ -80,7 +80,7 @@ public class TimerService extends Service {
         }else{
             pendingIntent = PendingIntent.getActivity(MainActivity.activity, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
-
+    
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.android_device_icon)
                 .setContentTitle("Syncing Service")

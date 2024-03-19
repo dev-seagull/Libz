@@ -1,17 +1,33 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout  xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:gravity="center"
+    android:foregroundGravity="center"
+    app:layout_anchorGravity="center"
+    android:layout_gravity="center"
+    android:orientation="vertical"
+    >
 
-    <Button
-        android:id="@+id/syncToBackUpAccountButton"
-        android:layout_width="match_parent"
+    <android.widget.Switch
+        android:id="@+id/syncWidgetSwitch"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Sync to Backup Account"/>
+        android:checked="false"
+        android:maxLength="10"
+        android:fontFamily="sans-serif-condensed"
+        android:shadowColor="@color/black"
+        android:shadowDx="2"
+        android:shadowDy="2"
+        android:background="@drawable/seagulllogo"
+        android:maxHeight="30dp"
+        android:shadowRadius="5"
+        android:text="Sync"
+        android:thumbTextPadding="10dp"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        app:thumbTint="#850808"
+        app:trackTint="#BF2C2C"
+            ></android.widget.Switch>
 
-    <Button
-        android:id="@+id/restoreButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Restore"/>
 </LinearLayout>

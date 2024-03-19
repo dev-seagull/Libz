@@ -77,8 +77,8 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
-                <action android:name="SYNC_ACTION"/>
-                <action android:name="RESTORE_ACTION"/>
+                <action android:name="START_SYNC"/>
+                <action android:name="STOP_SYNC"/>
             </intent-filter>
 
             <meta-data
