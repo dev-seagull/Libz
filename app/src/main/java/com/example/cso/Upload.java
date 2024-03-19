@@ -507,7 +507,6 @@ public class Upload {
                         new com.google.api.services.drive.model.File();
                 fileMetadata.setName(fileName);
                 String memeTypeToUpload = getMemeType(new File(filePath));
-
                 FileContent mediaContent = null;
                 if (isImage(memeTypeToUpload)) {
                     if (androidFile.exists()) {
@@ -543,15 +542,23 @@ public class Upload {
 //                            if (!isVideo(memeType)) {
                 HttpResponse uploadFile =
                         service.files().create(fileMetadata, mediaContent)
-                                .setFields("id,sha256Checksum")
+                                .setFields("files(id)")
                                 .getMediaHttpUploader()
                                 .setChunkSize(MediaHttpUploader.MINIMUM_CHUNK_SIZE)
                                 .setDirectUploadEnabled(false)
                                 .upload(new GenericUrl("https://www.googleapis.com" +
                                         "/upload/drive/v3/files?uploadType=multipart"));
                 JSONObject responseJson = new JSONObject(uploadFile.parseAsString());
-                String uploadFileId = responseJson.getString("id");
                 int uploadStatus = uploadFile.getStatusCode();
+                String uploadFileId = null;
+                uploadFileId = uploadFile.getStatusMessage();
+                if (uploadStatus != HttpURLConnection.HTTP_OK) {
+                    LogHandler.saveLog("Failed to upload " + fileName + " from Android to backup because it's null", true);
+                }else{
+                    if (responseJson.has("id")) {
+                        uploadFileId = responseJson.getString("id");
+                    }
+                }
                 while (uploadFileId == null) {
                     wait();
                 }
@@ -559,9 +566,8 @@ public class Upload {
                     LogHandler.saveLog("Failed to upload " + fileName + " from Android to drive " +
                             " with status of " + uploadStatus, true);
                 } else {
-                    String sha256Checksum = responseJson.optString("sha256Checksum");
-                    System.out.println(sha256Checksum + " " + sha256Checksum.equals(fileHash) +
-                            " " + uploadFileId);
+                    String sha256Checksum = "";
+//                   sha256Checksum = GoogleDrive.getSha256Checksum(uploadFileId, driveBackupAccessToken);
                     if(sha256Checksum.equals(fileHash)){
                         isUploadValid[0] = true;
                         DBHelper.insertIntoDriveTable(Long.valueOf(assetId),String.valueOf(fileId)
@@ -575,7 +581,6 @@ public class Upload {
 //                            }
 //                                  test[0]--;
 
-                    LogHandler.saveLog("Duplicated file in android was found: " + fileName, false);
             }catch (Exception e){
                 LogHandler.saveLog("Failed to back up android file to drive: "  + e.getLocalizedMessage(), true);
             }
@@ -1024,6 +1029,9 @@ public class Upload {
                 }
             }
         });
+        for (String[] item : android_items){
+            System.out.println("item in sorted android items: " + item[1] + " " + item[6]);
+        }
         return android_items;
     }
 }

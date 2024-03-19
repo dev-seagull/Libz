@@ -73,14 +73,6 @@ public class StorageHandler {
     }
 
 
-    public void syncAndroidToDrive(){
-        double amountSpaceToFreeUp = 0;
-        amountSpaceToFreeUp = getAmountSpaceToFreeUp();
-        upload.syncAndroidToDrive(amountSpaceToFreeUp);
-        LogHandler.saveLog("Free up space for " + amountSpaceToFreeUp, false);
-    }
-
-
     public double getAmountSpaceToFreeUp() {
         return 3.3;
 //        String sqlQuery = "SELECT freeStorage FROM DEVICE WHERE deviceName = ?;";

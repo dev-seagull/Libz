@@ -441,7 +441,7 @@
                         LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
                     }
                 }
-            }, 15000, 15000);
+            }, 10000, 3000);
 
 
 

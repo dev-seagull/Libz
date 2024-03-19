@@ -62,22 +62,21 @@ public class GoogleDrive {
     }
 
 
-    public static String createStashSyncedAssetsFolderInDrive(){
-        final String[] folderId = {null};
+    public static void createStashSyncedAssetsFolderInDrive(){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<Boolean> createFolderTask = () -> {
             try{
                 String[] selected_columns = {"userEmail","type","accessToken","folderId"};
                 List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_columns);
+                String folderId = null;
                 for (String[] account_row : account_rows){
                     if (!account_row[1].equals("backup")){
                         continue;
                     }
                     if (account_row[3] != null){
-                        return Boolean.valueOf(account_row[3]);
-                        //opt
-                    }else{
-                        try{
+                        continue;
+                    }
+                    try{
                             String driveBackupAccessToken = account_row[2];
                             Drive service = initializeDrive(driveBackupAccessToken);
 
@@ -92,10 +91,10 @@ public class GoogleDrive {
                                     .execute();
                             List<com.google.api.services.drive.model.File> driveFolders = fileList.getFiles();
                             for(com.google.api.services.drive.model.File driveFolder: driveFolders){
-                                folderId[0] = driveFolder.getId();
+                                folderId = driveFolder.getId();
                             }
 
-                            if (folderId[0] == null) {
+                            if (folderId == null) {
                                 com.google.api.services.drive.model.File folder_metadata =
                                         new com.google.api.services.drive.model.File();
                                 folder_metadata.setName(folder_name);
@@ -103,20 +102,19 @@ public class GoogleDrive {
                                 folder = service.files().create(folder_metadata)
                                         .setFields("id").execute();
 
-                                folderId[0] = folder.getId();
+                                folderId = folder.getId();
                             }
-                            if (folderId[0] == null){
+                            if (folderId == null){
                                 LogHandler.saveLog("Failed to create folder in google drive " + account_row[0],true);
                             }
 
-                            DBHelper.updateFileIdInAccounts(folderId[0],account_row[0]);
+                            DBHelper.updateFileIdInAccounts(folderId,account_row[0]);
 
                         }catch (Exception e){
                             LogHandler.saveLog("Failed to create stash synced assets folders in drive : " +
                                     e.getLocalizedMessage(), true);
                         }
                     }
-                }
             }catch (Exception e){
                 LogHandler.saveLog("Failed to create or get stash synced assets folder id : " + e.getLocalizedMessage(), true);
             }
@@ -129,7 +127,6 @@ public class GoogleDrive {
         }catch (Exception e){
             System.out.println(e.getLocalizedMessage());
         }
-        return folderId[0];
     }
 
     public static ArrayList<DriveAccountInfo.MediaItem> getMediaItems(String accessToken) {

@@ -3,6 +3,5 @@
   <component name="me.schlaubi.intellij_gradle_version_checker.settings.ProjectPersistentGradleVersionSettings">
     <option name="alwaysConvertGroovy" value="false" />
     <option name="dependencyFormat" value="NotationDependencyFormat" />
-    <option name="ignoreOutdatedVersion" value="false" />
   </component>
 </project>

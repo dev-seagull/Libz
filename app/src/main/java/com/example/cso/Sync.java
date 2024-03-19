@@ -9,13 +9,27 @@ public class Sync {
         try{
             StorageHandler storageHandler = new StorageHandler();
             double amountSpaceToFreeUp = storageHandler.getAmountSpaceToFreeUp();
-
+            String[] id = {""};
+            String[] fileName = {""};
+            String[] filePath = {""};
+            String[] device = {""};
+            String[] fileSize = {""};
+            String[] fileHash = {""};
+            String[] dateModified = {""};
+            String[] memeType = {""};
+            String[] assetId = {""};
             String[] selected_accounts_columns = {"userEmail","type", "totalStorage","usedStorage", "accessToken","folderId"};
             List<String[]> account_rows = DBHelper.getAccounts(selected_accounts_columns);
-
+            final boolean[] isBackedUp = {false};
             for(String[] account_row: account_rows){
-                if(account_row[1].equals("backup")){
-                    double driveFreeSpace = Double.valueOf(account_row[2]) - Double.valueOf(account_row[3]);
+                String[] userEmail = {account_row[0]};
+                String[] type = {account_row[1]};
+                String[] totalStorage = {account_row[2]};
+                String[] usedStorage = {account_row[3]};
+                String[] accessToken = {account_row[4]};
+                String[] folderId = {account_row[5]};
+                if(type[0].equals("backup")){
+                    double driveFreeSpace = Double.valueOf(totalStorage[0]) - Double.valueOf(usedStorage[0]);
                     ArrayList<String> file_hashes = new ArrayList<>() ;
                     String[] selected_android_columns = {"id", "fileName", "filePath", "device",
                             "fileSize", "fileHash", "dateModified", "memeType","assetId"};
@@ -23,19 +37,27 @@ public class Sync {
                     Upload upload = new Upload();
                     Upload.sortAndroidItems(android_rows);
                     for(String[] android_row: android_rows){
+                        id[0] = android_row[0];
+                        fileName[0] = android_row[1];
+                        filePath[0] = android_row[2];
+                        fileSize[0] = android_row[4];
+                        fileHash[0] = android_row[5];
+                        dateModified[0] = android_row[6];
+                        memeType[0] = android_row[7];
+                        assetId[0] = android_row[8];
+                        System.out.println("Check android Item : " + filePath[0] + "\nWith\n"+
+                                "Account: " + userEmail[0] + "\n" + "driveFreeSpace: " + driveFreeSpace + "\n");
                         boolean isDeleted = false;
-                        if(!file_hashes.contains(android_row[5])) {
-                            file_hashes.add(android_row[5]);
-                            if (!DBHelper.androidFileExistsInDrive(Long.valueOf(android_row[8]), android_row[5])) {
-                                if (driveFreeSpace > Double.valueOf(android_row[4])) {
-                                    final boolean[] isBackedUp = {false};
+                        if(!file_hashes.contains(fileHash[0])) {
+                            file_hashes.add(fileHash[0]);
+                            if (!DBHelper.androidFileExistsInDrive(Long.valueOf(assetId[0]), fileHash[0])) {
+                                if (driveFreeSpace > Double.valueOf(fileSize[0])) {
+                                    isBackedUp[0] = false;
                                     Thread backupThread = new Thread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            isBackedUp[0] = upload.backupAndroidToDrive(Long.valueOf(account_row[0]), account_row[1], account_row[2],
-                                                    account_row[5], account_row[7],
-                                                    account_row[8], account_row[4],
-                                                    account_row[0], account_row[5]);
+                                            isBackedUp[0] = upload.backupAndroidToDrive(Long.valueOf(id[0]),fileName[0],
+                                                    filePath[0],fileHash[0],memeType[0],assetId[0],accessToken[0],userEmail[0],folderId[0]);
                                         }
                                     });
                                     backupThread.start();
@@ -45,7 +67,7 @@ public class Sync {
                                         LogHandler.saveLog("Failed to join backup thread when syncing android file.", true);
                                     }
                                     if (isBackedUp[0]) {
-                                        driveFreeSpace = driveFreeSpace - Double.valueOf(android_row[4]);
+                                        driveFreeSpace = driveFreeSpace - Double.valueOf(fileSize[0]);
                                         if (amountSpaceToFreeUp > 0) {
                                             Thread deleteRedundantDrive = new Thread(new Runnable() {
                                                 @Override
@@ -77,9 +99,9 @@ public class Sync {
                                                 LogHandler.saveLog("Failed to join delete " +
                                                         " redundant drive thread when syncing android file.", true);
                                             }
-                                            if(DBHelper.androidFileExistsInDrive(Long.valueOf(android_row[8]), android_row[5])){
-                                                isDeleted = Android.deleteAndroidFile(android_row[2],account_row[8],android_row[5]
-                                                        ,account_row[4],android_row[1]);
+                                            if(DBHelper.androidFileExistsInDrive(Long.valueOf(assetId[0]), fileHash[0])){
+                                                isDeleted = Android.deleteAndroidFile(filePath[0],assetId[0],fileHash[0]
+                                                        ,fileSize[0],fileName[0]);
                                             }
                                         }
                                     }
@@ -91,7 +113,6 @@ public class Sync {
                                         public void run() {
                                             String[] columns = {"accessToken","userEmail", "type"};
                                             List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
-
                                             for(String[] account_row : account_rows) {
                                                 String type = account_row[2];
                                                 if(type.equals("backup")){
@@ -116,15 +137,20 @@ public class Sync {
                                         LogHandler.saveLog("Failed to join delete " +
                                                 " redundant drive thread when syncing android file.", true);
                                     }
-                                    if(DBHelper.androidFileExistsInDrive(Long.valueOf(android_row[8]), android_row[5])){
-                                        isDeleted = Android.deleteAndroidFile(android_row[2],account_row[8],android_row[5]
-                                                ,account_row[4],android_row[1]);
+                                    if(DBHelper.androidFileExistsInDrive(Long.valueOf(assetId[0]), fileHash[0])){
+                                        isDeleted = Android.deleteAndroidFile(filePath[0],assetId[0],fileHash[0]
+                                                ,fileSize[0],fileName[0]);
                                     }
                                 }
                             }
+                        }else{
+                            System.out.println("android duplicate file hash: " + fileHash[0]);
                         }
+                        System.out.println("isBackedUp: " + isBackedUp[0]);
+                        System.out.println("isDeleted: " + isDeleted);
+
                         if(isDeleted){
-                            amountSpaceToFreeUp = amountSpaceToFreeUp - Double.valueOf(android_row[4]);
+                            amountSpaceToFreeUp = amountSpaceToFreeUp - Double.valueOf(fileSize[0]);
                         }
                     }
                 }

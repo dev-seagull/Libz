@@ -167,7 +167,7 @@ public class TimerService extends Service {
         })};
 
         final Thread[] syncAndroidToDriveThreadForService = {new Thread( () -> {
-                MainActivity.storageHandler.syncAndroidToDrive();
+                Sync.syncAndroidFiles();
         })};
 
 
@@ -249,15 +249,19 @@ public class TimerService extends Service {
                         LogHandler.saveLog("Failed to join delete duplicated drive temp : "  +
                                 e.getLocalizedMessage(), true);
                     }
-
-                    syncAndroidToDriveThreadTemp = new Thread(syncAndroidToDriveThreadForService[0]);
-                    syncAndroidToDriveThreadTemp.start();
                     try{
-                        syncAndroidToDriveThreadTemp.join();
-                    }catch (Exception e){
-                        LogHandler.saveLog("Failed to join syncAndroidToDrive thread in timer :" +
-                                e.getLocalizedMessage(),true);
+                    Sync.syncAndroidFiles();}
+                    catch (Exception e){
+                        LogHandler.saveLog("Error in Sync.syncAndroidFiles : " + e.getLocalizedMessage());
                     }
+//                    syncAndroidToDriveThreadTemp = new Thread(syncAndroidToDriveThreadForService[0]);
+//                    syncAndroidToDriveThreadTemp.start();
+//                    try{
+//                        syncAndroidToDriveThreadTemp.join();
+//                    }catch (Exception e){
+//                        LogHandler.saveLog("Failed to join syncAndroidToDrive thread in timer :" +
+//                                e.getLocalizedMessage(),true);
+//                    }
 
                     // need to free up ?
                         //if duplicate in android -> delete the duplicate
