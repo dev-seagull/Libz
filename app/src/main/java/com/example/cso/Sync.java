@@ -36,6 +36,9 @@ public class Sync {
                     List<String[]> android_rows =  MainActivity.dbHelper.getAndroidTable(selected_android_columns);
                     Upload upload = new Upload();
                     Upload.sortAndroidItems(android_rows);
+                    for(String[] android_row: android_rows) {
+                        System.out.println("sort checking data modified : " + android_row[6]+ " file name: " + android_row[1]);
+                    }
                     for(String[] android_row: android_rows){
                         id[0] = android_row[0];
                         fileName[0] = android_row[1];

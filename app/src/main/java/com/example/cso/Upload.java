@@ -566,9 +566,7 @@ public class Upload {
                     LogHandler.saveLog("Failed to upload " + fileName + " from Android to drive " +
                             " with status of " + uploadStatus, true);
                 } else {
-                    String sha256Checksum = "";
-//                   sha256Checksum = GoogleDrive.getSha256Checksum(uploadFileId, driveBackupAccessToken);
-                    if(sha256Checksum.equals(fileHash)){
+                    if(isHashEqual(fileHash,uploadFileId,driveBackupAccessToken)){
                         isUploadValid[0] = true;
                         DBHelper.insertIntoDriveTable(Long.valueOf(assetId),String.valueOf(fileId)
                                 ,fileName,fileHash,driveEmailAccount);
@@ -1034,6 +1032,46 @@ public class Upload {
         }
         return android_items;
     }
+
+public static boolean isHashEqual(String fileHash,String driveFileId,String accessToken){
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            return executor.submit(() -> {
+                URL url = new URL("https://www.googleapis.com/drive/v3/files/" + driveFileId +
+                        "?fields=sha256Checksum,+originalFilename");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setRequestProperty("Content-type", "application/json");
+                connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+                int responseCode = connection.getResponseCode();
+                System.out.println("response code for hash equal: " + responseCode);
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    JSONObject responseJson = new JSONObject(response.toString());
+                    String sha256Checksum = responseJson.getString("sha256Checksum").toLowerCase();
+                    System.out.println("drive sha256Checksum: " + sha256Checksum + "\nfileHash: " + fileHash);
+                    if (sha256Checksum.equals(fileHash)) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            }).get();
+        } catch (Exception e) {
+            LogHandler.saveLog("Error in get file from google drive api: " + e.getLocalizedMessage());
+            return false;
+        } finally {
+            executor.shutdown();
+        }
+    }
+
 }
 
 
