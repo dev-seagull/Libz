@@ -70,7 +70,6 @@
         public static String androidDeviceName;
         public static String logFileName = "stash_log.txt";
         public static int errorCounter = 0;
-        public static Intent serviceIntent;
         static SharedPreferences preferences;
         public static DBHelper dbHelper;
 
@@ -455,7 +454,7 @@
         protected void onStart(){
             super.onStart();
             runOnUiThread(this::updateButtonsListeners);
-            serviceIntent = new Intent(this.getApplicationContext(), timerService.getClass());
+            Intent serviceIntent = new Intent(this.getApplicationContext(), timerService.getClass());
             System.out.println("startService(serviceIntent); " + serviceIntent);
 //            serviceIntent.getData();
 //            Intent.getIntentOld();
