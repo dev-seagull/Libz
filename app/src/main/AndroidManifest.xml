@@ -64,7 +64,9 @@
         <service
             android:name=".TimerService"
             android:label="Stash Is Syncing All Of Your Files"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+            />
         <receiver android:name=".TestNotification"
             android:exported="true">
             <intent-filter>

@@ -110,7 +110,8 @@ public class Sync {
                                         }
                                     }
                                 }
-                            }else {
+                            }
+                            else {
                                 if (amountSpaceToFreeUp > 0) {
                                     Thread deleteRedundantDrive = new Thread(new Runnable() {
                                         @Override

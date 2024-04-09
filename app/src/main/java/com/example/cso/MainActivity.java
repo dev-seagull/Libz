@@ -70,6 +70,7 @@
         public static String androidDeviceName;
         public static String logFileName = "stash_log.txt";
         public static int errorCounter = 0;
+        public static Intent serviceIntent;
         static SharedPreferences preferences;
         public static DBHelper dbHelper;
 
@@ -83,7 +84,7 @@
         public Thread deleteDuplicatedInDrive;
 
         SwitchMaterial syncSwitchMaterialButton;
-        public  static TimerService timerService;
+        public static TimerService timerService;
 
         List<Thread> threads = new ArrayList<>(Arrays.asList(firstUiThread, secondUiThread,
                 backUpJsonThread, insertMediaItemsThread, deleteRedundantDriveThread, updateDriveBackUpThread, deleteDuplicatedInDrive));
@@ -454,7 +455,7 @@
         protected void onStart(){
             super.onStart();
             runOnUiThread(this::updateButtonsListeners);
-            Intent serviceIntent = new Intent(this.getApplicationContext(), timerService.getClass());
+            serviceIntent = new Intent(this.getApplicationContext(), timerService.getClass());
             System.out.println("startService(serviceIntent); " + serviceIntent);
 //            serviceIntent.getData();
 //            Intent.getIntentOld();

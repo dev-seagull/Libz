@@ -5,7 +5,9 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
@@ -48,11 +50,20 @@ public class TimerService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "Service onStartCommand");
-
-        Notification notification = createNotification();
-
-        startForeground(NOTIFICATION_ID, notification);
-
+        if (intent != null && intent.getAction() != null) {
+            System.out.println("i can reach here");
+            if (intent.getAction().equals("STOP_SERVICE")) {
+                System.out.println("i can reach here 2 ");
+                    TimerService.shouldCancel = true;
+                    stopService(MainActivity.serviceIntent);
+            }
+        }else {
+            Notification notification = createNotification();
+            System.out.println("i can reach here 3 ");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+            }
+        }
         return Service.START_REDELIVER_INTENT;
     }
 
@@ -69,7 +80,9 @@ public class TimerService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel notificationChannel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME,
                     NotificationManager.IMPORTANCE_DEFAULT);
+            System.out.println("i can reach here 4 ");
             NotificationManager notificationManager = MainActivity.activity.getSystemService(NotificationManager.class);
+            System.out.println("i can reach here 5 ");
             notificationManager.createNotificationChannel(notificationChannel);
         }
 
@@ -80,13 +93,24 @@ public class TimerService extends Service {
         }else{
             pendingIntent = PendingIntent.getActivity(MainActivity.activity, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
-    
+
+        Intent actionIntent = new Intent(MainActivity.activity, TimerService.class);
+        actionIntent.setAction("STOP_SERVICE");
+        PendingIntent actionPendingIntent = PendingIntent.getService(MainActivity.activity, 1, actionIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        NotificationCompat.Action action =
+                new NotificationCompat.Action.Builder(R.drawable.googledriveimage, "Stop Service", actionPendingIntent)
+                        .build();
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.android_device_icon)
                 .setContentTitle("Syncing Service")
                 .setContentText("Syncing process is running in the background")
                 .setContentIntent(pendingIntent)
-                .setPriority(NotificationCompat.PRIORITY_MAX);
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText("Syncing process is running in the background"))
+                .addAction(action);
+
         builder.setContentIntent(pendingIntent);
         return builder.build();
     }
