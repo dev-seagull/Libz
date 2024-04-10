@@ -1337,6 +1337,9 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public static boolean insertIntoDeviceTable(String deviceName,String totalSpace,String freeSpace){
+        if (deviceNameExists(deviceName)){
+            return updateDeviceTable(deviceName, freeSpace);
+        }
         dbWritable.beginTransaction();
         try {
             String sqlQuery = "INSERT INTO DEVICE (" +
@@ -1371,6 +1374,27 @@ public class DBHelper extends SQLiteOpenHelper {
         }finally {
             dbWritable.endTransaction();
         }
+    }
+
+    public static boolean deviceNameExists(String deviceName){
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM DEVICE WHERE deviceName = ?)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{deviceName});
+        boolean exists = false;
+        try{
+            if(cursor != null && cursor.moveToFirst()){
+                int result = cursor.getInt(0);
+                if(result == 1){
+                    exists = true;
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to check if device name exists : " + e.getLocalizedMessage());
+        }finally {
+            if(cursor != null){
+                cursor.close();
+            }
+        }
+        return exists;
     }
 
     public static boolean updateDeviceTable(String deviceName,String totalStorage,String freeSpace){

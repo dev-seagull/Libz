@@ -57,19 +57,22 @@ public class TimerService extends Service {
                     TimerService.shouldCancel = true;
                     stopForeground(true);
                     stopSelf();
+                    stopService(MainActivity.serviceIntent);
+                    stopTimerService();
+                System.out.println("specifically stop service");
             }
         }else {
             Notification notification = createNotification();
             System.out.println("i can reach here 3 ");
             startForeground(NOTIFICATION_ID, notification);
         }
-        return Service.START_REDELIVER_INTENT;
+        return Service.START_STICKY;
     }
 
     private void startTimer() {
-        timer = new Timer();
-        initializeTimerTask();
-        timer.schedule(timerTask, 5000 , 1000);
+//        timer = new Timer();
+//        initializeTimerTask();
+//        timer.schedule(timerTask, 5000 , 1000);
     }
 
     public void stopTimerService(){
@@ -79,9 +82,7 @@ public class TimerService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel notificationChannel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME,
                     NotificationManager.IMPORTANCE_DEFAULT);
-            System.out.println("i can reach here 4 "+ MainActivity.activity);
             NotificationManager notificationManager = MainActivity.activity.getSystemService(NotificationManager.class);
-            System.out.println("i can reach here 5 ");
             notificationManager.createNotificationChannel(notificationChannel);
         }
 
@@ -93,9 +94,9 @@ public class TimerService extends Service {
             pendingIntent = PendingIntent.getActivity(MainActivity.activity, 0, intent, PendingIntent.FLAG_MUTABLE);
         }
 
-        Intent actionIntent = new Intent(this, TimerService.class);
+        Intent actionIntent = new Intent(MainActivity.activity, TimerService.class);
         actionIntent.setAction("STOP_SERVICE");
-        PendingIntent actionPendingIntent = PendingIntent.getService(this, 0, actionIntent, PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent actionPendingIntent = PendingIntent.getService(MainActivity.activity, 0, actionIntent, PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Action action =
                 new NotificationCompat.Action.Builder(R.drawable.googledriveimage, "Stop Service", actionPendingIntent)

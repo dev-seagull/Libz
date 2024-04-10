@@ -77,6 +77,7 @@
         public Thread firstUiThread;
         public Thread secondUiThread;
         public static Thread backUpJsonThread;
+        public static Intent serviceIntent;
         public Thread insertMediaItemsThread;
         public Thread deleteRedundantDriveThread;
         public Thread updateDriveBackUpThread;
@@ -149,10 +150,11 @@
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
             androidDeviceName = DeviceName.getDeviceName();
+            Upgrade.versionHandler(preferences);
             storageHandler = new StorageHandler();
 //            if(dbHelper.DATABASE_VERSION < 11) {
 //            LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
-            Upgrade.versionHandler(preferences);
+
 
             drawerLayout = findViewById(R.id.drawer_layout);
 //            Profile.test();
@@ -454,7 +456,7 @@
         protected void onStart(){
             super.onStart();
             runOnUiThread(this::updateButtonsListeners);
-            Intent serviceIntent = new Intent(this.getApplicationContext(), timerService.getClass());
+            serviceIntent = new Intent(this.getApplicationContext(), timerService.getClass());
             System.out.println("startService(serviceIntent); " + serviceIntent);
 //            serviceIntent.getData();
 //            Intent.getIntentOld();
