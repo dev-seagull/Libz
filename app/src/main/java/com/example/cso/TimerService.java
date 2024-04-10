@@ -70,9 +70,9 @@ public class TimerService extends Service {
     }
 
     private void startTimer() {
-//        timer = new Timer();
-//        initializeTimerTask();
-//        timer.schedule(timerTask, 5000 , 1000);
+        timer = new Timer();
+        initializeTimerTask();
+        timer.schedule(timerTask, 5000 , 1000);
     }
 
     public void stopTimerService(){
