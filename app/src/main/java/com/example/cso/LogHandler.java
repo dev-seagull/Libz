@@ -21,7 +21,8 @@ public class LogHandler extends Application {
     static String LOG_DIR_PATH = Environment.getExternalStoragePublicDirectory
             (Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator + "stash";
 
-    public static void CreateLogFile() {
+    public static boolean CreateLogFile() {
+        boolean hasError = false;
         try {
             File logDir = new File(LOG_DIR_PATH);
             if (!logDir.exists()) {
@@ -41,8 +42,38 @@ public class LogHandler extends Application {
             }else{
                 System.out.println("Log file exists");
             }
+
+            File oldLogFile = new File(logDir, MainActivity.logFileName);
+            if (logFile.exists()) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(oldLogFile)))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (line.startsWith("err")) {
+                            hasError = true;
+                            break;
+                        }
+                    }
+                }catch (Exception e){
+                    System.out.println("Error in buffer reader log handler" + e.getLocalizedMessage());
+                }
+            }
         } catch (Exception e) {
             System.out.println("error in creating log file in existing directory" + e.getLocalizedMessage());
+        }
+        return hasError;
+    }
+
+    public static void actionOnLogFile(boolean hasError, File oldLogFile) {
+        if (hasError // || true
+        ) {
+            String accessToken = Support.getUserEmailForSupport();
+            if (accessToken == null) {
+                System.out.println("No email found for support");
+                return;
+            }
+            Support.sendEmail(accessToken, "Log file has errors", oldLogFile);
+        } else {
+            //truncate the file
         }
     }
 
@@ -72,7 +103,7 @@ public class LogHandler extends Application {
                 if (isError) {
                     MainActivity.errorCounter++;
                     logEntry = "err " + timestamp + " --------- " + text;
-                    System.out.println("Err IS SAVED: " + text);
+                    System.out.println("err IS SAVED: " + text);
                 } else {
                     logEntry = "log " + timestamp + " --------- " + text;
                     System.out.println("LOG IS SAVED: " + text);

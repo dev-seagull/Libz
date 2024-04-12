@@ -65,7 +65,8 @@
                     .requestScopes(new Scope("https://www.googleapis.com/auth/drive"),
                             new Scope("https://www.googleapis.com/auth/photoslibrary.readonly"),
                             new Scope("https://www.googleapis.com/auth/drive.file"),
-                            new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly")
+                            new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly"),
+                            new Scope("https://www.googleapis.com/auth/gmail.send")
                             )
                     .requestServerAuthCode(activity.getResources().getString(R.string.web_client_id), forceCodeForRefreshToken)
                     .requestEmail()
@@ -100,6 +101,9 @@
                             os.write(input, 0, input.length);
                         }
                     }
+                    connection.getResponseCode();
+                    //dont delete this line
+                    System.out.println("responseCode of signOut " + connection.getResponseCode());
                     connection.disconnect();
                     boolean isAccessTokenValid = isAccessTokenValid(accessToken);
                     if (!isAccessTokenValid) {
@@ -138,6 +142,7 @@
                     while ((line = reader.readLine()) != null) {
                         response.append(line);
                     }
+
                     LogHandler.saveLog("access token validity " + response, false);
                     return !response.toString().toLowerCase().contains("error");
                 } finally {
@@ -232,7 +237,6 @@
             try{
                 Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
                 GoogleSignInAccount account = googleSignInTask.getResult(ApiException.class);
-
                 userEmail = account.getEmail();
                 if (userEmail != null && userEmail.toLowerCase().endsWith("@gmail.com")) {
                     userEmail = account.getEmail();

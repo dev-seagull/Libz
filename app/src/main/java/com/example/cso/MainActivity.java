@@ -4,6 +4,8 @@
     import android.app.Activity;
     import android.app.ActivityManager;
     import android.app.AlertDialog;
+    import android.app.PendingIntent;
+    import android.app.Service;
     import android.content.ComponentName;
     import android.content.Context;
     import android.content.DialogInterface;
@@ -47,6 +49,7 @@
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
 
+    import java.io.File;
     import java.util.ArrayList;
     import java.util.Arrays;
     import java.util.HashMap;
@@ -91,6 +94,12 @@
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
+            while (true){
+                if (SplashActivity.complete_loaded){
+                    break;
+                }
+                System.out.println("waiting for the splash screen to load in Main activity");
+            }
             activity = this;
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
@@ -140,7 +149,7 @@
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            LogHandler.CreateLogFile();
+            boolean hasError = LogHandler.CreateLogFile();
 
             googleCloud = new GoogleCloud(this);
 //            LogHandler.saveLog("--------------------------new run----------------------------",false);
@@ -149,6 +158,7 @@
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
+            LogHandler.actionOnLogFile(hasError, new File(LogHandler.LOG_DIR_PATH + File.separator + logFileName));
             androidDeviceName = DeviceName.getDeviceName();
             Upgrade.versionHandler(preferences);
             storageHandler = new StorageHandler();
@@ -214,13 +224,14 @@
 
             TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
             TextView deviceStorage = findViewById(R.id.deviceStorage);
-            timerService = new TimerService();
+            serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
+            new TimerService();//.onStartCommand(serviceIntent, Service.START_FLAG_REDELIVERY,1505);
 
             runOnUiThread(() ->{
                 TextView deviceStorageTextView = findViewById(R.id.deviceStorage);
                 deviceStorageTextView.setText("Wait until we get an update of your assets ...");
                 syncSwitchMaterialButton = findViewById(R.id.syncSwitchMaterial);
-                if (isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("on")){
+                if (isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
                     runOnUiThread(() -> {
                         syncSwitchMaterialButton.setChecked(true);
                         syncSwitchMaterialButton.setThumbTintList(ColorStateList.valueOf(Color.GREEN));
@@ -379,69 +390,71 @@
             final Thread[] deleteRedundantAndroidThread2 = {new Thread(deleteRedundantDriveThread)};
             new Timer().scheduleAtFixedRate(new TimerTask() {
                 public void run() {
-                    boolean anyThreadAlive = false;
-                    if (!isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("on")){
-                        runOnUiThread(() -> {
-                            syncSwitchMaterialButton.setChecked(false);
-                            syncSwitchMaterialButton.setThumbTintList(ColorStateList.valueOf(Color.parseColor("#BF2C2C")));
-                            syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.parseColor("#850808")));
-                        });
-                    }else{
-                        runOnUiThread(() -> {
-                            syncSwitchMaterialButton.setChecked(true);
-                            syncSwitchMaterialButton.setThumbTintList(ColorStateList.valueOf(Color.GREEN));
-                            syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.GREEN));
-                        });
-                    }
-
-                    try{
-                        for(Thread thread : threads ){
-                            if(thread != null){
-                                System.out.println(thread.getId());
-                                System.out.println("Name : " + thread.getName() + " is " + thread.isAlive());
-                            }
-                            if (thread != null && thread.isAlive()) {
-                                anyThreadAlive = true;
-                                break;
-                            }
-                        }
-                        System.out.println("should run : " + !anyThreadAlive);
-                        if(!updateAndroidFilesThread.isAlive() && !updateAndroidFilesThread2[0].isAlive()){
-                            if(!anyThreadAlive){
-
-//                                if (!storageUpdaterThread[0].isAlive()) {
-//                                    Thread storageUpdaterThreadTemp = new Thread(storageUpdaterThread[0]);
-//                                    storageUpdaterThreadTemp.start();
-//                                }
-                                runOnUiThread(() -> {
-                                    TextView deviceStorage = findViewById(R.id.deviceStorage);
-                                    deviceStorage.setText("Total space: " + storageHandler.getTotalStorage()+
-                                            " GB\n" + "Free space: " + storageHandler.getFreeSpace()+ " GB\n" +
-                                            "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n");
-                                    TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
-                                    androidStatisticsTextView.setVisibility(View.VISIBLE);
-                                    int total_androidAssets_count = dbHelper.countAndroidAssets();
-                                    androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
-                                            "\n" + "Synced android assets: " +
-                                            dbHelper.countAndroidSyncedAssets());
-                                });
-                            }
-                        }
-
-                        System.out.println("is alive: " + updateAndroidFilesThread.isAlive() + updateAndroidFilesThread2[0].isAlive());
-                        if(!deleteRedundantAndroidThread.isAlive() && !anyThreadAlive){
-                            deleteRedundantAndroidThread2[0] = new Thread(deleteRedundantAndroidThread);
-                            System.out.println("here running 1.1");
-                            deleteRedundantAndroidThread2[0].start();
-                        }
-                        if(!updateAndroidFilesThread.isAlive() && !updateAndroidFilesThread2[0].isAlive() && !anyThreadAlive){
-                            updateAndroidFilesThread2[0] = new Thread(updateAndroidFilesThread);
-                            System.out.println("here running 2.1");
-                            updateAndroidFilesThread2[0].start();
-                        }
-                    }catch (Exception e){
-                        LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
-                    }
+                    System.out.println("inner timer");
+                    return;
+//                    boolean anyThreadAlive = false;
+//                    if (!isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
+//                        runOnUiThread(() -> {
+//                            syncSwitchMaterialButton.setChecked(false);
+//                            syncSwitchMaterialButton.setThumbTintList(ColorStateList.valueOf(Color.parseColor("#BF2C2C")));
+//                            syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.parseColor("#850808")));
+//                        });
+//                    }else{
+//                        runOnUiThread(() -> {
+//                            syncSwitchMaterialButton.setChecked(true);
+//                            syncSwitchMaterialButton.setThumbTintList(ColorStateList.valueOf(Color.GREEN));
+//                            syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.GREEN));
+//                        });
+//                    }
+//
+//                    try{
+//                        for(Thread thread : threads ){
+//                            if(thread != null){
+//                                System.out.println(thread.getId());
+//                                System.out.println("Name : " + thread.getName() + " is " + thread.isAlive());
+//                            }
+//                            if (thread != null && thread.isAlive()) {
+//                                anyThreadAlive = true;
+//                                break;
+//                            }
+//                        }
+//                        System.out.println("should run : " + !anyThreadAlive);
+//                        if(!updateAndroidFilesThread.isAlive() && !updateAndroidFilesThread2[0].isAlive()){
+//                            if(!anyThreadAlive){
+//
+////                                if (!storageUpdaterThread[0].isAlive()) {
+////                                    Thread storageUpdaterThreadTemp = new Thread(storageUpdaterThread[0]);
+////                                    storageUpdaterThreadTemp.start();
+////                                }
+//                                runOnUiThread(() -> {
+//                                    TextView deviceStorage = findViewById(R.id.deviceStorage);
+//                                    deviceStorage.setText("Total space: " + storageHandler.getTotalStorage()+
+//                                            " GB\n" + "Free space: " + storageHandler.getFreeSpace()+ " GB\n" +
+//                                            "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n");
+//                                    TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
+//                                    androidStatisticsTextView.setVisibility(View.VISIBLE);
+//                                    int total_androidAssets_count = dbHelper.countAndroidAssets();
+//                                    androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
+//                                            "\n" + "Synced android assets: " +
+//                                            dbHelper.countAndroidSyncedAssets());
+//                                });
+//                            }
+//                        }
+//
+//                        System.out.println("is alive: " + updateAndroidFilesThread.isAlive() + updateAndroidFilesThread2[0].isAlive());
+//                        if(!deleteRedundantAndroidThread.isAlive() && !anyThreadAlive){
+//                            deleteRedundantAndroidThread2[0] = new Thread(deleteRedundantAndroidThread);
+//                            System.out.println("here running 1.1");
+//                            deleteRedundantAndroidThread2[0].start();
+//                        }
+//                        if(!updateAndroidFilesThread.isAlive() && !updateAndroidFilesThread2[0].isAlive() && !anyThreadAlive){
+//                            updateAndroidFilesThread2[0] = new Thread(updateAndroidFilesThread);
+//                            System.out.println("here running 2.1");
+//                            updateAndroidFilesThread2[0].start();
+//                        }
+//                    }catch (Exception e){
+//                        LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
+//                    }
                 }
             }, 10000, 3000);
 
@@ -456,7 +469,6 @@
         protected void onStart(){
             super.onStart();
             runOnUiThread(this::updateButtonsListeners);
-            serviceIntent = new Intent(this.getApplicationContext(), timerService.getClass());
             System.out.println("startService(serviceIntent); " + serviceIntent);
 //            serviceIntent.getData();
 //            Intent.getIntentOld();
@@ -1286,9 +1298,9 @@
                             syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.GREEN));
                         });
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            if (!isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("on")){
+                            if (!isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
                                 TimerService.shouldCancel = false;
-                                startForegroundService(serviceIntent);
+                                startService(serviceIntent);
                             }
                         }
                         System.out.println("startService(serviceIntent); " + serviceIntent);
@@ -1298,7 +1310,7 @@
                             syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.parseColor("#850808")));
                         });
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            if (isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("on")){
+                            if (isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
                                 TimerService.shouldCancel = true;
                                 stopService(serviceIntent);
                             }
@@ -1312,7 +1324,7 @@
 //                @Override
 //                public void onClick(View view) {
 //                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//                        if (!isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("on")){
+//                        if (!isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
 //                            TimerService.shouldCancel = false;
 //                            startForegroundService(serviceIntent);
 //                        }
@@ -1542,13 +1554,13 @@
 //                    updateAndroidFilesThread2.start();
 //                    updateUIThread.start();
 //                    stopService(serviceIntent);
-//                    serviceIntent = new Intent(activity,timerService.getClass());
+//                    serviceIntent = new Intent(activity,TimerService.class);
 
 //            restoreButton.setOnClickListener(new View.OnClickListener() {
 //                @Override
 //                public void onClick(View view) {
 //                    TimerService.shouldCancel = true;
-//                    while (!isMyServiceRunning(activity.getApplicationContext(),timerService.getClass()).equals("off")) {
+//                    while (!isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("off")) {
 //                        stopService(serviceIntent);
 //                    }
 //                }

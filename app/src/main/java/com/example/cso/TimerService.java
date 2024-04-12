@@ -56,9 +56,14 @@ public class TimerService extends Service {
             System.out.println("i can reach here");
             if (intent.getAction().equals("STOP_SERVICE")) {
                 System.out.println("i can reach here 2 ");
-                    TimerService.shouldCancel = true;
-                    stopService(MainActivity.serviceIntent);
-                    stopSelf(startId);
+                TimerService.shouldCancel = true;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    stopForeground(STOP_FOREGROUND_DETACH);
+                }
+                stopSelf();
+                boolean result_of_stop = stopSelfResult(startId);
+                System.out.println("result of stop : " + result_of_stop);
+                getApplicationContext().stopService(MainActivity.serviceIntent);
             }
         }
         else {
@@ -69,6 +74,7 @@ public class TimerService extends Service {
     }
 
     private void startTimer() {
+        System.out.println("startTimer method called");
         timer = new Timer();
         initializeTimerTask();
         timer.schedule(timerTask, 5000 , 1000);
