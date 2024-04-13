@@ -59,7 +59,7 @@ public class Upload {
         File[] destinationFolderFiles = destinationFolder.listFiles();
         if (destinationFolderFiles != null) {
             for (File destinationFolderFile: destinationFolderFiles) {
-                if (!destinationFolderFile.getName().equals(MainActivity.logFileName)){
+                if (!destinationFolderFile.getName().equals(LogHandler.logFileName)){
                     boolean isDeleted = destinationFolderFile.delete();
                     if (isDeleted){
                         LogHandler.saveLog(destinationFolderFile.getName() + " deleted from CSO folder",false);

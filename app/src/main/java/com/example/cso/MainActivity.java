@@ -4,9 +4,6 @@
     import android.app.Activity;
     import android.app.ActivityManager;
     import android.app.AlertDialog;
-    import android.app.PendingIntent;
-    import android.app.Service;
-    import android.content.ComponentName;
     import android.content.Context;
     import android.content.DialogInterface;
     import android.content.Intent;
@@ -19,7 +16,6 @@
     import android.os.Environment;
     import android.os.Looper;
     import android.provider.Settings;
-    import android.service.quicksettings.TileService;
     import android.text.Layout;
     import android.text.Spannable;
     import android.text.SpannableString;
@@ -49,9 +45,7 @@
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
 
-    import java.io.File;
     import java.util.ArrayList;
-    import java.util.Arrays;
     import java.util.HashMap;
     import java.util.List;
     import java.util.Map;
@@ -71,8 +65,6 @@
         GooglePhotos googlePhotos;
         HashMap<String, PhotosAccountInfo> primaryAccountHashMap = new HashMap<>();
         public static String androidDeviceName;
-        public static String logFileName = "stash_log.txt";
-        public static int errorCounter = 0;
         static SharedPreferences preferences;
         public static DBHelper dbHelper;
 
@@ -89,8 +81,8 @@
         SwitchMaterial syncSwitchMaterialButton;
         public static TimerService timerService;
 
-        List<Thread> threads = new ArrayList<>(Arrays.asList(firstUiThread, secondUiThread,
-                backUpJsonThread, insertMediaItemsThread, deleteRedundantDriveThread, updateDriveBackUpThread, deleteDuplicatedInDrive));
+//        List<Thread> threads = new ArrayList<>(Arrays.asList(firstUiThread, secondUiThread,
+//                backUpJsonThread, insertMediaItemsThread, deleteRedundantDriveThread, updateDriveBackUpThread, deleteDuplicatedInDrive));
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -149,7 +141,11 @@
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            boolean hasError = LogHandler.CreateLogFile();
+
+
+
+            boolean hasCreated = LogHandler.createLogFile();
+            System.out.println("Log file is created :"  + hasCreated);
 
             googleCloud = new GoogleCloud(this);
 //            LogHandler.saveLog("--------------------------new run----------------------------",false);
@@ -158,7 +154,7 @@
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
-            LogHandler.actionOnLogFile(hasError, new File(LogHandler.LOG_DIR_PATH + File.separator + logFileName));
+            LogHandler.actionOnLogFile();
             androidDeviceName = DeviceName.getDeviceName();
             Upgrade.versionHandler(preferences);
             storageHandler = new StorageHandler();
@@ -459,8 +455,6 @@
             }, 10000, 3000);
 
 
-
-            System.out.println(" here 1 : " +  errorCounter );
             LogHandler.saveLog("--------------------------first threads were finished----------------------------",false);
         }
 
