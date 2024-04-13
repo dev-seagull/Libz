@@ -6,6 +6,7 @@ import android.os.Environment;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -52,17 +53,28 @@ public class LogHandler extends Application {
     }
 
     private static boolean logFileContainsError(File logFile){
-        if (logFile.exists()) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(logFile.toPath())))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (line.startsWith("err")) {
-                        return true;
-                    }
+        try {
+            if (logFile.exists()) {
+                BufferedReader reader;
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    reader = new BufferedReader(new InputStreamReader
+                            (Files.newInputStream(logFile.toPath())));
+                }else{
+                    reader = new BufferedReader(new FileReader(logFile));
                 }
-            }catch (Exception e){
-                System.out.println("Error in buffer reader log handler" + e.getLocalizedMessage());
+                try{
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (line.startsWith("Err")) {
+                            return true;
+                        }
+                    }
+                }catch (Exception e){
+                    System.out.println("Error in buffer reader log handler" + e.getLocalizedMessage());
+                }
             }
+        }catch (Exception e){
+            System.out.println("Error in log file contains error" + e.getLocalizedMessage());
         }
         return false;
     }
@@ -82,9 +94,19 @@ public class LogHandler extends Application {
     }
 
     public static void cleanLogFile(File logFile){
-        try(BufferedWriter writer = new BufferedWriter(new FileWriter(logFile))) {
+        try{
+            BufferedWriter writer;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(logFile.toPath())));
+            }else{
+                writer = new BufferedWriter(new FileWriter(logFile));
+            }
+            try{
                 writer.write("");
                 System.out.println("All existing lines removed from the log file: " + logFile.getAbsolutePath());
+            }catch (Exception e){
+                System.out.println("Error when cleaning log file: " + e.getLocalizedMessage());
+            }
         }catch (Exception e){
             System.out.println("Error when cleaning log file: " + e.getLocalizedMessage());
         }
@@ -98,12 +120,14 @@ public class LogHandler extends Application {
 
         try{
             if (logFile.exists()) {
-                BufferedReader reader =  new BufferedReader(new InputStreamReader
-                        (Files.newInputStream(logFile.toPath())));
+                BufferedReader reader;
                 BufferedWriter writer;
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    reader = new BufferedReader(new InputStreamReader
+                            (Files.newInputStream(logFile.toPath())));
                     writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(logFile.toPath())));
                 }else{
+                    reader = new BufferedReader(new FileReader(logFile));
                     writer = new BufferedWriter(new FileWriter(logFile));
                 }
                 String line;
@@ -140,12 +164,14 @@ public class LogHandler extends Application {
 
         try{
             if (logFile.exists()) {
-                BufferedReader reader =  new BufferedReader(new InputStreamReader
-                        (Files.newInputStream(logFile.toPath())));
+                BufferedReader reader;
                 BufferedWriter writer;
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    reader = new BufferedReader(new InputStreamReader
+                            (Files.newInputStream(logFile.toPath())));
                     writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(logFile.toPath())));
                 }else{
+                    reader = new BufferedReader(new FileReader(logFile));
                     writer = new BufferedWriter(new FileWriter(logFile));
                 }
                 String line;
@@ -156,8 +182,8 @@ public class LogHandler extends Application {
                 String timestamp = dateFormat.format(new Date());
                 String logEntry;
 
-                logEntry = "Err " + timestamp + " --------- " + text;
-                System.out.println("Err IS SAVED: " + text);
+                logEntry = "Log " + timestamp + " --------- " + text;
+                System.out.println("Log IS SAVED: " + text);
                 existingLines.add(Math.min(2, existingLines.size()), logEntry);
 
                 writer.newLine();
