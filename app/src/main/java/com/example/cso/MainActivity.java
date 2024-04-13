@@ -154,7 +154,9 @@
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this);
+            LogHandler.saveLog("salam",true);
             LogHandler.actionOnLogFile();
+            LogHandler.saveLog("salam2",true);
             androidDeviceName = DeviceName.getDeviceName();
             Upgrade.versionHandler(preferences);
             storageHandler = new StorageHandler();

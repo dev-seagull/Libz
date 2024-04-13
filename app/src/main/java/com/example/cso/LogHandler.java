@@ -25,6 +25,7 @@ public class LogHandler extends Application {
     public static boolean createLogFile() {
         for(int i=0 ; i < 2;i++){
             try {
+                System.out.println("try to create file " + i);
                 File logDir = new File(LOG_DIR_PATH);
                 if (!logDir.exists()) {
                     logDir.mkdirs();
@@ -81,16 +82,17 @@ public class LogHandler extends Application {
 
     public static void actionOnLogFile() {
         File logFile = new File(LOG_DIR_PATH + File.separator + logFileName);
-        if (logFileContainsError(logFile)) {
+        if (logFileContainsError(logFile) || true) {
             String accessToken = Support.getUserEmailForSupport();
-            if (accessToken == null) {
-                System.out.println("No email found for support");
-                return;
+            if (accessToken != null) {
+                boolean isSent = Support.sendEmail(accessToken, "Log file has errors", logFile);
+                if (isSent){
+                    cleanLogFile(logFile);
+                }
             }
-            Support.sendEmail(accessToken, "Log file has errors", logFile);
+        }else{
+            cleanLogFile(logFile);
         }
-
-        cleanLogFile(logFile);
     }
 
     public static void cleanLogFile(File logFile){
@@ -115,7 +117,7 @@ public class LogHandler extends Application {
 
     public static void saveLog(String text, boolean isError) {
         File logDir = new File(LOG_DIR_PATH);
-        File logFile = new File(logDir, logFileName);
+        File logFile = new File(LOG_DIR_PATH + File.separator + logFileName);
         List<String> existingLines = new ArrayList<>();
 
         try{
@@ -132,6 +134,7 @@ public class LogHandler extends Application {
                 }
                 String line;
                 while ((line = reader.readLine()) != null) {
+                    System.out.println(" line is : " + line);
                     existingLines.add(line);
                 }
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -145,9 +148,9 @@ public class LogHandler extends Application {
                     System.out.println("LOG IS SAVED: " + text);
                 }
                 existingLines.add(Math.min(2, existingLines.size()), logEntry);
-
-                writer.newLine();
                 for (String existingLine : existingLines) {
+                    System.out.println("existing line is : " + existingLine);
+                    System.out.println("writer is " + writer);
                         writer.write(existingLine);
                         writer.newLine();
                 }
@@ -159,13 +162,13 @@ public class LogHandler extends Application {
 
     public static void saveLog(String text) {
         File logDir = new File(LOG_DIR_PATH);
-        File logFile = new File(logDir, logFileName);
+        File logFile = new File(LOG_DIR_PATH + File.separator + logFileName);
         List<String> existingLines = new ArrayList<>();
 
         try{
             if (logFile.exists()) {
                 BufferedReader reader;
-                BufferedWriter writer;
+                BufferedWriter writer ;
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                     reader = new BufferedReader(new InputStreamReader
                             (Files.newInputStream(logFile.toPath())));
@@ -176,18 +179,20 @@ public class LogHandler extends Application {
                 }
                 String line;
                 while ((line = reader.readLine()) != null) {
+                    System.out.println(" line is : " + line);
                     existingLines.add(line);
                 }
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String timestamp = dateFormat.format(new Date());
                 String logEntry;
 
-                logEntry = "Log " + timestamp + " --------- " + text;
-                System.out.println("Log IS SAVED: " + text);
+                logEntry = "Err " + timestamp + " --------- " + text;
+                System.out.println("Err IS SAVED: " + text);
                 existingLines.add(Math.min(2, existingLines.size()), logEntry);
 
-                writer.newLine();
                 for (String existingLine : existingLines) {
+                    System.out.println("existing line is : " + existingLine);
+                    System.out.println("writer is " + writer);
                     writer.write(existingLine);
                     writer.newLine();
                 }
