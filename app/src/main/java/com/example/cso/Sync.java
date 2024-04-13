@@ -40,126 +40,126 @@ public class Sync {
                         System.out.println("------ - - - - - - -sort checking data modified : " + android_row[6]
                                 + " file name: " + android_row[1]);
                     }
-                    for(String[] android_row: android_rows){
-                        id[0] = android_row[0];
-                        fileName[0] = android_row[1];
-                        filePath[0] = android_row[2];
-                        fileSize[0] = android_row[4];
-                        fileHash[0] = android_row[5];
-                        dateModified[0] = android_row[6];
-                        memeType[0] = android_row[7];
-                        assetId[0] = android_row[8];
-                        System.out.println("Check android Item : " + filePath[0] + "\nWith\n"+
-                                "Account: " + userEmail[0] + "\n" + "driveFreeSpace: " + driveFreeSpace + "\n");
-                        boolean isDeleted = false;
-                        if(!file_hashes.contains(fileHash[0])) {
-                            file_hashes.add(fileHash[0]);
-                            if (!DBHelper.androidFileExistsInDrive(Long.valueOf(assetId[0]), fileHash[0])) {
-                                if (driveFreeSpace > Double.valueOf(fileSize[0])) {
-                                    isBackedUp[0] = false;
-                                    Thread backupThread = new Thread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            System.out.println("uploading "+fileName[0] + " to drive");
-                                            isBackedUp[0] = upload.backupAndroidToDrive(Long.valueOf(id[0]),fileName[0],
-                                                    filePath[0],fileHash[0],memeType[0],assetId[0],accessToken[0],userEmail[0],folderId[0]);
-                                            System.out.println("uplaoded "+fileName[0] + " to drive is finished");
-                                        }
-                                    });
-                                    backupThread.start();
-                                    try {
-                                        backupThread.join();
-                                    } catch (Exception e) {
-                                        LogHandler.saveLog("Failed to join backup thread when syncing android file.", true);
-                                    }
-                                    if (isBackedUp[0]) {
-                                        driveFreeSpace = driveFreeSpace - Double.valueOf(fileSize[0]);
-                                        if (amountSpaceToFreeUp > 0) {
-                                            Thread deleteRedundantDrive = new Thread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    String[] columns = {"accessToken","userEmail", "type"};
-                                                    List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
-
-                                                    for(String[] account_row : account_rows) {
-                                                        String type = account_row[2];
-                                                        if(type.equals("backup")){
-                                                            String userEmail = account_row[1];
-                                                            String accessToken = account_row[0];
-                                                            ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
-                                                            ArrayList<String> driveFileIds = new ArrayList<>();
-
-                                                            for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
-                                                                String fileId = driveMediaItem.getId();
-                                                                driveFileIds.add(fileId);
-                                                            }
-                                                            MainActivity.dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
-                                                        }
-                                                    }
-                                                }
-                                            });
-                                            deleteRedundantDrive.start();
-                                            try {
-                                                deleteRedundantDrive.join();
-                                            } catch (Exception e) {
-                                                LogHandler.saveLog("Failed to join delete " +
-                                                        " redundant drive thread when syncing android file.", true);
-                                            }
-                                            if(DBHelper.androidFileExistsInDrive(Long.valueOf(assetId[0]), fileHash[0])){
-                                                isDeleted = Android.deleteAndroidFile(filePath[0],assetId[0],fileHash[0]
-                                                        ,fileSize[0],fileName[0]);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            else {
-                                if (amountSpaceToFreeUp > 0) {
-                                    Thread deleteRedundantDrive = new Thread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            String[] columns = {"accessToken","userEmail", "type"};
-                                            List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
-                                            for(String[] account_row : account_rows) {
-                                                String type = account_row[2];
-                                                if(type.equals("backup")){
-                                                    String userEmail = account_row[1];
-                                                    String accessToken = account_row[0];
-                                                    ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
-                                                    ArrayList<String> driveFileIds = new ArrayList<>();
-
-                                                    for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
-                                                        String fileId = driveMediaItem.getId();
-                                                        driveFileIds.add(fileId);
-                                                    }
-                                                    MainActivity.dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
-                                                }
-                                            }
-                                        }
-                                    });
-                                    deleteRedundantDrive.start();
-                                    try {
-                                        deleteRedundantDrive.join();
-                                    } catch (Exception e) {
-                                        LogHandler.saveLog("Failed to join delete " +
-                                                " redundant drive thread when syncing android file.", true);
-                                    }
-                                    if(DBHelper.androidFileExistsInDrive(Long.valueOf(assetId[0]), fileHash[0])){
-                                        isDeleted = Android.deleteAndroidFile(filePath[0],assetId[0],fileHash[0]
-                                                ,fileSize[0],fileName[0]);
-                                    }
-                                }
-                            }
-                        }else{
-                            System.out.println("android duplicate file hash: " + fileHash[0]);
-                        }
-                        System.out.println("isBackedUp: " + isBackedUp[0]);
-                        System.out.println("isDeleted: " + isDeleted);
-
-                        if(isDeleted){
-                            amountSpaceToFreeUp = amountSpaceToFreeUp - Double.valueOf(fileSize[0]);
-                        }
-                    }
+//                    for(String[] android_row: android_rows){
+//                        id[0] = android_row[0];
+//                        fileName[0] = android_row[1];
+//                        filePath[0] = android_row[2];
+//                        fileSize[0] = android_row[4];
+//                        fileHash[0] = android_row[5];
+//                        dateModified[0] = android_row[6];
+//                        memeType[0] = android_row[7];
+//                        assetId[0] = android_row[8];
+//                        System.out.println("Check android Item : " + filePath[0] + "\nWith\n"+
+//                                "Account: " + userEmail[0] + "\n" + "driveFreeSpace: " + driveFreeSpace + "\n");
+//                        boolean isDeleted = false;
+//                        if(!file_hashes.contains(fileHash[0])) {
+//                            file_hashes.add(fileHash[0]);
+//                            if (!DBHelper.androidFileExistsInDrive(Long.valueOf(assetId[0]), fileHash[0])) {
+//                                if (driveFreeSpace > Double.valueOf(fileSize[0])) {
+//                                    isBackedUp[0] = false;
+//                                    Thread backupThread = new Thread(new Runnable() {
+//                                        @Override
+//                                        public void run() {
+//                                            System.out.println("uploading "+fileName[0] + " to drive");
+//                                            isBackedUp[0] = upload.backupAndroidToDrive(Long.valueOf(id[0]),fileName[0],
+//                                                    filePath[0],fileHash[0],memeType[0],assetId[0],accessToken[0],userEmail[0],folderId[0]);
+//                                            System.out.println("uplaoded "+fileName[0] + " to drive is finished");
+//                                        }
+//                                    });
+//                                    backupThread.start();
+//                                    try {
+//                                        backupThread.join();
+//                                    } catch (Exception e) {
+//                                        LogHandler.saveLog("Failed to join backup thread when syncing android file.", true);
+//                                    }
+//                                    if (isBackedUp[0]) {
+//                                        driveFreeSpace = driveFreeSpace - Double.valueOf(fileSize[0]);
+//                                        if (amountSpaceToFreeUp > 0) {
+//                                            Thread deleteRedundantDrive = new Thread(new Runnable() {
+//                                                @Override
+//                                                public void run() {
+//                                                    String[] columns = {"accessToken","userEmail", "type"};
+//                                                    List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
+//
+//                                                    for(String[] account_row : account_rows) {
+//                                                        String type = account_row[2];
+//                                                        if(type.equals("backup")){
+//                                                            String userEmail = account_row[1];
+//                                                            String accessToken = account_row[0];
+//                                                            ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+//                                                            ArrayList<String> driveFileIds = new ArrayList<>();
+//
+//                                                            for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+//                                                                String fileId = driveMediaItem.getId();
+//                                                                driveFileIds.add(fileId);
+//                                                            }
+//                                                            MainActivity.dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
+//                                                        }
+//                                                    }
+//                                                }
+//                                            });
+//                                            deleteRedundantDrive.start();
+//                                            try {
+//                                                deleteRedundantDrive.join();
+//                                            } catch (Exception e) {
+//                                                LogHandler.saveLog("Failed to join delete " +
+//                                                        " redundant drive thread when syncing android file.", true);
+//                                            }
+//                                            if(DBHelper.androidFileExistsInDrive(Long.valueOf(assetId[0]), fileHash[0])){
+//                                                isDeleted = Android.deleteAndroidFile(filePath[0],assetId[0],fileHash[0]
+//                                                        ,fileSize[0],fileName[0]);
+//                                            }
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                            else {
+//                                if (amountSpaceToFreeUp > 0) {
+//                                    Thread deleteRedundantDrive = new Thread(new Runnable() {
+//                                        @Override
+//                                        public void run() {
+//                                            String[] columns = {"accessToken","userEmail", "type"};
+//                                            List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
+//                                            for(String[] account_row : account_rows) {
+//                                                String type = account_row[2];
+//                                                if(type.equals("backup")){
+//                                                    String userEmail = account_row[1];
+//                                                    String accessToken = account_row[0];
+//                                                    ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+//                                                    ArrayList<String> driveFileIds = new ArrayList<>();
+//
+//                                                    for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+//                                                        String fileId = driveMediaItem.getId();
+//                                                        driveFileIds.add(fileId);
+//                                                    }
+//                                                    MainActivity.dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
+//                                                }
+//                                            }
+//                                        }
+//                                    });
+//                                    deleteRedundantDrive.start();
+//                                    try {
+//                                        deleteRedundantDrive.join();
+//                                    } catch (Exception e) {
+//                                        LogHandler.saveLog("Failed to join delete " +
+//                                                " redundant drive thread when syncing android file.", true);
+//                                    }
+//                                    if(DBHelper.androidFileExistsInDrive(Long.valueOf(assetId[0]), fileHash[0])){
+//                                        isDeleted = Android.deleteAndroidFile(filePath[0],assetId[0],fileHash[0]
+//                                                ,fileSize[0],fileName[0]);
+//                                    }
+//                                }
+//                            }
+//                        }else{
+//                            System.out.println("android duplicate file hash: " + fileHash[0]);
+//                        }
+//                        System.out.println("isBackedUp: " + isBackedUp[0]);
+//                        System.out.println("isDeleted: " + isDeleted);
+//
+//                        if(isDeleted){
+//                            amountSpaceToFreeUp = amountSpaceToFreeUp - Double.valueOf(fileSize[0]);
+//                        }
+//                    }
                 }
             }
         }catch (Exception e){
