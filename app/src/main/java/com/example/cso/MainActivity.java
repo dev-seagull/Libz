@@ -375,7 +375,7 @@
                 }
             });
 
-            LogHandler.saveLog("--------------------------Start of app----------------------------",false);
+            LogHandler.saveLog("---------------Start of app--------------",false);
 
             manageReadAndWritePermissonsThread.start();
             deleteRedundantAndroidThread.start();
