@@ -110,7 +110,7 @@ public class LogHandler extends Application {
             if (logFile.exists()) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    System.out.println("line is : " + line);
+//                    System.out.println("line is : " + line);
                     existingLines.add(line);
                 }
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -126,8 +126,8 @@ public class LogHandler extends Application {
                 existingLines.add(Math.min(2, existingLines.size()), logEntry);
                 try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(logFile)))) {
                     for (String existingLine : existingLines) {
-                        System.out.println("existing line is : " + existingLine);
-                        System.out.println("writer is " + writer);
+//                        System.out.println("existing line is : " + existingLine);
+//                        System.out.println("writer is " + writer);
                         writer.write(existingLine);
                         writer.newLine();
                     }
@@ -149,7 +149,7 @@ public class LogHandler extends Application {
             if (logFile.exists()) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    System.out.println(" line is : " + line);
+//                    System.out.println(" line is : " + line);
                     existingLines.add(line);
                 }
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -162,8 +162,8 @@ public class LogHandler extends Application {
 
                 try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(logFile)))) {
                     for (String existingLine : existingLines) {
-                        System.out.println("existing line is : " + existingLine);
-                        System.out.println("writer is " + writer);
+//                        System.out.println("existing line is : " + existingLine);
+//                        System.out.println("writer is " + writer);
                         writer.write(existingLine);
                         writer.newLine();
                     }

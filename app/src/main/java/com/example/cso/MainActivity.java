@@ -87,12 +87,12 @@
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
-            while (true){
-                if (SplashActivity.complete_loaded){
-                    break;
-                }
-                System.out.println("waiting for the splash screen to load in Main activity");
-            }
+//            while (true){
+//                if (SplashActivity.complete_loaded){
+//                    break;
+//                }
+//                System.out.println("waiting for the splash screen to load in Main activity");
+//            }
             activity = this;
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);

@@ -214,66 +214,66 @@ public class TimerService extends Service {
                     ){
                         return;
                     }
-//                    deleteRedundantAndroidThreadTemp = new Thread(deleteRedundantAndroidThreadForService[0]);
-//                    deleteRedundantAndroidThreadTemp.start();
-//                    try {
-//                        deleteRedundantAndroidThreadTemp.join();
-//                    } catch (InterruptedException e) {
-//                        LogHandler.saveLog("Failed to join delete redundant temp : "  +
-//                                e.getLocalizedMessage(), true);
-//                    }
-//
-//                    updateAndroidFilesThreadTemp = new Thread(updateAndroidFilesThreadForService[0]);
-//                    updateAndroidFilesThreadTemp.start();
-//                    try{
-//                        updateAndroidFilesThreadTemp.join();
-//                    }catch (InterruptedException e){
-//                        LogHandler.saveLog("Failed to join update android temp : "  +
-//                                e.getLocalizedMessage(), true);
-//                    }
-//
-//                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
-//                    storageUpdaterThreadTemp.start();
-//                    try{
-//                        storageUpdaterThreadTemp.join();
-//                    }catch (InterruptedException e) {
-//                        LogHandler.saveLog("Failed to join storage update temp : " +
-//                                e.getLocalizedMessage(), true);
-//                    }
-//                    System.out.println("Android Status is up-to-date and storageUpdaterThreadTemp is done");
-//
-//
-//                    deleteRedundantDriveThreadTemp = new Thread(deleteRedundantDriveThreadForService[0]);
-//                    deleteRedundantDriveThreadTemp.start();
-//                    try{
-//                        deleteRedundantDriveThreadTemp.join();
-//                    }catch (InterruptedException e){
-//                        LogHandler.saveLog("Failed to join delete redundant drive temp : "  +
-//                                e.getLocalizedMessage(), true);
-//                    }
-//
-//                    updateDriveFilesThreadTemp = new Thread(updateDriveFilesThreadForService[0]);
-//                    updateDriveFilesThreadTemp.start();
-//                    try{
-//                        updateDriveFilesThreadTemp.join();
-//                    }catch (InterruptedException e){
-//                        LogHandler.saveLog("Failed to join update drive temp : "  +
-//                                e.getLocalizedMessage(), true);
-//                    }
-//
-//                    deleteDuplicatedInDriveTemp = new Thread(deleteDuplicatedInDriveForService[0]);
-//                    deleteDuplicatedInDriveTemp.start();
-//                    try{
-//                        deleteDuplicatedInDriveTemp.join();
-//                    }catch (InterruptedException e){
-//                        LogHandler.saveLog("Failed to join delete duplicated drive temp : "  +
-//                                e.getLocalizedMessage(), true);
-//                    }
-//                    try{
-//                    Sync.syncAndroidFiles();}
-//                    catch (Exception e){
-//                        LogHandler.saveLog("Error in Sync.syncAndroidFiles : " + e.getLocalizedMessage());
-//                    }
+                    deleteRedundantAndroidThreadTemp = new Thread(deleteRedundantAndroidThreadForService[0]);
+                    deleteRedundantAndroidThreadTemp.start();
+                    try {
+                        deleteRedundantAndroidThreadTemp.join();
+                    } catch (InterruptedException e) {
+                        LogHandler.saveLog("Failed to join delete redundant temp : "  +
+                                e.getLocalizedMessage(), true);
+                    }
+
+                    updateAndroidFilesThreadTemp = new Thread(updateAndroidFilesThreadForService[0]);
+                    updateAndroidFilesThreadTemp.start();
+                    try{
+                        updateAndroidFilesThreadTemp.join();
+                    }catch (InterruptedException e){
+                        LogHandler.saveLog("Failed to join update android temp : "  +
+                                e.getLocalizedMessage(), true);
+                    }
+
+                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
+                    storageUpdaterThreadTemp.start();
+                    try{
+                        storageUpdaterThreadTemp.join();
+                    }catch (InterruptedException e) {
+                        LogHandler.saveLog("Failed to join storage update temp : " +
+                                e.getLocalizedMessage(), true);
+                    }
+                    System.out.println("Android Status is up-to-date and storageUpdaterThreadTemp is done");
+
+
+                    deleteRedundantDriveThreadTemp = new Thread(deleteRedundantDriveThreadForService[0]);
+                    deleteRedundantDriveThreadTemp.start();
+                    try{
+                        deleteRedundantDriveThreadTemp.join();
+                    }catch (InterruptedException e){
+                        LogHandler.saveLog("Failed to join delete redundant drive temp : "  +
+                                e.getLocalizedMessage(), true);
+                    }
+
+                    updateDriveFilesThreadTemp = new Thread(updateDriveFilesThreadForService[0]);
+                    updateDriveFilesThreadTemp.start();
+                    try{
+                        updateDriveFilesThreadTemp.join();
+                    }catch (InterruptedException e){
+                        LogHandler.saveLog("Failed to join update drive temp : "  +
+                                e.getLocalizedMessage(), true);
+                    }
+
+                    deleteDuplicatedInDriveTemp = new Thread(deleteDuplicatedInDriveForService[0]);
+                    deleteDuplicatedInDriveTemp.start();
+                    try{
+                        deleteDuplicatedInDriveTemp.join();
+                    }catch (InterruptedException e){
+                        LogHandler.saveLog("Failed to join delete duplicated drive temp : "  +
+                                e.getLocalizedMessage(), true);
+                    }
+                    try{
+                    Sync.syncAndroidFiles();}
+                    catch (Exception e){
+                        LogHandler.saveLog("Error in Sync.syncAndroidFiles : " + e.getLocalizedMessage());
+                    }
 //                    syncAndroidToDriveThreadTemp = new Thread(syncAndroidToDriveThreadForService[0]);
 //                    syncAndroidToDriveThreadTemp.start();
 //                    try{

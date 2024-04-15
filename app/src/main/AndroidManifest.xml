@@ -41,20 +41,12 @@
                 android:resource="@xml/provider_paths"/>
         </provider>
 
-        <activity android:name=".SplashActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
         <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER"></category>
             </intent-filter>
         </activity>
 
@@ -74,18 +66,7 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".MyWidget"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
-                <action android:name="START_SYNC"/>
-                <action android:name="STOP_SYNC"/>
-            </intent-filter>
 
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info"/>
-        </receiver>
 
 
     </application>
