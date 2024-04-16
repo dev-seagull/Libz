@@ -1,10 +1,14 @@
 package com.example.cso;
 
 import android.database.Cursor;
+import android.os.Build;
 import android.os.Environment;
 import android.os.StatFs;
 
+import java.io.File;
 import java.text.DecimalFormat;
+import java.util.HashMap;
+import java.util.List;
 
 public class StorageHandler {
 
@@ -132,7 +136,48 @@ public class StorageHandler {
         return formattedResult;
     }
 
+    public static HashMap<String,Double> directoryUIDisplay(){
+        HashMap<String, Double> directoryMap = new HashMap<>();
+        try {
+            File rootDirectory = Environment.getExternalStorageDirectory();
+            System.out.println("Root Directory: " + rootDirectory);
+            File[] rootFolder = rootDirectory.listFiles();
 
+
+            for (File file : rootFolder) {
+                if (file.isDirectory()) {
+                    directoryMap.put(file.getName(), 0.0);
+                    System.out.println("rootFolder: " + file.getName());
+                }
+            }
+
+            List<String[]> androidRows = MainActivity.dbHelper.getAndroidTable(new String[]{"filePath", "fileSize"});
+
+            for (String[] row : androidRows) {
+                String filePath = row[0];
+                double fileSize = Double.parseDouble(row[1]);
+                for (String directory : directoryMap.keySet()) {
+                    if (filePath.startsWith(rootDirectory+"/"+directory)) {
+                        double currentSize = directoryMap.get(directory);
+                        directoryMap.put(directory, currentSize + fileSize);
+                    }
+                }
+            }
+            // remove directories with 0.0 size
+            for (String directory : directoryMap.keySet()) {
+                if (String.valueOf(directoryMap.get(directory)) == String.valueOf(0.0)) {
+                    directoryMap.remove(directory);
+                }else {
+                    directoryMap.put(directory, Double.valueOf(String.format("%.3f", directoryMap.get(directory))));
+                }
+            }
+
+            System.out.println("DirectoryMap: " + directoryMap);
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to get directory UI display: " + e.getLocalizedMessage(),true);
+        }
+        return directoryMap;
+    }
 
     
 }

@@ -35,8 +35,8 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:gravity="center"
                     android:layout_gravity="fill"
+                    android:gravity="center"
                     android:orientation="vertical"
                     android:padding="16dp"
                     tools:context=".MainActivity">
@@ -83,7 +83,6 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="20dp"
-                        app:backgroundTint="@null"
                         android:background="@drawable/gradient_gray"
                         android:clickable="false"
                         android:drawableLeft="@drawable/android_device_icon"
@@ -91,43 +90,69 @@
                         android:gravity="center"
                         android:paddingRight="84dp"
                         android:textColor="@color/white"
-                        android:textSize="18dp" />
+                        android:textSize="18dp"
+                        app:backgroundTint="@null" />
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center">
 
                     <TextView
                         android:id="@+id/deviceStorage"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="3dp"
-                        android:layout_marginRight="3dp"
                         android:layout_marginTop="30dp"
-                        android:layout_marginBottom="30dp"
+                        android:layout_marginRight="3dp"
+
+                        android:fontFamily="sans-serif-condensed"
                         android:gravity="center"
-                        android:text=""
                         android:shadowColor="@color/black"
                         android:shadowDx="2"
                         android:shadowDy="2"
                         android:shadowRadius="5"
-                        android:fontFamily="sans-serif-condensed"
+                        android:text=""
                         android:textColor="@color/white"
                         android:textSize="20sp" />
 
+
+                        <ImageButton
+                            android:id="@+id/directoriesButton"
+                            android:src="@drawable/backbutton"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:visibility="gone"
+                            />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/directoryUsages"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:fontFamily="sans-serif-condensed"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:visibility="gone"
+                        ></TextView>
 
                     <TextView
                         android:id="@+id/androidStatistics"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="3dp"
-                        android:layout_marginRight="3dp"
                         android:layout_marginTop="20dp"
+                        android:layout_marginRight="3dp"
                         android:layout_marginBottom="20dp"
+                        android:fontFamily="sans-serif-condensed"
                         android:gravity="center"
-                        android:text=""
                         android:shadowColor="@color/black"
                         android:shadowDx="2"
                         android:shadowDy="2"
                         android:shadowRadius="5"
-                        android:fontFamily="sans-serif-condensed"
+                        android:text=""
                         android:textColor="@color/white"
                         android:textSize="20sp"
                         android:visibility="gone" />
@@ -151,26 +176,46 @@
                         android:id="@+id/syncToBackUpAccountTextView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text=""
+                        android:fontFamily="sans-serif-condensed"
                         android:shadowColor="@color/black"
                         android:shadowDx="2"
                         android:shadowDy="2"
                         android:shadowRadius="5"
-                        android:fontFamily="sans-serif-condensed"
-                        android:textColor="@color/white"/>
+                        android:text=""
+                        android:textColor="@color/white" />
 
                     <TextView
                         android:id="@+id/restoreTextView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-condensed"
                         android:shadowColor="@color/black"
-                        android:text=""
                         android:shadowDx="2"
                         android:shadowDy="2"
                         android:shadowRadius="5"
+                        android:text=""
+                        android:textColor="@color/white" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/syncSwitchMaterial"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="false"
                         android:fontFamily="sans-serif-condensed"
+                        android:scaleX="1.5"
+                        android:scaleY="1.5"
+                        android:shadowColor="@color/black"
+                        android:shadowDx="2"
+                        android:shadowDy="2"
+                        android:shadowRadius="5"
+                        android:text="Sync"
                         android:textColor="@color/white"
-                        />
+                        android:textSize="20sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:thumbTint="#850808"
+                        app:trackTint="#BF2C2C" />
 
                 </LinearLayout>
 
@@ -187,28 +232,7 @@
                 >
 
 
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/syncSwitchMaterial"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:scaleX="1.5"
-                    android:scaleY="1.5"
-                    android:text="Sync"
-                    android:shadowColor="@color/black"
-                    android:shadowDx="2"
-                    android:shadowDy="2"
-                    android:shadowRadius="5"
-                    android:fontFamily="sans-serif-condensed"
-                    android:textColor="@color/white"
-                    android:textSize="20sp"
-                    app:thumbTint="#850808"
-                    app:trackTint="#BF2C2C"
-                    android:checked="false"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-<!--                <LinearLayout-->
+                <!--                <LinearLayout-->
 <!--                    android:layout_width="wrap_content"-->
 <!--                    android:layout_height="wrap_content"-->
 <!--                    android:layout_weight="1"-->
@@ -276,5 +300,7 @@
 
 
     </androidx.drawerlayout.widget.DrawerLayout>
+
+
 
 </LinearLayout>
