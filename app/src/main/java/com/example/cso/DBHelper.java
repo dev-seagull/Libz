@@ -1486,7 +1486,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 cursor.close();
             }
         }
-        if (syncAssetsFolderId == null){
+        if (syncAssetsFolderId == null || syncAssetsFolderId == ""){
             syncAssetsFolderId = GoogleDrive.createStashSyncedAssetsFolderInDrive(userEmail);
         }
         return syncAssetsFolderId;
@@ -1503,7 +1503,5 @@ public class DBHelper extends SQLiteOpenHelper {
             LogHandler.saveLog("Failed to update fileId in account: " + e.getLocalizedMessage(), true);
         }
     }
-
-
-    //usage of folderId = getmediaItems , upload, download,checkForExists, delete, createFolder, getFolderId,
+    
 }

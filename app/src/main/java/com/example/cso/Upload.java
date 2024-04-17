@@ -492,7 +492,7 @@ public class Upload {
 
     public boolean backupAndroidToDrive(Long fileId, String fileName, String filePath,
                                         String fileHash, String mimeType, String assetId,
-                                        String driveBackupAccessToken, String driveEmailAccount, String folderId){
+                                        String driveBackupAccessToken, String driveEmailAccount, String syncAssetsFolderId){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final boolean[] isUploadValid = {false};
 
@@ -533,7 +533,7 @@ public class Upload {
                     }
                 }
 
-                fileMetadata.setParents(Collections.singletonList(folderId));
+                fileMetadata.setParents(Collections.singletonList(syncAssetsFolderId));
                 if (mediaContent == null) {
                     LogHandler.saveLog("media content is null in syncAndroidToDrive", true);
                 }
@@ -590,7 +590,6 @@ public class Upload {
         }catch (Exception e){
             System.out.println(e.getLocalizedMessage());
         }
-
         LogHandler.saveLog("Upload validation : " + isUploadValidFuture, false);
         return isUploadValidFuture;
     }
