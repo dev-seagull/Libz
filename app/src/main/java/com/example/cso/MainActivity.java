@@ -11,6 +11,7 @@
     import android.content.pm.PackageManager;
     import android.content.res.ColorStateList;
     import android.graphics.Color;
+    import android.graphics.drawable.Drawable;
     import android.os.Build;
     import android.os.Bundle;
     import android.os.Environment;
@@ -378,8 +379,12 @@
                         TextView directoriesUsages = findViewById(R.id.directoryUsages);
                         displayDirectoriesUsagesButton.setOnClickListener(view -> {
                             if (directoriesUsages.getVisibility() == View.VISIBLE) {
+                                Drawable newBackground = getResources().getDrawable(R.drawable.down_vector_icon);
+                                displayDirectoriesUsagesButton.setBackground(newBackground);
                                 directoriesUsages.setVisibility(View.GONE);
                             } else {
+                                Drawable newBackground = getResources().getDrawable(R.drawable.up_vector_icon);
+                                displayDirectoriesUsagesButton.setBackground(newBackground);
                                 directoriesUsages.setVisibility(View.VISIBLE);
                             }
                         });
