@@ -154,7 +154,7 @@
             try{
                 isValid = future.get();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to check validity from future: " + e.getLocalizedMessage(),true);
+                System.out.println("Failed to check validity from future: " + e.getLocalizedMessage());
             }
             return isValid;
         }

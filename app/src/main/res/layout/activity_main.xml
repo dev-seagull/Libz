@@ -140,7 +140,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginLeft="3dp"
-                            android:layout_marginTop="30dp"
+                            android:layout_marginTop="10dp"
                             android:layout_marginRight="3dp"
                             android:fontFamily="sans-serif-condensed"
                             android:gravity="center"
@@ -222,7 +222,7 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/actionButtonsLayout"
                 android:layout_alignParentBottom="true"
-                android:orientation="horizontal"
+                android:orientation="vertical"
                 android:gravity="center"
                 android:foregroundGravity="center"
                 >
@@ -248,6 +248,47 @@
                     app:thumbTint="#850808"
                     app:trackTint="#BF2C2C" />
 
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/internetSwitchMaterial"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="false"
+                    android:fontFamily="sans-serif-condensed"
+                    android:scaleX="1.5"
+                    android:scaleY="1.5"
+                    android:shadowColor="@color/black"
+                    android:shadowDx="2"
+                    android:shadowDy="2"
+                    android:shadowRadius="5"
+                    android:text="WIFI"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:thumbTint="#850808"
+                    app:trackTint="#BF2C2C" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/MobileDataSwitchMaterial"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="false"
+                    android:fontFamily="sans-serif-condensed"
+                    android:scaleX="1.5"
+                    android:scaleY="1.5"
+                    android:shadowColor="@color/black"
+                    android:shadowDx="2"
+                    android:shadowDy="2"
+                    android:shadowRadius="5"
+                    android:text="Mobile Data"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:thumbTint="#850808"
+                    app:trackTint="#BF2C2C" />
 
 <!--                                <LinearLayout-->
 <!--                    android:layout_width="wrap_content"-->

@@ -327,6 +327,7 @@
                         String accessToken = account_row[0];
                         String userEmail = account_row[1];
                         ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                        System.out.println("dv nums: " + driveMediaItems.size());
                         for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
                             Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
                             if (last_insertId != -1) {
