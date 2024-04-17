@@ -642,8 +642,9 @@
                                                     dbHelper.insertIntoAccounts(signInResult[0].getUserEmail(), "backup"
                                                             , signInResult[0].getTokens().getRefreshToken(), signInResult[0].getTokens().getAccessToken(),
                                                             signInResult[0].getStorage().getTotalStorage(), signInResult[0].getStorage().getUsedStorage(),
-                                                            signInResult[0].getStorage().getUsedInDriveStorage(), signInResult[0].getStorage().getUsedInGmailAndPhotosStorage());
-
+                                                            signInResult[0].getStorage().getUsedInDriveStorage(), signInResult[0].getStorage().getUsedInGmailAndPhotosStorage(),"");
+                                                    String syncAssetsFolderId = GoogleDrive.createStashSyncedAssetsFolderInDrive(signInResult[0].getUserEmail());
+                                                    dbHelper.updateSyncAssetsFolderId(signInResult[0].getUserEmail(),syncAssetsFolderId);
                                                     isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(false,"");
                                                     System.out.println("isBackedUp "+isBackedUp[0]);
                                                 }else {

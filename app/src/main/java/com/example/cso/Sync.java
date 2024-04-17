@@ -18,7 +18,7 @@ public class Sync {
             String[] dateModified = {""};
             String[] memeType = {""};
             String[] assetId = {""};
-            String[] selected_accounts_columns = {"userEmail","type", "totalStorage","usedStorage", "accessToken","folderId"};
+            String[] selected_accounts_columns = {"userEmail","type", "totalStorage","usedStorage", "accessToken"};
             List<String[]> account_rows = DBHelper.getAccounts(selected_accounts_columns);
             final boolean[] isBackedUp = {false};
             for(String[] account_row: account_rows){
@@ -27,7 +27,7 @@ public class Sync {
                 String[] totalStorage = {account_row[2]};
                 String[] usedStorage = {account_row[3]};
                 String[] accessToken = {account_row[4]};
-                String[] folderId = {account_row[5]};
+                String[] syncAssetsFolderId = {DBHelper.getSyncAssetsFolderId(userEmail[0])};
                 if(type[0].equals("backup")){
                     double driveFreeSpace = Double.valueOf(totalStorage[0]) - Double.valueOf(usedStorage[0]);
                     ArrayList<String> file_hashes = new ArrayList<>() ;
@@ -62,7 +62,7 @@ public class Sync {
                                         public void run() {
                                             System.out.println("uploading "+fileName[0] + " to drive");
                                             isBackedUp[0] = upload.backupAndroidToDrive(Long.valueOf(id[0]),fileName[0],
-                                                    filePath[0],fileHash[0],memeType[0],assetId[0],accessToken[0],userEmail[0],folderId[0]);
+                                                    filePath[0],fileHash[0],memeType[0],assetId[0],accessToken[0],userEmail[0],syncAssetsFolderId[0]);
                                             System.out.println("uplaoded "+fileName[0] + " to drive is finished");
                                         }
                                     });

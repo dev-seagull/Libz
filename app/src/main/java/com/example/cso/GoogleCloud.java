@@ -127,7 +127,6 @@
             return isSignedOut;
         }
 
-
         private static boolean isAccessTokenValid(String accessToken) throws IOException {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<Boolean> callableTask = () -> {

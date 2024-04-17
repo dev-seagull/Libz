@@ -95,13 +95,13 @@ public class Profile {
 
             Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
 
-            String driveFolderId = get_StashUserProfile_DriveFolderId(service);
+            String profileFolderId = get_StashUserProfile_DriveFolderId(service);
 
-            List<com.google.api.services.drive.model.File> files = GoogleDrive.getDriveFolderFiles(service, driveFolderId);
+            List<com.google.api.services.drive.model.File> files = GoogleDrive.getDriveFolderFiles(service, profileFolderId);
 
             boolean jsonFileExists = false;
             try{
-                if(!driveFolderId.isEmpty() && driveFolderId != null){
+                if(!profileFolderId.isEmpty() && profileFolderId != null){
                     if(!files.isEmpty() && files != null){
                         for (com.google.api.services.drive.model.File file : files) {
                             if ("application/json".equals(file.getMimeType()) && file.getName().startsWith("profileMap")) {

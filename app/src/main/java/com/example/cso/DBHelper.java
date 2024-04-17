@@ -433,7 +433,8 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public void insertIntoAccounts(String userEmail,String type,String refreshToken ,String accessToken,
-                            Double totalStorage , Double usedStorage , Double usedInDriveStorage , Double UsedInGmailAndPhotosStorage) {
+                            Double totalStorage , Double usedStorage , Double usedInDriveStorage ,
+                                   Double UsedInGmailAndPhotosStorage ,String syncAssetsFolderId) {
         String[] profile_selected_columns = {"id"};
         List<String[]> profile_rows = getProfile(profile_selected_columns);
         String profileId = "0";
@@ -458,9 +459,10 @@ public class DBHelper extends SQLiteOpenHelper {
                     "totalStorage," +
                     "usedStorage," +
                     "usedInDriveStorage,"+
-                    "UsedInGmailAndPhotosStorage) VALUES (?,?,?,?,?,?,?,?,?)";
+                    "UsedInGmailAndPhotosStorage,"+
+                    "folderId) VALUES (?,?,?,?,?,?,?,?,?,?)";
             Object[] values = new Object[]{profileId,userEmail, type,refreshToken ,accessToken,
-                    totalStorage ,usedStorage ,usedInDriveStorage ,UsedInGmailAndPhotosStorage};
+                    totalStorage ,usedStorage ,usedInDriveStorage ,UsedInGmailAndPhotosStorage,syncAssetsFolderId};
             dbWritable.execSQL(sqlQuery, values);
             dbWritable.setTransactionSuccessful();
         }catch (Exception e){
@@ -1047,7 +1049,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         .setApplicationName("cso")
                         .build();
                 String folder_name = "Stash_DataBase";
-                String folderId = null;
+                String backupDbFolderId = null;
                 com.google.api.services.drive.model.File folder = null;
 
                 FileList fileList = service.files().list()
@@ -1058,10 +1060,10 @@ public class DBHelper extends SQLiteOpenHelper {
                         .execute();
                 List<com.google.api.services.drive.model.File> driveFolders = fileList.getFiles();
                 for(com.google.api.services.drive.model.File driveFolder: driveFolders){
-                    folderId = driveFolder.getId();
+                    backupDbFolderId = driveFolder.getId();
                 }
 
-                if (folderId == null) {
+                if (backupDbFolderId == null) {
                     com.google.api.services.drive.model.File folder_metadata =
                             new com.google.api.services.drive.model.File();
                     folder_metadata.setName(folder_name);
@@ -1069,14 +1071,14 @@ public class DBHelper extends SQLiteOpenHelper {
                     folder = service.files().create(folder_metadata)
                             .setFields("id").execute();
 
-                    folderId = folder.getId();
+                    backupDbFolderId = folder.getId();
                 }
 
 
                 com.google.api.services.drive.model.File fileMetadata =
                             new com.google.api.services.drive.model.File();
                 fileMetadata.setName("StashDatabase.db");
-                fileMetadata.setParents(java.util.Collections.singletonList(folderId));
+                fileMetadata.setParents(java.util.Collections.singletonList(backupDbFolderId));
 
                 File androidFile = new File(dataBasePath);
                 if (!androidFile.exists()) {
@@ -1174,7 +1176,7 @@ public class DBHelper extends SQLiteOpenHelper {
 //                        String userEmail = account_row[0];
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                         String folder_name = "stash_user_profile";
-                        String folderId = null;
+                        String profileFolderId = null;
                         com.google.api.services.drive.model.File folder = null;
 
                         FileList fileList = service.files().list()
@@ -1185,10 +1187,10 @@ public class DBHelper extends SQLiteOpenHelper {
                                 .execute();
                         List<com.google.api.services.drive.model.File> driveFolders = fileList.getFiles();
                         for(com.google.api.services.drive.model.File driveFolder: driveFolders){
-                            folderId = driveFolder.getId();
+                            profileFolderId = driveFolder.getId();
                         }
 
-                        if (folderId == null) {
+                        if (profileFolderId == null) {
                             com.google.api.services.drive.model.File folder_metadata =
                                     new com.google.api.services.drive.model.File();
                             folder_metadata.setName(folder_name);
@@ -1196,11 +1198,11 @@ public class DBHelper extends SQLiteOpenHelper {
                             folder = service.files().create(folder_metadata)
                                     .setFields("id").execute();
 
-                            folderId = folder.getId();
+                            profileFolderId = folder.getId();
                         }
 
                         fileList = service.files().list()
-                                .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
+                                .setQ("name contains 'profileMap' and '" + profileFolderId + "' in parents")
                                 .setSpaces("drive")
                                 .setFields("files(id)")
                                 .execute();
@@ -1211,7 +1213,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
                         com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
                         fileMetadata.setName("profileMap.json");
-                        fileMetadata.setParents(java.util.Collections.singletonList(folderId));
+                        fileMetadata.setParents(java.util.Collections.singletonList(profileFolderId));
 
                         String content = Profile.createProfileMapContent(account_row[0]).toString();
 
@@ -1466,11 +1468,35 @@ public class DBHelper extends SQLiteOpenHelper {
         return existsInDrive;
     }
 
-    public static void updateFileIdInAccounts(String folderId, String userEmail){
+    public static String getSyncAssetsFolderId(String userEmail){
+        String syncAssetsFolderId = "";
+        String sqlQuery = "SELECT folderId FROM ACCOUNTS WHERE userEmail = ?";
+        Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery,new String[]{userEmail});
+        try{
+            if(cursor != null && cursor.moveToFirst()){
+                int folderIdColumnIndex = cursor.getColumnIndex("folderId");
+                if(folderIdColumnIndex >= 0){
+                    syncAssetsFolderId = cursor.getString(folderIdColumnIndex);
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to get folderId from accounts : " + e.getLocalizedMessage(), true);
+        }finally {
+            if(cursor != null){
+                cursor.close();
+            }
+        }
+        if (syncAssetsFolderId == null){
+            syncAssetsFolderId = GoogleDrive.createStashSyncedAssetsFolderInDrive(userEmail);
+        }
+        return syncAssetsFolderId;
+    }
+
+    public static void updateSyncAssetsFolderId(String userEmail, String syncAssetsFolderId){
         try{
             String insertFolderIdIntoAccounts = "UPDATE ACCOUNTS SET folderId = ? WHERE userEmail = ?";
             MainActivity.dbHelper.getWritableDatabase().beginTransaction();
-            MainActivity.dbHelper.getWritableDatabase().execSQL(insertFolderIdIntoAccounts,new String[]{folderId, userEmail});
+            MainActivity.dbHelper.getWritableDatabase().execSQL(insertFolderIdIntoAccounts,new String[]{syncAssetsFolderId, userEmail});
             MainActivity.dbHelper.getWritableDatabase().setTransactionSuccessful();
             MainActivity.dbHelper.getWritableDatabase().endTransaction();
         }catch (Exception e){
@@ -1479,4 +1505,5 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
+    //usage of folderId = getmediaItems , upload, download,checkForExists, delete, createFolder, getFolderId,
 }

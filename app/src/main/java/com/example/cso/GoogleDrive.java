@@ -47,7 +47,7 @@ public class GoogleDrive {
 
     public static String[] goodEmailAccount(){
         // some check like capacity
-        String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken","folderId"};
+        String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
         List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getAccounts(drive_backup_selected_columns);
         try {
             for (String[] drive_backUp_account : drive_backUp_accounts) {
@@ -62,71 +62,52 @@ public class GoogleDrive {
     }
 
 
-    public static void createStashSyncedAssetsFolderInDrive(){
+    public static String createStashSyncedAssetsFolderInDrive(String userEmail){
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Callable<Boolean> createFolderTask = () -> {
-            try{
-                String[] selected_columns = {"userEmail","type","accessToken","folderId"};
+        String syncAssetsFolderIdStr = null;
+        Callable<String> createFolderTask = () -> {
+            String syncAssetsFolderId = null;
+            try {
+                String[] selected_columns = {"userEmail", "accessToken"};
                 List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_columns);
-                String folderId = null;
-                for (String[] account_row : account_rows){
-                    if (!account_row[1].equals("backup")){
-                        continue;
+                String driveBackupAccessToken = null;
+                for (String[] account_row : account_rows) {
+                    if (account_row[0].equals(userEmail)) {
+                        driveBackupAccessToken = account_row[1];
+                        break;
                     }
-                    if (account_row[3] != null){
-                        continue;
+                }
+                try {
+                    Drive service = initializeDrive(driveBackupAccessToken);
+                    String folder_name = "stash_synced_assets";
+                    com.google.api.services.drive.model.File folder = null;
+                    com.google.api.services.drive.model.File folder_metadata =
+                            new com.google.api.services.drive.model.File();
+                    folder_metadata.setName(folder_name);
+                    folder_metadata.setMimeType("application/vnd.google-apps.folder");
+                    folder = service.files().create(folder_metadata).setFields("id").execute();
+                    syncAssetsFolderId = folder.getId();
+                    if (syncAssetsFolderId == null) {
+                        LogHandler.saveLog("Failed to create folder in google drive " + userEmail, true);
+                    } else {
+                        DBHelper.updateSyncAssetsFolderId(userEmail, syncAssetsFolderId);
                     }
-                    try{
-                            String driveBackupAccessToken = account_row[2];
-                            Drive service = initializeDrive(driveBackupAccessToken);
-
-                            String folder_name = "stash_synced_assets";
-                            com.google.api.services.drive.model.File folder = null;
-
-                            FileList fileList = service.files().list()
-                                    .setQ("mimeType='application/vnd.google-apps.folder' and name='"
-                                            + folder_name + "'")
-                                    .setSpaces("drive")
-                                    .setFields("files(id)")
-                                    .execute();
-                            List<com.google.api.services.drive.model.File> driveFolders = fileList.getFiles();
-                            for(com.google.api.services.drive.model.File driveFolder: driveFolders){
-                                folderId = driveFolder.getId();
-                            }
-
-                            if (folderId == null) {
-                                com.google.api.services.drive.model.File folder_metadata =
-                                        new com.google.api.services.drive.model.File();
-                                folder_metadata.setName(folder_name);
-                                folder_metadata.setMimeType("application/vnd.google-apps.folder");
-                                folder = service.files().create(folder_metadata)
-                                        .setFields("id").execute();
-
-                                folderId = folder.getId();
-                            }
-                            if (folderId == null){
-                                LogHandler.saveLog("Failed to create folder in google drive " + account_row[0],true);
-                            }
-
-                            DBHelper.updateFileIdInAccounts(folderId,account_row[0]);
-
-                        }catch (Exception e){
-                            LogHandler.saveLog("Failed to create stash synced assets folders in drive : " +
-                                    e.getLocalizedMessage(), true);
-                        }
-                    }
+                } catch (Exception e) {
+                    LogHandler.saveLog("Failed to create stash synced assets folders in drive : " +
+                            e.getLocalizedMessage(), true);
+                }
             }catch (Exception e){
-                LogHandler.saveLog("Failed to create or get stash synced assets folder id : " + e.getLocalizedMessage(), true);
+                LogHandler.saveLog("Error in creating stash synced assets folder in drive : "+ userEmail + e.getLocalizedMessage(),true);
             }
-            return true;
+            return syncAssetsFolderId;
         };
-        Future<Boolean> future = executor.submit(createFolderTask);
-        boolean listOfAllFoldersCreated = false;
+        Future<String> future = executor.submit(createFolderTask);
         try{
-            listOfAllFoldersCreated = future.get();
+            syncAssetsFolderIdStr = future.get();
         }catch (Exception e){
-            System.out.println(e.getLocalizedMessage());
+            LogHandler.saveLog("Error in creating stash synced assets folder in drive : "+ userEmail + e.getLocalizedMessage(),true);
         }
+        return syncAssetsFolderIdStr;
     }
 
     public static ArrayList<DriveAccountInfo.MediaItem> getMediaItems(String accessToken) {
@@ -135,15 +116,16 @@ public class GoogleDrive {
         final ArrayList<DriveAccountInfo.MediaItem> mediaItems = new ArrayList<>();
         Callable<ArrayList<DriveAccountInfo.MediaItem>> backgroundTask = () -> {
             try {
-                String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken","folderId"};
-                String folderId ="";
+                String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
+                String syncAssetsFolderId ="";
                 List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getAccounts(drive_backup_selected_columns);
                 for (String[] account_row:drive_backUp_accounts){
                     if (account_row[2].equals(accessToken)){
-                        folderId = account_row[3];
+                        String userEmail = account_row[0];
+                        syncAssetsFolderId = DBHelper.getSyncAssetsFolderId(userEmail);
                     }
                 }
-                if (folderId == null){
+                if (syncAssetsFolderId == null){
                     LogHandler.saveLog("No folder was found in Google Drive back up account",false);
                     return mediaItems;
                 }
@@ -162,10 +144,10 @@ public class GoogleDrive {
                     System.out.println("page token is: " + nextPageToken);
                     FileList result = driveService.files().list()
                             .setFields("files(id, name, sha256Checksum),nextPageToken")
-                            .setQ("'" +folderId + "' in parents")
+                            .setQ("'" +syncAssetsFolderId + "' in parents")
                             .setPageToken(nextPageToken)
                             .execute();
-                    System.out.println("checking folderId : "+ folderId + " and trashed = false" +
+                    System.out.println("checking folderId : "+ syncAssetsFolderId + " and trashed = false" +
                             "files Are : ");
                     List<com.google.api.services.drive.model.File> files = result.getFiles();
                     if (files != null && !files.isEmpty()) {

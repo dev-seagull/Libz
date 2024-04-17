@@ -257,7 +257,6 @@ public class Upload {
         System.out.println("needed free space size for upload is : " + neededFreeSpaceSize[0]);
         Callable<Boolean> uploadTask = () -> {
             try {
-                GoogleDrive.createStashSyncedAssetsFolderInDrive();
                 String[] selected_android_columns = {"id", "fileName", "filePath", "device",
                         "fileSize", "fileHash", "dateModified", "memeType","assetId"};
                 List<String[]> android_items = MainActivity.dbHelper.getAndroidTable(selected_android_columns);
@@ -295,13 +294,14 @@ public class Upload {
 //                            neededFreeSpaceSize[0] = neededFreeSpaceSize[0] -  fileSize;
 //                        continue;
 //                    }
-                    String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken","folderId"};
+                    String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
                     List<String[]> account_rows = MainActivity.dbHelper.getAccounts(drive_backup_selected_columns);
                     Boolean isInDrive = false;
                     driveLoop:{
                         for(String[] account_row : account_rows){
                             String userEmail = account_row[0];
                             String type = account_row[1];
+                            String syncAssetsFolderId = DBHelper.getSyncAssetsFolderId(userEmail);
                             if(type.equals("backup")){
                                 String[] selected_drive_columns = {"id", "assetId", "fileId", "fileName",
                                         "userEmail","fileHash"};
@@ -498,7 +498,6 @@ public class Upload {
 
         Callable<Boolean> uploadTask = () -> {
             try {
-                GoogleDrive.createStashSyncedAssetsFolderInDrive();
                 isUploadValid[0] = false;
                 File androidFile = new File(filePath);
 
