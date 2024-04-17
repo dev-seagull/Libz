@@ -8,7 +8,9 @@ import android.os.StatFs;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class StorageHandler {
 
@@ -163,15 +165,15 @@ public class StorageHandler {
                     }
                 }
             }
-            for (String directory : directoryMap.keySet()) {
-                if (String.valueOf(directoryMap.get(directory)) == String.valueOf(0.0)) {
-                    directoryMap.remove(directory);
-                }else {
-                    directoryMap.put(directory, Double.valueOf(String.format("%.3f", directoryMap.get(directory))));
+            Iterator<Map.Entry<String, Double>> iterator = directoryMap.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, Double> entry = iterator.next();
+                if (entry.getValue() == 0.0) {
+                    iterator.remove();
+                } else {
+                    entry.setValue(Double.valueOf(String.format("%.3f", entry.getValue())));
                 }
             }
-
-            System.out.println("DirectoryMap: " + directoryMap);
         }catch (Exception e){
             LogHandler.saveLog("Failed to get directory UI display: " + e.getLocalizedMessage(),true);
         }
