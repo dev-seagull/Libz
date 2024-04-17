@@ -29,7 +29,7 @@
             <ScrollView
                 android:id="@+id/scrollView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_above="@+id/actionButtonsLayout">
 
                 <LinearLayout
@@ -41,6 +41,14 @@
                     android:padding="16dp"
                     tools:context=".MainActivity">
 
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="100dp"
+                        android:layout_marginTop="-10dp"
+                        android:src="@drawable/seagulllogo" />
+
+
+
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="5dp"
@@ -50,39 +58,30 @@
                         android:background="#050505" />
 
 
-                    <LinearLayout
-                        android:id="@+id/primaryAccountsButtons"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:orientation="vertical"></LinearLayout>
+<!--                    <LinearLayout-->
+<!--                        android:id="@+id/primaryAccountsButtons"-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:gravity="center"-->
+<!--                        android:orientation="vertical"></LinearLayout>-->
 
 
-                    <TextView
-                        android:id="@+id/googlePhotosMediaItemsCount"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"></TextView>
+<!--                    <TextView-->
+<!--                        android:id="@+id/googlePhotosMediaItemsCount"-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="wrap_content"></TextView>-->
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="5dp"
-                        android:layout_marginTop="5dp"
-                        android:layout_marginBottom="5dp"
-                        android:alpha="1"
-                        android:background="#050505" />
-
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="100dp"
-                        android:layout_marginTop="-40dp"
-                        android:src="@drawable/seagulllogo" />
-
+<!--                    <View-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="5dp"-->
+<!--                        android:layout_marginTop="5dp"-->
+<!--                        android:layout_marginBottom="5dp"-->
+<!--                        android:alpha="1"-->
+<!--                        android:background="#050505" />-->
                     <Button
                         android:id="@+id/androidDeviceButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
                         android:background="@drawable/gradient_gray"
                         android:clickable="false"
                         android:drawableLeft="@drawable/android_device_icon"
@@ -92,29 +91,31 @@
                         android:textColor="@color/white"
                         android:textSize="18dp"
                         app:backgroundTint="@null" />
+<!--                        android:layout_marginTop="20dp"-->
+
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:orientation="vertical"
                         android:gravity="center">
 
-                    <TextView
-                        android:id="@+id/deviceStorage"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="3dp"
-                        android:layout_marginTop="30dp"
-                        android:layout_marginRight="3dp"
-
-                        android:fontFamily="sans-serif-condensed"
-                        android:gravity="center"
-                        android:shadowColor="@color/black"
-                        android:shadowDx="2"
-                        android:shadowDy="2"
-                        android:shadowRadius="5"
-                        android:text=""
-                        android:textColor="@color/white"
-                        android:textSize="20sp" />
+                        <TextView
+                            android:id="@+id/deviceStorage"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="3dp"
+                            android:layout_marginTop="30dp"
+                            android:layout_marginRight="3dp"
+                            android:fontFamily="sans-serif-condensed"
+                            android:gravity="center"
+                            android:shadowColor="@color/black"
+                            android:shadowDx="2"
+                            android:shadowDy="2"
+                            android:shadowRadius="5"
+                            android:text=""
+                            android:textColor="@color/white"
+                            android:textSize="20sp" />
 
 
                         <ImageButton
@@ -125,99 +126,79 @@
                             android:visibility="gone"
                             />
 
+
+                        <TextView
+                            android:id="@+id/directoryUsages"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="1dp"
+                            android:fontFamily="sans-serif-condensed"
+                            android:textColor="@color/white"
+                            android:textSize="16sp"
+                            android:visibility="gone"
+                            ></TextView>
+
+                        <TextView
+                            android:id="@+id/androidStatistics"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="3dp"
+                            android:layout_marginTop="20dp"
+                            android:layout_marginRight="3dp"
+                            android:layout_marginBottom="20dp"
+                            android:fontFamily="sans-serif-condensed"
+                            android:gravity="center"
+                            android:shadowColor="@color/black"
+                            android:shadowDx="2"
+                            android:shadowDy="2"
+                            android:shadowRadius="5"
+                            android:text=""
+                            android:textColor="@color/white"
+                            android:textSize="20sp"
+                            android:visibility="gone" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="5dp"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="5dp"
+                            android:alpha="1"
+                            android:background="#050505" />
                     </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/directoryUsages"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="1dp"
-                        android:fontFamily="sans-serif-condensed"
-                        android:textColor="@color/white"
-                        android:textSize="16sp"
-                        android:visibility="gone"
-                        ></TextView>
+                        <LinearLayout
+                            android:id="@+id/backUpAccountsButtons"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical"></LinearLayout>
 
-                    <TextView
-                        android:id="@+id/androidStatistics"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="3dp"
-                        android:layout_marginTop="20dp"
-                        android:layout_marginRight="3dp"
-                        android:layout_marginBottom="20dp"
-                        android:fontFamily="sans-serif-condensed"
-                        android:gravity="center"
-                        android:shadowColor="@color/black"
-                        android:shadowDx="2"
-                        android:shadowDy="2"
-                        android:shadowRadius="5"
-                        android:text=""
-                        android:textColor="@color/white"
-                        android:textSize="20sp"
-                        android:visibility="gone" />
+                        <TextView
+                            android:id="@+id/syncToBackUpAccountTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-condensed"
+                            android:shadowColor="@color/black"
+                            android:shadowDx="2"
+                            android:shadowDy="2"
+                            android:shadowRadius="5"
+                            android:text=""
+                            android:textColor="@color/white" />
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="5dp"
-                        android:layout_marginTop="5dp"
-                        android:layout_marginBottom="5dp"
-                        android:alpha="1"
-                        android:background="#050505" />
+                        <TextView
+                            android:id="@+id/restoreTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-condensed"
+                            android:shadowColor="@color/black"
+                            android:shadowDx="2"
+                            android:shadowDy="2"
+                            android:shadowRadius="5"
+                            android:text=""
+                            android:textColor="@color/white" />
 
-                    <LinearLayout
-                        android:id="@+id/backUpAccountsButtons"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:orientation="vertical"></LinearLayout>
+                    </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/syncToBackUpAccountTextView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif-condensed"
-                        android:shadowColor="@color/black"
-                        android:shadowDx="2"
-                        android:shadowDy="2"
-                        android:shadowRadius="5"
-                        android:text=""
-                        android:textColor="@color/white" />
-
-                    <TextView
-                        android:id="@+id/restoreTextView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif-condensed"
-                        android:shadowColor="@color/black"
-                        android:shadowDx="2"
-                        android:shadowDy="2"
-                        android:shadowRadius="5"
-                        android:text=""
-                        android:textColor="@color/white" />
-
-                    <com.google.android.material.switchmaterial.SwitchMaterial
-                        android:id="@+id/syncSwitchMaterial"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="false"
-                        android:fontFamily="sans-serif-condensed"
-                        android:scaleX="1.5"
-                        android:scaleY="1.5"
-                        android:shadowColor="@color/black"
-                        android:shadowDx="2"
-                        android:shadowDy="2"
-                        android:shadowRadius="5"
-                        android:text="Sync"
-                        android:textColor="@color/white"
-                        android:textSize="20sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:thumbTint="#850808"
-                        app:trackTint="#BF2C2C" />
-
-                </LinearLayout>
 
             </ScrollView>
 
@@ -231,8 +212,29 @@
                 android:foregroundGravity="center"
                 >
 
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/syncSwitchMaterial"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="false"
+                    android:fontFamily="sans-serif-condensed"
+                    android:scaleX="1.5"
+                    android:scaleY="1.5"
+                    android:shadowColor="@color/black"
+                    android:shadowDx="2"
+                    android:shadowDy="2"
+                    android:shadowRadius="5"
+                    android:text="Sync"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:thumbTint="#850808"
+                    app:trackTint="#BF2C2C" />
 
-                <!--                <LinearLayout-->
+
+<!--                                <LinearLayout-->
 <!--                    android:layout_width="wrap_content"-->
 <!--                    android:layout_height="wrap_content"-->
 <!--                    android:layout_weight="1"-->

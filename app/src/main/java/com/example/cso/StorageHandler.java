@@ -163,7 +163,6 @@ public class StorageHandler {
                     }
                 }
             }
-            // remove directories with 0.0 size
             for (String directory : directoryMap.keySet()) {
                 if (String.valueOf(directoryMap.get(directory)) == String.valueOf(0.0)) {
                     directoryMap.remove(directory);
