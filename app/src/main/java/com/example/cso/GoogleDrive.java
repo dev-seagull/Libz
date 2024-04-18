@@ -172,7 +172,6 @@ public class GoogleDrive {
                 }
                 return mediaItems;
             }catch (Exception e) {
-                System.out.println(e.getLocalizedMessage());
                 LogHandler.saveLog("Error when trying to get files from google drive: " + e.getLocalizedMessage());
             }
             return mediaItems;
@@ -190,7 +189,6 @@ public class GoogleDrive {
     public static void deleteDuplicatedMediaItems(String accessToken, String userEmail){
         String[] driveColumns = {"fileHash", "id","assetId", "fileId", "fileName", "userEmail"};
         List<String[]> drive_rows = MainActivity.dbHelper.getDriveTable(driveColumns, userEmail);
-
         Map<String, Integer> assetIdCount = new HashMap<>();
 
         for (String[] drive_row : drive_rows) {

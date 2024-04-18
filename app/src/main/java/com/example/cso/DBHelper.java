@@ -1503,5 +1503,5 @@ public class DBHelper extends SQLiteOpenHelper {
             LogHandler.saveLog("Failed to update fileId in account: " + e.getLocalizedMessage(), true);
         }
     }
-    
+    // syncAssetsFolder = upload , download , exists ,
 }

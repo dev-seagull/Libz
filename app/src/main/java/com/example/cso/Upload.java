@@ -66,7 +66,6 @@ public class Upload {
                     }else {
                         LogHandler.saveLog(destinationFolderFile.getName() + " was not deleted from CSO folder");
                     }
-
                 }
             }
         }else{
