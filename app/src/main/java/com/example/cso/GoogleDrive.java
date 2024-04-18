@@ -144,7 +144,7 @@ public class GoogleDrive {
                     System.out.println("page token is: " + nextPageToken);
                     FileList result = driveService.files().list()
                             .setFields("files(id, name, sha256Checksum),nextPageToken")
-                            .setQ("'" +syncAssetsFolderId + "' in parents")
+//                            .setQ("'" +syncAssetsFolderId + "' in parents")
                             .setPageToken(nextPageToken)
                             .execute();
                     System.out.println("checking folderId : "+ syncAssetsFolderId + " and trashed = false" +
