@@ -10,7 +10,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -242,13 +244,24 @@ public class Profile {
         Callable<Boolean> uploadTask = () -> {
             try {
                 String driveBackupAccessToken = "";
-                String[] selected_columns = {"userEmail", "type", "accessToken"};
+                String[] selected_columns = {"userEmail", "type", "accessToken","refreshToken"};
                 List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_columns);
                 for (String[] account_row : account_rows) {
                     System.out.println("lmn " + account_row[0]);
                     if (account_row[1].equals("backup") && account_row[0].equals(userEmail)) {
                         driveBackupAccessToken = account_row[2];
-
+                        try {
+                            if (!GoogleCloud.isAccessTokenValid(driveBackupAccessToken)) {
+                                GoogleCloud.Tokens tokens = MainActivity.googleCloud.requestAccessToken(account_row[3]);
+                                Map<String, Object> updatedValues = new HashMap<String, Object>() {{
+                                    put("accessToken", tokens.getAccessToken());
+                                }};
+                                MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, "backup");
+                                driveBackupAccessToken = tokens.getAccessToken();
+                            }
+                        }catch (Exception e) {
+                            LogHandler.saveLog("Failed to update the access token: " + e.getLocalizedMessage(), true);
+                        }
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                         String folder_name = "stash_user_profile";
                         String folderId = null;
@@ -302,7 +315,7 @@ public class Profile {
                     }
                 }
             } catch (Exception e) {
-                LogHandler.saveLog("Failed to upload profileMap from Android to backup : " + e.getLocalizedMessage());
+                LogHandler.saveLog("Failed to upload profileMap from Android to backup in deleteProfileJson : " + e.getLocalizedMessage());
             }
             return isDeleted[0];
         };

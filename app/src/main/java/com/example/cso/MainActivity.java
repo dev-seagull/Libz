@@ -221,7 +221,7 @@
 //            newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
 
             Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
-            newBackupLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+            newBackupLoginButton.setBackgroundTintList(UIHelper.addBackupAccountButtonColor);
 
             TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
             TextView deviceStorage = findViewById(R.id.deviceStorage);
@@ -244,8 +244,8 @@
                 if (isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
                     runOnUiThread(() -> {
                         syncSwitchMaterialButton.setChecked(true);
-                        syncSwitchMaterialButton.setThumbTintList(ColorStateList.valueOf(Color.GREEN));
-                        syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.GREEN));
+                        syncSwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
+                        syncSwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
                     });
                 }
             });
@@ -419,14 +419,14 @@
                     if (!isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
                         runOnUiThread(() -> {
                             syncSwitchMaterialButton.setChecked(false);
-                            syncSwitchMaterialButton.setThumbTintList(ColorStateList.valueOf(Color.parseColor("#BF2C2C")));
-                            syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.parseColor("#850808")));
+                            syncSwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
+                            syncSwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
                         });
                     }else{
                         runOnUiThread(() -> {
                             syncSwitchMaterialButton.setChecked(true);
-                            syncSwitchMaterialButton.setThumbTintList(ColorStateList.valueOf(Color.GREEN));
-                            syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.GREEN));
+                            syncSwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
+                            syncSwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
                         });
                     }
 
@@ -679,7 +679,7 @@
                                             if (isBackedUp[0] == true) {
                                                 runOnUiThread(() -> {
                                                     Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupButtonsLinearLayout);
-                                                    newBackupLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+                                                    newBackupLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
                                                     child[0] = backupButtonsLinearLayout.getChildAt(
                                                             backupButtonsLinearLayout.getChildCount() - 2);
                                                     LogHandler.saveLog(signInResult[0].getUserEmail()
@@ -866,8 +866,8 @@
                 public void onClick(View view) {
                     if(syncSwitchMaterialButton.isChecked()){
                         runOnUiThread( () -> {
-                            syncSwitchMaterialButton.setThumbTintList(ColorStateList.valueOf(Color.GREEN));
-                            syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.GREEN));
+                            syncSwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
+                            syncSwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
                         });
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             if (!isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
@@ -878,8 +878,8 @@
                         System.out.println("startService(serviceIntent); " + serviceIntent);
                     }else{
                         runOnUiThread( () -> {
-                            syncSwitchMaterialButton.setThumbTintList(ColorStateList.valueOf(Color.parseColor("#BF2C2C")));
-                            syncSwitchMaterialButton.setTrackTintList(ColorStateList.valueOf(Color.parseColor("#850808")));
+                            syncSwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
+                            syncSwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
                         });
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             if (isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){

@@ -248,8 +248,8 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:thumbTint="#850808"
-                    app:trackTint="#BF2C2C" />
+                    app:thumbTint="#BF2C2C"
+                    app:trackTint="#850808" />
 
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/internetSwitchMaterial"
@@ -269,8 +269,8 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:thumbTint="#850808"
-                    app:trackTint="#BF2C2C" />
+                    app:thumbTint="#BF2C2C"
+                    app:trackTint="#850808" />
 
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/MobileDataSwitchMaterial"
@@ -290,8 +290,8 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:thumbTint="#850808"
-                    app:trackTint="#BF2C2C" />
+                    app:thumbTint="#BF2C2C"
+                    app:trackTint="#850808" />
 
 <!--                                <LinearLayout-->
 <!--                    android:layout_width="wrap_content"-->

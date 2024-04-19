@@ -1266,7 +1266,7 @@ public class DBHelper extends SQLiteOpenHelper {
                     isBackedUp[0] = true;
                 }
             } catch (Exception e) {
-                LogHandler.saveLog("Failed to upload profileMap from Android to backup : " + e.getLocalizedMessage());
+                LogHandler.saveLog("Failed to upload profileMap from Android to backup in backUpProfileMap: " + e.getLocalizedMessage());
             }
             return isBackedUp[0];
         };

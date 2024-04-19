@@ -102,6 +102,7 @@
                         put("accessToken", tokens.getAccessToken());
                     }};
                     MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                    accessTokens[0] = tokens.getAccessToken();
                 }
             }catch (Exception e) {
                 LogHandler.saveLog("Failed to update the access token: " + e.getLocalizedMessage(), true);
@@ -146,7 +147,7 @@
             return isSignedOut;
         }
 
-        private static boolean isAccessTokenValid(String accessToken) throws IOException {
+        public static boolean isAccessTokenValid(String accessToken) throws IOException {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<Boolean> callableTask = () -> {
                 String tokenInfoUrl = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=" + accessToken;
@@ -173,7 +174,7 @@
             try{
                 isValid = future.get();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to check validity from future: " + e.getLocalizedMessage(), true);
+                LogHandler.saveLog("Failed to check validity from future in isAccessTokenValid: " + e.getLocalizedMessage(), true);
             }
             return isValid;
         }
@@ -302,7 +303,7 @@
             newLoginButton.setText("Add a primary account");
             newLoginButton.setGravity(Gravity.CENTER);
             newLoginButton.setVisibility(View.VISIBLE);
-            newLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
+            newLoginButton.setBackgroundTintList(UIHelper.primaryAccountButtonColor);
             newLoginButton.setPadding(40,0,150,0);
             newLoginButton.setTextSize(18);
             newLoginButton.setTextColor(Color.WHITE);
