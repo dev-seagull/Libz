@@ -1,7 +1,6 @@
 package com.example.cso;
 
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -9,6 +8,19 @@ import android.widget.LinearLayout;
 import com.google.gson.JsonObject;
 
 public class SharedPreferencesHandler {
+
+    public static boolean getWifiSwitchState(SharedPreferences sharedPreferences){
+        return sharedPreferences.getBoolean("wifiSwitchState", false);
+    }
+
+    public static boolean getDataSwitchState(SharedPreferences sharedPreferences){
+        return sharedPreferences.getBoolean("dataSwitchState", false);
+    }
+
+    public void setSwitchState(String switchStateKey, boolean state, SharedPreferences sharedPreferences) {
+        sharedPreferences.edit().putBoolean(switchStateKey, state);
+        sharedPreferences.edit().apply();
+    }
 
     public static void displayDialogForRestoreAccountsDecision(SharedPreferences preferences) {
         try{
