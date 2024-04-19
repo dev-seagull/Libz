@@ -516,7 +516,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 valuesList.add(columnValue);
             }
 
-            sqlQueryBuilder.delete(sqlQueryBuilder.length() - 2, sqlQueryBuilder.length());
+            sqlQueryBuilder.delete(sqlQueryBuilder.length() - 2, sqlQueryBuilder.length());//delete the last comma
             sqlQueryBuilder.append(" WHERE userEmail = ? and type = ?");
             valuesList.add(userEmail);
             valuesList.add(type);

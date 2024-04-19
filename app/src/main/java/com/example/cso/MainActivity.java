@@ -1227,7 +1227,7 @@
 //            Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
 //            newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
             Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
-            newBackupLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+            newBackupLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
         }
 
         public static void showAccountsAddPopup(JsonObject profileMapContent) {

@@ -40,22 +40,21 @@
     import java.net.URL;
     import java.nio.charset.StandardCharsets;
     import java.util.ArrayList;
+    import java.util.HashMap;
     import java.util.List;
+    import java.util.Map;
     import java.util.concurrent.Callable;
     import java.util.concurrent.ExecutorService;
     import java.util.concurrent.Executors;
     import java.util.concurrent.Future;
 
-
     public class GoogleCloud extends AppCompatActivity {
         private final Activity activity;
         private GoogleSignInClient googleSignInClient;
 
-
         public GoogleCloud(FragmentActivity activity){
             this.activity = activity;
         }
-
 
         public void signInToGoogleCloud(ActivityResultLauncher<Intent> signInLauncher) {
             boolean forceCodeForRefreshToken = true;
@@ -65,8 +64,7 @@
                     .requestScopes(new Scope("https://www.googleapis.com/auth/drive"),
                             new Scope("https://www.googleapis.com/auth/photoslibrary.readonly"),
                             new Scope("https://www.googleapis.com/auth/drive.file"),
-                            new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly"),
-                            new Scope("https://www.googleapis.com/auth/gmail.send")
+                            new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly")
                             )
                     .requestServerAuthCode(activity.getResources().getString(R.string.web_client_id), forceCodeForRefreshToken)
                     .requestEmail()
@@ -79,14 +77,36 @@
                     signInLauncher.launch(signInIntent);
                 });
             } catch (Exception e){
-                LogHandler.saveLog("login failed in signInGoogleCloud : "+e.getLocalizedMessage());
+                LogHandler.saveLog("login failed in signInGoogleCloud : "+e.getLocalizedMessage(),true);
             }
         }
 
         public boolean signOut(String userEmail) {
             ExecutorService executor = Executors.newSingleThreadExecutor();
+            String type = "";
+            String refreshToken = "";
+            String[] accessTokens = new String[1];
+            List<String[]> accountRows = DBHelper.getAccounts(new String[]{"type","userEmail","refreshToken","accessToken"});
+            for (String[] row : accountRows) {
+                if (row.length > 0 && row[1] != null && row[1].equals(userEmail)) {
+                    type = row[0];
+                    refreshToken = row[2];
+                    accessTokens[0] = row[3];
+                    break;
+                }
+            }
+            try {
+                if (!isAccessTokenValid(accessTokens[0])) {
+                    GoogleCloud.Tokens tokens = requestAccessToken(refreshToken);
+                    Map<String, Object> updatedValues = new HashMap<String, Object>() {{
+                        put("accessToken", tokens.getAccessToken());
+                    }};
+                    MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                }
+            }catch (Exception e) {
+                LogHandler.saveLog("Failed to update the access token: " + e.getLocalizedMessage(), true);
+            }
             Callable<Boolean> callableTask = () -> {
-                String accessToken = DBHelper.getAccessToken(userEmail);
                 try {
                     String revokeUrl = "https://accounts.google.com/o/oauth2/revoke";
                     URL url = new URL(revokeUrl);
@@ -94,18 +114,17 @@
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("POST");
                     connection.setDoOutput(true);
-                    if (accessToken != null) {
-                        String requestBody = "token=" + accessToken;
+                    if (accessTokens[0] != null) {
+                        String requestBody = "token=" + accessTokens[0];
                         try (OutputStream os = connection.getOutputStream()) {
                             byte[] input = requestBody.getBytes(StandardCharsets.UTF_8);
                             os.write(input, 0, input.length);
                         }
                     }
-                    connection.getResponseCode();
-                    //dont delete this line
+                    connection.getResponseCode();//dont delete this line , it is important
                     System.out.println("responseCode of signOut " + connection.getResponseCode());
                     connection.disconnect();
-                    boolean isAccessTokenValid = isAccessTokenValid(accessToken);
+                    boolean isAccessTokenValid = isAccessTokenValid(accessTokens[0]);
                     if (!isAccessTokenValid) {
                         LogHandler.saveLog("Tokens revoked successfully.", false);
                         return true;
@@ -143,7 +162,8 @@
                     }
 
                     LogHandler.saveLog("access token validity " + response, false);
-                    return !response.toString().toLowerCase().contains("error");
+                    boolean isValid = response.toString().contains("error");
+                    return !isValid;
                 } finally {
                     connection.disconnect();
                 }
@@ -153,11 +173,10 @@
             try{
                 isValid = future.get();
             }catch (Exception e){
-                System.out.println("Failed to check validity from future: " + e.getLocalizedMessage());
+                LogHandler.saveLog("Failed to check validity from future: " + e.getLocalizedMessage(), true);
             }
             return isValid;
         }
-
 
         public static class signInResult{
             private final String userEmail;
@@ -227,9 +246,10 @@
 
         public signInResult handleSignInToBackupResult(Intent data){
             final boolean[] isHandled = {false};
-            String userEmail = "";
-            String authCode;
+            String userEmail = null;
+            String authCode = null;
             boolean isInAccounts = false;
+            boolean isValidAlready = false;
             GoogleCloud.Tokens tokens = null;
             Storage storage = null;
             ArrayList<DriveAccountInfo.MediaItem> mediaItems  = null;
@@ -242,18 +262,17 @@
                     userEmail = userEmail.replace("@gmail.com", "");
                 }
 
-                String[] columnsList = new String[]{"userEmail","type"};
+                String[] columnsList = new String[]{"userEmail","type","accessToken"};
                 List<String[]> accounts_rows = DBHelper.getAccounts(columnsList);
                 for (String[] row : accounts_rows) {
-                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
+                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {//seems to be a bug here (all conditions are equal)
                         isInAccounts = true;
-                        runOnUiThread(() -> {
-                            CharSequence text = "This Account Already Exists !";
-                            Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
-                        });
+                        isValidAlready = isAccessTokenValid(row[2]);
+                        break;
                     }
                 }
-                if (!isInAccounts){
+
+                if (!isInAccounts || !isValidAlready){
                     authCode = account.getServerAuthCode();
                     tokens = getTokens(authCode);
                     storage = getStorage(tokens);
@@ -261,13 +280,17 @@
                     if (userEmail != null && tokens.getRefreshToken() != null && tokens.getAccessToken() != null) {
                         isHandled[0] = true;
                     }
+                }else {
+                    runOnUiThread(() -> {
+                        CharSequence text = "This Account Already Exists !";
+                        Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
+                    });
                 }
             }catch (Exception e){
                 LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
             }
             return new signInResult(userEmail, isHandled[0], isInAccounts, tokens, storage, mediaItems);
         }
-
 
         public Button createPrimaryLoginButton(LinearLayout linearLayout){
             Button newLoginButton = new Button(activity);
@@ -301,18 +324,17 @@
 
         public Button createBackUpLoginButton(LinearLayout linearLayout){
             Button newLoginButton = new Button(activity);
-            Drawable loginButtonLeftDrawable = activity.getApplicationContext().getResources()
-                    .getDrawable(R.drawable.googledriveimage);
+            Drawable loginButtonLeftDrawable = UIHelper.driveImage;
             newLoginButton.setCompoundDrawablesWithIntrinsicBounds
                     (loginButtonLeftDrawable, null, null, null);
             newLoginButton.setText("Add a back up account");
             newLoginButton.setGravity(Gravity.CENTER);
             newLoginButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             newLoginButton.setVisibility(View.VISIBLE);
-            newLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#42A5F5")));
+            newLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
             newLoginButton.setPadding(40,0,150,0);
             newLoginButton.setTextSize(18);
-            newLoginButton.setTextColor(Color.WHITE);
+            newLoginButton.setTextColor(UIHelper.buttonTextColor);
             newLoginButton.setId(View.generateViewId());
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -346,7 +368,7 @@
                     byte[] postData = requestBody.getBytes(StandardCharsets.UTF_8);
                     httpURLConnection.setRequestMethod("POST");
                     httpURLConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
-                    httpURLConnection.setRequestProperty("Host", "oauth2.googleapis.com");
+                    httpURLConnection.setRequestProperty("Host", "oauth2.googleapis.com");//this line seems to be extra
                     httpURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
                     httpURLConnection.setDoInput(true);
                     httpURLConnection.setDoOutput(true);
@@ -368,6 +390,7 @@
                         JSONObject responseJSONObject = new JSONObject(response);
                         accessToken = responseJSONObject.getString("access_token");
                         refreshToken = responseJSONObject.getString("refresh_token");
+                        return new GoogleCloud.Tokens(accessToken, refreshToken);
                     }else {
                         LogHandler.saveLog("Getting tokens failed with response code of " + responseCode, true);
                     }
@@ -388,7 +411,7 @@
             return tokens_fromFuture;
         }
 
-        protected Tokens requestAccessToken(final String refreshToken){
+        protected Tokens requestAccessToken(String refreshToken){
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<GoogleCloud.Tokens> backgroundTokensTask = () -> {
                 String accessToken = null;
@@ -423,6 +446,7 @@
                         String response = responseBuilder.toString();
                         JSONObject responseJSONObject = new JSONObject(response);
                         accessToken = responseJSONObject.getString("access_token");
+                        return new GoogleCloud.Tokens(accessToken, refreshToken);
                     }else {
                         LogHandler.saveLog("Getting access token failed with response code of " + responseCode, true);
                     }
@@ -459,9 +483,8 @@
             final Double[] totalStorage = new Double[1];
             final Double[] usedStorage = new Double[1];
             final Double[] usedInDriveStorage = new Double[1];
-
-            try{
-                Callable<Storage> backgroundTask = () -> {
+            Callable<Storage> backgroundTask = () -> {
+                try {
                     final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
                     final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
                     HttpRequestInitializer httpRequestInitializer = request -> {
@@ -484,15 +507,21 @@
                             .setFields("user, storageQuota")
                             .execute().getStorageQuota().getUsageInDrive());
 
-                    storage[0] = new Storage(totalStorage[0], usedStorage[0],usedInDriveStorage[0]);
+                    storage[0] = new Storage(totalStorage[0], usedStorage[0], usedInDriveStorage[0]);
                     return storage[0];
-                };
+                } catch (Exception e) {
+                    LogHandler.saveLog("Failed to get the storage : " + e.getLocalizedMessage(), true);
+                }
+                return storage[0];
+            };
+            try{
                 Future<Storage> future = executor.submit(backgroundTask);
                 storage[0] = future.get();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to get the storage: " + e.getLocalizedMessage(), true);
+                LogHandler.saveLog("Failed to get the storage in future: " + e.getLocalizedMessage(), true);
+            }finally {
+                executor.shutdown();
             }
-            executor.shutdown();
             return storage[0];
         }
 
@@ -518,7 +547,6 @@
                 return refreshToken;
             }
         }
-
 
         public static class Storage{
             private Double totalStorage;
