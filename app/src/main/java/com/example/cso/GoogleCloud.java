@@ -332,7 +332,7 @@
             newLoginButton.setGravity(Gravity.CENTER);
             newLoginButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             newLoginButton.setVisibility(View.VISIBLE);
-            newLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
+            newLoginButton.setBackgroundTintList(UIHelper.addBackupAccountButtonColor);
             newLoginButton.setPadding(40,0,150,0);
             newLoginButton.setTextSize(18);
             newLoginButton.setTextColor(UIHelper.buttonTextColor);

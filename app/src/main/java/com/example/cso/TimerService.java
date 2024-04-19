@@ -188,7 +188,7 @@ public class TimerService extends Service {
         })};
 
         final Thread[] syncAndroidToDriveThreadForService = {new Thread( () -> {
-                Sync.syncAndroidFiles();
+                Sync.syncAndroidFiles(getApplicationContext());
         })};
 
 
@@ -270,7 +270,7 @@ public class TimerService extends Service {
                                 e.getLocalizedMessage(), true);
                     }
                     try{
-                    Sync.syncAndroidFiles();}
+                    Sync.syncAndroidFiles(getApplicationContext());}
                     catch (Exception e){
                         LogHandler.saveLog("Error in Sync.syncAndroidFiles : " + e.getLocalizedMessage());
                     }
