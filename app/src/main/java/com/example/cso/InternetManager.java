@@ -28,7 +28,7 @@ public class InternetManager {
                 if (networkInfo.getTypeName().equalsIgnoreCase("MOBILE"))
                     if (networkInfo.isConnected()) {
                         if(isInternetReachable("https://drive.google.com")){
-                            return "mobile";
+                            return "data";
                         }
                     }
                 }
@@ -71,11 +71,7 @@ public class InternetManager {
                 return true;
             }
             if (capabilities != null) {
-                if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
-                    return true;
-                }else{
-                    return false;
-                }
+                return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN);
             }
         }
         return true;
