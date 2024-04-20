@@ -162,8 +162,6 @@ public class LogHandler extends Application {
 
                 try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(logFile)))) {
                     for (String existingLine : existingLines) {
-//                        System.out.println("existing line is : " + existingLine);
-//                        System.out.println("writer is " + writer);
                         writer.write(existingLine);
                         writer.newLine();
                     }

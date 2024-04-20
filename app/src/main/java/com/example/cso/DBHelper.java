@@ -137,9 +137,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
-
     }
-
 
     public long insertAssetData(String fileHash) {
         long lastInsertedId = -1;
@@ -183,7 +181,6 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor2.close();
         return lastInsertedId;
     }
-
 
     public void deleteRedundantPhotos(ArrayList<String> fileIds, String userEmail){
         String sqlQuery = "SELECT * FROM PHOTOS where userEmail = ?";
@@ -303,9 +300,6 @@ public class DBHelper extends SQLiteOpenHelper {
             }
         }
     }
-
-
-
     public static void insertIntoDriveTable(Long assetId, String fileId,String fileName, String fileHash,String userEmail){
         String sqlQuery = "";
         Boolean existsInDrive = false;
@@ -350,7 +344,6 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-
     public void insertTransactionsData(String source, String fileName, String destination
             ,String assetId, String operation, String fileHash) {
         dbWritable.beginTransaction();
@@ -367,7 +360,6 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.endTransaction();
         }
     }
-
 
     public static void insertIntoProfile(String userName, String password){
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -473,7 +465,6 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-
     public static List<String []> getAccounts(String[] columns){
         List<String[]> resultList = new ArrayList<>();
 
@@ -499,8 +490,6 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
         return resultList;
     }
-
-
 
     public void updateAccounts(String userEmail, Map<String, Object> updateValues,String type) {
         dbWritable.beginTransaction();
@@ -531,7 +520,6 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.endTransaction();
         }
     }
-
 
     public boolean deleteFromAccountsTable(String userEmail, String type) {
         dbWritable.beginTransaction();
@@ -588,7 +576,6 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-
     public List<String []> getAndroidTable(String[] columns){
         List<String[]> resultList = new ArrayList<>();
 
@@ -614,7 +601,6 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
         return resultList;
     }
-
 
     public void insertIntoAndroidTable(long assetId,String fileName,String filePath,String device,
                                        String fileHash, Double fileSize,String dateModified,String memeType) {
@@ -713,8 +699,6 @@ public class DBHelper extends SQLiteOpenHelper {
         return false;
     }
 
-
-    //done but to another class delete method
     public void deleteFileFromDriveTable(String fileHash, String id, String assetId, String fileId, String userEmail){
         String sqlQuery  = "DELETE FROM DRIVE WHERE fileHash = ? and id = ? and assetId = ? and fileId = ? and userEmail = ?";
         dbWritable.execSQL(sqlQuery, new String[]{fileHash, id, assetId, fileId, userEmail});
@@ -736,6 +720,149 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    public List<String[]> getDriveTable(String[] columns, String userEmail){
+        List<String[]> resultList = new ArrayList<>();
+
+        String sqlQuery = "SELECT ";
+        for (String column:columns){
+            sqlQuery += column + ", ";
+        }
+
+        sqlQuery = sqlQuery.substring(0, sqlQuery.length() - 2);
+        sqlQuery += " FROM DRIVE WHERE userEmail = ?" ;
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
+        if (cursor.moveToFirst()) {
+            do {
+                String[] row = new String[columns.length];
+                for (int i = 0; i < columns.length; i++) {
+                    int columnIndex = cursor.getColumnIndex(columns[i]);
+                    if (columnIndex >= 0) {
+                        row[i] = cursor.getString(columnIndex);
+                    }
+                }
+                resultList.add(row);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return resultList;
+    }
+
+    public int countAndroidAssets(){
+        String sqlQuery = "SELECT COUNT(filePath) AS pathCount FROM ANDROID where device = ?";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidDeviceName});
+        int pathCount = 0;
+        if(cursor != null){
+            cursor.moveToFirst();
+            int pathCountColumnIndex = cursor.getColumnIndex("pathCount");
+            if(pathCountColumnIndex >= 0){
+                pathCount = cursor.getInt(pathCountColumnIndex);
+            }
+        }
+        if(pathCount == 0){
+            LogHandler.saveLog("No android file was found in count android assets.",false);
+        }
+        cursor.close();
+        return pathCount;
+    }
+
+    public int countAndroidSyncedAssets(){
+        String sqlQuery = "SELECT COUNT(DISTINCT androidTable.filePath) AS rowCount FROM ANDROID androidTable\n" +
+                "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId WHERE androidTable.device = ?;";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidDeviceName});
+        int count = 0;
+        if(cursor != null && cursor.moveToFirst()){
+            count = cursor.getInt(0);
+        }
+        if(count == 0){
+            LogHandler.saveLog("No android synced asset was found in countAndroidSyncedAssets",false);
+        }
+        cursor.close();
+        return count;
+    }
+
+    public boolean backupAccountExists(){
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ACCOUNTS WHERE type = 'backup')";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
+        boolean exists = false;
+        if(cursor != null && cursor.moveToFirst()){
+            int result = cursor.getInt(0);
+            if(result == 1){
+                exists = true;
+            }
+        }
+        cursor.close();
+        return exists;
+    }
+
+    public static boolean accountExists(String userEmail, String type){
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ACCOUNTS WHERE userEmail = ? and type = ?)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{userEmail, type});
+        boolean exists = false;
+        if(cursor != null && cursor.moveToFirst()){
+            int result = cursor.getInt(0);
+            if(result == 1){
+                exists = true;
+            }
+        }
+        cursor.close();
+        return exists;
+    }
+
+    public static boolean accountExistsInDriveTable(String userEmail){
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE userEmail = ?)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{userEmail});
+        boolean exists = false;
+        if(cursor != null && cursor.moveToFirst()){
+            int result = cursor.getInt(0);
+            if(result == 1){
+                exists = true;
+            }
+        }
+        cursor.close();
+        return exists;
+    }
+
+    public static boolean accountExistsInPhotosTable(String userEmail){
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM PHOTOS WHERE userEmail = ?)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{userEmail});
+        boolean exists = false;
+        if(cursor != null && cursor.moveToFirst()){
+            int result = cursor.getInt(0);
+            if(result == 1){
+                exists = true;
+            }
+        }
+        cursor.close();
+        return exists;
+    }
+
+    public static boolean assetExistsInAssetTable(String assetId){
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ASSET WHERE id = ?)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{assetId});
+        boolean exists = false;
+        if(cursor != null && cursor.moveToFirst()){
+            int result = cursor.getInt(0);
+            if(result == 1){
+                exists = true;
+            }
+        }
+        cursor.close();
+        return exists;
+    }
+
+    public static String getAccessToken(String userEmail){
+        String sqlQuery = "SELECT accessToken FROM ACCOUNTS WHERE userEmail = ?";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{userEmail});
+        String accessToken = "";
+        if(cursor != null && cursor.moveToFirst()){
+            int result = cursor.getColumnIndex("accessToken");
+            if(result >= 0){
+                accessToken = cursor.getString(result);
+            }
+        }
+        cursor.close();
+        return accessToken;
+    }
     public void deleteRedundantDrive(ArrayList<String> fileIds, String userEmail){
         String sqlQuery = "SELECT * FROM DRIVE where userEmail = ?";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
@@ -900,67 +1027,6 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
     }
 
-    public List<String[]> getDriveTable(String[] columns, String userEmail){
-        List<String[]> resultList = new ArrayList<>();
-
-        String sqlQuery = "SELECT ";
-        for (String column:columns){
-            sqlQuery += column + ", ";
-        }
-
-        sqlQuery = sqlQuery.substring(0, sqlQuery.length() - 2);
-        sqlQuery += " FROM DRIVE WHERE userEmail = ?" ;
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
-        if (cursor.moveToFirst()) {
-            do {
-                String[] row = new String[columns.length];
-                for (int i = 0; i < columns.length; i++) {
-                    int columnIndex = cursor.getColumnIndex(columns[i]);
-                    if (columnIndex >= 0) {
-                        row[i] = cursor.getString(columnIndex);
-                    }
-                }
-                resultList.add(row);
-            } while (cursor.moveToNext());
-        }
-        cursor.close();
-        return resultList;
-    }
-
-
-    public int countAndroidAssets(){
-        String sqlQuery = "SELECT COUNT(filePath) AS pathCount FROM ANDROID where device = ?";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidDeviceName});
-        int pathCount = 0;
-        if(cursor != null){
-            cursor.moveToFirst();
-            int pathCountColumnIndex = cursor.getColumnIndex("pathCount");
-            if(pathCountColumnIndex >= 0){
-                pathCount = cursor.getInt(pathCountColumnIndex);
-            }
-        }
-        if(pathCount == 0){
-            LogHandler.saveLog("No android file was found in count android assets.",false);
-        }
-        cursor.close();
-        return pathCount;
-    }
-
-    public int countAndroidSyncedAssets(){ //
-        String sqlQuery = "SELECT COUNT(DISTINCT androidTable.filePath) AS rowCount FROM ANDROID androidTable\n" +
-                "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId WHERE androidTable.device = ?;";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidDeviceName});
-        int count = 0;
-        if(cursor != null && cursor.moveToFirst()){
-            count = cursor.getInt(0);
-        }
-        if(count == 0){
-            LogHandler.saveLog("No android synced asset was found in countAndroidSyncedAssets",false);
-        }
-        cursor.close();
-        return count;
-    }
-
     public void deleteRedundantAsset(){
         String sqlQuery = "SELECT id FROM ASSET";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
@@ -1019,7 +1085,6 @@ public class DBHelper extends SQLiteOpenHelper {
     public List<String> backUpDataBase(Context context) {
 
         String dataBasePath = context.getDatabasePath("CSODatabase").getPath();
-        System.out.println("db path -- >  " + dataBasePath);
         final String[] userEmail = {""};
         final String[] uploadFileId = new String[1];
 
@@ -1039,7 +1104,6 @@ public class DBHelper extends SQLiteOpenHelper {
                 NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();;
                 final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
                 String bearerToken = "Bearer " + driveBackupAccessToken;
-                System.out.println("access token to upload is " + driveBackupAccessToken);
                 HttpRequestInitializer requestInitializer = request -> {
                     request.getHeaders().setAuthorization(bearerToken);
                     request.getHeaders().setContentType("application/json");
@@ -1091,10 +1155,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 com.google.api.services.drive.model.File uploadFile =
                         service.files().create(fileMetadata, mediaContent).setFields("id").execute();
                 uploadFileId[0] = uploadFile.getId();
-                System.out.println("upload id is " + uploadFileId[0]);
 //                while (uploadFileId[0] == null) {
 //                    wait();
-//                    System.out.println("waiting ... ");
 //                }
                 if (uploadFileId[0] == null | uploadFileId[0].isEmpty()) {
                     LogHandler.saveLog("Failed to upload database from Android to backup because it's null");
@@ -1116,34 +1178,6 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         List<String> result = Arrays.asList(userEmail[0],uploadFileIdFuture);
         return result;
-    }
-
-    public boolean backupAccountExists(){
-        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ACCOUNTS WHERE type = 'backup')";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
-        boolean exists = false;
-        if(cursor != null && cursor.moveToFirst()){
-            int result = cursor.getInt(0);
-            if(result == 1){
-                exists = true;
-            }
-        }
-        cursor.close();
-        return exists;
-    }
-
-    public static boolean accountExists(String userEmail, String type){
-        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ACCOUNTS WHERE userEmail = ? and type = ?)";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{userEmail, type});
-        boolean exists = false;
-        if(cursor != null && cursor.moveToFirst()){
-            int result = cursor.getInt(0);
-            if(result == 1){
-                exists = true;
-            }
-        }
-        cursor.close();
-        return exists;
     }
 
     public boolean backUpProfileMap(boolean hasRemoved,String signedEmail) {
@@ -1226,8 +1260,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         String uploadedFileId = uploadedFile.getId();
 
 //                        while (uploadedFileId == null) {
-//                            this.wait();
-//                            System.out.println("waiting for profile map backup... ");
+//                            this.wait();");
 //                        }
                         if (uploadedFileId == null | uploadedFileId.isEmpty()) {
                             LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
@@ -1253,15 +1286,11 @@ public class DBHelper extends SQLiteOpenHelper {
 //                                primaryUserEmails.add(primaryEmail);
 //                            }catch (Exception e){}
 //                        }
-//
-//                        System.out.println("pp is " + (primaryUserEmails.containsAll(primaryAccountsDb)));
-//                        System.out.println("pp is " + (backUpUserEmails.containsAll(backupAccountsDb)));
 //                        if(primaryUserEmails.containsAll(primaryAccountsDb) && backUpUserEmails.containsAll(backupAccountsDb)){
 //                            isBackedUp = true;
 //                        }
                     }
                 }
-                System.out.println("num of backups " + backUpAccountCounts);
                 if(backUpAccountCounts == 0){
                     isBackedUp[0] = true;
                 }
@@ -1279,63 +1308,6 @@ public class DBHelper extends SQLiteOpenHelper {
             System.out.println(e.getLocalizedMessage());
         }
         return isBackedUpFuture;
-    }
-
-    public static boolean accountExistsInDriveTable(String userEmail){
-        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE userEmail = ?)";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{userEmail});
-        boolean exists = false;
-        if(cursor != null && cursor.moveToFirst()){
-            int result = cursor.getInt(0);
-            if(result == 1){
-                exists = true;
-            }
-        }
-        cursor.close();
-        return exists;
-    }
-
-    public static boolean accountExistsInPhotosTable(String userEmail){
-        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM PHOTOS WHERE userEmail = ?)";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{userEmail});
-        boolean exists = false;
-        if(cursor != null && cursor.moveToFirst()){
-            int result = cursor.getInt(0);
-            if(result == 1){
-                exists = true;
-            }
-        }
-        cursor.close();
-        return exists;
-    }
-
-    public static boolean assetExistsInAssetTable(String assetId){
-        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ASSET WHERE id = ?)";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{assetId});
-        boolean exists = false;
-        if(cursor != null && cursor.moveToFirst()){
-            int result = cursor.getInt(0);
-            if(result == 1){
-                exists = true;
-            }
-        }
-        cursor.close();
-        return exists;
-    }
-
-    public static String getAccessToken(String userEmail){
-        String sqlQuery = "SELECT accessToken FROM ACCOUNTS WHERE userEmail = ?";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{userEmail});
-        String accessToken = "";
-        if(cursor != null && cursor.moveToFirst()){
-            int result = cursor.getColumnIndex("accessToken");
-            if(result >= 0){
-                accessToken = cursor.getString(result);
-            }
-        }
-        cursor.close();
-        System.out.println("getting accsess token for the tset: " + accessToken);
-        return accessToken;
     }
 
     public static boolean insertIntoDeviceTable(String deviceName,String totalSpace,String freeSpace){
@@ -1438,7 +1410,6 @@ public class DBHelper extends SQLiteOpenHelper {
     public void createIndex() {
         SQLiteDatabase db = getWritableDatabase();
         try {
-            System.out.println("helllo");
             db.execSQL("CREATE INDEX IF NOT EXISTS fileSize_index ON ANDROID(fileSize)");
         } catch (Exception e) {
             LogHandler.saveLog("Failed to create index: " + e.getLocalizedMessage(), true);
