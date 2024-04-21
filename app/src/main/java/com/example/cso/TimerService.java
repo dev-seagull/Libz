@@ -5,9 +5,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
@@ -120,7 +118,7 @@ public class TimerService extends Service {
 
 
     private void initializeTimerTask() {
-        final Thread[] deleteRedundantAndroidThreadForService = {new Thread(() -> {MainActivity.dbHelper.deleteRedundantAndroid();})};
+        final Thread[] deleteRedundantAndroidThreadForService = {new Thread(() -> {MainActivity.dbHelper.deleteRedundantAndroidFromDB();})};
 
         final Thread[] updateAndroidFilesThreadForService = {new Thread(() -> {Android.getGalleryMediaItems(MainActivity.activity);})};
 
@@ -143,7 +141,7 @@ public class TimerService extends Service {
                         String fileId = driveMediaItem.getId();
                         driveFileIds.add(fileId);
                     }
-                    MainActivity.dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
+                    MainActivity.dbHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
                 }
             }
         })};

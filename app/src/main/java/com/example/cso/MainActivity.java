@@ -54,8 +54,6 @@
     import java.util.Map;
     import java.util.Timer;
     import java.util.TimerTask;
-    import java.util.concurrent.Executor;
-    import java.util.concurrent.Executors;
 
 
     public class MainActivity extends AppCompatActivity {
@@ -253,7 +251,7 @@
             Thread deleteRedundantAndroidThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    dbHelper.deleteRedundantAndroid();
+                    dbHelper.deleteRedundantAndroidFromDB();
                     synchronized (this){
                         notify();
                     }
@@ -303,7 +301,7 @@
                                 String fileId = driveMediaItem.getId();
                                 driveFileIds.add(fileId);
                             }
-                            dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
+                            dbHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
                         }
                     }
                 }
@@ -748,7 +746,7 @@
                                                             String fileId = driveMediaItem.getId();
                                                             driveFileIds.add(fileId);
                                                         }
-                                                        dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
+                                                        dbHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
                                                     }
                                                 }
                                             }catch (Exception e){

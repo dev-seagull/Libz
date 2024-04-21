@@ -133,7 +133,7 @@ public class Sync {
                     String fileId = driveMediaItem.getId();
                     driveFileIds.add(fileId);
                 }
-                MainActivity.dbHelper.deleteRedundantDrive(driveFileIds, userEmail);
+                MainActivity.dbHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
             });
             deleteRedundantDrive.start();
             try {
