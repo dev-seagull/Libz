@@ -252,7 +252,7 @@
                     app:trackTint="#850808" />
 
                 <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/internetSwitchMaterial"
+                    android:id="@+id/wifiSwitchMaterial"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="false"
@@ -273,7 +273,7 @@
                     app:trackTint="#850808" />
 
                 <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/MobileDataSwitchMaterial"
+                    android:id="@+id/mobileDataSwitchMaterial"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="false"

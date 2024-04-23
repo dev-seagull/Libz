@@ -17,9 +17,10 @@ public class SharedPreferencesHandler {
         return sharedPreferences.getBoolean("dataSwitchState", false);
     }
 
-    public void setSwitchState(String switchStateKey, boolean state, SharedPreferences sharedPreferences) {
-        sharedPreferences.edit().putBoolean(switchStateKey, state);
-        sharedPreferences.edit().apply();
+    public static void setSwitchState(String switchStateKey, boolean state, SharedPreferences sharedPreferences) {
+        android.content.SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(switchStateKey, state);
+        editor.apply();
     }
 
     public static void displayDialogForRestoreAccountsDecision(SharedPreferences preferences) {

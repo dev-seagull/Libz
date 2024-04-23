@@ -80,6 +80,8 @@
         public Thread deleteDuplicatedInDrive;
 
         SwitchMaterial syncSwitchMaterialButton;
+        SwitchMaterial mobileDataSwitchMaterial;
+        SwitchMaterial wifiSwitchMaterial;
         public static TimerService timerService;
 
         List<Thread> threads = new ArrayList<>(Arrays.asList(firstUiThread, secondUiThread,
@@ -228,6 +230,7 @@
             serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
             new TimerService();//.onStartCommand(serviceIntent, Service.START_FLAG_REDELIVERY,1505);
             HashMap<String,Double> dirHashMap = storageHandler.directoryUIDisplay();
+
             runOnUiThread(() ->{
                 TextView deviceStorageTextView = findViewById(R.id.deviceStorage);
                 TextView directoryUsages = findViewById(R.id.directoryUsages);
@@ -239,13 +242,7 @@
                         directoryUsages.append(entry.getKey() + ": " + entry.getValue() + " MB\n");
                     }
                 });
-                if (isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
-                    runOnUiThread(() -> {
-                        syncSwitchMaterialButton.setChecked(true);
-                        syncSwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
-                        syncSwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
-                    });
-                }
+                UIHandler.handleSwitchMaterials();
             });
 
             Thread deleteRedundantAndroidThread = new Thread(new Runnable() {
@@ -858,35 +855,68 @@
                 }
             });
 
+            wifiSwitchMaterial = findViewById(R.id.wifiSwitchMaterial);
+            wifiSwitchMaterial.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if(wifiSwitchMaterial.isChecked()){
+                        runOnUiThread( () -> {
+                            wifiSwitchMaterial.setThumbTintList(UIHelper.onSwitchMaterialThumb);
+                            wifiSwitchMaterial.setTrackTintList(UIHelper.onSwitchMaterialTrack);
+                        });
+                        SharedPreferencesHandler.setSwitchState("wifiSwitchState",true,preferences);
+                    }else{
+                        runOnUiThread( () -> {
+                            wifiSwitchMaterial.setThumbTintList(UIHelper.offSwitchMaterialThumb);
+                            wifiSwitchMaterial.setTrackTintList(UIHelper.offSwitchMaterialTrack);
+                        });
+                        SharedPreferencesHandler.setSwitchState("wifiSwitchState",false,preferences);
+                    }
+                }
+            });
+            mobileDataSwitchMaterial = findViewById(R.id.mobileDataSwitchMaterial);
+            mobileDataSwitchMaterial.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if(mobileDataSwitchMaterial.isChecked()){
+                        runOnUiThread( () -> {
+                            mobileDataSwitchMaterial.setThumbTintList(UIHelper.onSwitchMaterialThumb);
+                            mobileDataSwitchMaterial.setTrackTintList(UIHelper.onSwitchMaterialTrack);
+                        });
+                        SharedPreferencesHandler.setSwitchState("dataSwitchState",true,preferences);
+                    }else{
+                        runOnUiThread( () -> {
+                            mobileDataSwitchMaterial.setThumbTintList(UIHelper.offSwitchMaterialThumb);
+                            mobileDataSwitchMaterial.setTrackTintList(UIHelper.offSwitchMaterialTrack);
+                        });
+                        SharedPreferencesHandler.setSwitchState("dataSwitchState",false,preferences);
+                    }
+                }
+            });
+
             syncSwitchMaterialButton = findViewById(R.id.syncSwitchMaterial);
             syncSwitchMaterialButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     if(syncSwitchMaterialButton.isChecked()){
-                        runOnUiThread( () -> {
-                            syncSwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
-                            syncSwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
-                        });
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             if (!isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
                                 TimerService.shouldCancel = false;
                                 startService(serviceIntent);
                             }
                         }
-                        System.out.println("startService(serviceIntent); " + serviceIntent);
                     }else{
-                        runOnUiThread( () -> {
-                            syncSwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
-                            syncSwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
-                        });
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             if (isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
                                 TimerService.shouldCancel = true;
                                 stopService(serviceIntent);
                             }
                         }
+                        SharedPreferencesHandler.setSwitchState("wifiSwitchState",false,preferences);
+                        SharedPreferencesHandler.setSwitchState("dataSwitchState",false,preferences);
 
                     }
+                    UIHandler.handleSwitchMaterials();
                 }
             });
 
@@ -1184,10 +1214,10 @@
                 String refreshToken = account_row[2];
                 GoogleCloud.Tokens tokens = googleCloud.requestAccessToken(refreshToken);
                 Map<String, Object> updatedValues = new HashMap<String, Object>(){{
-                    put("accessToken", tokens.getAccessToken());
+                        put("accessToken", tokens.getAccessToken());
                 }};
 
-                dbHelper.updateAccounts(userEmail, updatedValues, type);
+                 dbHelper.updateAccounts(userEmail, updatedValues, type);
 
                 if (type.equals("primary")){
 //                    LinearLayout primaryLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
