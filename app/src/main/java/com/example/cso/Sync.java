@@ -29,7 +29,7 @@ public class Sync {
         try{
             String userEmail = accountRow[0];
             String accessToken = accountRow[4];
-            String syncedAssetsFolderId = DBHelper.getSyncAssetsFolderId(userEmail);
+            String syncedAssetsFolderId = DBHelper.getSyncAssetsFolderIdFromDB(userEmail);
 
             double driveFreeSpace = calculateDriveFreeSpace(accountRow);
 

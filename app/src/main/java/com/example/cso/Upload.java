@@ -300,7 +300,7 @@ public class Upload {
                         for(String[] account_row : account_rows){
                             String userEmail = account_row[0];
                             String type = account_row[1];
-                            String syncAssetsFolderId = DBHelper.getSyncAssetsFolderId(userEmail);
+                            String syncAssetsFolderId = DBHelper.getSyncAssetsFolderIdFromDB(userEmail);
                             if(type.equals("backup")){
                                 String[] selected_drive_columns = {"id", "assetId", "fileId", "fileName",
                                         "userEmail","fileHash"};

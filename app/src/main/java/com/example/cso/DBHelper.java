@@ -1356,7 +1356,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-    public static String getSyncAssetsFolderId(String userEmail){
+    public static String getSyncAssetsFolderIdFromDB(String userEmail){
         String syncAssetsFolderId = "";
         String sqlQuery = "SELECT folderId FROM ACCOUNTS WHERE userEmail = ?";
         Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery,new String[]{userEmail});
@@ -1380,7 +1380,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return syncAssetsFolderId;
     }
 
-    public static void updateSyncAssetsFolderId(String userEmail, String syncAssetsFolderId){
+    public static void updateSyncAssetsFolderIdInDB(String userEmail, String syncAssetsFolderId){
         try{
             String insertFolderIdIntoAccounts = "UPDATE ACCOUNTS SET folderId = ? WHERE userEmail = ?";
             MainActivity.dbHelper.getWritableDatabase().beginTransaction();

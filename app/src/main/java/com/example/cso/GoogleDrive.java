@@ -80,6 +80,17 @@ public class GoogleDrive {
                 try {
                     Drive service = initializeDrive(driveBackupAccessToken);
                     String folder_name = "stash_synced_assets";
+                    List<com.google.api.services.drive.model.File> files = getDriveFolderFiles(service, "root");
+                    for (com.google.api.services.drive.model.File file : files) {
+                        if (file.getName().equals(folder_name)) {
+                            syncAssetsFolderId = file.getId();
+                            DBHelper.updateSyncAssetsFolderIdInDB(userEmail, syncAssetsFolderId);
+                            break;
+                        }
+                    }
+                    if (syncAssetsFolderId != null) {
+                        return syncAssetsFolderId;
+                    }
                     com.google.api.services.drive.model.File folder = null;
                     com.google.api.services.drive.model.File folder_metadata =
                             new com.google.api.services.drive.model.File();
@@ -90,7 +101,7 @@ public class GoogleDrive {
                     if (syncAssetsFolderId == null) {
                         LogHandler.saveLog("Failed to create folder in google drive " + userEmail, true);
                     } else {
-                        DBHelper.updateSyncAssetsFolderId(userEmail, syncAssetsFolderId);
+                        DBHelper.updateSyncAssetsFolderIdInDB(userEmail, syncAssetsFolderId);
                     }
                 } catch (Exception e) {
                     LogHandler.saveLog("Failed to create stash synced assets folders in drive : " +
@@ -122,7 +133,7 @@ public class GoogleDrive {
                 for (String[] account_row:drive_backUp_accounts){
                     if (account_row[2].equals(accessToken)){
                         String userEmail = account_row[0];
-                        syncAssetsFolderId = DBHelper.getSyncAssetsFolderId(userEmail);
+                        syncAssetsFolderId = DBHelper.getSyncAssetsFolderIdFromDB(userEmail);
                     }
                 }
                 if (syncAssetsFolderId == null){
