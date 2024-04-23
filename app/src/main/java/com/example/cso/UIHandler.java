@@ -62,7 +62,7 @@ public class UIHandler {
         SwitchMaterial syncSwitchMaterialButton = MainActivity.activity.findViewById(R.id.syncSwitchMaterial);
         SwitchMaterial mobileDataSwitchMaterial = MainActivity.activity.findViewById(R.id.mobileDataSwitchMaterial);
         if (!syncSwitchMaterialButton.isChecked()){
-            SharedPreferencesHandler.setSwitchState("wifiSwitchState", false, MainActivity.preferences);
+            SharedPreferencesHandler.setSwitchState("dataSwitchState", false, MainActivity.preferences);
             MainActivity.activity.runOnUiThread(() -> {
                 mobileDataSwitchMaterial.setChecked(false);
                 mobileDataSwitchMaterial.setThumbTintList(UIHelper.disabledSwitchMaterialThunm);
@@ -71,7 +71,7 @@ public class UIHandler {
             mobileDataSwitchMaterial.setEnabled(false);
         }else{
             mobileDataSwitchMaterial.setEnabled(true);
-            if (SharedPreferencesHandler.getWifiSwitchState(MainActivity.preferences)){
+            if (SharedPreferencesHandler.getDataSwitchState(MainActivity.preferences)){
                 MainActivity.activity.runOnUiThread(() -> {
                     mobileDataSwitchMaterial.setChecked(true);
                     mobileDataSwitchMaterial.setThumbTintList(UIHelper.onSwitchMaterialThumb);
