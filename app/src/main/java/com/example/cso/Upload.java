@@ -321,23 +321,7 @@ public class Upload {
                              (isInDrive == false)){
                         androidItemsToUpload_hash.add(fileHash);
                         try {
-                            NetHttpTransport HTTP_TRANSPORT = null;
-                            try {
-                                HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-                            } catch (GeneralSecurityException e) {
-                                LogHandler.saveLog("Failed to http_transport " + e.getLocalizedMessage());
-                            } catch (IOException e) {
-                            }
-                            final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-                            String bearerToken = "Bearer " + driveBackupAccessToken;
-                            System.out.println("access token to upload is " + driveBackupAccessToken);
-                            HttpRequestInitializer requestInitializer = request -> {
-                                request.getHeaders().setAuthorization(bearerToken);
-                                request.getHeaders().setContentType("application/json");
-                            };
-                            Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                                    .setApplicationName("cso")
-                                    .build();
+                            Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
 
                             com.google.api.services.drive.model.File fileMetadata =
                                     new com.google.api.services.drive.model.File();
@@ -648,24 +632,7 @@ public class Upload {
                     accessTokenCursor.close();
                 }
                 if(!accessToken.isEmpty() && accessToken != null){
-                    NetHttpTransport HTTP_TRANSPORT = null;
-                    try {
-                        HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-                    } catch (GeneralSecurityException e) {
-                        LogHandler.saveLog("Failed to http_transport in restore method" + e.getLocalizedMessage(), true);
-                    } catch (IOException e) {
-                    }
-                    final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-
-                    String bearerToken = "Bearer " + accessToken;
-                    HttpRequestInitializer requestInitializer = request -> {
-                        request.getHeaders().setAuthorization(bearerToken);
-                        request.getHeaders().setContentType("application/json");
-                    };
-
-                    Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                            .setApplicationName("cso")
-                            .build();
+                    Drive service = GoogleDrive.initializeDrive(accessToken);
 
                     OutputStream outputStream = null;
                     File file = new File(filePath);
@@ -763,15 +730,8 @@ public class Upload {
                         request.getHeaders().setContentType("application/json");
                     };
                     try {
-                        System.out.println("here5 in photos to drive");
-                        Drive service = null;
-                        if (HTTP_TRANSPORT != null) {
-                            service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                                    .setApplicationName("cso")
-                                    .build();
-                        }else{
-                            LogHandler.saveLog("Http transport is null");
-                        }
+                        Drive service = GoogleDrive.initializeDrive(accessToken);
+
                         com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
                         fileMetadata.setName(destinationFolderFile.getName());
                         String memeType = getMemeType(destinationFolderFile);

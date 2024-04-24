@@ -140,16 +140,7 @@ public class GoogleDrive {
                     LogHandler.saveLog("No folder was found in Google Drive back up account",false);
                     return mediaItems;
                 }
-                final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
-                final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-                HttpRequestInitializer httpRequestInitializer = request -> {
-                    System.out.println("access token for get files : " + accessToken);
-                    request.getHeaders().setAuthorization("Bearer " + accessToken);
-                    request.getHeaders().setContentType("application/json");
-                };
-
-                Drive driveService = new Drive.Builder(netHttpTransport, jsonFactory, httpRequestInitializer)
-                        .setApplicationName("cso").build();
+                Drive driveService = initializeDrive(accessToken);
                 String nextPageToken = null;
                 do{
                     System.out.println("page token is: " + nextPageToken);
@@ -286,7 +277,7 @@ public class GoogleDrive {
                 request.getHeaders().setContentType("application/json");
             };
             service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                    .setApplicationName("cso")
+                    .setApplicationName("stash")
                     .build();
 
         }catch (Exception e){

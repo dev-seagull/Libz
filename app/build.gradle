@@ -45,9 +45,6 @@ android {
 }
 
 
-
-
-
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.7.0'
@@ -77,7 +74,7 @@ dependencies {
 
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.0.2'
-
+    implementation 'net.zetetic:android-database-sqlcipher:4.5.4'
     implementation 'com.jaredrummler:android-device-names:2.1.1'
     implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.0"))
 }

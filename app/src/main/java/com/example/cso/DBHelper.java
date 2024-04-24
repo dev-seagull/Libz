@@ -1040,17 +1040,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         break;
                     }
                 }
-                NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();;
-                final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-                String bearerToken = "Bearer " + driveBackupAccessToken;
-                HttpRequestInitializer requestInitializer = request -> {
-                    request.getHeaders().setAuthorization(bearerToken);
-                    request.getHeaders().setContentType("application/json");
-                };
-
-                Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                        .setApplicationName("cso")
-                        .build();
+                Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                 String folder_name = "Stash_DataBase";
                 String backupDbFolderId = null;
                 com.google.api.services.drive.model.File folder = null;

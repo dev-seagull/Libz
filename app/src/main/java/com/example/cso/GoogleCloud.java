@@ -486,15 +486,7 @@
             final Double[] usedInDriveStorage = new Double[1];
             Callable<Storage> backgroundTask = () -> {
                 try {
-                    final NetHttpTransport netHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
-                    final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-                    HttpRequestInitializer httpRequestInitializer = request -> {
-                        request.getHeaders().setAuthorization("Bearer " + accessToken);
-                        request.getHeaders().setContentType("application/json");
-                    };
-
-                    Drive driveService = new Drive.Builder(netHttpTransport, jsonFactory, httpRequestInitializer)
-                            .setApplicationName("cso").build();
+                    Drive driveService = GoogleDrive.initializeDrive(accessToken);
 
                     totalStorage[0] = StorageHandler.convertStorageToGigaByte(driveService.about().get()
                             .setFields("user, storageQuota")
