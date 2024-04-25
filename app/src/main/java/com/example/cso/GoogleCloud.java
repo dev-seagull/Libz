@@ -245,12 +245,30 @@
             return new signInResult(userEmail, isHandled[0], isInAccounts, tokens, storage, new ArrayList<>());
         }
 
+        public signInResult startSignInToBackUpThread(Intent data){
+            final GoogleCloud.signInResult[] signInResult = new signInResult[1];
+            Thread signInResultThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try{
+                        signInResult[0] = handleSignInToBackupResult(data);
+                    }catch (Exception e){
+                        LogHandler.saveLog("Failed to join and run sign in to backUp thread : " + e.getLocalizedMessage(), true);
+                    }
+                }
+            });
+            signInResultThread.start();
+            try {
+                signInResultThread.join();
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to join sign in to backUp thread : " + e.getLocalizedMessage(), true);
+            }
+            return signInResult[0];
+        }
+
         public signInResult handleSignInToBackupResult(Intent data){
-            final boolean[] isHandled = {false};
             String userEmail = null;
-            String authCode = null;
             boolean isInAccounts = false;
-            boolean isValidAlready = false;
             GoogleCloud.Tokens tokens = null;
             Storage storage = null;
             ArrayList<DriveAccountInfo.MediaItem> mediaItems  = null;
@@ -258,28 +276,28 @@
                 Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
                 GoogleSignInAccount account = googleSignInTask.getResult(ApiException.class);
                 userEmail = account.getEmail();
+
                 if (userEmail != null && userEmail.toLowerCase().endsWith("@gmail.com")) {
-                    userEmail = account.getEmail();
                     userEmail = userEmail.replace("@gmail.com", "");
                 }
 
                 String[] columnsList = new String[]{"userEmail","type","accessToken"};
                 List<String[]> accounts_rows = DBHelper.getAccounts(columnsList);
                 for (String[] row : accounts_rows) {
-                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {//seems to be a bug here (all conditions are equal)
+                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
                         isInAccounts = true;
-                        isValidAlready = isAccessTokenValid(row[2]);
                         break;
                     }
                 }
 
-                if (!isInAccounts || !isValidAlready){
-                    authCode = account.getServerAuthCode();
+                if(!isInAccounts){
+                    String authCode = account.getServerAuthCode();
                     tokens = getTokens(authCode);
                     storage = getStorage(tokens);
                     mediaItems = GoogleDrive.getMediaItems(tokens.getAccessToken());
                     if (userEmail != null && tokens.getRefreshToken() != null && tokens.getAccessToken() != null) {
-                        isHandled[0] = true;
+                        return new signInResult(userEmail, true, isInAccounts,
+                                tokens, storage, mediaItems);
                     }
                 }else {
                     runOnUiThread(() -> {
@@ -290,7 +308,7 @@
             }catch (Exception e){
                 LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
             }
-            return new signInResult(userEmail, isHandled[0], isInAccounts, tokens, storage, mediaItems);
+            return new signInResult(userEmail, false, isInAccounts, tokens, storage, mediaItems);
         }
 
         public Button createPrimaryLoginButton(LinearLayout linearLayout){

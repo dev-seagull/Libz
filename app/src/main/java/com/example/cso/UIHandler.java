@@ -1,5 +1,9 @@
 package com.example.cso;
 
+import android.app.Activity;
+import android.view.View;
+import android.widget.LinearLayout;
+
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 public class UIHandler {
@@ -87,4 +91,17 @@ public class UIHandler {
         }
     }
 
+    public static void setLastBackupAccountButtonClickableFalse(Activity activity) {
+        try {
+            LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+            View[] child = {backupButtonsLinearLayout.getChildAt(
+                    backupButtonsLinearLayout.getChildCount() - 1)};
+            activity.runOnUiThread(() ->
+            {
+                child[0].setClickable(false);
+            });
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to set last back up button clickable false:" + e.getLocalizedMessage(), true);
+        }
+    }
 }

@@ -54,6 +54,7 @@
     import java.util.Map;
     import java.util.Timer;
     import java.util.TimerTask;
+    import java.util.concurrent.CountDownLatch;
 
 
     public class MainActivity extends AppCompatActivity {
@@ -61,10 +62,10 @@
 
         public static Activity activity ;
         static GoogleCloud googleCloud;
-        ActivityResultLauncher<Intent> signInToPrimaryLauncher;
+//        ActivityResultLauncher<Intent> signInToPrimaryLauncher;
         ActivityResultLauncher<Intent> signInToBackUpLauncher;
-        GooglePhotos googlePhotos;
-        HashMap<String, PhotosAccountInfo> primaryAccountHashMap = new HashMap<>();
+//        GooglePhotos googlePhotos;
+//        HashMap<String, PhotosAccountInfo> primaryAccountHashMap = new HashMap<>();
         public static String androidDeviceName;
         static SharedPreferences preferences;
         public static DBHelper dbHelper;
@@ -78,23 +79,15 @@
         public Thread deleteRedundantDriveThread;
         public Thread updateDriveBackUpThread;
         public Thread deleteDuplicatedInDrive;
-
         SwitchMaterial syncSwitchMaterialButton;
         SwitchMaterial mobileDataSwitchMaterial;
         SwitchMaterial wifiSwitchMaterial;
-        public static TimerService timerService;
-
+        int buildSdkInt = Build.VERSION.SDK_INT;
         List<Thread> threads = new ArrayList<>(Arrays.asList(firstUiThread, secondUiThread,
                 backUpJsonThread, insertMediaItemsThread, deleteRedundantDriveThread, updateDriveBackUpThread, deleteDuplicatedInDrive));
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
-//            while (true){
-//                if (SplashActivity.complete_loaded){
-//                    break;
-//                }
-//                System.out.println("waiting for the splash screen to load in Main activity");
-//            }
             activity = this;
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
@@ -104,48 +97,8 @@
                     Manifest.permission.WRITE_EXTERNAL_STORAGE,
             };
 
-            Thread manageAccessThread = new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        int buildSdkInt = Build.VERSION.SDK_INT;
-                        if (buildSdkInt >= 30) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                if (!Environment.isExternalStorageManager()) {
-                                    Intent getPermission = new Intent();
-                                    getPermission.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                                    startActivity(getPermission);
-                                    while (!Environment.isExternalStorageManager()){
-                                        System.out.println("here " + Environment.isExternalStorageManager());
-                                        try {
-                                            Thread.sleep(1000);
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            if (Environment.isExternalStorageManager()) {
-                                System.out.println("Starting to get access from your android device");
-                            }}
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            };
-
-            manageAccessThread.start();
-
-            try {
-                manageAccessThread.join();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-
+            PermissionManager permissionManager = new PermissionManager();
+            boolean isAccessGranted = permissionManager.requestStorageAccess(activity);
 
             boolean hasCreated = LogHandler.createLogFile();
             System.out.println("Log file is created :"  + hasCreated);
@@ -186,14 +139,14 @@
             Thread manageReadAndWritePermissonsThread = new Thread() {
                 @Override
                 public void run() {
-                    synchronized (manageAccessThread){
-                        try{
-                            manageAccessThread.join();
-                        }catch (Exception e){
-                            LogHandler.saveLog("Failed to join delete duplicated drive " +
-                                    "thread in customLoginThread : " + e.getLocalizedMessage(),true);
-                        }
-                    }
+//                    synchronized (manageAccessThread){
+//                        try{
+//                            manageAccessThread.join();
+//                        }catch (Exception e){
+//                            LogHandler.saveLog("Failed to join delete duplicated drive " +
+//                                    "thread in customLoginThread : " + e.getLocalizedMessage(),true);
+//                        }
+//                    }
                     boolean isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
                             (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
                     while(!isWriteAndReadPermissionGranted){
@@ -490,7 +443,7 @@
 //            Intent.getIntentOld();
             try{
                 googleCloud = new GoogleCloud(this);
-                googlePhotos = new GooglePhotos();
+//                googlePhotos = new GooglePhotos();
             }catch (Exception e){
                 LogHandler.saveLog("failed to initialize the classes: " + e.getLocalizedMessage());
             }
@@ -598,49 +551,33 @@
             signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if(result.getResultCode() == RESULT_OK){
-                        LinearLayout backupButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
+                        LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
                         View[] child = {backupButtonsLinearLayout.getChildAt(
                                 backupButtonsLinearLayout.getChildCount() - 1)};
-
-                        runOnUiThread(() -> {child[0].setClickable(false);});
-
-//                        Executor signInToBackupExecutor = Executors.newSingleThreadExecutor();
+                        UIHandler.setLastBackupAccountButtonClickableFalse(activity);
                         try{
-                            final GoogleCloud.signInResult[] signInResult = new GoogleCloud.signInResult[1];
-                            Thread signInResultThread = new Thread(new Runnable() {
+                            Thread mainmThread = new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    signInResult[0] = googleCloud.handleSignInToBackupResult(result.getData());
-                                    synchronized (this){
-                                        notify();
-                                    }
-                                }
-                            });
+                                    final GoogleCloud.signInResult signInResult =
+                                            googleCloud.startSignInToBackUpThread(result.getData());
 
-                            boolean[] isBackedUp = {false};
+                                    boolean[] isBackedUp = {false};
 
-//                            Runnable backgroundTask = () -> {
                                     backUpJsonThread = new Thread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            synchronized (signInResultThread){
-                                                try{
-                                                    signInResultThread.join();
-                                                }catch (Exception e){
-                                                    LogHandler.saveLog("Failed to join signIn result thread : " + e.getLocalizedMessage() , true);
-                                                }
-                                            }
                                             if(Looper.myLooper() == Looper.getMainLooper()) {
                                                 System.out.println("this is main thread8.");
                                             }
                                             try{
-                                                if (signInResult[0].getHandleStatus() == true) {
-                                                    dbHelper.insertIntoAccounts(signInResult[0].getUserEmail(), "backup"
-                                                            , signInResult[0].getTokens().getRefreshToken(), signInResult[0].getTokens().getAccessToken(),
-                                                            signInResult[0].getStorage().getTotalStorage(), signInResult[0].getStorage().getUsedStorage(),
-                                                            signInResult[0].getStorage().getUsedInDriveStorage(), signInResult[0].getStorage().getUsedInGmailAndPhotosStorage(),"");
-                                                    String syncAssetsFolderId = GoogleDrive.createStashSyncedAssetsFolderInDrive(signInResult[0].getUserEmail());
-                                                    dbHelper.updateSyncAssetsFolderIdInDB(signInResult[0].getUserEmail(),syncAssetsFolderId);
+                                                if (signInResult.getHandleStatus() == true) {
+                                                    dbHelper.insertIntoAccounts(signInResult.getUserEmail(), "backup"
+                                                            , signInResult.getTokens().getRefreshToken(), signInResult.getTokens().getAccessToken(),
+                                                            signInResult.getStorage().getTotalStorage(), signInResult.getStorage().getUsedStorage(),
+                                                            signInResult.getStorage().getUsedInDriveStorage(), signInResult.getStorage().getUsedInGmailAndPhotosStorage(),"");
+                                                    String syncAssetsFolderId = GoogleDrive.createStashSyncedAssetsFolderInDrive(signInResult.getUserEmail());
+                                                    dbHelper.updateSyncAssetsFolderIdInDB(signInResult.getUserEmail(),syncAssetsFolderId);
                                                     isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(false,"");
                                                     System.out.println("isBackedUp "+isBackedUp[0]);
                                                 }else {
@@ -649,9 +586,9 @@
                                                         View child2 = backupButtonsLinearLayout.getChildAt(
                                                                 backupButtonsLinearLayout.getChildCount() - 1);
                                                         if(child2 instanceof Button){
-                                                        Button bt = (Button) child2;
-                                                        bt.setText("ADD A BACK UP ACCOUNT");
-                                                    }
+                                                            Button bt = (Button) child2;
+                                                            bt.setText("ADD A BACK UP ACCOUNT");
+                                                        }
                                                         updateButtonsListeners();
                                                     });
                                                 }
@@ -677,12 +614,12 @@
                                                     newBackupLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
                                                     child[0] = backupButtonsLinearLayout.getChildAt(
                                                             backupButtonsLinearLayout.getChildCount() - 2);
-                                                    LogHandler.saveLog(signInResult[0].getUserEmail()
+                                                    LogHandler.saveLog(signInResult.getUserEmail()
                                                             + " has logged in to the backup account", false);
 
                                                     if (child[0] instanceof Button) {
                                                         Button bt = (Button) child[0];
-                                                        bt.setText(signInResult[0].getUserEmail());
+                                                        bt.setText(signInResult.getUserEmail());
                                                         bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
                                                     }
                                                     updateButtonsListeners();
@@ -702,11 +639,11 @@
                                                 }
                                             }
                                             try{
-                                                for(DriveAccountInfo.MediaItem mediaItem : signInResult[0].getMediaItems()){
+                                                for(DriveAccountInfo.MediaItem mediaItem : signInResult.getMediaItems()){
                                                     Long last_insertId = MainActivity.dbHelper.insertAssetData(mediaItem.getHash());
                                                     if (last_insertId != -1) {
                                                         MainActivity.dbHelper.insertIntoDriveTable(last_insertId, mediaItem.getId(), mediaItem.getFileName(),
-                                                                mediaItem.getHash(), signInResult[0].getUserEmail());
+                                                                mediaItem.getHash(), signInResult.getUserEmail());
                                                     } else {
                                                         LogHandler.saveLog("Failed to insert file into drive table: " + mediaItem.getFileName());
                                                     }
@@ -828,7 +765,6 @@
                                         }
                                     });
 
-                                    signInResultThread.start();
                                     backUpJsonThread.start();
                                     firstUiThread.start();
                                     insertMediaItemsThread.start();
@@ -836,6 +772,9 @@
                                     updateDriveBackUpThread.start();
                                     deleteDuplicatedInDrive.start();
                                     secondUiThread.start();
+                                }
+                            });
+                            mainmThread.start();
                         }catch (Exception e){
                             LogHandler.saveLog("Failed to sign in to backup : "  + e.getLocalizedMessage());
                         }
