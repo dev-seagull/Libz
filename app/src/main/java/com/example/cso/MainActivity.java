@@ -63,7 +63,7 @@
         public static Activity activity ;
         static GoogleCloud googleCloud;
 //        ActivityResultLauncher<Intent> signInToPrimaryLauncher;
-        ActivityResultLauncher<Intent> signInToBackUpLauncher;
+        public ActivityResultLauncher<Intent> signInToBackUpLauncher;
 //        GooglePhotos googlePhotos;
 //        HashMap<String, PhotosAccountInfo> primaryAccountHashMap = new HashMap<>();
         public static String androidDeviceName;
@@ -437,7 +437,12 @@
         @Override
         protected void onStart(){
             super.onStart();
-            runOnUiThread(this::updateButtonsListeners);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    updateButtonsListeners(signInToBackUpLauncher);
+                }
+            });
             System.out.println("startService(serviceIntent); " + serviceIntent);
 //            serviceIntent.getData();
 //            Intent.getIntentOld();
@@ -562,41 +567,7 @@
                                     final GoogleCloud.signInResult signInResult =
                                             googleCloud.startSignInToBackUpThread(result.getData());
 
-                                    boolean[] isBackedUp = {false};
-
-                                    backUpJsonThread = new Thread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            if(Looper.myLooper() == Looper.getMainLooper()) {
-                                                System.out.println("this is main thread8.");
-                                            }
-                                            try{
-                                                if (signInResult.getHandleStatus() == true) {
-                                                    dbHelper.insertIntoAccounts(signInResult.getUserEmail(), "backup"
-                                                            , signInResult.getTokens().getRefreshToken(), signInResult.getTokens().getAccessToken(),
-                                                            signInResult.getStorage().getTotalStorage(), signInResult.getStorage().getUsedStorage(),
-                                                            signInResult.getStorage().getUsedInDriveStorage(), signInResult.getStorage().getUsedInGmailAndPhotosStorage(),"");
-                                                    String syncAssetsFolderId = GoogleDrive.createStashSyncedAssetsFolderInDrive(signInResult.getUserEmail());
-                                                    dbHelper.updateSyncAssetsFolderIdInDB(signInResult.getUserEmail(),syncAssetsFolderId);
-                                                    isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(false,"");
-                                                    System.out.println("isBackedUp "+isBackedUp[0]);
-                                                }else {
-                                                    runOnUiThread(() -> {
-                                                        LogHandler.saveLog("login with back up launcher failed with response code :" + result.getResultCode());
-                                                        View child2 = backupButtonsLinearLayout.getChildAt(
-                                                                backupButtonsLinearLayout.getChildCount() - 1);
-                                                        if(child2 instanceof Button){
-                                                            Button bt = (Button) child2;
-                                                            bt.setText("ADD A BACK UP ACCOUNT");
-                                                        }
-                                                        updateButtonsListeners();
-                                                    });
-                                                }
-                                            }catch (Exception e){
-                                                LogHandler.saveLog("failed to back up profile map in backup account: " + e.getLocalizedMessage());
-                                            }
-                                        }
-                                    });
+                                    boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
 
                                     firstUiThread = new Thread(new Runnable() {
                                         @Override
@@ -608,7 +579,7 @@
                                                     LogHandler.saveLog("failed to join backUpJsonThread in backup account: " + e.getLocalizedMessage());
                                                 }
                                             }
-                                            if (isBackedUp[0] == true) {
+                                            if (isBackedUp) {
                                                 runOnUiThread(() -> {
                                                     Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupButtonsLinearLayout);
                                                     newBackupLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
@@ -622,7 +593,7 @@
                                                         bt.setText(signInResult.getUserEmail());
                                                         bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
                                                     }
-                                                    updateButtonsListeners();
+                                                    updateButtonsListeners(signInToBackUpLauncher);
                                                 });
                                             }
                                         }
@@ -789,7 +760,7 @@
                                 Button bt = (Button) childview;
                                 bt.setText("ADD A BACK UP ACCOUNT");
                             }
-                            updateButtonsListeners();
+                            updateButtonsListeners(signInToBackUpLauncher);
                         });
                 }
             });
@@ -873,9 +844,9 @@
             return "off";
         }
 
-        private void updateButtonsListeners() {
+        public static void updateButtonsListeners(ActivityResultLauncher<Intent> signInToBackUpLauncher) {
 //            updatePrimaryButtonsListener();
-            updateBackupButtonsListener();
+            updateBackupButtonsListener(activity, signInToBackUpLauncher);
         }
 //        private void updatePrimaryButtonsListener(){
 //            LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
@@ -998,8 +969,8 @@
 //                }
 //            }
 //        }
-        private void updateBackupButtonsListener(){
-            LinearLayout backUpAccountsButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
+        public static void updateBackupButtonsListener(Activity activity, ActivityResultLauncher<Intent> signInToBackUpLauncher){
+            LinearLayout backUpAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
             for (int i = 0; i < backUpAccountsButtonsLinearLayout.getChildCount(); i++) {
                 View childView = backUpAccountsButtonsLinearLayout.getChildAt(i);
                 if (childView instanceof Button) {
@@ -1018,7 +989,7 @@
                                     button.setText("add a back up account");
                                 }
                                 else {
-                                    PopupMenu popupMenu = new PopupMenu(MainActivity.this, button, Gravity.CENTER);
+                                    PopupMenu popupMenu = new PopupMenu(activity.getApplicationContext(), button, Gravity.CENTER);
                                     popupMenu.getMenuInflater().inflate(R.menu.account_button_menu, popupMenu.getMenu());
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                         popupMenu.setGravity(Gravity.CENTER);
@@ -1095,7 +1066,7 @@
                                                                     e.getLocalizedMessage(), true);
                                                         }
                                                     }
-                                                    runOnUiThread(() -> {
+                                                    activity.runOnUiThread(() -> {
                                                         if (isBackedUp[0]) {
                                                             try {
                                                                 item.setEnabled(false);
@@ -1143,6 +1114,7 @@
                 }
             }
         }
+
 
         public static void initializeButtons(Activity activity,GoogleCloud googleCloud){
             String[] columnsList = {"userEmail", "type", "refreshToken"};

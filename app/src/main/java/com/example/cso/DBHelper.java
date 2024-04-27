@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.text.TextUtils;
 
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.FileContent;
@@ -49,7 +50,6 @@ public class DBHelper extends SQLiteOpenHelper {
                 "usedStorage REAL," +
                 "usedInDriveStorage REAL,"+
                 "UsedInGmailAndPhotosStorage REAL," +
-                "folderId TEXT DEFAULT NULL," +
                 "FOREIGN KEY (profileId) REFERENCES PROFILE(id));";
         sqLiteDatabase.execSQL(ACCOUNTS);
 
@@ -132,6 +132,51 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
+    }
+
+    public static void removeColumn(String column, String table) {
+        try{
+            List<String> existingColumns = getTableColumns(table);
+            existingColumns.remove(column);
+            String columnList = TextUtils.join(",", existingColumns);
+
+            String createNewTableQuery = "CREATE TABLE temp_table AS SELECT " +
+                    columnList +
+                    " FROM " + table + ";";
+            dbWritable.execSQL(createNewTableQuery);
+
+            String copyDataQuery = "INSERT INTO temp_table (" + columnList + ") " +
+                    "SELECT " + columnList + " FROM " + table + ";";
+            dbWritable.execSQL(copyDataQuery);
+
+            String dropOldTableQuery = "DROP TABLE " + table + ";";
+            dbWritable.execSQL(dropOldTableQuery);
+
+            String renameTableQuery = "ALTER TABLE temp_table RENAME TO " + table + ";";
+            dbWritable.execSQL(renameTableQuery);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private static List<String> getTableColumns(String tableName) {
+        List<String> columns = new ArrayList<>();
+        try{
+            Cursor cursor = dbWritable.rawQuery("PRAGMA table_info(" + tableName + ")", null);
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    int columnIndex = cursor.getColumnIndex("name");
+                    if(columnIndex >=0){
+                        String columnName = cursor.getString(columnIndex);
+                        columns.add(columnName);
+                    }
+                }
+                cursor.close();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return columns;
     }
 
     public long insertAssetData(String fileHash) {
@@ -421,7 +466,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public void insertIntoAccounts(String userEmail,String type,String refreshToken ,String accessToken,
                             Double totalStorage , Double usedStorage , Double usedInDriveStorage ,
-                                   Double UsedInGmailAndPhotosStorage ,String syncAssetsFolderId) {
+                                   Double UsedInGmailAndPhotosStorage) {
         String[] profile_selected_columns = {"id"};
         List<String[]> profile_rows = getProfile(profile_selected_columns);
         String profileId = "0";
@@ -446,10 +491,9 @@ public class DBHelper extends SQLiteOpenHelper {
                     "totalStorage," +
                     "usedStorage," +
                     "usedInDriveStorage,"+
-                    "UsedInGmailAndPhotosStorage,"+
-                    "folderId) VALUES (?,?,?,?,?,?,?,?,?,?)";
+                    "UsedInGmailAndPhotosStorage) VALUES (?,?,?,?,?,?,?,?,?)";
             Object[] values = new Object[]{profileId,userEmail, type,refreshToken ,accessToken,
-                    totalStorage ,usedStorage ,usedInDriveStorage ,UsedInGmailAndPhotosStorage,syncAssetsFolderId};
+                    totalStorage ,usedStorage ,usedInDriveStorage ,UsedInGmailAndPhotosStorage};
             dbWritable.execSQL(sqlQuery, values);
             dbWritable.setTransactionSuccessful();
         }catch (Exception e){
@@ -1104,7 +1148,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return result;
     }
 
-    public boolean backUpProfileMap(boolean hasRemoved,String signedEmail) {
+    public boolean backUpProfileMap(boolean hasRemoved,String signedOutEmail) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final boolean[] isBackedUp = {false};
         Callable<Boolean> uploadTask = () -> {
@@ -1124,7 +1168,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
                 int backUpAccountCounts = 0;
                 for (String[] account_row : account_rows) {
-                    if (hasRemoved == true && account_row[0].equals(signedEmail)) {
+                    if (hasRemoved == true && account_row[0].equals(signedOutEmail)) {
                         continue;
                     }
                     if (account_row[1].equals("backup")){

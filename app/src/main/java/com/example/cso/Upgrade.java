@@ -33,6 +33,8 @@ public class Upgrade {
                     break;
                 case 17:
                     upgrade_17_to_18();
+                case 18:
+                    upgrade_18_to_19();
                 default:
                     lastVersion();
             }
@@ -51,6 +53,7 @@ public class Upgrade {
         });
         deleteDeviceTableContent();
 //        deleteAccountsTableContent();
+        upgrade_18_to_19();
     }
 
 
@@ -86,6 +89,10 @@ public class Upgrade {
     public static void upgrade_13_to_14(){
         cutFromUserProfileToAccounts();
         upgrade_14_to_15();
+    }
+
+    public static void upgrade_18_to_19(){
+        DBHelper.removeColumn("folderId","ACCOUNTS");
     }
 
     public static void dropProfileIdColumn() {

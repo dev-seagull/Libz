@@ -1,7 +1,13 @@
 package com.example.cso;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
+import android.view.View;
+import android.widget.Button;
+import android.widget.LinearLayout;
+
+import androidx.activity.result.ActivityResultLauncher;
 
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
@@ -328,5 +334,52 @@ public class Profile {
             LogHandler.saveLog("Failed to delete profile Content from account : " + e.getLocalizedMessage());
         }
         return isDeletedFuture;
+    }
+
+    public static boolean backUpJsonFile(GoogleCloud.signInResult signInResult, ActivityResultLauncher<Intent> signInTobackUpLauncher){
+        boolean[] isBackedUp = {false};
+        Thread backUpJsonThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    if (signInResult.getHandleStatus() == true) {
+                        String userEmail = signInResult.getUserEmail();
+                        GoogleCloud.Tokens tokens = signInResult.getTokens();
+                        String refreshToken = tokens.getRefreshToken();
+                        String accessToken = tokens.getAccessToken();
+                        Double totalStorage = signInResult.getStorage().getTotalStorage();
+                        Double usedStorage = signInResult.getStorage().getUsedStorage();
+                        Double usedInDriveStorage = signInResult.getStorage().getUsedInDriveStorage();
+                        Double usedInGmailAndPhotosStorage = signInResult.getStorage().getUsedInGmailAndPhotosStorage();
+
+                        MainActivity.dbHelper.insertIntoAccounts(userEmail, "backup", refreshToken,accessToken,
+                                totalStorage, usedStorage, usedInDriveStorage, usedInGmailAndPhotosStorage);
+                        isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(false,"");
+                        System.out.println("Test of is backedUp: " + isBackedUp[0]);
+                    }else{
+                        LogHandler.saveLog("login with back up launcher failed with response code ");
+                        MainActivity.activity.runOnUiThread(() -> {
+                            LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
+                            View child2 = backupButtonsLinearLayout.getChildAt(
+                                    backupButtonsLinearLayout.getChildCount() - 1);
+                            if(child2 instanceof Button){
+                                Button bt = (Button) child2;
+                                bt.setText("ADD A BACK UP ACCOUNT");
+                            }
+                            MainActivity.updateButtonsListeners(signInTobackUpLauncher);
+                        });
+                    }
+                }catch (Exception e){
+                    LogHandler.saveLog("Failed to backup json file: " + e.getLocalizedMessage(), true);
+                }
+            }
+        });
+        backUpJsonThread.start();
+        try {
+            backUpJsonThread.join();
+        } catch (Exception e) {
+            LogHandler.saveLog("failed to join backUpJsonThread in backup account: " + e.getLocalizedMessage());
+        }
+        return isBackedUp[0];
     }
 }
