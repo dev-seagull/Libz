@@ -47,7 +47,7 @@ public class Sync {
     }
 
 
-    private static void syncAndroidFile(String[] androidRow, String userEmail, String accessToken, String syncedAssetsFolderId,
+    private static void syncAndroidFile(String[] androidRow, String userEmail, String accessToken,
             double driveFreeSpace, double amountSpaceToFreeUp, Context context){
         try{
             String fileName = androidRow[1];
@@ -62,7 +62,7 @@ public class Sync {
                     InternetManager.getInternetStatus(context).equals("data") && isDataSwitchOn)){
                 if (!DBHelper.androidFileExistsInDrive(assetId, fileHash)){
                     if(driveFreeSpace > Double.parseDouble(fileSize)) {
-                        boolean isBackedUp = uploadAndroidToDrive(androidRow, userEmail, accessToken, syncedAssetsFolderId);
+                        boolean isBackedUp = uploadAndroidToDrive(androidRow, userEmail, accessToken);
                         if (isBackedUp) {
                             driveFreeSpace -= Double.parseDouble(fileSize);
                             if(amountSpaceToFreeUp > 0){
@@ -94,6 +94,8 @@ public class Sync {
             LogHandler.saveLog("Failed to sync android file: " + e.getLocalizedMessage());
         }
     }
+
+
 
     private static boolean uploadAndroidToDrive(String[] androidRow, String userEmail
             , String accessToken, String syncedAssetsFolderId){
@@ -182,6 +184,8 @@ public class Sync {
         }
     }
 }
+
+
 
 //--------------------------lets go for next comment code (google photos is here)--------------------------------
 
