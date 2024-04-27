@@ -401,89 +401,12 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public static void insertIntoProfile(String userName, String password){
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String joined = dateFormat.format(new Date());
-        dbWritable.beginTransaction();
-        try{
-            String sqlQuery = "INSERT INTO PROFILE (" +
-                    "userName, "+
-                    "password," +
-                    "joined) VALUES (?,?,?)";
-            Object[] values = new Object[]{userName,Hash.calculateSHA256(password), joined};
-            dbWritable.execSQL(sqlQuery, values);
-            dbWritable.setTransactionSuccessful();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to save into the database " +
-                    "in insertIntoProfile method : "+e.getLocalizedMessage());
-        }finally {
-            dbWritable.endTransaction();
-        }
-    }
-
-    public static void insertIntoProfile(String userName, String password, String joined){
-        dbWritable.beginTransaction();
-        try{
-            String sqlQuery = "INSERT INTO PROFILE (" +
-                    "userName, "+
-                    "password," +
-                    "joined) VALUES (?,?,?)";
-            Object[] values = new Object[]{userName,Hash.calculateSHA256(password), joined};
-            dbWritable.execSQL(sqlQuery, values);
-            dbWritable.setTransactionSuccessful();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to save into the database " +
-                    "in insertIntoProfile method : "+e.getLocalizedMessage());
-        }finally {
-            dbWritable.endTransaction();
-        }
-    }
-
-    public static List<String []> getProfile(String[] columns){
-        List<String[]> resultList = new ArrayList<>();
-        String sqlQuery = "SELECT ";
-        for (String column:columns){
-            sqlQuery += column + ", ";
-        }
-        sqlQuery = sqlQuery.substring(0, sqlQuery.length() - 2);
-        sqlQuery += " FROM PROFILE" ;
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
-        if (cursor.moveToFirst()) {
-            do {
-                String[] row = new String[columns.length];
-                for (int i = 0; i < columns.length; i++) {
-                    int columnIndex = cursor.getColumnIndex(columns[i]);
-                    if (columnIndex >= 0) {
-                        row[i] = cursor.getString(columnIndex);
-                    }
-                }
-                resultList.add(row);
-            } while (cursor.moveToNext());
-        }
-        cursor.close();
-        return resultList;
-    }
-
     public void insertIntoAccounts(String userEmail,String type,String refreshToken ,String accessToken,
                             Double totalStorage , Double usedStorage , Double usedInDriveStorage ,
                                    Double UsedInGmailAndPhotosStorage) {
-        String[] profile_selected_columns = {"id"};
-        List<String[]> profile_rows = getProfile(profile_selected_columns);
-        String profileId = "0";
-        for(String[] profile_row:profile_rows){
-            profileId = profile_row[0];
-            if(profileId != null && !profileId.isEmpty()){
-                break;
-            }
-        }
-        if(profileId == null | profileId.isEmpty()){
-            LogHandler.saveLog("Profile id is empty or null !",true);
-        }
-
         dbWritable.beginTransaction();
         try{
             String sqlQuery = "INSERT INTO ACCOUNTS (" +
-                    "profileId, "+
                     "userEmail," +
                     "type, " +
                     "refreshToken, " +
@@ -491,8 +414,8 @@ public class DBHelper extends SQLiteOpenHelper {
                     "totalStorage," +
                     "usedStorage," +
                     "usedInDriveStorage,"+
-                    "UsedInGmailAndPhotosStorage) VALUES (?,?,?,?,?,?,?,?,?)";
-            Object[] values = new Object[]{profileId,userEmail, type,refreshToken ,accessToken,
+                    "UsedInGmailAndPhotosStorage) VALUES (?,?,?,?,?,?,?,?)";
+            Object[] values = new Object[]{userEmail, type,refreshToken ,accessToken,
                     totalStorage ,usedStorage ,usedInDriveStorage ,UsedInGmailAndPhotosStorage};
             dbWritable.execSQL(sqlQuery, values);
             dbWritable.setTransactionSuccessful();
@@ -502,6 +425,21 @@ public class DBHelper extends SQLiteOpenHelper {
         }finally {
             dbWritable.endTransaction();
         }
+    }
+
+
+    public static void dropTable(String tableName){
+        try{
+            dbWritable.beginTransaction();
+            String sql = "DROP TABLE IF EXISTS " + tableName;
+            dbWritable.execSQL(sql);
+            dbWritable.setTransactionSuccessful();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to drop the table in dropTable method : " + e.getLocalizedMessage());
+        }finally {
+            dbWritable.endTransaction();
+        }
+
     }
 
     public static List<String []> getAccounts(String[] columns){
@@ -1383,6 +1321,4 @@ public class DBHelper extends SQLiteOpenHelper {
             LogHandler.saveLog("Failed to create index: " + e.getLocalizedMessage(), true);
         }
     }
-
-    // syncAssetsFolder = upload , download , exists ,
 }

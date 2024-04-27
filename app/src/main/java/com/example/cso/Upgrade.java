@@ -93,6 +93,8 @@ public class Upgrade {
 
     public static void upgrade_18_to_19(){
         DBHelper.removeColumn("folderId","ACCOUNTS");
+        DBHelper.removeColumn("profileId","ACCOUNTS");
+        DBHelper.dropTable("PROFILE");
     }
 
     public static void dropProfileIdColumn() {
@@ -184,6 +186,8 @@ public class Upgrade {
             MainActivity.dbHelper.getWritableDatabase().endTransaction();
         }
     }
+
+
 
     public static String updateProfileIdsInAccounts(){
         String profileId = "";

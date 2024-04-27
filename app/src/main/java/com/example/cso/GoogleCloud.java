@@ -2,7 +2,6 @@
 
     import android.app.Activity;
     import android.content.Intent;
-    import android.content.res.ColorStateList;
     import android.graphics.Color;
     import android.graphics.drawable.Drawable;
     import android.view.Gravity;
@@ -23,11 +22,6 @@
     import com.google.android.gms.common.api.ApiException;
     import com.google.android.gms.common.api.Scope;
     import com.google.android.gms.tasks.Task;
-    import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-    import com.google.api.client.http.HttpRequestInitializer;
-    import com.google.api.client.http.javanet.NetHttpTransport;
-    import com.google.api.client.json.JsonFactory;
-    import com.google.api.client.json.gson.GsonFactory;
     import com.google.api.services.drive.Drive;
 
     import org.json.JSONObject;
