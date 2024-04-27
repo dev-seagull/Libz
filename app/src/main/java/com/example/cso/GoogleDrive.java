@@ -84,7 +84,6 @@ public class GoogleDrive {
                     for (com.google.api.services.drive.model.File file : files) {
                         if (file.getName().equals(folder_name)) {
                             syncAssetsFolderId = file.getId();
-                            DBHelper.updateSyncAssetsFolderIdInDB(userEmail, syncAssetsFolderId);
                             break;
                         }
                     }
@@ -98,11 +97,6 @@ public class GoogleDrive {
                     folder_metadata.setMimeType("application/vnd.google-apps.folder");
                     folder = service.files().create(folder_metadata).setFields("id").execute();
                     syncAssetsFolderId = folder.getId();
-                    if (syncAssetsFolderId == null) {
-                        LogHandler.saveLog("Failed to create folder in google drive " + userEmail, true);
-                    } else {
-                        DBHelper.updateSyncAssetsFolderIdInDB(userEmail, syncAssetsFolderId);
-                    }
                 } catch (Exception e) {
                     LogHandler.saveLog("Failed to create stash synced assets folders in drive : " +
                             e.getLocalizedMessage(), true);
@@ -133,7 +127,7 @@ public class GoogleDrive {
                 for (String[] account_row:drive_backUp_accounts){
                     if (account_row[2].equals(accessToken)){
                         String userEmail = account_row[0];
-                        syncAssetsFolderId = DBHelper.getSyncAssetsFolderIdFromDB(userEmail);
+                        syncAssetsFolderId = GoogleDrive.createStashSyncedAssetsFolderInDrive(userEmail);
                     }
                 }
                 if (syncAssetsFolderId == null){

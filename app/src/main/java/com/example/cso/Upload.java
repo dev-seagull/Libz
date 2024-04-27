@@ -300,6 +300,7 @@ public class Upload {
                         for(String[] account_row : account_rows){
                             String userEmail = account_row[0];
                             String type = account_row[1];
+                            String syncAssetsFolderId = GoogleDrive.createStashSyncedAssetsFolderInDrive(userEmail);
                             if(type.equals("backup")){
                                 String[] selected_drive_columns = {"id", "assetId", "fileId", "fileName",
                                         "userEmail","fileHash"};
@@ -317,7 +318,7 @@ public class Upload {
 
                     System.out.println("before neededFreeSpaceSize[0] : " + neededFreeSpaceSize[0] + " isUploadValid[0] : " + isUploadValid[0] + " isEnough[0] : " + isEnough[0]);
                     if(//(isDuplicated == false) &&
-                             (isInDrive == false)){
+                            (isInDrive == false)){
                         androidItemsToUpload_hash.add(fileHash);
                         try {
                             Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
@@ -354,14 +355,14 @@ public class Upload {
                                 }
                             }
 
-                                fileMetadata.setParents(Collections.singletonList(folderId));
-                                System.out.println("folder id for upload is : " + folderId);
-                                if (mediaContent == null){
-                                    LogHandler.saveLog("media content is null in syncAndroidToDrive",true);
-                                }
-                                if (mediaContent == null){
-                                    LogHandler.saveLog("media content is null in syncAndroidToDrive",true);
-                                }
+                            fileMetadata.setParents(Collections.singletonList(folderId));
+                            System.out.println("folder id for upload is : " + folderId);
+                            if (mediaContent == null){
+                                LogHandler.saveLog("media content is null in syncAndroidToDrive",true);
+                            }
+                            if (mediaContent == null){
+                                LogHandler.saveLog("media content is null in syncAndroidToDrive",true);
+                            }
 
 //                            if (!isVideo(memeType)) {
                             String uploadFileId = "";
@@ -387,35 +388,35 @@ public class Upload {
 //                                    continue;
 //                                }
 
-                                if (uploadFileId == null | uploadFileId.isEmpty()) {
-                                    LogHandler.saveLog("Failed to upload " + fileName + " from Android to backup because it's null");
-                                } else {
-                                    LogHandler.saveLog("Uploading " + fileName +
-                                            " from android into backup account uploadId : " + uploadFileId, false);
+                            if (uploadFileId == null | uploadFileId.isEmpty()) {
+                                LogHandler.saveLog("Failed to upload " + fileName + " from Android to backup because it's null");
+                            } else {
+                                LogHandler.saveLog("Uploading " + fileName +
+                                        " from android into backup account uploadId : " + uploadFileId, false);
 
-                                    try {
-                                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems =
-                                                GoogleDrive.getMediaItems(driveBackupAccessToken);
-                                        for (DriveAccountInfo.MediaItem mediaItem : driveMediaItems) {
-                                            if (mediaItem.getHash().equals(fileHash)) {
-                                                isUploadValid[0] = true;
-                                                break;
-                                            }
+                                try {
+                                    ArrayList<DriveAccountInfo.MediaItem> driveMediaItems =
+                                            GoogleDrive.getMediaItems(driveBackupAccessToken);
+                                    for (DriveAccountInfo.MediaItem mediaItem : driveMediaItems) {
+                                        if (mediaItem.getHash().equals(fileHash)) {
+                                            isUploadValid[0] = true;
+                                            break;
                                         }
-                                    } catch (Exception e) {
-                                        LogHandler.saveLog("Failed to check if upload is done properly : " + e.getLocalizedMessage());
                                     }
-
-
-                                    MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
-                                            driveEmailAcoount[0], assetId, "sync", fileHash);
+                                } catch (Exception e) {
+                                    LogHandler.saveLog("Failed to check if upload is done properly : " + e.getLocalizedMessage());
                                 }
+
+
+                                MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
+                                        driveEmailAcoount[0], assetId, "sync", fileHash);
+                            }
 //                            }
 //                                  test[0]--;
-                            } catch(Exception e){
-                                System.out.println("Uploading android error inner: " + e.getLocalizedMessage());
-                                LogHandler.saveLog("Uploading android error inner: " + e.getMessage());
-                            }
+                        } catch(Exception e){
+                            System.out.println("Uploading android error inner: " + e.getLocalizedMessage());
+                            LogHandler.saveLog("Uploading android error inner: " + e.getMessage());
+                        }
                     }
                     else{
                         LogHandler.saveLog("Duplicated file in android was found: " + fileName,false);
@@ -664,7 +665,7 @@ public class Upload {
                 }
             }
 
-           return isFinished[0];
+            return isFinished[0];
         };
         Future<Boolean> future = executor.submit(backgroundDownloadTask);
         try{
@@ -766,8 +767,8 @@ public class Upload {
                         com.google.api.services.drive.model.File uploadFile =
                                 null;
                         if (service != null) {
-                                uploadFile = service.files()
-                                .create(fileMetadata, mediaContent[0]).setFields("id").execute();
+                            uploadFile = service.files()
+                                    .create(fileMetadata, mediaContent[0]).setFields("id").execute();
                         }else{
                             LogHandler.saveLog("Drive service is null");
                         }
@@ -808,7 +809,7 @@ public class Upload {
         ArrayList<String> uploadFileIds = null;
         Future<ArrayList<String>> futureFileIds = executor.submit(backgroundTaskUpload);
         try{
-           uploadFileIds = futureFileIds.get();
+            uploadFileIds = futureFileIds.get();
         }catch (Exception e){
             LogHandler.saveLog("Failed to get upload file id form background task upload: " + e.getLocalizedMessage());
         }
@@ -989,7 +990,7 @@ public class Upload {
         return android_items;
     }
 
-public static boolean isHashEqual(String fileHash,String driveFileId,String accessToken){
+    public static boolean isHashEqual(String fileHash,String driveFileId,String accessToken){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
             return executor.submit(() -> {

@@ -29,7 +29,7 @@ public class Sync {
         try{
             String userEmail = accountRow[0];
             String accessToken = accountRow[4];
-            String syncedAssetsFolderId = DBHelper.getSyncAssetsFolderIdFromDB(userEmail);
+            String syncedAssetsFolderId = GoogleDrive.createStashSyncedAssetsFolderInDrive(userEmail);
 
             double driveFreeSpace = calculateDriveFreeSpace(accountRow);
 
@@ -47,8 +47,8 @@ public class Sync {
     }
 
 
-    private static void syncAndroidFile(String[] androidRow, String userEmail, String accessToken,
-            double driveFreeSpace, double amountSpaceToFreeUp, Context context){
+    private static void syncAndroidFile(String[] androidRow, String userEmail, String accessToken, String syncedAssetsFolderId,
+                                        double driveFreeSpace, double amountSpaceToFreeUp, Context context){
         try{
             String fileName = androidRow[1];
             String fileHash = androidRow[5];
@@ -62,7 +62,7 @@ public class Sync {
                     InternetManager.getInternetStatus(context).equals("data") && isDataSwitchOn)){
                 if (!DBHelper.androidFileExistsInDrive(assetId, fileHash)){
                     if(driveFreeSpace > Double.parseDouble(fileSize)) {
-                        boolean isBackedUp = uploadAndroidToDrive(androidRow, userEmail, accessToken);
+                        boolean isBackedUp = uploadAndroidToDrive(androidRow, userEmail, accessToken, syncedAssetsFolderId);
                         if (isBackedUp) {
                             driveFreeSpace -= Double.parseDouble(fileSize);
                             if(amountSpaceToFreeUp > 0){
@@ -94,8 +94,6 @@ public class Sync {
             LogHandler.saveLog("Failed to sync android file: " + e.getLocalizedMessage());
         }
     }
-
-
 
     private static boolean uploadAndroidToDrive(String[] androidRow, String userEmail
             , String accessToken, String syncedAssetsFolderId){
@@ -184,8 +182,6 @@ public class Sync {
         }
     }
 }
-
-
 
 //--------------------------lets go for next comment code (google photos is here)--------------------------------
 

@@ -1384,41 +1384,5 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-
-    public static String getSyncAssetsFolderIdFromDB(String userEmail){
-        String syncAssetsFolderId = "";
-        String sqlQuery = "SELECT folderId FROM ACCOUNTS WHERE userEmail = ?";
-        Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery,new String[]{userEmail});
-        try{
-            if(cursor != null && cursor.moveToFirst()){
-                int folderIdColumnIndex = cursor.getColumnIndex("folderId");
-                if(folderIdColumnIndex >= 0){
-                    syncAssetsFolderId = cursor.getString(folderIdColumnIndex);
-                }
-            }
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to get folderId from accounts : " + e.getLocalizedMessage(), true);
-        }finally {
-            if(cursor != null){
-                cursor.close();
-            }
-        }
-        if (syncAssetsFolderId == null || syncAssetsFolderId == ""){
-            syncAssetsFolderId = GoogleDrive.createStashSyncedAssetsFolderInDrive(userEmail);
-        }
-        return syncAssetsFolderId;
-    }
-
-    public static void updateSyncAssetsFolderIdInDB(String userEmail, String syncAssetsFolderId){
-        try{
-            String insertFolderIdIntoAccounts = "UPDATE ACCOUNTS SET folderId = ? WHERE userEmail = ?";
-            MainActivity.dbHelper.getWritableDatabase().beginTransaction();
-            MainActivity.dbHelper.getWritableDatabase().execSQL(insertFolderIdIntoAccounts,new String[]{syncAssetsFolderId, userEmail});
-            MainActivity.dbHelper.getWritableDatabase().setTransactionSuccessful();
-            MainActivity.dbHelper.getWritableDatabase().endTransaction();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to update fileId in account: " + e.getLocalizedMessage(), true);
-        }
-    }
     // syncAssetsFolder = upload , download , exists ,
 }
