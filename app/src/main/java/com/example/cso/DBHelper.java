@@ -145,12 +145,11 @@ public class DBHelper extends SQLiteOpenHelper {
                     " FROM " + table + ";";
             dbWritable.execSQL(createNewTableQuery);
 
-            String copyDataQuery = "INSERT INTO temp_table (" + columnList + ") " +
-                    "SELECT " + columnList + " FROM " + table + ";";
-            dbWritable.execSQL(copyDataQuery);
+//            String copyDataQuery = "INSERT INTO temp_table (" + columnList + ") " +
+//                    "SELECT " + columnList + " FROM " + table + ";";
+//            dbWritable.execSQL(copyDataQuery);
 
-            String dropOldTableQuery = "DROP TABLE " + table + ";";
-            dbWritable.execSQL(dropOldTableQuery);
+            dropTable(table);
 
             String renameTableQuery = "ALTER TABLE temp_table RENAME TO " + table + ";";
             dbWritable.execSQL(renameTableQuery);
