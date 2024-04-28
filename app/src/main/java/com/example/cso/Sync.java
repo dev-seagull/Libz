@@ -8,8 +8,8 @@ import java.util.List;
 public class Sync {
     public static void syncAndroidFiles(Context context){
         try{
-            StorageHandler storageHandler = new StorageHandler();
-            double amountSpaceToFreeUp = storageHandler.getAmountSpaceToFreeUp();
+            MainActivity.storageHandler.freeStorageUpdater();
+            double amountSpaceToFreeUp = MainActivity.storageHandler.getAmountSpaceToFreeUp();
 
             String[] selected_accounts_columns = {"userEmail","type", "totalStorage","usedStorage", "accessToken"};
             List<String[]> account_rows = DBHelper.getAccounts(selected_accounts_columns);
@@ -38,6 +38,7 @@ public class Sync {
             List<String[]> sortedAndroidFiles = getSortedAndroidFiles();
 
             for (String[] androidRow : sortedAndroidFiles) {
+                MainActivity.storageHandler.freeStorageUpdater();
                 syncAndroidFile(androidRow, userEmail, accessToken, syncedAssetsFolderId,
                         driveFreeSpace, amountSpaceToFreeUp, context);
             }

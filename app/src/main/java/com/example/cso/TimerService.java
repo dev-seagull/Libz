@@ -122,7 +122,7 @@ public class TimerService extends Service {
 
         final Thread[] updateAndroidFilesThreadForService = {new Thread(() -> {Android.getGalleryMediaItems(MainActivity.activity);})};
 
-        final Thread[] storageUpdaterThreadForService = {new Thread(() -> {MainActivity.storageHandler.storageUpdater();})};
+        final Thread[] storageUpdaterThreadForService = {new Thread(() -> {MainActivity.storageHandler.freeStorageUpdater();})};
 
         final Thread[] deleteRedundantDriveThreadForService = {new Thread(() -> {
 

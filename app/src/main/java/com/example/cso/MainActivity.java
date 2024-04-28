@@ -109,7 +109,9 @@
 //                    Build.VERSION_CODES.M, false);
 
             preferences = getPreferences(Context.MODE_PRIVATE);
-            dbHelper = new DBHelper(this);
+            dbHelper = new DBHelper(this,"StashDatabase");
+            DBHelper oldDBHelper = new DBHelper(this, "CSODatabase");
+            oldDBHelper.copyDataFromOldToNew(dbHelper);
             LogHandler.saveLog("salam",true);
             LogHandler.actionOnLogFile();
             LogHandler.saveLog("salam2",true);

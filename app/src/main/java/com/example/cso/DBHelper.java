@@ -1,5 +1,6 @@
 package com.example.cso;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
@@ -26,12 +27,13 @@ import java.util.concurrent.Future;
 
 public class DBHelper extends SQLiteOpenHelper {
     private static final String OLD_DATABASE_NAME = "CSODatabase";
-    public static final int DATABASE_VERSION = 11;
+    private static final String NEW_DATABASE_NAME =  "StashDatabase";
+    public static final int DATABASE_VERSION = 12;
     public static SQLiteDatabase dbReadable;
     public static SQLiteDatabase dbWritable;
 
-    public DBHelper(Context context) {
-        super(context, OLD_DATABASE_NAME, null, DATABASE_VERSION);
+    public DBHelper(Context context, String databaseName) {
+        super(context, databaseName, null, DATABASE_VERSION);
         dbReadable = getReadableDatabase();
         dbWritable = getWritableDatabase();
         onCreate(getWritableDatabase());
@@ -123,6 +125,46 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
+    }
+
+    public void copyDataFromOldToNew(DBHelper newDBHelper){
+        String[] tableNames = {"ACCOUNTS", "DEVICE", "ASSET", "BACKUPDB", "DRIVE", "ANDROID", "PHOTOS", "ERRORS", "TRANSACTIONS"};
+        SQLiteDatabase oldDatabase = getReadableDatabase();
+        for (String tableName : tableNames) {
+            String selectQuery = "SELECT * FROM " + tableName;
+            Cursor cursor = oldDatabase.rawQuery(selectQuery, null);
+
+            newDBHelper.getWritableDatabase().beginTransaction();
+            try {
+                while (cursor.moveToNext()) {
+                    ContentValues values = new ContentValues();
+                    // Map column names to values
+                    for (int i = 0; i < cursor.getColumnCount(); i++) {
+                        String columnName = cursor.getColumnName(i);
+                        switch (cursor.getType(i)) {
+                            case Cursor.FIELD_TYPE_INTEGER:
+                                values.put(columnName, cursor.getInt(i));
+                                break;
+                            case Cursor.FIELD_TYPE_FLOAT:
+                                values.put(columnName, cursor.getFloat(i));
+                                break;
+                            case Cursor.FIELD_TYPE_STRING:
+                                values.put(columnName, cursor.getString(i));
+                                break;
+                            // Handle other data types if necessary
+                        }
+                    }
+                    // Insert data into the corresponding table in the new database
+                    newDBHelper.getWritableDatabase().insert(tableName, null, values);
+                }
+                newDBHelper.getWritableDatabase().setTransactionSuccessful();
+            } catch (Exception e) {
+                LogHandler.saveLog( "Error copying data from " + tableName + ": " + e.getMessage(), true);
+            } finally {
+                newDBHelper.getWritableDatabase().endTransaction();
+                cursor.close();
+            }
+        }
     }
 
     public static void removeColumn(String column, String table) {
