@@ -116,7 +116,7 @@
                             os.write(input, 0, input.length);
                         }
                     }
-                    connection.getResponseCode();//dont delete this line , it is important
+                    connection.getResponseCode();//don't delete this line , it is important
                     System.out.println("responseCode of signOut " + connection.getResponseCode());
                     connection.disconnect();
                     boolean isAccessTokenValid = isAccessTokenValid(accessTokens[0]);
@@ -290,7 +290,7 @@
                     storage = getStorage(tokens);
                     mediaItems = GoogleDrive.getMediaItems(tokens.getAccessToken());
                     if (userEmail != null && tokens.getRefreshToken() != null && tokens.getAccessToken() != null) {
-                        return new signInResult(userEmail, true, isInAccounts,
+                        return new signInResult(userEmail, true, false,
                                 tokens, storage, mediaItems);
                     }
                 }else {

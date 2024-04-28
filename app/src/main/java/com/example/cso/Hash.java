@@ -1,7 +1,5 @@
 package com.example.cso;
 
-import android.content.Context;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -65,5 +63,4 @@ public class Hash {
         }
         return hexString.toString();
     }
-
 }

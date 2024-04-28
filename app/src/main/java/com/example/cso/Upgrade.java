@@ -33,10 +33,8 @@ public class Upgrade {
                     break;
                 case 17:
                     upgrade_17_to_18();
-                    break;
                 case 18:
                     upgrade_18_to_19();
-                    break;
                 default:
                     lastVersion();
             }

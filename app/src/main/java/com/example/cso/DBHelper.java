@@ -41,7 +41,6 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         String ACCOUNTS = "CREATE TABLE IF NOT EXISTS ACCOUNTS("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                +"profileId INTEGER ,"
                 +"userEmail TEXT ," +
                 "type TEXT CHECK (type IN ('primary','backup')), " +
                 "refreshToken TEXT, " +
@@ -49,16 +48,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 "totalStorage REAL," +
                 "usedStorage REAL," +
                 "usedInDriveStorage REAL,"+
-                "UsedInGmailAndPhotosStorage REAL," +
-                "FOREIGN KEY (profileId) REFERENCES PROFILE(id));";
+                "UsedInGmailAndPhotosStorage REAL);";
         sqLiteDatabase.execSQL(ACCOUNTS);
-
-        String PROFILE = "CREATE TABLE IF NOT EXISTS PROFILE(" +
-            "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-            "userName TEXT ," +
-            "password TEXT," +
-            "joined DATE);";
-        sqLiteDatabase.execSQL(PROFILE);
 
         String DEVICE = "CREATE TABLE IF NOT EXISTS DEVICE("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -182,7 +173,7 @@ public class DBHelper extends SQLiteOpenHelper {
         long lastInsertedId = -1;
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ASSET WHERE fileHash = ?)";
         Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{fileHash});
-        Boolean existsInAsset = false;
+        boolean existsInAsset = false;
         try{
            if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
@@ -210,14 +201,18 @@ public class DBHelper extends SQLiteOpenHelper {
                 dbWritable.endTransaction();
             }
         }
-        sqlQuery = "SELECT id FROM ASSET WHERE fileHash = ?;";
-        Cursor cursor2 = dbReadable.rawQuery(sqlQuery, new String[]{fileHash});
-        if(cursor2 != null && cursor2.moveToFirst()){
-            lastInsertedId = cursor2.getInt(0);
-        }else{
-            LogHandler.saveLog("Failed to find the existing file id in Asset database.", true);
+        try{
+            sqlQuery = "SELECT id FROM ASSET WHERE fileHash = ?;";
+            Cursor cursor2 = dbReadable.rawQuery(sqlQuery, new String[]{fileHash});
+            if(cursor2 != null && cursor2.moveToFirst()){
+                lastInsertedId = cursor2.getInt(0);
+            }else{
+                LogHandler.saveLog("Failed to find the existing file id in Asset database.", true);
+            }
+            cursor2.close();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed select asset id from asset table: " + e.getLocalizedMessage());
         }
-        cursor2.close();
         return lastInsertedId;
     }
 
@@ -252,7 +247,7 @@ public class DBHelper extends SQLiteOpenHelper {
                             existsInDatabase = assetExistsInDatabase(assetId);
                         }
 
-                        if (existsInDatabase == false) {
+                        if (!existsInDatabase) {
                             dbWritable.beginTransaction();
                             try {
                                 sqlQuery = "DELETE FROM ASSET WHERE id = ? ";
@@ -277,8 +272,7 @@ public class DBHelper extends SQLiteOpenHelper {
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
                 "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
                 "OR EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId, assetId, assetId});
-        try {
+        try (Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{assetId, assetId, assetId})) {
             if (cursor != null && cursor.moveToFirst()) {
                 int result = cursor.getInt(0);
                 if (result == 1) {
@@ -287,36 +281,28 @@ public class DBHelper extends SQLiteOpenHelper {
             }
         } catch (Exception e) {
             LogHandler.saveLog("Failed to check if the data exists in Database : " + e.getLocalizedMessage());
-        }finally {
-            if(cursor != null){
-                cursor.close();
-            }
         }
         return existsInDatabase;
     }
 
     public void insertIntoPhotosTable(Long assetId, String fileId,String fileName, String fileHash,
                                      String userEmail, String creationTime, String baseUrl){
-        String sqlQuery = "";
-        Boolean existsInPhotos = false;
-        sqlQuery = "SELECT EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?" +
+        boolean existsInPhotos = false;
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?" +
                 " and fileHash = ? and fileId =? and userEmail = ?)";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId),
-                fileHash, fileId, userEmail});
-        try{
-            if(cursor != null && cursor.moveToFirst()){
+        try (Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{String.valueOf(assetId),
+                fileHash, fileId, userEmail})) {
+            if (cursor != null && cursor.moveToFirst()) {
                 int result = cursor.getInt(0);
-                if(result == 1){
+                if (result == 1) {
                     existsInPhotos = true;
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             LogHandler.saveLog("Failed to select from PHOTOS in " +
                     "insertIntoPhotosTable method: " + e.getLocalizedMessage());
-        }finally {
-            cursor.close();
         }
-        if(existsInPhotos == false){
+        if(!existsInPhotos){
             dbWritable.beginTransaction();
             try{
                 sqlQuery = "INSERT INTO PHOTOS (" +
@@ -327,7 +313,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         "creationTime, " +
                         "fileHash, " +
                         "baseUrl) VALUES (?,?,?,?,?,?,?)";
-                Object[] values = new Object[]{assetId,fileId,
+                   Object[] values = new Object[]{assetId,fileId,
                         fileName,userEmail,creationTime,fileHash,baseUrl};
                 dbWritable.execSQL(sqlQuery, values);
                 dbWritable.setTransactionSuccessful();

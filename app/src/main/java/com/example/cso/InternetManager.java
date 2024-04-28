@@ -64,7 +64,7 @@ public class InternetManager {
     public static boolean isConnectedToVPN(Context context){
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (connectivityManager != null) {
-            NetworkCapabilities capabilities = null;
+            NetworkCapabilities capabilities =  null;
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
                 capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.getActiveNetwork());
             }else{
