@@ -39,6 +39,10 @@ public class Upgrade {
                     break;
                 case 19 :
                     upgrade_19_to_20();
+                    break;
+                case 20 :
+                    upgrade_20_to_21();
+                    break;
                 default:
                     lastVersion();
             }
@@ -103,8 +107,13 @@ public class Upgrade {
     public static void upgrade_19_to_20(){
         DBHelper.removeColumn("profileId","ACCOUNTS");
         DBHelper.dropTable("PROFILE");
+        upgrade_20_to_21();
     }
 
+    public static void upgrade_20_to_21(){
+        DBHelper oldDBHelper = new DBHelper(MainActivity.activity.getApplicationContext(), "CSODatabase");
+        oldDBHelper.copyDataFromOldToNew(MainActivity.dbHelper);
+    }
 
     public static void dropProfileIdColumn() {
         SQLiteDatabase db = MainActivity.dbHelper.getWritableDatabase();
