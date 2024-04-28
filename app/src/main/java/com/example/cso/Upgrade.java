@@ -33,8 +33,12 @@ public class Upgrade {
                     break;
                 case 17:
                     upgrade_17_to_18();
+                    break;
                 case 18:
                     upgrade_18_to_19();
+                    break;
+                case 19 :
+                    upgrade_19_to_20();
                 default:
                     lastVersion();
             }
@@ -93,9 +97,14 @@ public class Upgrade {
 
     public static void upgrade_18_to_19(){
         DBHelper.removeColumn("folderId","ACCOUNTS");
+        upgrade_19_to_20();
+    }
+
+    public static void upgrade_19_to_20(){
         DBHelper.removeColumn("profileId","ACCOUNTS");
         DBHelper.dropTable("PROFILE");
     }
+
 
     public static void dropProfileIdColumn() {
         SQLiteDatabase db = MainActivity.dbHelper.getWritableDatabase();
