@@ -3,9 +3,8 @@ package com.example.cso;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteConstraintException;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
+
+
 import android.text.TextUtils;
 
 import com.google.api.client.http.ByteArrayContent;
@@ -25,6 +24,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+
+//import android.database.sqlite.SQLiteConstraintException;
+//import android.database.sqlite.SQLiteDatabase;
+//import android.database.sqlite.SQLiteOpenHelper;
+import net.sqlcipher.database.SQLiteDatabase;
+import net.sqlcipher.database.SQLiteOpenHelper;
+
+import net.sqlcipher.database.SQLiteStatement;
+import net.sqlcipher.database.SQLiteQueryBuilder;
+import net.sqlcipher.DefaultDatabaseErrorHandler;
+import net.sqlcipher.database.SQLiteDatabase;
+
+
 public class DBHelper extends SQLiteOpenHelper {
     private static final String OLD_DATABASE_NAME = "CSODatabase";
     private static final String NEW_DATABASE_NAME =  "StashDatabase";
@@ -32,11 +44,15 @@ public class DBHelper extends SQLiteOpenHelper {
     public static SQLiteDatabase dbReadable;
     public static SQLiteDatabase dbWritable;
 
+    private static final String ENCRYPTION_KEY = "stash";
+
+
     public DBHelper(Context context, String databaseName) {
         super(context, databaseName, null, DATABASE_VERSION);
-        dbReadable = getReadableDatabase();
-        dbWritable = getWritableDatabase();
-        onCreate(getWritableDatabase());
+        SQLiteDatabase.loadLibs(context);
+        dbReadable = getReadableDatabase(ENCRYPTION_KEY);
+        dbWritable = getWritableDatabase(ENCRYPTION_KEY);
+        onCreate(getWritableDatabase(ENCRYPTION_KEY));
     }
 
     @Override
@@ -129,12 +145,12 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public void copyDataFromOldToNew(DBHelper newDBHelper){
         String[] tableNames = {"ACCOUNTS", "DEVICE", "ASSET", "BACKUPDB", "DRIVE", "ANDROID", "PHOTOS", "ERRORS", "TRANSACTIONS"};
-        SQLiteDatabase oldDatabase = getReadableDatabase();
+        SQLiteDatabase oldDatabase = getReadableDatabase(ENCRYPTION_KEY);
         for (String tableName : tableNames) {
             String selectQuery = "SELECT * FROM " + tableName;
             Cursor cursor = oldDatabase.rawQuery(selectQuery, null);
 
-            newDBHelper.getWritableDatabase().beginTransaction();
+            newDBHelper.getWritableDatabase(ENCRYPTION_KEY).beginTransaction();
             try {
                 while (cursor.moveToNext()) {
                     ContentValues values = new ContentValues();
@@ -155,13 +171,13 @@ public class DBHelper extends SQLiteOpenHelper {
                         }
                     }
                     // Insert data into the corresponding table in the new database
-                    newDBHelper.getWritableDatabase().insert(tableName, null, values);
+                    newDBHelper.getWritableDatabase(ENCRYPTION_KEY).insert(tableName, null, values);
                 }
-                newDBHelper.getWritableDatabase().setTransactionSuccessful();
+                newDBHelper.getWritableDatabase(ENCRYPTION_KEY).setTransactionSuccessful();
             } catch (Exception e) {
                 LogHandler.saveLog( "Error copying data from " + tableName + ": " + e.getMessage(), true);
             } finally {
-                newDBHelper.getWritableDatabase().endTransaction();
+                newDBHelper.getWritableDatabase(ENCRYPTION_KEY).endTransaction();
                 cursor.close();
             }
         }
@@ -284,7 +300,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         boolean existsInDatabase = false;
                         String assetId = "";
                         if (assetIdColumnIndex >= 0) {
-                            dbReadable = getReadableDatabase();
+                            dbReadable = getReadableDatabase(ENCRYPTION_KEY);
                             assetId = cursor.getString(assetIdColumnIndex);
                             existsInDatabase = assetExistsInDatabase(assetId);
                         }
@@ -722,7 +738,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
         boolean existsInDatabase = assetExistsInDatabase(assetId);
         if (existsInDatabase == false) {
-            dbWritable = getWritableDatabase();
+            dbWritable = getWritableDatabase(ENCRYPTION_KEY);
             dbWritable.beginTransaction();
             try {
                 sqlQuery = "DELETE FROM ASSET WHERE id = ? ";
@@ -1027,7 +1043,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public List<String> backUpDataBase(Context context) {
 
-        String dataBasePath = context.getDatabasePath("CSODatabase").getPath();
+        String dataBasePath = context.getDatabasePath(NEW_DATABASE_NAME).getPath();
         final String[] userEmail = {""};
         final String[] uploadFileId = new String[1];
 
@@ -1074,7 +1090,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
                 com.google.api.services.drive.model.File fileMetadata =
                             new com.google.api.services.drive.model.File();
-                fileMetadata.setName("StashDatabase.db");
+                fileMetadata.setName(NEW_DATABASE_NAME + ".db");
                 fileMetadata.setParents(java.util.Collections.singletonList(backupDbFolderId));
 
                 File androidFile = new File(dataBasePath);
@@ -1100,6 +1116,7 @@ public class DBHelper extends SQLiteOpenHelper {
             } catch (Exception e) {
                 LogHandler.saveLog("Failed to upload database from Android to backup : " + e.getLocalizedMessage());
             }
+            System.out.println("i reach here in backupDatabase");
             return uploadFileId[0];
         };
         Future<String> future = executor.submit(uploadTask);
@@ -1256,13 +1273,15 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, new Object[]{deviceName, totalSpace, freeSpace});
             dbWritable.setTransactionSuccessful();
             return true;
-        }catch (SQLiteConstraintException e1){
-            updateDeviceTable(deviceName, totalSpace, freeSpace);
-            e1.printStackTrace();
-            return true;
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to insert into DEVICE table : " + e.getLocalizedMessage());
-            return false;
+        }catch (Exception e1){
+            if (e1.getLocalizedMessage().contains("no such table")){ //note
+                updateDeviceTable(deviceName, totalSpace, freeSpace);
+                e1.printStackTrace();
+                return true;
+            }else{
+                LogHandler.saveLog("Failed to insert into DEVICE table : " + e1.getLocalizedMessage());
+                return false;
+            }
         }finally {
             dbWritable.endTransaction();
         }
@@ -1323,7 +1342,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public String getPhotosAndVideosStorage(){
         createIndex();
         double sum = 0.0;
-        SQLiteDatabase db = getReadableDatabase();
+        SQLiteDatabase db = getReadableDatabase(ENCRYPTION_KEY);
         String query = "SELECT SUM(fileSize) FROM ANDROID";
         Cursor cursor = db.rawQuery(query, null);
 
@@ -1341,7 +1360,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public void createIndex() {
-        SQLiteDatabase db = getWritableDatabase();
+        SQLiteDatabase db = getWritableDatabase(ENCRYPTION_KEY);
         try {
             db.execSQL("CREATE INDEX IF NOT EXISTS fileSize_index ON ANDROID(fileSize)");
         } catch (Exception e) {
