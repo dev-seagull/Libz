@@ -29,6 +29,7 @@ import java.util.concurrent.Future;
 //import android.database.sqlite.SQLiteDatabase;
 //import android.database.sqlite.SQLiteOpenHelper;
 import net.sqlcipher.database.SQLiteDatabase;
+import net.sqlcipher.database.SQLiteDatabaseHook;
 import net.sqlcipher.database.SQLiteOpenHelper;
 
 import net.sqlcipher.database.SQLiteStatement;
@@ -39,7 +40,7 @@ import net.sqlcipher.database.SQLiteDatabase;
 
 public class DBHelper extends SQLiteOpenHelper {
     private static final String OLD_DATABASE_NAME = "CSODatabase";
-    private static final String NEW_DATABASE_NAME =  "StashDatabase";
+    public static final String NEW_DATABASE_NAME =  "StashDatabase";
     public static final int DATABASE_VERSION = 12;
     public static SQLiteDatabase dbReadable;
     public static SQLiteDatabase dbWritable;
@@ -49,10 +50,11 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context, String databaseName) {
         super(context, databaseName, null, DATABASE_VERSION);
+        SQLiteDatabase sqLiteDatabase = InitializeSQLCipher(context);
         SQLiteDatabase.loadLibs(context);
-        dbReadable = getReadableDatabase(ENCRYPTION_KEY);
-        dbWritable = getWritableDatabase(ENCRYPTION_KEY);
-        onCreate(getWritableDatabase(ENCRYPTION_KEY));
+        dbReadable = sqLiteDatabase;
+        dbWritable = sqLiteDatabase;
+        onCreate(sqLiteDatabase);
     }
 
     @Override
@@ -1367,4 +1369,51 @@ public class DBHelper extends SQLiteOpenHelper {
             LogHandler.saveLog("Failed to create index: " + e.getLocalizedMessage(), true);
         }
     }
+
+
+    public void exportDecryptedDatabase(String exportPath) {
+//        File file = new File(exportPath);
+        SQLiteDatabase encryptedDatabase = getWritableDatabase(ENCRYPTION_KEY);
+//        System.out.println("exportPath : "+ exportPath +" "+ file.exists());
+        encryptedDatabase.rawExecSQL(String.format("ATTACH DATABASE '%s' AS plaintext KEY '';", exportPath));
+        encryptedDatabase.rawExecSQL("SELECT sqlcipher_export('plaintext')");
+
+        Cursor cursor = encryptedDatabase.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null);
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                String tableName = cursor.getString(0);
+                System.out.println("Table Name: " + tableName);
+            }
+            cursor.close();
+        }
+
+        encryptedDatabase.rawExecSQL("DETACH DATABASE plaintext");
+    }
+
+
+    private SQLiteDatabase InitializeSQLCipher(Context context) {
+        System.loadLibrary("sqlcipher");
+
+        File databaseFile = context.getDatabasePath(NEW_DATABASE_NAME+".db");
+        databaseFile.mkdirs();
+
+        SQLiteDatabaseHook hook = new SQLiteDatabaseHook() {
+            @Override
+            public void preKey(SQLiteDatabase sqLiteDatabase) {
+
+            }
+
+            @Override
+            public void postKey(SQLiteDatabase sqLiteDatabase) {
+
+            }
+        };
+
+
+        SQLiteDatabase database = SQLiteDatabase.openOrCreateDatabase(
+                databaseFile, ENCRYPTION_KEY, null, hook);
+        return database;
+    }
+
+
 }

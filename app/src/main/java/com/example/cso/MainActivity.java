@@ -47,6 +47,8 @@
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
 
+    import net.sqlcipher.database.SQLiteDatabase;
+
     import java.util.ArrayList;
     import java.util.Arrays;
     import java.util.HashMap;
@@ -439,6 +441,11 @@
         protected void onStart(){
             super.onStart();
             dbHelper.backUpDataBase(getApplicationContext());
+            System.out.println("before database decryption");
+            String exportPath = getDatabasePath(DBHelper.NEW_DATABASE_NAME + "1.db").getPath();
+//            SQLiteDatabase ss= dbHelper.openEncryptedDatabase(getApplicationContext(),DBHelper.NEW_DATABASE_NAME);
+            dbHelper.exportDecryptedDatabase(exportPath);
+            System.out.println("after database decryption");
             signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                     result -> {
                         if(result.getResultCode() == RESULT_OK){
