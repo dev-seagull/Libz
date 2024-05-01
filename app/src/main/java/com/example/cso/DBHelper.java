@@ -3,14 +3,16 @@ package com.example.cso;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-
-
 import android.text.TextUtils;
 
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
+
+import net.sqlcipher.database.SQLiteDatabase;
+import net.sqlcipher.database.SQLiteDatabaseHook;
+import net.sqlcipher.database.SQLiteOpenHelper;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -25,19 +27,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 
-//import android.database.sqlite.SQLiteConstraintException;
-//import android.database.sqlite.SQLiteDatabase;
-//import android.database.sqlite.SQLiteOpenHelper;
-import net.sqlcipher.database.SQLiteDatabase;
-import net.sqlcipher.database.SQLiteDatabaseHook;
-import net.sqlcipher.database.SQLiteOpenHelper;
-
-import net.sqlcipher.database.SQLiteStatement;
-import net.sqlcipher.database.SQLiteQueryBuilder;
-import net.sqlcipher.DefaultDatabaseErrorHandler;
-import net.sqlcipher.database.SQLiteDatabase;
-
-
 public class DBHelper extends SQLiteOpenHelper {
     private static final String OLD_DATABASE_NAME = "CSODatabase";
     public static final String NEW_DATABASE_NAME =  "StashDatabase";
@@ -50,11 +39,10 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context, String databaseName) {
         super(context, databaseName, null, DATABASE_VERSION);
-        SQLiteDatabase sqLiteDatabase = InitializeSQLCipher(context);
         SQLiteDatabase.loadLibs(context);
-        dbReadable = sqLiteDatabase;
-        dbWritable = sqLiteDatabase;
-        onCreate(sqLiteDatabase);
+        dbReadable = getReadableDatabase(ENCRYPTION_KEY);
+        dbWritable = getReadableDatabase(ENCRYPTION_KEY);
+        onCreate(getWritableDatabase(ENCRYPTION_KEY));
     }
 
     @Override
@@ -1392,26 +1380,18 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
     private SQLiteDatabase InitializeSQLCipher(Context context) {
-        System.loadLibrary("sqlcipher");
-
         File databaseFile = context.getDatabasePath(NEW_DATABASE_NAME+".db");
-        databaseFile.mkdirs();
 
         SQLiteDatabaseHook hook = new SQLiteDatabaseHook() {
             @Override
-            public void preKey(SQLiteDatabase sqLiteDatabase) {
-
-            }
+            public void preKey(SQLiteDatabase sqLiteDatabase) {}
 
             @Override
-            public void postKey(SQLiteDatabase sqLiteDatabase) {
-
-            }
+            public void postKey(SQLiteDatabase sqLiteDatabase) {}
         };
 
 
-        SQLiteDatabase database = SQLiteDatabase.openOrCreateDatabase(
-                databaseFile, ENCRYPTION_KEY, null, hook);
+        SQLiteDatabase database = SQLiteDatabase.openOrCreateDatabase(databaseFile.getPath(), ENCRYPTION_KEY,null,null);
         return database;
     }
 

@@ -39,7 +39,7 @@ public class UIHandler {
             SharedPreferencesHandler.setSwitchState("wifiSwitchState", false, MainActivity.preferences);
             MainActivity.activity.runOnUiThread(() -> {
                 wifiSwitchMaterialButton.setChecked(false);
-                wifiSwitchMaterialButton.setThumbTintList(UIHelper.disabledSwitchMaterialThunm);
+                wifiSwitchMaterialButton.setThumbTintList(UIHelper.disabledSwitchMaterialThumb);
                 wifiSwitchMaterialButton.setTrackTintList(UIHelper.disabledSwitchMaterialTrack);
             });
             wifiSwitchMaterialButton.setEnabled(false);
@@ -69,7 +69,7 @@ public class UIHandler {
             SharedPreferencesHandler.setSwitchState("dataSwitchState", false, MainActivity.preferences);
             MainActivity.activity.runOnUiThread(() -> {
                 mobileDataSwitchMaterial.setChecked(false);
-                mobileDataSwitchMaterial.setThumbTintList(UIHelper.disabledSwitchMaterialThunm);
+                mobileDataSwitchMaterial.setThumbTintList(UIHelper.disabledSwitchMaterialThumb);
                 mobileDataSwitchMaterial.setTrackTintList(UIHelper.disabledSwitchMaterialTrack);
             });
             mobileDataSwitchMaterial.setEnabled(false);
@@ -97,9 +97,7 @@ public class UIHandler {
             View[] child = {backupButtonsLinearLayout.getChildAt(
                     backupButtonsLinearLayout.getChildCount() - 1)};
             activity.runOnUiThread(() ->
-            {
-                child[0].setClickable(false);
-            });
+                    child[0].setClickable(false));
         } catch (Exception e) {
             LogHandler.saveLog("Failed to set last back up button clickable false:" + e.getLocalizedMessage(), true);
         }
