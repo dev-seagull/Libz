@@ -3,6 +3,7 @@ package com.example.cso;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.text.TextUtils;
 
 import com.google.api.client.http.ByteArrayContent;
@@ -1378,22 +1379,17 @@ public class DBHelper extends SQLiteOpenHelper {
         encryptedDatabase.rawExecSQL("DETACH DATABASE plaintext");
     }
 
-
-    private SQLiteDatabase InitializeSQLCipher(Context context) {
-        File databaseFile = context.getDatabasePath(NEW_DATABASE_NAME+".db");
-
-        SQLiteDatabaseHook hook = new SQLiteDatabaseHook() {
-            @Override
-            public void preKey(SQLiteDatabase sqLiteDatabase) {}
-
-            @Override
-            public void postKey(SQLiteDatabase sqLiteDatabase) {}
-        };
-
-
-        SQLiteDatabase database = SQLiteDatabase.openOrCreateDatabase(databaseFile.getPath(), ENCRYPTION_KEY,null,null);
-        return database;
+    public static void deleteTableContent(String tableName){
+        try{
+            dbWritable.beginTransaction();
+            String deleteAndroidContent = "DELETE FROM "+tableName+" ;";
+            dbWritable.execSQL(deleteAndroidContent);
+            dbWritable.setTransactionSuccessful();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to delete Android table because in (deleteTableContent "+ tableName + ") : " + e.getLocalizedMessage());
+        }finally {
+            dbWritable.endTransaction();
+        }
     }
-
 
 }
