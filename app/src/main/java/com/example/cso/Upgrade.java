@@ -44,6 +44,9 @@ public class Upgrade {
                 case 22:
                     upgrade_22_to_23();
                     break;
+                case 23:
+                    upgrade_23_to_24();
+                    break;
                 default:
                     lastVersion();
             }
@@ -70,7 +73,8 @@ public class Upgrade {
         MainActivity.activity.runOnUiThread(() -> {
             Toast.makeText(MainActivity.activity, "You are upgraded to last version", Toast.LENGTH_SHORT).show();
         });
-        DBHelper.deleteTableContent("ACCOUNTS");
+//        MainActivity.dbHelper.deleteFromAccountsTable("stashdevteam","support");
+//        DBHelper.deleteTableContent("ACCOUNTS");
     }
 
 
@@ -123,6 +127,11 @@ public class Upgrade {
 
     public static void upgrade_22_to_23(){
         DBHelper.dropTable("ERRORS");
+        upgrade_23_to_24();
+    }
+
+    public static void upgrade_23_to_24(){
+        DBHelper.alterAccountsTableConstraint();
     }
 
 }

@@ -122,7 +122,7 @@
             if(dbHelper.DATABASE_VERSION < 11) {
                 LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
             }
-
+            dbHelper.insertSupportCredential();
 
             drawerLayout = findViewById(R.id.drawer_layout);
 //            Profile.test();
@@ -442,11 +442,11 @@
         protected void onStart(){
             super.onStart();
             dbHelper.backUpDataBase(getApplicationContext());
-            System.out.println("before database decryption");
-            String exportPath = getDatabasePath(DBHelper.NEW_DATABASE_NAME + "1.db").getPath();
-//            SQLiteDatabase ss= dbHelper.openEncryptedDatabase(getApplicationContext(),DBHelper.NEW_DATABASE_NAME);
-            dbHelper.exportDecryptedDatabase(exportPath);
-            System.out.println("after database decryption");
+//            System.out.println("before database decryption");
+//            String exportPath = getDatabasePath(DBHelper.NEW_DATABASE_NAME + "_decrypted.db").getPath();
+//            dbHelper.exportDecryptedDatabase(exportPath);
+//            System.out.println("after database decryption");
+
             signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                     result -> {
                         if(result.getResultCode() == RESULT_OK){
