@@ -1394,6 +1394,4 @@ public class DBHelper extends SQLiteOpenHelper {
         SQLiteDatabase database = SQLiteDatabase.openOrCreateDatabase(databaseFile.getPath(), ENCRYPTION_KEY,null,null);
         return database;
     }
-
-
 }

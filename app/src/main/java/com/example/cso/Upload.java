@@ -590,7 +590,7 @@ public class Upload {
                 "   WHERE fileHash = T.hash " +
                 ");";
 
-        Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidDeviceName});
+        Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidDeviceName});
         List<String[]> resultList = new ArrayList<>();
         if(cursor.moveToFirst() && cursor != null){
             do {
