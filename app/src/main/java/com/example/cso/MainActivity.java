@@ -117,10 +117,11 @@
             LogHandler.actionOnLogFile();
             LogHandler.saveLog("salam2",true);
             androidDeviceName = DeviceName.getDeviceName();
-//            Upgrade.versionHandler(preferences);
+            Upgrade.versionHandler(preferences);
             storageHandler = new StorageHandler();
-//            if(dbHelper.DATABASE_VERSION < 11) {
-//            LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
+            if(dbHelper.DATABASE_VERSION < 11) {
+                LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
+            }
 
 
             drawerLayout = findViewById(R.id.drawer_layout);
