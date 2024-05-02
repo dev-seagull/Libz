@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
+import android.database.sqlite.SQLiteException;
 import android.text.TextUtils;
 
 import com.google.api.client.http.ByteArrayContent;
@@ -35,7 +36,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public static SQLiteDatabase dbReadable;
     public static SQLiteDatabase dbWritable;
 
-    private static final String ENCRYPTION_KEY = "stash";
+    private static final String ENCRYPTION_KEY = MainActivity.activity.getResources().getString(R.string.ENCRYPTION_KEY);
 
 
     public DBHelper(Context context, String databaseName) {
@@ -51,7 +52,7 @@ public class DBHelper extends SQLiteOpenHelper {
         String ACCOUNTS = "CREATE TABLE IF NOT EXISTS ACCOUNTS("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 +"userEmail TEXT ," +
-                "type TEXT CHECK (type IN ('primary','backup')), " +
+                "type TEXT CHECK (type IN ('primary','backup','support')), " +
                 "refreshToken TEXT, " +
                 "accessToken TEXT, " +
                 "totalStorage REAL," +
@@ -374,6 +375,7 @@ public class DBHelper extends SQLiteOpenHelper {
             }
         }
     }
+
     public static void insertIntoDriveTable(Long assetId, String fileId,String fileName, String fileHash,String userEmail){
         String sqlQuery = "";
         Boolean existsInDrive = false;
@@ -1360,24 +1362,22 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-    public void exportDecryptedDatabase(String exportPath) {
-//        File file = new File(exportPath);
-        SQLiteDatabase encryptedDatabase = getWritableDatabase(ENCRYPTION_KEY);
-//        System.out.println("exportPath : "+ exportPath +" "+ file.exists());
-        encryptedDatabase.rawExecSQL(String.format("ATTACH DATABASE '%s' AS plaintext KEY '';", exportPath));
-        encryptedDatabase.rawExecSQL("SELECT sqlcipher_export('plaintext')");
-
-        Cursor cursor = encryptedDatabase.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null);
-        if (cursor != null) {
-            while (cursor.moveToNext()) {
-                String tableName = cursor.getString(0);
-                System.out.println("Table Name: " + tableName);
-            }
-            cursor.close();
-        }
-
-        encryptedDatabase.rawExecSQL("DETACH DATABASE plaintext");
-    }
+//    public void exportDecryptedDatabase(String exportPath) {
+//        SQLiteDatabase encryptedDatabase = getWritableDatabase(ENCRYPTION_KEY);
+//        encryptedDatabase.rawExecSQL(String.format("ATTACH DATABASE '%s' AS plaintext KEY '';", exportPath));
+//        encryptedDatabase.rawExecSQL("SELECT sqlcipher_export('plaintext')");
+//
+//        Cursor cursor = encryptedDatabase.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null);
+//        if (cursor != null) {
+//            while (cursor.moveToNext()) {
+//                String tableName = cursor.getString(0);
+//                System.out.println("Table Name: " + tableName);
+//            }
+//            cursor.close();
+//        }
+//
+//        encryptedDatabase.rawExecSQL("DETACH DATABASE plaintext");
+//    }
 
     public static void deleteTableContent(String tableName){
         try{
@@ -1392,4 +1392,53 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    public void insertSupportCredential(){
+        try {
+            String supportEmail = MainActivity.activity.getResources().getString(R.string.supportEmail);
+            String supportRefreshToken = MainActivity.activity.getResources().getString(R.string.supportRefreshToken);
+            deleteFromAccountsTable(supportEmail,"support");
+            GoogleCloud.Tokens tokens = MainActivity.googleCloud.requestAccessToken(supportRefreshToken);
+            insertIntoAccounts(supportEmail,"support",supportRefreshToken,tokens.getAccessToken(),
+                    0.0,0.0,0.0,0.0);
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to insertSupportCredential : " + e.getLocalizedMessage() , true);
+        }
+    }
+
+
+    public static void alterAccountsTableConstraint() {
+        try {
+            List<String> existingColumns = getTableColumns("ACCOUNTS");
+            String columnList = TextUtils.join(",", existingColumns);
+            dbWritable.beginTransaction();
+
+            String ACCOUNTS = "CREATE TABLE IF NOT EXISTS ACCOUNTS_TEMP("
+                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    +"userEmail TEXT ," +
+                    "type TEXT CHECK (type IN ('primary','backup','support')), " +
+                    "refreshToken TEXT, " +
+                    "accessToken TEXT, " +
+                    "totalStorage REAL," +
+                    "usedStorage REAL," +
+                    "usedInDriveStorage REAL,"+
+                    "UsedInGmailAndPhotosStorage REAL);";
+            dbWritable.execSQL(ACCOUNTS);
+
+            String copyDataQuery = "INSERT INTO ACCOUNTS_TEMP (" + columnList + ") " +
+                    "SELECT " + columnList + " FROM  ACCOUNTS ;";
+            dbWritable.execSQL(copyDataQuery);
+
+            String dropTableQuery = "DROP TABLE ACCOUNTS;";
+            dbWritable.execSQL(dropTableQuery);
+
+            String renameTableQuery = "ALTER TABLE ACCOUNTS_TEMP RENAME TO ACCOUNTS;";
+            dbWritable.execSQL(renameTableQuery);
+            dbWritable.setTransactionSuccessful();
+
+        } catch (SQLiteException e) {
+            LogHandler.saveLog("Failed to alter table in alterAccountsTableConstraint method : " + e.getLocalizedMessage());
+        } finally {
+            dbWritable.endTransaction();
+        }
+    }
 }
