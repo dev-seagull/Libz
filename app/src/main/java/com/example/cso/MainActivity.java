@@ -186,7 +186,7 @@
 
             serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
             new TimerService();//.onStartCommand(serviceIntent, Service.START_FLAG_REDELIVERY,1505);
-            HashMap<String,Double> dirHashMap = storageHandler.directoryUIDisplay();
+            HashMap<String,String> dirHashMap = storageHandler.directoryUIDisplay();
 
             runOnUiThread(() ->{
                 TextView deviceStorageTextView = findViewById(R.id.deviceStorage);
@@ -195,7 +195,7 @@
                 syncSwitchMaterialButton = findViewById(R.id.syncSwitchMaterial);
 
                 runOnUiThread(() -> {
-                    for (Map.Entry<String, Double> entry : dirHashMap.entrySet()) {
+                    for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
                         directoryUsages.append(entry.getKey() + ": " + entry.getValue() + " MB\n");
                     }
                 });
@@ -325,9 +325,9 @@
                 }
                 try{
                     runOnUiThread(() -> {
-                        deviceStorage.setText("Total space: " + storageHandler.getTotalStorage()+
-                                " GB\n" + "Free space: " + storageHandler.getFreeSpace()+ " GB\n" +
-                                "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n");
+                        deviceStorage.setText("Total : " + storageHandler.getTotalStorage()+
+                                " GB\n" + "Free : " + storageHandler.getFreeSpace()+ " GB\n" +
+                                "Videos and Photos : "  + dbHelper.getPhotosAndVideosStorage() + "\n");
                         displayDirectoriesUsagesButton.setVisibility(View.VISIBLE);
                         TextView directoriesUsages = findViewById(R.id.directoryUsages);
                         displayDirectoriesUsagesButton.setOnClickListener(view -> {
@@ -343,9 +343,8 @@
                         });
                         androidStatisticsTextView.setVisibility(View.VISIBLE);
                         int total_androidAssets_count = dbHelper.countAndroidAssets();
-                        androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
-                                "\n" + "Synced android assets: " +
-                                dbHelper.countAndroidSyncedAssets());
+                        androidStatisticsTextView.setText("Sync Status : " + dbHelper.countAndroidSyncedAssets() +
+                                " / " + total_androidAssets_count);
                     });
                 }catch (Exception e){
                     LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
@@ -403,16 +402,15 @@
 //                                }
                                 runOnUiThread(() -> {
                                     TextView deviceStorage = findViewById(R.id.deviceStorage);
-                                    deviceStorage.setText("Total space: " + storageHandler.getTotalStorage()+
-                                            " GB\n" + "Free space: " + storageHandler.getFreeSpace()+ " GB\n" +
-                                            "Videos and Photos space: "  + dbHelper.getPhotosAndVideosStorage() + "\n");
+                                    deviceStorage.setText("Total : " + storageHandler.getTotalStorage()+
+                                            " GB\n" + "Free : " + storageHandler.getFreeSpace()+ " GB\n" +
+                                            "Videos and Photos : "  + dbHelper.getPhotosAndVideosStorage() + "\n");
 
                                     TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
                                     androidStatisticsTextView.setVisibility(View.VISIBLE);
                                     int total_androidAssets_count = dbHelper.countAndroidAssets();
-                                    androidStatisticsTextView.setText("Android assets: " + total_androidAssets_count +
-                                            "\n" + "Synced android assets: " +
-                                            dbHelper.countAndroidSyncedAssets());
+                                    androidStatisticsTextView.setText("Sync Status : " + dbHelper.countAndroidSyncedAssets() +
+                                            " / " + total_androidAssets_count);
                                 });
                             }
                         }

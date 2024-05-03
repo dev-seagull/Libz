@@ -137,8 +137,8 @@ public class StorageHandler {
         return formattedResult;
     }
 
-    public static HashMap<String,Double> directoryUIDisplay(){
-        HashMap<String, Double> directoryMap = new HashMap<>();
+    public static HashMap<String,String> directoryUIDisplay(){
+        HashMap<String, String> directoryMap = new HashMap<>();
         try {
             File rootDirectory = Environment.getExternalStorageDirectory();
             System.out.println("Root Directory: " + rootDirectory);
@@ -147,7 +147,7 @@ public class StorageHandler {
 
             for (File file : rootFolder) {
                 if (file.isDirectory()) {
-                    directoryMap.put(file.getName(), 0.0);
+                    directoryMap.put(file.getName(), "0.0");
                     System.out.println("rootFolder: " + file.getName());
                 }
             }
@@ -158,19 +158,21 @@ public class StorageHandler {
                 String filePath = row[0];
                 double fileSize = Double.parseDouble(row[1]);
                 for (String directory : directoryMap.keySet()) {
-                    if (filePath.startsWith(rootDirectory+"/"+directory)) {
-                        double currentSize = directoryMap.get(directory);
-                        directoryMap.put(directory, currentSize + fileSize);
+                    if (filePath.startsWith(rootDirectory+"/"+directory+"/")) {
+                        double currentSize = Double.valueOf(directoryMap.get(directory));
+                        directoryMap.put(directory, String.valueOf(currentSize + fileSize));
                     }
                 }
             }
-            Iterator<Map.Entry<String, Double>> iterator = directoryMap.entrySet().iterator();
+            Iterator<Map.Entry<String, String>> iterator = directoryMap.entrySet().iterator();
             while (iterator.hasNext()) {
-                Map.Entry<String, Double> entry = iterator.next();
-                if (entry.getValue() == 0.0) {
+                Map.Entry<String, String> entry = iterator.next();
+                if (Double.valueOf(entry.getValue()) == 0.0) {
                     iterator.remove();
-                } else {
-                    entry.setValue(Double.valueOf(String.format("%.3f", entry.getValue())));
+                } else if (Double.valueOf(entry.getValue()) <= 1000.0) {
+                    entry.setValue("less than one Gigabyte");
+                }else {
+                    entry.setValue(String.format("%.3f", Double.valueOf(entry.getValue())));
                 }
             }
         }catch (Exception e){
