@@ -44,7 +44,15 @@ public class GoogleDrive {
         Callable<String> createFolderTask = () -> {
             String syncAssetsFolderId = null;
             try {
-                String driveBackupAccessToken = GoogleCloud.getAccessTokenOfAccount(userEmail);
+                List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","refreshToken"});
+                String driveBackupAccessToken = "";
+                for(String[] account_row: account_rows){
+                    String selectedUserEmail = account_row[0];
+                    if(selectedUserEmail.equals(userEmail)){
+                        String driveBackupRefreshToken = account_row[1];
+                        driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
+                    }
+                }
                 Drive service = initializeDrive(driveBackupAccessToken);
                 String folder_name = "stash_synced_assets";
                 syncAssetsFolderId = getStashSyncedAssetsFolderInDrive(service,folder_name);

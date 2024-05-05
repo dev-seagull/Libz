@@ -87,13 +87,15 @@ public class Profile {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<JsonObject> uploadTask = () -> {
             JsonObject result = null;
+            String driveBackupRefreshToken = "";
             String driveBackupAccessToken = "";
             try{
-                String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
+                String[] drive_backup_selected_columns = {"userEmail", "type", "refreshToken"};
                 List<String[]> drive_backUp_accounts = DBHelper.getAccounts(drive_backup_selected_columns);
                 for (String[] drive_backUp_account : drive_backUp_accounts) {
                     if (drive_backUp_account[1].equals("backup") && drive_backUp_account[0].equals(userEmail)) {
-                        driveBackupAccessToken = drive_backUp_account[2];
+                        driveBackupRefreshToken = drive_backUp_account[2];
+                        driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
                         break;
                     }
                 }
@@ -103,7 +105,7 @@ public class Profile {
 
             Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
 
-            String profileFolderId = get_StashUserProfile_DriveFolderId(service);
+            String profileFolderId = getDriveFolderId(service, "stash_user_profile");
 
             List<com.google.api.services.drive.model.File> files = GoogleDrive.getDriveFolderFiles(service, profileFolderId);
 
@@ -153,10 +155,9 @@ public class Profile {
         return resultJson;
     }
 
-    private static String get_StashUserProfile_DriveFolderId(Drive service){
+    private static String getDriveFolderId(Drive service, String folderName){
         String folderId = null;
-        String folder_name = "stash_user_profile";
-        String query = "mimeType='application/vnd.google-apps.folder' and name='" + folder_name + "' and trashed=false";
+        String query = "mimeType='application/vnd.google-apps.folder' and name='" + folderName + "' and trashed=false";
         try{
             FileList resultList = service.files().list()
                     .setQ(query)
@@ -250,24 +251,14 @@ public class Profile {
         Callable<Boolean> uploadTask = () -> {
             try {
                 String driveBackupAccessToken = "";
-                String[] selected_columns = {"userEmail", "type", "accessToken","refreshToken"};
+                String driveBackupRefreshToken = "";
+                String[] selected_columns = {"userEmail", "type","refreshToken"};
                 List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_columns);
                 for (String[] account_row : account_rows) {
-                    System.out.println("lmn " + account_row[0]);
                     if (account_row[1].equals("backup") && account_row[0].equals(userEmail)) {
-                        driveBackupAccessToken = account_row[2];
-                        try {
-                            if (!GoogleCloud.isAccessTokenValid(driveBackupAccessToken)) {
-                                GoogleCloud.Tokens tokens = MainActivity.googleCloud.requestAccessToken(account_row[3]);
-                                Map<String, Object> updatedValues = new HashMap<String, Object>() {{
-                                    put("accessToken", tokens.getAccessToken());
-                                }};
-                                MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, "backup");
-                                driveBackupAccessToken = tokens.getAccessToken();
-                            }
-                        }catch (Exception e) {
-                            LogHandler.saveLog("Failed to update the access token: " + e.getLocalizedMessage(), true);
-                        }
+                        driveBackupRefreshToken = account_row[2];
+                        driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
+
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                         String folder_name = "stash_user_profile";
                         String folderId = null;

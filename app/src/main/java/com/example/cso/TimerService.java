@@ -125,14 +125,15 @@ public class TimerService extends Service {
 
         final Thread[] deleteRedundantDriveThreadForService = {new Thread(() -> {
 
-            String[] columns = {"accessToken","userEmail", "type"};
+            String[] columns = {"refreshToken","userEmail", "type"};
             List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
 
             for(String[] account_row : account_rows) {
                 String type = account_row[2];
                 if(type.equals("backup")){
                     String userEmail = account_row[1];
-                    String accessToken = account_row[0];
+                    String refreshToken = account_row[0];
+                    String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
                     ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken, userEmail);
                     ArrayList<String> driveFileIds = new ArrayList<>();
 
@@ -147,13 +148,14 @@ public class TimerService extends Service {
 
         final Thread[] updateDriveFilesThreadForService = {new Thread(() -> {
 
-            String[] columns = {"accessToken", "userEmail","type"};
+            String[] columns = {"refreshTokne", "userEmail","type"};
             List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
 
             for(String[] account_row : account_rows){
                 String type = account_row[2];
                 if (type.equals("backup")){
-                    String accessToken = account_row[0];
+                    String refreshToken = account_row[0];
+                    String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
                     String userEmail = account_row[1];
                     ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken, userEmail);
                     for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
@@ -171,23 +173,19 @@ public class TimerService extends Service {
 
         final Thread[] deleteDuplicatedInDriveForService = {new Thread(() -> {
 
-            String[] columns = {"accessToken","userEmail", "type"};
+            String[] columns = {"refreshToken","userEmail", "type"};
             List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
 
             for(String[] account_row : account_rows) {
                 String type = account_row[2];
                 if(type.equals("backup")){
                     String userEmail = account_row[1];
-                    String accessToken = account_row[0];
+                    String refreshToken = account_row[0];
+                    String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
                     GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
                 }
             }
         })};
-
-        final Thread[] syncAndroidToDriveThreadForService = {new Thread( () -> {
-                Sync.syncAndroidFiles(getApplicationContext());
-        })};
-
 
         timerTask = new TimerTask() {
             public void run() {

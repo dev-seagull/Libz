@@ -101,7 +101,7 @@ public class Support {
 
 
     public static String getUserEmailForSupport(){
-        List<String []> accountRows = DBHelper.getAccounts(new String[]{"type","accessToken"});
+        List<String []> accountRows = DBHelper.getAccounts(new String[]{"type"});
         for (String[] row : accountRows) {
             if (row[0].equals("backup")) {
                 return row[1];

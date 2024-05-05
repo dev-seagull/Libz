@@ -11,7 +11,7 @@ public class Sync {
             MainActivity.storageHandler.freeStorageUpdater();
             double amountSpaceToFreeUp = MainActivity.storageHandler.getAmountSpaceToFreeUp();
 
-            String[] selected_accounts_columns = {"userEmail","type", "totalStorage","usedStorage", "accessToken"};
+            String[] selected_accounts_columns = {"userEmail","type", "totalStorage","usedStorage", "refreshToken"};
             List<String[]> account_rows = DBHelper.getAccounts(selected_accounts_columns);
 
             for(String[] account_row: account_rows){
@@ -28,7 +28,7 @@ public class Sync {
     private static void syncAndroidToBackupAccount(String[] accountRow, double amountSpaceToFreeUp, Context context){
         try{
             String userEmail = accountRow[0];
-            String accessToken = accountRow[4];
+            String refreshToken = accountRow[4];
             String syncedAssetsFolderId = GoogleDrive.createStashSyncedAssetsFolderInDrive(userEmail);
 
             double driveFreeSpace = calculateDriveFreeSpace(accountRow);
@@ -39,7 +39,7 @@ public class Sync {
 
             for (String[] androidRow : sortedAndroidFiles) {
                 MainActivity.storageHandler.freeStorageUpdater();
-                syncAndroidFile(androidRow, userEmail, accessToken, syncedAssetsFolderId,
+                syncAndroidFile(androidRow, userEmail, refreshToken, syncedAssetsFolderId,
                         driveFreeSpace, amountSpaceToFreeUp, context);
             }
         }catch (Exception e){
@@ -48,7 +48,7 @@ public class Sync {
     }
 
 
-    private static void syncAndroidFile(String[] androidRow, String userEmail, String accessToken, String syncedAssetsFolderId,
+    private static void syncAndroidFile(String[] androidRow, String userEmail, String refreshToken, String syncedAssetsFolderId,
                                         double driveFreeSpace, double amountSpaceToFreeUp, Context context){
         try{
             String fileName = androidRow[1];
@@ -60,6 +60,7 @@ public class Sync {
             boolean isWifiOnlySwitchOn = SharedPreferencesHandler.getWifiOnlySwitchState(MainActivity.preferences);
             if ((isWifiOnlySwitchOn && InternetManager.getInternetStatus(context).equals("wifi")) || (!isWifiOnlySwitchOn)){
                 if (!DBHelper.androidFileExistsInDrive(assetId, fileHash)){
+                    String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
                     if(driveFreeSpace > Double.parseDouble(fileSize)) {
                         boolean isBackedUp = uploadAndroidToDrive(androidRow, userEmail, accessToken, syncedAssetsFolderId);
                         if (isBackedUp) {
@@ -79,6 +80,7 @@ public class Sync {
                     }
                 }else {
                     if (amountSpaceToFreeUp > 0) {
+                        String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
                         deleteRedundantDriveFilesFromAccount(userEmail, accessToken);
                         if (DBHelper.androidFileExistsInDrive(Long.valueOf(androidRow[8]), fileHash)) {
                             boolean isDeleted = Android.deleteAndroidFile(filePath, androidRow[8], fileHash, fileSize, androidRow[1]);

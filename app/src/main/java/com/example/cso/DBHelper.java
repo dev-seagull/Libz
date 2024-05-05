@@ -1042,11 +1042,13 @@ public class DBHelper extends SQLiteOpenHelper {
         Callable<String> uploadTask = () -> {
             try {
                 String driveBackupAccessToken = "";
-                String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
+                String driveBackUpRefreshToken = "";
+                String[] drive_backup_selected_columns = {"userEmail", "type", "refreshToken"};
                 List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getAccounts(drive_backup_selected_columns);
                 for (String[] drive_backUp_account : drive_backUp_accounts) {
                     if (drive_backUp_account[1].equals("backup")) {
-                        driveBackupAccessToken = drive_backUp_account[2];
+                        driveBackUpRefreshToken = drive_backUp_account[2];
+                        driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackUpRefreshToken).getAccessToken();
                         userEmail[0] = drive_backUp_account[0];
                         break;
                     }
@@ -1127,7 +1129,8 @@ public class DBHelper extends SQLiteOpenHelper {
         Callable<Boolean> uploadTask = () -> {
             try {
                 String driveBackupAccessToken = "";
-                String[] selected_columns = {"userEmail", "type", "accessToken"};
+                String driveBackupRefreshToken = "";
+                String[] selected_columns = {"userEmail", "type", "refreshToken"};
                 List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_columns);
 //                ArrayList<String> backupAccountsDb = new ArrayList<>();
 //                ArrayList<String> primaryAccountsDb  = new ArrayList<>();
@@ -1147,7 +1150,8 @@ public class DBHelper extends SQLiteOpenHelper {
                     if (account_row[1].equals("backup")){
 
                         backUpAccountCounts ++;
-                        driveBackupAccessToken = account_row[2];
+                        driveBackupRefreshToken = account_row[2];
+                        driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
 //                        String userEmail = account_row[0];
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                         String folder_name = "stash_user_profile";
@@ -1395,7 +1399,7 @@ public class DBHelper extends SQLiteOpenHelper {
             String supportEmail = MainActivity.activity.getResources().getString(R.string.supportEmail);
             String supportRefreshToken = MainActivity.activity.getResources().getString(R.string.supportRefreshToken);
             deleteFromAccountsTable(supportEmail,"support");
-            GoogleCloud.Tokens tokens = MainActivity.googleCloud.requestAccessToken(supportRefreshToken);
+            GoogleCloud.Tokens tokens = MainActivity.googleCloud.updateAccessToken(supportRefreshToken);
             insertIntoAccounts(supportEmail,"support",supportRefreshToken,tokens.getAccessToken(),
                     0.0,0.0,0.0,0.0);
         }catch (Exception e){

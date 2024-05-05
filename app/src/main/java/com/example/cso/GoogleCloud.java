@@ -91,7 +91,7 @@
             }
             try {
                 if (!isAccessTokenValid(accessTokens[0])) {
-                    GoogleCloud.Tokens tokens = requestAccessToken(refreshToken);
+                    GoogleCloud.Tokens tokens = updateAccessToken(refreshToken);
                     Map<String, Object> updatedValues = new HashMap<String, Object>() {{
                         put("accessToken", tokens.getAccessToken());
                     }};
@@ -275,7 +275,7 @@
                     userEmail = userEmail.replace("@gmail.com", "");
                 }
 
-                String[] columnsList = new String[]{"userEmail","type","accessToken"};
+                String[] columnsList = new String[]{"userEmail","type"};
                 List<String[]> accounts_rows = DBHelper.getAccounts(columnsList);
                 for (String[] row : accounts_rows) {
                     if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
@@ -424,7 +424,7 @@
             return tokens_fromFuture;
         }
 
-        protected Tokens requestAccessToken(String refreshToken){
+        public Tokens updateAccessToken(String refreshToken){
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<GoogleCloud.Tokens> backgroundTokensTask = () -> {
                 String accessToken = null;
@@ -574,22 +574,34 @@
             public Double getUsedStorage() {return usedStorage;}
         }
 
-        public static String getAccessTokenOfAccount(String userEmail){
-            String driveBackupAccessToken = null;
-            try{
-                String[] selected_columns = {"userEmail", "accessToken"};
-                List<String[]> account_rows = DBHelper.getAccounts(selected_columns);
-                for (String[] account_row : account_rows) {
-                    if (account_row[0].equals(userEmail)) {
-                        driveBackupAccessToken = account_row[1];
-                        break;
+        public boolean updateAccessTokens(){
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Callable<Boolean> backgroundTokensTask = () -> {
+                boolean isUpdated = false;
+                try {
+                    List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
+                    for (String[] account_row: account_rows){
+                        String userEmail = account_row[0];
+                        String type = account_row[1];
+                        String refreshToken = account_row[2];
+                        GoogleCloud.Tokens tokens = updateAccessToken(refreshToken);
                     }
+                    isUpdated = true;
+                } catch (Exception e) {
+                    LogHandler.saveLog("Getting access token failed: " + e.getLocalizedMessage(), true);
                 }
+                return isUpdated;
+            };
+            Future<Boolean> future = executor.submit(backgroundTokensTask);
+            boolean tokens_fromFuture = false;
+            try {
+                tokens_fromFuture = future.get();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to get access token of email :  " + e.getLocalizedMessage(), true);
+                LogHandler.saveLog("failed to get access token from the future: " + e.getLocalizedMessage(), true);
+            }finally {
+                executor.shutdown();
             }
-
-            return driveBackupAccessToken;
+            return tokens_fromFuture;
         }
     }
 

@@ -153,9 +153,6 @@ public class BackUp {
                 }
             }
         });
-        for (String[] item : android_items){
-            System.out.println("item in sorted android items: " + item[1] + " " + item[6]);
-        }
         return android_items;
     }
 
