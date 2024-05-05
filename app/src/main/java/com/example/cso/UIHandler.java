@@ -3,11 +3,16 @@ package com.example.cso;
 import android.app.Activity;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
-public class UIHandler {
+import java.util.HashMap;
+import java.util.Map;
 
+
+public class UIHandler {
+    public static TextView directoryUsages = MainActivity.activity.findViewById(R.id.directoryUsages);
     public static void handleSwitchMaterials(){
         handleSyncSwitchMaterials();
         handleWifiOnlySwitchMaterial();
@@ -67,4 +72,12 @@ public class UIHandler {
         }
     }
 
+    public static void updateDirectoriesUsages(){
+        System.out.println("");
+        HashMap<String,String> dirHashMap = MainActivity.storageHandler.directoryUIDisplay();
+        directoryUsages.setText("");
+        for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
+            directoryUsages.append(entry.getKey() + ": " + entry.getValue() + " GB\n");
+        }
+    }
 }

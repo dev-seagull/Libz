@@ -1349,7 +1349,7 @@ public class DBHelper extends SQLiteOpenHelper {
             cursor.close();
         }
 
-        return String.format("%.2f GB", sum);
+        return String.format("%.1f GB", sum);
     }
 
     public void createIndex() {

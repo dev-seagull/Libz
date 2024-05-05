@@ -138,7 +138,8 @@ public class StorageHandler {
     }
 
     public static HashMap<String,String> directoryUIDisplay(){
-        HashMap<String, String> directoryMap = new HashMap<>();
+        HashMap<String, Double> directoryMap = new HashMap<>();
+        HashMap<String, String> directorySizes = new HashMap<>();
         try {
             File rootDirectory = Environment.getExternalStorageDirectory();
             System.out.println("Root Directory: " + rootDirectory);
@@ -147,8 +148,7 @@ public class StorageHandler {
 
             for (File file : rootFolder) {
                 if (file.isDirectory()) {
-                    directoryMap.put(file.getName(), "0");
-                    System.out.println("rootFolder: " + file.getName());
+                    directoryMap.put(file.getName(), 0.0);
                 }
             }
 
@@ -160,25 +160,26 @@ public class StorageHandler {
                 for (String directory : directoryMap.keySet()) {
                     if (filePath.startsWith(rootDirectory+"/"+directory+"/")) {
                         double currentSize = Double.valueOf(directoryMap.get(directory));
-                        directoryMap.put(directory, String.valueOf(currentSize + fileSize));
+                        directoryMap.put(directory, currentSize + fileSize);
                     }
                 }
             }
-            Iterator<Map.Entry<String, String>> iterator = directoryMap.entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<String, String> entry = iterator.next();
-                if (Double.valueOf(entry.getValue()) == 0.0 || Double.valueOf(entry.getValue()) < 2) {
-                    iterator.remove();
-                } else if (Double.valueOf(entry.getValue()) <= 1000.0) {
-                    entry.setValue("less than one ");
+
+            for (String directoryName : directoryMap.keySet()){
+                Double size = directoryMap.get(directoryName);
+                System.out.println("directoryName : "+directoryName + "And size is : " + directoryMap.get(directoryName));
+                if (size == 0.0){
+                    continue;
+                } else if (0.0 <= size && size <= 1000) {
+                    directorySizes.put(directoryName,"less than one ");
                 }else {
-                    entry.setValue(String.format("%.1f", Double.valueOf(entry.getValue()) / 1024));
+                    directorySizes.put(directoryName,String.format("%.1f", size / 1000));
                 }
             }
         }catch (Exception e){
             LogHandler.saveLog("Failed to get directory UI display: " + e.getLocalizedMessage(),true);
         }
-        return directoryMap;
+        return directorySizes;
     }
 
     
