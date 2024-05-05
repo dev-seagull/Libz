@@ -164,7 +164,6 @@
                     }
                 }
             };
-
             initializeButtons(this,googleCloud);
 
 
@@ -186,18 +185,14 @@
 
             serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
             new TimerService();//.onStartCommand(serviceIntent, Service.START_FLAG_REDELIVERY,1505);
-            HashMap<String,String> dirHashMap = storageHandler.directoryUIDisplay();
+
 
             runOnUiThread(() ->{
+
                 TextView deviceStorageTextView = findViewById(R.id.deviceStorage);
-                TextView directoryUsages = findViewById(R.id.directoryUsages);
                 deviceStorageTextView.setText("Wait until we get an update of your assets ...");
                 syncSwitchMaterialButton = findViewById(R.id.syncSwitchMaterial);
-
-                for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
-                    directoryUsages.append(entry.getKey() + ": " + entry.getValue() + " GB\n");
-                }
-
+                UIHandler.updateDirectoriesUsages();
                 UIHandler.handleSwitchMaterials();
             });
 
@@ -328,16 +323,16 @@
                                 " /Out Of" + storageHandler.getTotalStorage()+ " GB\n"+
                                 "Media : "  + dbHelper.getPhotosAndVideosStorage() + "\n");
                         displayDirectoriesUsagesButton.setVisibility(View.VISIBLE);
-                        TextView directoriesUsages = findViewById(R.id.directoryUsages);
                         displayDirectoriesUsagesButton.setOnClickListener(view -> {
-                            if (directoriesUsages.getVisibility() == View.VISIBLE) {
+                            if (UIHandler.directoryUsages.getVisibility() == View.VISIBLE) {
                                 Drawable newBackground = getResources().getDrawable(R.drawable.down_vector_icon);
                                 displayDirectoriesUsagesButton.setBackground(newBackground);
-                                directoriesUsages.setVisibility(View.GONE);
+                                UIHandler.directoryUsages.setVisibility(View.GONE);
                             } else {
+                                UIHandler.updateDirectoriesUsages();
                                 Drawable newBackground = getResources().getDrawable(R.drawable.up_vector_icon);
                                 displayDirectoriesUsagesButton.setBackground(newBackground);
-                                directoriesUsages.setVisibility(View.VISIBLE);
+                                UIHandler.directoryUsages.setVisibility(View.VISIBLE);
                             }
                         });
                         androidStatisticsTextView.setVisibility(View.VISIBLE);
