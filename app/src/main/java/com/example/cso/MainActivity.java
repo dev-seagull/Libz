@@ -247,7 +247,7 @@
                         if(type.equals("backup")){
                             String userEmail = account_row[1];
                             String accessToken = account_row[0];
-                            ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                            ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken, userEmail);
                             ArrayList<String> driveFileIds = new ArrayList<>();
 
                             for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
@@ -277,7 +277,7 @@
                     if (type.equals("backup")){
                         String accessToken = account_row[0];
                         String userEmail = account_row[1];
-                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken, userEmail);
                         System.out.println("dv nums: " + driveMediaItems.size());
                         for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
                             Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
@@ -528,7 +528,7 @@
                                                         if(type.equals("backup")){
                                                             String userEmail = account_row[1];
                                                             String accessToken = account_row[0];
-                                                            ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                                                            ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken, userEmail);
                                                             ArrayList<String> driveFileIds = new ArrayList<>();
 
                                                             for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
@@ -563,7 +563,7 @@
                                                     if (type.equals("backup")){
                                                         String accessToken = account_row[0];
                                                         String userEmail = account_row[1];
-                                                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                                                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken, userEmail);
                                                         for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
                                                             Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
                                                             if (last_insertId != -1) {

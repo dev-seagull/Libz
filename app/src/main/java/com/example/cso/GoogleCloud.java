@@ -288,7 +288,7 @@
                     String authCode = account.getServerAuthCode();
                     tokens = getTokens(authCode);
                     storage = getStorage(tokens);
-                    mediaItems = GoogleDrive.getMediaItems(tokens.getAccessToken());
+                    mediaItems = GoogleDrive.getMediaItems(tokens.getAccessToken(), userEmail);
                     if (userEmail != null && tokens.getRefreshToken() != null && tokens.getAccessToken() != null) {
                         return new signInResult(userEmail, true, false,
                                 tokens, storage, mediaItems);
@@ -572,6 +572,24 @@
             public Double getUsedInGmailAndPhotosStorage() {return UsedInGmailAndPhotosStorage;}
             public Double getTotalStorage() {return totalStorage;}
             public Double getUsedStorage() {return usedStorage;}
+        }
+
+        public static String getAccessTokenOfAccount(String userEmail){
+            String driveBackupAccessToken = null;
+            try{
+                String[] selected_columns = {"userEmail", "accessToken"};
+                List<String[]> account_rows = DBHelper.getAccounts(selected_columns);
+                for (String[] account_row : account_rows) {
+                    if (account_row[0].equals(userEmail)) {
+                        driveBackupAccessToken = account_row[1];
+                        break;
+                    }
+                }
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to get access token of email :  " + e.getLocalizedMessage(), true);
+            }
+
+            return driveBackupAccessToken;
         }
     }
 

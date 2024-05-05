@@ -125,7 +125,7 @@ public class Sync {
     private static void deleteRedundantDriveFilesFromAccount(String userEmail, String accessToken) {
         try {
             Thread deleteRedundantDrive = new Thread(() -> {
-                ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken);
+                ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken, userEmail);
                 ArrayList<String> driveFileIds = new ArrayList<>();
 
                 for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {

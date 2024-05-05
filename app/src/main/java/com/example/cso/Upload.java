@@ -396,7 +396,7 @@ public class Upload {
 
                                 try {
                                     ArrayList<DriveAccountInfo.MediaItem> driveMediaItems =
-                                            GoogleDrive.getMediaItems(driveBackupAccessToken);
+                                            GoogleDrive.getMediaItems(driveBackupAccessToken, driveEmailAcoount[0]);
                                     for (DriveAccountInfo.MediaItem mediaItem : driveMediaItems) {
                                         if (mediaItem.getHash().equals(fileHash)) {
                                             isUploadValid[0] = true;
