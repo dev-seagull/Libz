@@ -480,13 +480,13 @@
             return tokens_fromFuture;
         }
 
-        public static String getMemeType(String fileName){
+        public static String getMimeType(String fileName){
             int dotIndex = fileName.lastIndexOf(".");
-            String memeType="";
+            String mimeType="";
             if (dotIndex >= 0 && dotIndex < fileName.length() - 1) {
-                memeType = fileName.substring(dotIndex + 1);
+                mimeType = fileName.substring(dotIndex + 1);
             }
-            return memeType;
+            return mimeType;
         }
 
         public Storage getStorage(GoogleCloud.Tokens tokens){

@@ -1,16 +1,12 @@
 package com.example.cso;
 
-import android.database.Cursor;
-import android.os.Build;
 import android.os.Environment;
 import android.os.StatFs;
 
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 public class StorageHandler {
 
@@ -60,7 +56,7 @@ public class StorageHandler {
     private double optimizedPercent = 0.15;
 //    private double maxFreeStorageNeeded = 80;
     private double freeSpace;
-    private Upload upload = new Upload();
+    private BackUp backUp = new BackUp();
 
 
     public StorageHandler(){

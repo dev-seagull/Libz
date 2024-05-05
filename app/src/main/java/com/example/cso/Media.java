@@ -23,15 +23,15 @@ public class Media {
 
     public static String getMimeType(File file){
         int dotIndex = file.getName().lastIndexOf(".");
-        String memeType="";
+        String mimeType="";
         try{
             if (dotIndex >= 0 && dotIndex < file.getName().length() - 1) {
-                memeType = file.getName().substring(dotIndex + 1);
+                mimeType = file.getName().substring(dotIndex + 1);
             }
         }catch (Exception e){
             LogHandler.saveLog("Failed to get mime type: " + e.getLocalizedMessage(), true);
         }
 
-        return memeType;
+        return mimeType;
     }
 }

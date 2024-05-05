@@ -24,7 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class Upload {
+public class BackUp {
     public boolean backupAndroidToDrive(Long fileId, String fileName, String filePath,
                                         String fileHash, String mimeType, String assetId,
                                         String driveBackupAccessToken, String driveEmailAccount, String syncAssetsFolderId){

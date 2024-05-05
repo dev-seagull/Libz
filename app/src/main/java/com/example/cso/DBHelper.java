@@ -614,7 +614,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public void insertIntoAndroidTable(long assetId,String fileName,String filePath,String device,
-                                       String fileHash, Double fileSize,String dateModified,String memeType) {
+                                       String fileHash, Double fileSize,String dateModified,String mimeType) {
         fileHash = fileHash.toLowerCase();
         String sqlQuery = "";
         boolean existsInAndroid = existsInAndroid(assetId, filePath, device, fileSize, fileHash);
@@ -631,7 +631,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         "dateModified," +
                         "memeType) VALUES (?,?,?,?,?,?,?,?)";
                 Object[] values = new Object[]{assetId,fileName,filePath,device,
-                        fileSize,fileHash,dateModified,memeType};
+                        fileSize,fileHash,dateModified,mimeType};
                 dbWritable.execSQL(sqlQuery, values);
                 dbWritable.setTransactionSuccessful();
             }catch (Exception e){

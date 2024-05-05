@@ -105,8 +105,8 @@ public class Sync {
                 String fileHash = androidRow[5];
                 String mimeType = androidRow[7];
                 String assetId = androidRow[8];
-                Upload upload = new Upload();
-                isBackedUp[0] = upload.backupAndroidToDrive(fileId,fileName, filePath,fileHash,mimeType,assetId,
+                BackUp backUp = new BackUp();
+                isBackedUp[0] = backUp.backupAndroidToDrive(fileId,fileName, filePath,fileHash,mimeType,assetId,
                         accessToken,userEmail,syncedAssetsFolderId);
             });
             backupThread.start();
@@ -155,7 +155,7 @@ public class Sync {
 
         try{
             List<String[]> android_rows =  MainActivity.dbHelper.getAndroidTable(selected_android_columns);
-            Upload.sortAndroidItems(android_rows);
+            BackUp.sortAndroidItems(android_rows);
             for(String[] android_row: android_rows){
                 String fileHash = android_row[5];
                 if(!file_hashes.contains(fileHash)){
