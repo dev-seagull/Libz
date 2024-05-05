@@ -9,13 +9,10 @@ import com.google.gson.JsonObject;
 
 public class SharedPreferencesHandler {
 
-    public static boolean getWifiSwitchState(SharedPreferences sharedPreferences){
-        return sharedPreferences.getBoolean("wifiSwitchState", false);
+    public static boolean getWifiOnlySwitchState(SharedPreferences sharedPreferences){
+        return sharedPreferences.getBoolean("wifiOnlySwitchState", false);
     }
 
-    public static boolean getDataSwitchState(SharedPreferences sharedPreferences){
-        return sharedPreferences.getBoolean("dataSwitchState", false);
-    }
 
     public static void setSwitchState(String switchStateKey, boolean state, SharedPreferences sharedPreferences) {
         android.content.SharedPreferences.Editor editor = sharedPreferences.edit();

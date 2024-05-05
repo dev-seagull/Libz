@@ -83,7 +83,7 @@
         public Thread deleteDuplicatedInDrive;
         SwitchMaterial syncSwitchMaterialButton;
         SwitchMaterial mobileDataSwitchMaterial;
-        SwitchMaterial wifiSwitchMaterial;
+        SwitchMaterial wifiOnlySwitchMaterial;
         int buildSdkInt = Build.VERSION.SDK_INT;
         List<Thread> threads = new ArrayList<>(Arrays.asList(firstUiThread, secondUiThread,
                 backUpJsonThread, insertMediaItemsThread, deleteRedundantDriveThread, updateDriveBackUpThread, deleteDuplicatedInDrive));
@@ -194,11 +194,10 @@
                 deviceStorageTextView.setText("Wait until we get an update of your assets ...");
                 syncSwitchMaterialButton = findViewById(R.id.syncSwitchMaterial);
 
-                runOnUiThread(() -> {
-                    for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
-                        directoryUsages.append(entry.getKey() + ": " + entry.getValue() + " MB\n");
-                    }
-                });
+                for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
+                    directoryUsages.append(entry.getKey() + ": " + entry.getValue() + " GB\n");
+                }
+
                 UIHandler.handleSwitchMaterials();
             });
 
@@ -325,9 +324,9 @@
                 }
                 try{
                     runOnUiThread(() -> {
-                        deviceStorage.setText("Total : " + storageHandler.getTotalStorage()+
-                                " GB\n" + "Free : " + storageHandler.getFreeSpace()+ " GB\n" +
-                                "Videos and Photos : "  + dbHelper.getPhotosAndVideosStorage() + "\n");
+                        deviceStorage.setText("Storage : " + storageHandler.getFreeSpace() +
+                                " /Out Of" + storageHandler.getTotalStorage()+ " GB\n"+
+                                "Media : "  + dbHelper.getPhotosAndVideosStorage() + "\n");
                         displayDirectoriesUsagesButton.setVisibility(View.VISIBLE);
                         TextView directoriesUsages = findViewById(R.id.directoryUsages);
                         displayDirectoriesUsagesButton.setOnClickListener(view -> {
@@ -344,7 +343,7 @@
                         androidStatisticsTextView.setVisibility(View.VISIBLE);
                         int total_androidAssets_count = dbHelper.countAndroidAssets();
                         androidStatisticsTextView.setText("Sync Status : " + dbHelper.countAndroidSyncedAssets() +
-                                " / " + total_androidAssets_count);
+                                " Of " + total_androidAssets_count);
                     });
                 }catch (Exception e){
                     LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
@@ -402,15 +401,15 @@
 //                                }
                                 runOnUiThread(() -> {
                                     TextView deviceStorage = findViewById(R.id.deviceStorage);
-                                    deviceStorage.setText("Total : " + storageHandler.getTotalStorage()+
-                                            " GB\n" + "Free : " + storageHandler.getFreeSpace()+ " GB\n" +
-                                            "Videos and Photos : "  + dbHelper.getPhotosAndVideosStorage() + "\n");
+                                    deviceStorage.setText("Storage : " + storageHandler.getFreeSpace() +
+                                             " Out Of " + storageHandler.getTotalStorage()+ " GB\n"+
+                                            "Media : "  + dbHelper.getPhotosAndVideosStorage() + "\n");
 
                                     TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
                                     androidStatisticsTextView.setVisibility(View.VISIBLE);
                                     int total_androidAssets_count = dbHelper.countAndroidAssets();
                                     androidStatisticsTextView.setText("Sync Status : " + dbHelper.countAndroidSyncedAssets() +
-                                            " / " + total_androidAssets_count);
+                                            " Of " + total_androidAssets_count);
                                 });
                             }
                         }
@@ -766,41 +765,23 @@
 //                }
 //            );
 
-            wifiSwitchMaterial = findViewById(R.id.wifiSwitchMaterial);
-            wifiSwitchMaterial.setOnClickListener(new View.OnClickListener() {
+            wifiOnlySwitchMaterial = findViewById(R.id.wifiOnlySwitchMaterial);
+            wifiOnlySwitchMaterial.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if(wifiSwitchMaterial.isChecked()){
+                    if(wifiOnlySwitchMaterial.isChecked()){
                         runOnUiThread( () -> {
-                            wifiSwitchMaterial.setThumbTintList(UIHelper.onSwitchMaterialThumb);
-                            wifiSwitchMaterial.setTrackTintList(UIHelper.onSwitchMaterialTrack);
+                            wifiOnlySwitchMaterial.setThumbTintList(UIHelper.onSwitchMaterialThumb);
+                            wifiOnlySwitchMaterial.setTrackTintList(UIHelper.onSwitchMaterialTrack);
+                            wifiOnlySwitchMaterial.setAlpha(1.0f);
                         });
-                        SharedPreferencesHandler.setSwitchState("wifiSwitchState",true,preferences);
+                        SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true,preferences);
                     }else{
                         runOnUiThread( () -> {
-                            wifiSwitchMaterial.setThumbTintList(UIHelper.offSwitchMaterialThumb);
-                            wifiSwitchMaterial.setTrackTintList(UIHelper.offSwitchMaterialTrack);
+                            wifiOnlySwitchMaterial.setThumbTintList(UIHelper.offSwitchMaterialThumb);
+                            wifiOnlySwitchMaterial.setTrackTintList(UIHelper.offSwitchMaterialTrack);
                         });
-                        SharedPreferencesHandler.setSwitchState("wifiSwitchState",false,preferences);
-                    }
-                }
-            });
-            mobileDataSwitchMaterial = findViewById(R.id.mobileDataSwitchMaterial);
-            mobileDataSwitchMaterial.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if(mobileDataSwitchMaterial.isChecked()){
-                        runOnUiThread( () -> {
-                            mobileDataSwitchMaterial.setThumbTintList(UIHelper.onSwitchMaterialThumb);
-                            mobileDataSwitchMaterial.setTrackTintList(UIHelper.onSwitchMaterialTrack);
-                        });
-                        SharedPreferencesHandler.setSwitchState("dataSwitchState",true,preferences);
-                    }else{
-                        runOnUiThread( () -> {
-                            mobileDataSwitchMaterial.setThumbTintList(UIHelper.offSwitchMaterialThumb);
-                            mobileDataSwitchMaterial.setTrackTintList(UIHelper.offSwitchMaterialTrack);
-                        });
-                        SharedPreferencesHandler.setSwitchState("dataSwitchState",false,preferences);
+                        SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",false,preferences);
                     }
                 }
             });
@@ -823,9 +804,6 @@
                                 stopService(serviceIntent);
                             }
                         }
-                        SharedPreferencesHandler.setSwitchState("wifiSwitchState",false,preferences);
-                        SharedPreferencesHandler.setSwitchState("dataSwitchState",false,preferences);
-
                     }
                     UIHandler.handleSwitchMaterials();
                 }

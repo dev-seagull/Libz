@@ -57,10 +57,8 @@ public class Sync {
             String filePath = androidRow[2];
             Long assetId = Long.valueOf(androidRow[8]);
 
-            boolean isWifiSwitchOn = SharedPreferencesHandler.getWifiSwitchState(MainActivity.preferences);
-            boolean isDataSwitchOn = SharedPreferencesHandler.getDataSwitchState(MainActivity.preferences);
-            if((InternetManager.getInternetStatus(context).equals("wifi") && isWifiSwitchOn ||
-                    InternetManager.getInternetStatus(context).equals("data") && isDataSwitchOn)){
+            boolean isWifiOnlySwitchOn = SharedPreferencesHandler.getWifiOnlySwitchState(MainActivity.preferences);
+            if ((isWifiOnlySwitchOn && InternetManager.getInternetStatus(context).equals("wifi")) || (!isWifiOnlySwitchOn)){
                 if (!DBHelper.androidFileExistsInDrive(assetId, fileHash)){
                     if(driveFreeSpace > Double.parseDouble(fileSize)) {
                         boolean isBackedUp = uploadAndroidToDrive(androidRow, userEmail, accessToken, syncedAssetsFolderId);
