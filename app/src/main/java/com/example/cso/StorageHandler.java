@@ -69,7 +69,7 @@ public class StorageHandler {
         this.optimizedFreeSpace = this.totalStorage * optimizedPercent;
         this.freeSpace = getDeviceFreeStorage();
         MainActivity.dbHelper.insertIntoDeviceTable(MainActivity.androidDeviceName,
-                String.format("%.3f", this.totalStorage), String.format("%.3f", this.freeSpace));
+                String.format("%.1f", this.totalStorage), String.format("%.1f", this.freeSpace));
     }
 
     public void freeStorageUpdater(){
@@ -115,7 +115,7 @@ public class StorageHandler {
         StatFs statFs = new StatFs(externalStorageDirectory);
         long totalBlocks = statFs.getBlockCountLong();
         double totalSpaceGB = (totalBlocks * blockSize) / (1024.0 * 1024.0 * 1024.0);
-        return Double.valueOf(String.format("%.3f", totalSpaceGB));
+        return Double.valueOf(String.format("%.1f", totalSpaceGB));
     }
 
     public double getDeviceFreeStorage(){
@@ -123,7 +123,7 @@ public class StorageHandler {
         StatFs statFs = new StatFs(externalStorageDirectory);
         long availableBlocks = statFs.getAvailableBlocksLong();;
         double freeSpaceGB = (availableBlocks * blockSize) / (1024.0 * 1024.0 * 1024.0);
-        return Double.valueOf(String.format("%.3f", freeSpaceGB));
+        return Double.valueOf(String.format("%.1f", freeSpaceGB));
     }
 
 
@@ -137,8 +137,8 @@ public class StorageHandler {
         return formattedResult;
     }
 
-    public static HashMap<String,Double> directoryUIDisplay(){
-        HashMap<String, Double> directoryMap = new HashMap<>();
+    public static HashMap<String,String> directoryUIDisplay(){
+        HashMap<String, String> directoryMap = new HashMap<>();
         try {
             File rootDirectory = Environment.getExternalStorageDirectory();
             System.out.println("Root Directory: " + rootDirectory);
@@ -147,7 +147,7 @@ public class StorageHandler {
 
             for (File file : rootFolder) {
                 if (file.isDirectory()) {
-                    directoryMap.put(file.getName(), 0.0);
+                    directoryMap.put(file.getName(), "0");
                     System.out.println("rootFolder: " + file.getName());
                 }
             }
@@ -156,21 +156,23 @@ public class StorageHandler {
 
             for (String[] row : androidRows) {
                 String filePath = row[0];
-                double fileSize = Double.parseDouble(row[1]);
+                double fileSize = Double.valueOf(row[1]);
                 for (String directory : directoryMap.keySet()) {
-                    if (filePath.startsWith(rootDirectory+"/"+directory)) {
-                        double currentSize = directoryMap.get(directory);
-                        directoryMap.put(directory, currentSize + fileSize);
+                    if (filePath.startsWith(rootDirectory+"/"+directory+"/")) {
+                        double currentSize = Double.valueOf(directoryMap.get(directory));
+                        directoryMap.put(directory, String.valueOf(currentSize + fileSize));
                     }
                 }
             }
-            Iterator<Map.Entry<String, Double>> iterator = directoryMap.entrySet().iterator();
+            Iterator<Map.Entry<String, String>> iterator = directoryMap.entrySet().iterator();
             while (iterator.hasNext()) {
-                Map.Entry<String, Double> entry = iterator.next();
-                if (entry.getValue() == 0.0) {
+                Map.Entry<String, String> entry = iterator.next();
+                if (Double.valueOf(entry.getValue()) == 0.0 || Double.valueOf(entry.getValue()) < 2) {
                     iterator.remove();
-                } else {
-                    entry.setValue(Double.valueOf(String.format("%.3f", entry.getValue())));
+                } else if (Double.valueOf(entry.getValue()) <= 1000.0) {
+                    entry.setValue("less than one ");
+                }else {
+                    entry.setValue(String.format("%.1f", Double.valueOf(entry.getValue()) / 1024));
                 }
             }
         }catch (Exception e){

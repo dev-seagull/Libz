@@ -252,7 +252,7 @@
                     app:trackTint="#850808" />
 
                 <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/wifiSwitchMaterial"
+                    android:id="@+id/wifiOnlySwitchMaterial"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="false"
@@ -263,7 +263,7 @@
                     android:shadowDx="2"
                     android:shadowDy="2"
                     android:shadowRadius="5"
-                    android:text="WIFI"
+                    android:text="WIFI ONLY"
                     android:textColor="@color/white"
                     android:textSize="20sp"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -272,26 +272,6 @@
                     app:thumbTint="#BF2C2C"
                     app:trackTint="#850808" />
 
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/mobileDataSwitchMaterial"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false"
-                    android:fontFamily="sans-serif-condensed"
-                    android:scaleX="1.5"
-                    android:scaleY="1.5"
-                    android:shadowColor="@color/black"
-                    android:shadowDx="2"
-                    android:shadowDy="2"
-                    android:shadowRadius="5"
-                    android:text="Mobile Data"
-                    android:textColor="@color/white"
-                    android:textSize="20sp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:thumbTint="#BF2C2C"
-                    app:trackTint="#850808" />
 
 <!--                                <LinearLayout-->
 <!--                    android:layout_width="wrap_content"-->

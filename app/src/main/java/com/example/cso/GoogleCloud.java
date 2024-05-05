@@ -519,6 +519,7 @@
                 }
                 return storage[0];
             };
+
             try{
                 Future<Storage> future = executor.submit(backgroundTask);
                 storage[0] = future.get();

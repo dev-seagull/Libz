@@ -10,8 +10,7 @@ public class UIHandler {
 
     public static void handleSwitchMaterials(){
         handleSyncSwitchMaterials();
-        handleWifiSwitchMaterial();
-        handleMobileDataSwitchMaterial();
+        handleWifiOnlySwitchMaterial();
     }
 
     public static void handleSyncSwitchMaterials(){
@@ -32,63 +31,28 @@ public class UIHandler {
         }
     }
 
-    public static void handleWifiSwitchMaterial(){
+    public static void handleWifiOnlySwitchMaterial(){
         SwitchMaterial syncSwitchMaterialButton = MainActivity.activity.findViewById(R.id.syncSwitchMaterial);
-        SwitchMaterial wifiSwitchMaterialButton = MainActivity.activity.findViewById(R.id.wifiSwitchMaterial);
-        if (!syncSwitchMaterialButton.isChecked()){
-            SharedPreferencesHandler.setSwitchState("wifiSwitchState", false, MainActivity.preferences);
-            MainActivity.activity.runOnUiThread(() -> {
-                wifiSwitchMaterialButton.setChecked(false);
-                wifiSwitchMaterialButton.setThumbTintList(UIHelper.disabledSwitchMaterialThumb);
-                wifiSwitchMaterialButton.setTrackTintList(UIHelper.disabledSwitchMaterialTrack);
-            });
-            wifiSwitchMaterialButton.setEnabled(false);
-        }else{
-            wifiSwitchMaterialButton.setEnabled(true);
-            if (SharedPreferencesHandler.getWifiSwitchState(MainActivity.preferences)){
-                MainActivity.activity.runOnUiThread(() -> {
-                    wifiSwitchMaterialButton.setChecked(true);
-                    wifiSwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
-                    wifiSwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
-                });
+        SwitchMaterial wifiOnlySwitchMaterialButton = MainActivity.activity.findViewById(R.id.wifiOnlySwitchMaterial);
+        MainActivity.activity.runOnUiThread(() -> {
+            if (SharedPreferencesHandler.getWifiOnlySwitchState(MainActivity.preferences)){
+                    wifiOnlySwitchMaterialButton.setChecked(true);
+                    wifiOnlySwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
+                    wifiOnlySwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
             }else{
-                MainActivity.activity.runOnUiThread(() -> {
-                    wifiSwitchMaterialButton.setChecked(false);
-                    wifiSwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
-                    wifiSwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
-                });
+                    wifiOnlySwitchMaterialButton.setChecked(false);
+                    wifiOnlySwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
+                    wifiOnlySwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
             }
-        }
-    }
+            if (syncSwitchMaterialButton.isChecked()){
+                    wifiOnlySwitchMaterialButton.setAlpha(1.0f);
+                    wifiOnlySwitchMaterialButton.setEnabled(true);
 
-
-    public static void handleMobileDataSwitchMaterial(){
-        SwitchMaterial syncSwitchMaterialButton = MainActivity.activity.findViewById(R.id.syncSwitchMaterial);
-        SwitchMaterial mobileDataSwitchMaterial = MainActivity.activity.findViewById(R.id.mobileDataSwitchMaterial);
-        if (!syncSwitchMaterialButton.isChecked()){
-            SharedPreferencesHandler.setSwitchState("dataSwitchState", false, MainActivity.preferences);
-            MainActivity.activity.runOnUiThread(() -> {
-                mobileDataSwitchMaterial.setChecked(false);
-                mobileDataSwitchMaterial.setThumbTintList(UIHelper.disabledSwitchMaterialThumb);
-                mobileDataSwitchMaterial.setTrackTintList(UIHelper.disabledSwitchMaterialTrack);
-            });
-            mobileDataSwitchMaterial.setEnabled(false);
-        }else{
-            mobileDataSwitchMaterial.setEnabled(true);
-            if (SharedPreferencesHandler.getDataSwitchState(MainActivity.preferences)){
-                MainActivity.activity.runOnUiThread(() -> {
-                    mobileDataSwitchMaterial.setChecked(true);
-                    mobileDataSwitchMaterial.setThumbTintList(UIHelper.onSwitchMaterialThumb);
-                    mobileDataSwitchMaterial.setTrackTintList(UIHelper.onSwitchMaterialTrack);
-                });
             }else{
-                MainActivity.activity.runOnUiThread(() -> {
-                    mobileDataSwitchMaterial.setChecked(false);
-                    mobileDataSwitchMaterial.setThumbTintList(UIHelper.offSwitchMaterialThumb);
-                    mobileDataSwitchMaterial.setTrackTintList(UIHelper.offSwitchMaterialTrack);
-                });
+                    wifiOnlySwitchMaterialButton.setAlpha(0.5f);
+                    wifiOnlySwitchMaterialButton.setEnabled(false);
             }
-        }
+        });
     }
 
     public static void setLastBackupAccountButtonClickableFalse(Activity activity) {
@@ -102,4 +66,5 @@ public class UIHandler {
             LogHandler.saveLog("Failed to set last back up button clickable false:" + e.getLocalizedMessage(), true);
         }
     }
+
 }
