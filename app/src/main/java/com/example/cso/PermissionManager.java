@@ -59,8 +59,7 @@ public class PermissionManager {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        boolean isAccessGiven = isAccessConfirmed();
-        return isAccessGiven;
+        return isAccessConfirmed();
     }
     private boolean isAccessConfirmed() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && Environment.isExternalStorageManager()) {

@@ -8,7 +8,6 @@ import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.util.Log;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
@@ -50,7 +49,7 @@ public class NotificationHandler {
         builder.setContentIntent(pendingIntent);
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(activity);
-        notificationManager.notify(Integer.valueOf(channelId), builder.build());
+        notificationManager.notify(Integer.parseInt(channelId), builder.build());
     }
 
 }

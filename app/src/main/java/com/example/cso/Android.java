@@ -122,7 +122,7 @@ public class Android {
             Double mediaItemSize = currentFile.length() / (Math.pow(10, 6));
             SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.US);
             String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));
-            String mediaItemMimeType = GooglePhotos.getMemeType(mediaItemFile);
+            String mediaItemMimeType = Media.getMimeType(mediaItemFile);
             if(mediaItemFile.exists()){
                 galleryItems[0]++;
                 if(!MainActivity.dbHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidDeviceName,

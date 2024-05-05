@@ -109,8 +109,8 @@ public class GoogleDrive {
                     List<com.google.api.services.drive.model.File> files = result.getFiles();
                     if (files != null && !files.isEmpty()) {
                         for (File file : files) {
-                            if (GooglePhotos.isVideo(GoogleCloud.getMemeType(file.getName())) |
-                                    GooglePhotos.isImage(GoogleCloud.getMemeType(file.getName()))){
+                            if (Media.isVideo(GoogleCloud.getMemeType(file.getName())) |
+                                    Media.isImage(GoogleCloud.getMemeType(file.getName()))){
                                 DriveAccountInfo.MediaItem mediaItem = new DriveAccountInfo.MediaItem(file.getName(),
                                         file.getSha256Checksum().toLowerCase(), file.getId());
                                 mediaItems.add(mediaItem);

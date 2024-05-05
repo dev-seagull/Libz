@@ -1,8 +1,6 @@
 package com.example.cso;
 
 
-import org.apache.http.protocol.HTTP;
-
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -10,7 +8,6 @@ import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -22,7 +19,6 @@ public class Support {
 
     public static String supportEmail = "Alireza.Hoseini20031382@gmail.com";
     public static boolean sendEmail(String accessToken, String message, File attachment) {
-        final String[] messages = {message};
         final String[] accessTokens = {accessToken};
         ExecutorService executor = Executors.newSingleThreadExecutor();
         System.out.println("accessToken is "+accessToken);
@@ -84,7 +80,7 @@ public class Support {
                     while ((inputLine = in.readLine()) != null) {
                         response.append(inputLine);
                     }
-                    System.out.println("Response of sending Email: " + response.toString());
+                    System.out.println("Response of sending Email: " + response);
                 }
                 connection.disconnect();
             } catch (Exception e) {

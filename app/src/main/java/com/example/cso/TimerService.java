@@ -107,7 +107,6 @@ public class TimerService extends Service {
         PendingIntent actionPendingIntent = PendingIntent.getService(this, 0, actionIntent, PendingIntent.FLAG_IMMUTABLE);
         builder.addAction(R.drawable.googledriveimage, "Stop Service", actionPendingIntent);
 
-//        builder.setContentIntent(pendingIntent);
         return builder.build();
     }
 
