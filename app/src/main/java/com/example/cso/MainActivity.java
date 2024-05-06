@@ -76,7 +76,6 @@
         public Thread updateDriveBackUpThread;
         public Thread deleteDuplicatedInDrive;
         SwitchMaterial syncSwitchMaterialButton;
-        SwitchMaterial mobileDataSwitchMaterial;
         SwitchMaterial wifiOnlySwitchMaterial;
         int buildSdkInt = Build.VERSION.SDK_INT;
         List<Thread> threads = new ArrayList<>(Arrays.asList(firstUiThread, secondUiThread,
@@ -99,18 +98,15 @@
             boolean hasCreated = LogHandler.createLogFile();
             System.out.println("Log file is created :"  + hasCreated);
 
-            googleCloud = new GoogleCloud(this);
-//            LogHandler.saveLog("--------------------------new run----------------------------",false);
-//            LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
-//                    Build.VERSION_CODES.M, false);
-
             preferences = getPreferences(Context.MODE_PRIVATE);
             dbHelper = new DBHelper(this,"StashDatabase");
-
-            LogHandler.saveLog("salam",true);
-            LogHandler.actionOnLogFile();
-            LogHandler.saveLog("salam2",true);
+            googleCloud = new GoogleCloud(this);
             androidDeviceName = DeviceName.getDeviceName();
+
+            LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
+                    Build.VERSION_CODES.M, false);
+
+            LogHandler.actionOnLogFile();
             Upgrade.versionHandler(preferences);
             storageHandler = new StorageHandler();
             if(dbHelper.DATABASE_VERSION < 11) {
@@ -118,8 +114,8 @@
             }
             dbHelper.insertSupportCredential();
 
+            //done with cleaning this block of code but could be one method of initializer
             drawerLayout = findViewById(R.id.drawer_layout);
-//            Profile.test();
             NavigationView navigationView = findViewById(R.id.navigationView);
             ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
                     this, drawerLayout, R.string.navigation_drawer_open,
@@ -134,17 +130,22 @@
             AppCompatButton infoButton = findViewById(R.id.infoButton);
             infoButton.setOnClickListener(view -> drawerLayout.openDrawer(GravityCompat.END));
 
+            initializeButtons(this,googleCloud);
+            Button androidDeviceButton = findViewById(R.id.androidDeviceButton);
+            androidDeviceButton.setText(androidDeviceName);
+//            LinearLayout primaryAccountsButtonsLayout= findViewById(R.id.primaryAccountsButtons);
+            LinearLayout backupAccountsButtonsLayout= findViewById(R.id.backUpAccountsButtons);
+//            Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
+//            newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+            Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
+            newBackupLoginButton.setBackgroundTintList(UIHelper.addBackupAccountButtonColor);
+            TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
+            TextView deviceStorage = findViewById(R.id.deviceStorage);
+            ImageButton displayDirectoriesUsagesButton = findViewById(R.id.directoriesButton);
+
             Thread manageReadAndWritePermissonsThread = new Thread() {
                 @Override
                 public void run() {
-//                    synchronized (manageAccessThread){
-//                        try{
-//                            manageAccessThread.join();
-//                        }catch (Exception e){
-//                            LogHandler.saveLog("Failed to join delete duplicated drive " +
-//                                    "thread in customLoginThread : " + e.getLocalizedMessage(),true);
-//                        }
-//                    }
                     boolean isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
                             (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
                     while(!isWriteAndReadPermissionGranted){
@@ -158,30 +159,12 @@
                     }
                 }
             };
-            initializeButtons(this,googleCloud);
 
-            Button androidDeviceButton = findViewById(R.id.androidDeviceButton);
-            androidDeviceButton.setText(androidDeviceName);
-
-//            LinearLayout primaryAccountsButtonsLayout= findViewById(R.id.primaryAccountsButtons);
-            LinearLayout backupAccountsButtonsLayout= findViewById(R.id.backUpAccountsButtons);
-
-//            Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
-//            newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-
-            Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
-            newBackupLoginButton.setBackgroundTintList(UIHelper.addBackupAccountButtonColor);
-
-            TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
-            TextView deviceStorage = findViewById(R.id.deviceStorage);
-            ImageButton displayDirectoriesUsagesButton = findViewById(R.id.directoriesButton);
 
             serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
-            new TimerService();//.onStartCommand(serviceIntent, Service.START_FLAG_REDELIVERY,1505);
-
+            new TimerService();
 
             runOnUiThread(() ->{
-
                 TextView deviceStorageTextView = findViewById(R.id.deviceStorage);
                 deviceStorageTextView.setText("Wait until we get an update of your assets ...");
                 syncSwitchMaterialButton = findViewById(R.id.syncSwitchMaterial);
@@ -209,7 +192,6 @@
                             LogHandler.saveLog("failed to join deleteRedundantAndroidThread thread: "  + e.getLocalizedMessage());
                         }
                     }
-                    System.out.println(" here running updateAndroidFilesThread" );
                     int galleryItems = Android.getGalleryMediaItems(MainActivity.this);
                     LogHandler.saveLog("End of getting files from your android device when starting the app.",false);
                 }
@@ -370,10 +352,6 @@
 
                     try{
                         for(Thread thread : threads ){
-                            if(thread != null){
-                                System.out.println(thread.getId());
-                                System.out.println("Name : " + thread.getName() + " is " + thread.isAlive());
-                            }
                             if (thread != null && thread.isAlive()) {
                                 anyThreadAlive = true;
                                 break;
@@ -423,10 +401,8 @@
         protected void onStart(){
             super.onStart();
 //            dbHelper.backUpDataBase(getApplicationContext());
-//            System.out.println("before database decryption");
 //            String exportPath = getDatabasePath(DBHelper.NEW_DATABASE_NAME + "_decrypted.db").getPath();
 //            dbHelper.exportDecryptedDatabase(exportPath);
-//            System.out.println("after database decryption");
 
             signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                     result -> {
@@ -637,15 +613,6 @@
                     updateButtonsListeners(signInToBackUpLauncher);
                 }
             });
-            System.out.println("startService(serviceIntent); " + serviceIntent);
-//            serviceIntent.getData();
-//            Intent.getIntentOld();
-            try{
-                googleCloud = new GoogleCloud(this);
-//                googlePhotos = new GooglePhotos();
-            }catch (Exception e){
-                LogHandler.saveLog("failed to initialize the classes: " + e.getLocalizedMessage());
-            }
 //            displayDialogForRestoreAccountsDecision(preferences);
 //            signInToPrimaryLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
 //                result -> {
@@ -1184,7 +1151,6 @@
 //                                                }
                                             }
                                         });
-
 
                                         Thread uiThread = new Thread(new Runnable() {
                                             @Override
