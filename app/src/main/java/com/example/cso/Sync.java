@@ -62,7 +62,6 @@ public class Sync {
                 if (!DBHelper.androidFileExistsInDrive(assetId, fileHash)){
                     String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
                     if(driveFreeSpace > Double.parseDouble(fileSize)) {
-                        System.out.println("is token valid for upload for each file : " + GoogleCloud.isAccessTokenValid(accessToken));
                         boolean isBackedUp = uploadAndroidToDrive(androidRow, userEmail, accessToken, syncedAssetsFolderId);
                         if (isBackedUp) {
                             GoogleDrive.updateDriveAccountsFilesStatus();
@@ -74,6 +73,8 @@ public class Sync {
                                             , fileSize, fileName);
                                     if (isDeleted) {
                                         amountSpaceToFreeUp -= Double.parseDouble(fileSize);
+                                        LogHandler.saveLog(fileName + " is deleted",false);
+                                        System.out.println(fileName + " is deleted");
                                     }
                                 }
                             }
@@ -87,6 +88,8 @@ public class Sync {
                             boolean isDeleted = Android.deleteAndroidFile(filePath, androidRow[8], fileHash, fileSize, androidRow[1]);
                             if (isDeleted) {
                                 amountSpaceToFreeUp -= Double.parseDouble(fileSize);
+                                LogHandler.saveLog(fileName + " is deleted",false);
+                                System.out.println(fileName + " is deleted");
                             }
                         }
                     }
@@ -121,7 +124,6 @@ public class Sync {
         }catch (Exception e){
             LogHandler.saveLog("Failed to upload android to derive: " + e.getLocalizedMessage());
         }
-
         return isBackedUp[0];
     }
 

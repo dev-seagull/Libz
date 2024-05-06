@@ -34,7 +34,6 @@ public class BackUp {
             try {
                 isUploadValid[0] = false;
                 File androidFile = new File(filePath);
-                System.out.println("is access token valid for creating drive service " + GoogleCloud.isAccessTokenValid(driveBackupAccessToken));
                 Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                 com.google.api.services.drive.model.File fileMetadata =
                         new com.google.api.services.drive.model.File();
@@ -48,6 +47,8 @@ public class BackUp {
                 }
 
 //                            if (!isVideo(memeType)) {
+                LogHandler.saveLog("Starting to upload file : " + fileName, false );
+                System.out.println("Starting to upload file : " + fileName);
                 HttpResponse uploadFile =
                         service.files().create(fileMetadata, mediaContent)
                                 .setFields("files(id)")
@@ -84,9 +85,12 @@ public class BackUp {
                         MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
                                 driveEmailAccount, assetId, "sync", fileHash);
                         LogHandler.saveLog("Uploading " + fileName +
-                                " from android into backup account uploadId : " + uploadFileId, false);
+                                " is finished with upload file id of : " + uploadFileId, false);
+                        System.out.println("Uploading " + fileName +
+                                " is finished with upload file id of : " + uploadFileId);
                     }
                 }
+//                            }
 //                            }
 //                                  test[0]--;
 
