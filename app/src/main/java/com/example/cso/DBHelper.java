@@ -874,17 +874,23 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
-    public static String getAccessToken(String userEmail){
-        String sqlQuery = "SELECT accessToken FROM ACCOUNTS WHERE userEmail = ?";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{userEmail});
+    public static String getAccessTokenFromDB(String refreshToken){
+        Cursor cursor = null;
         String accessToken = "";
-        if(cursor != null && cursor.moveToFirst()){
-            int result = cursor.getColumnIndex("accessToken");
-            if(result >= 0){
-                accessToken = cursor.getString(result);
+        try {
+            String sqlQuery = "SELECT accessToken FROM ACCOUNTS WHERE refreshToken = ?";
+            cursor = dbReadable.rawQuery(sqlQuery, new String[]{refreshToken});
+            if (cursor != null && cursor.moveToFirst()) {
+                int result = cursor.getColumnIndex("accessToken");
+                if (result >= 0) {
+                    accessToken = cursor.getString(result);
+                }
             }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to get AccessToken from Db via refreshToken");
+        }finally {
+            cursor.close();
         }
-        cursor.close();
         return accessToken;
     }
 
@@ -1443,4 +1449,20 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.endTransaction();
         }
     }
+
+    public static boolean updateAccessTokenInDB(String refreshToken,String accessToken){
+        dbWritable.beginTransaction();
+        try{
+            String sqlQuery = "UPDATE ACCOUNTS SET accessToken = ? WHERE refreshToken = ?";
+            dbWritable.execSQL(sqlQuery, new Object[]{accessToken,refreshToken});
+            dbWritable.setTransactionSuccessful();
+            return true;
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to update accessToken in updateAccessTokenInDB : " + e.getLocalizedMessage());
+            return false;
+        }finally {
+            dbWritable.endTransaction();
+        }
+    }
+
 }

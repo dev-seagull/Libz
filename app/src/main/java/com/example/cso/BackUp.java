@@ -34,6 +34,7 @@ public class BackUp {
             try {
                 isUploadValid[0] = false;
                 File androidFile = new File(filePath);
+                System.out.println("is access token valid for creating drive service " + GoogleCloud.isAccessTokenValid(driveBackupAccessToken));
                 Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                 com.google.api.services.drive.model.File fileMetadata =
                         new com.google.api.services.drive.model.File();
@@ -60,7 +61,8 @@ public class BackUp {
                 String uploadFileId = null;
                 uploadFileId = uploadFile.getStatusMessage();
                 if (uploadStatus != HttpURLConnection.HTTP_OK) {
-                    LogHandler.saveLog("Failed to upload " + fileName + " from Android to backup because of response : " + uploadStatus, true);
+                    LogHandler.saveLog("Failed to upload " + fileName + " from Android to backup "+
+                            driveEmailAccount +" because of response : " + uploadStatus, true);
                 }else{
                     if (responseJson.has("id")) {
                         uploadFileId = responseJson.getString("id");
@@ -73,12 +75,12 @@ public class BackUp {
                 }
                 if (uploadFileId == null | uploadFileId.isEmpty()) {
                     LogHandler.saveLog("Failed to upload " + fileName + " from Android to drive " +
-                            " with status of " + uploadStatus, true);
+                            driveEmailAccount + " with status of " + uploadStatus, true);
                 } else {
                     if(isUploadHashEqual(fileHash,uploadFileId,driveBackupAccessToken)){
                         isUploadValid[0] = true;
-                        DBHelper.insertIntoDriveTable(Long.valueOf(assetId),String.valueOf(fileId)
-                                ,fileName,fileHash,driveEmailAccount);
+//                        DBHelper.insertIntoDriveTable(Long.valueOf(assetId),String.valueOf(fileId)
+//                                ,fileName,fileHash,driveEmailAccount);
                         MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
                                 driveEmailAccount, assetId, "sync", fileHash);
                         LogHandler.saveLog("Uploading " + fileName +

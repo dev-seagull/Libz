@@ -288,7 +288,7 @@
                     String authCode = account.getServerAuthCode();
                     tokens = getTokens(authCode);
                     storage = getStorage(tokens);
-                    mediaItems = GoogleDrive.getMediaItems(tokens.getAccessToken(), userEmail);
+                    mediaItems = GoogleDrive.getMediaItems(userEmail);
                     if (userEmail != null && tokens.getRefreshToken() != null && tokens.getAccessToken() != null) {
                         return new signInResult(userEmail, true, false,
                                 tokens, storage, mediaItems);
@@ -427,6 +427,10 @@
         public Tokens updateAccessToken(String refreshToken){
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<GoogleCloud.Tokens> backgroundTokensTask = () -> {
+                String currentAccessToken = DBHelper.getAccessTokenFromDB(refreshToken);
+                if (isAccessTokenValid(currentAccessToken)){
+                    return new GoogleCloud.Tokens(currentAccessToken,refreshToken);
+                }
                 String accessToken = null;
                 try {
                     URL googleAPITokenUrl = new URL("https://www.googleapis.com/oauth2/v4/token");
@@ -472,6 +476,7 @@
             GoogleCloud.Tokens tokens_fromFuture = null;
             try {
                 tokens_fromFuture = future.get();
+                DBHelper.updateAccessTokenInDB(refreshToken,tokens_fromFuture.getAccessToken());
             }catch (Exception e){
                 LogHandler.saveLog("failed to get access token from the future: " + e.getLocalizedMessage(), true);
             }finally {
