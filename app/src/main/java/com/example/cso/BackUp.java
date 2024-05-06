@@ -60,7 +60,7 @@ public class BackUp {
                 String uploadFileId = null;
                 uploadFileId = uploadFile.getStatusMessage();
                 if (uploadStatus != HttpURLConnection.HTTP_OK) {
-                    LogHandler.saveLog("Failed to upload " + fileName + " from Android to backup because it's null", true);
+                    LogHandler.saveLog("Failed to upload " + fileName + " from Android to backup because of response : " + uploadStatus, true);
                 }else{
                     if (responseJson.has("id")) {
                         uploadFileId = responseJson.getString("id");
