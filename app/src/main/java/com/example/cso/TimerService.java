@@ -120,16 +120,14 @@ public class TimerService extends Service {
 
         final Thread[] deleteRedundantDriveThreadForService = {new Thread(() -> {
 
-            String[] columns = {"refreshToken","userEmail", "type"};
+            String[] columns = {"userEmail", "type"};
             List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
 
             for(String[] account_row : account_rows) {
-                String type = account_row[2];
+                String type = account_row[1];
                 if(type.equals("backup")){
-                    String userEmail = account_row[1];
-                    String refreshToken = account_row[0];
-                    String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
-                    ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken, userEmail);
+                    String userEmail = account_row[0];
+                    ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail);
                     ArrayList<String> driveFileIds = new ArrayList<>();
 
                     for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
@@ -143,16 +141,14 @@ public class TimerService extends Service {
 
         final Thread[] updateDriveFilesThreadForService = {new Thread(() -> {
 
-            String[] columns = {"refreshToken", "userEmail","type"};
+            String[] columns = {"userEmail","type"};
             List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
 
             for(String[] account_row : account_rows){
-                String type = account_row[2];
+                String type = account_row[1];
                 if (type.equals("backup")){
-                    String refreshToken = account_row[0];
-                    String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
-                    String userEmail = account_row[1];
-                    ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken, userEmail);
+                    String userEmail = account_row[0];
+                    ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail);
                     for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
                         Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
                         if (last_insertId != -1) {

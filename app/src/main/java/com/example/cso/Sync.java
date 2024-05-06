@@ -62,11 +62,13 @@ public class Sync {
                 if (!DBHelper.androidFileExistsInDrive(assetId, fileHash)){
                     String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
                     if(driveFreeSpace > Double.parseDouble(fileSize)) {
+                        System.out.println("is token valid for upload for each file : " + GoogleCloud.isAccessTokenValid(accessToken));
                         boolean isBackedUp = uploadAndroidToDrive(androidRow, userEmail, accessToken, syncedAssetsFolderId);
                         if (isBackedUp) {
+                            GoogleDrive.updateDriveAccountsFilesStatus();
                             driveFreeSpace -= Double.parseDouble(fileSize);
                             if(amountSpaceToFreeUp > 0){
-                                deleteRedundantDriveFilesFromAccount(userEmail, accessToken);
+                                GoogleDrive.deleteRedundantDriveFilesFromAccount(userEmail);
                                 if (DBHelper.androidFileExistsInDrive(Long.valueOf(androidRow[8]), fileHash)) {
                                     boolean isDeleted = Android.deleteAndroidFile(filePath, String.valueOf(assetId), fileHash
                                             , fileSize, fileName);
@@ -80,8 +82,7 @@ public class Sync {
                     }
                 }else {
                     if (amountSpaceToFreeUp > 0) {
-                        String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
-                        deleteRedundantDriveFilesFromAccount(userEmail, accessToken);
+                        GoogleDrive.deleteRedundantDriveFilesFromAccount(userEmail);
                         if (DBHelper.androidFileExistsInDrive(Long.valueOf(androidRow[8]), fileHash)) {
                             boolean isDeleted = Android.deleteAndroidFile(filePath, androidRow[8], fileHash, fileSize, androidRow[1]);
                             if (isDeleted) {
@@ -124,29 +125,6 @@ public class Sync {
         return isBackedUp[0];
     }
 
-    private static void deleteRedundantDriveFilesFromAccount(String userEmail, String accessToken) {
-        try {
-            Thread deleteRedundantDrive = new Thread(() -> {
-                ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken, userEmail);
-                ArrayList<String> driveFileIds = new ArrayList<>();
-
-                for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
-                    String fileId = driveMediaItem.getId();
-                    driveFileIds.add(fileId);
-                }
-                MainActivity.dbHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
-            });
-            deleteRedundantDrive.start();
-            try {
-                deleteRedundantDrive.join();
-            } catch (Exception e) {
-                LogHandler.saveLog("Failed to join delete " +
-                        " redundant drive thread when syncing android file.", true);
-            }
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to run delete redundant drive files from account : " +e.getLocalizedMessage(), true);
-        }
-    }
 
     private static List<String[]> getSortedAndroidFiles(){
         String[] selected_android_columns = {"id", "fileName", "filePath", "device",

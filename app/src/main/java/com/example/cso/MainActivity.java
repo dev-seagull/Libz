@@ -227,16 +227,14 @@
                         }
                     }
 
-                    String[] columns = {"refreshToken","userEmail", "type"};
+                    String[] columns = {"userEmail", "type"};
                     List<String[]> account_rows = dbHelper.getAccounts(columns);
 
                     for(String[] account_row : account_rows) {
-                        String type = account_row[2];
+                        String type = account_row[1];
                         if(type.equals("backup")){
-                            String userEmail = account_row[1];
-                            String refreshToken = account_row[0];
-                            String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
-                            ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken, userEmail);
+                            String userEmail = account_row[0];
+                            ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail);
                             ArrayList<String> driveFileIds = new ArrayList<>();
 
                             for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
@@ -258,16 +256,14 @@
                     }
                 }
 
-                String[] columns = {"refreshToken", "userEmail","type"};
+                String[] columns = {"userEmail","type"};
                 List<String[]> account_rows = dbHelper.getAccounts(columns);
 
                 for(String[] account_row : account_rows){
-                    String type = account_row[2];
+                    String type = account_row[1];
                     if (type.equals("backup")){
-                        String refreshToken = account_row[0];
-                        String accessToken = googleCloud.updateAccessToken(refreshToken).getAccessToken();
-                        String userEmail = account_row[1];
-                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken, userEmail);
+                        String userEmail = account_row[0];
+                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail);
                         System.out.println("dv nums: " + driveMediaItems.size());
                         for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
                             Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
@@ -316,7 +312,7 @@
                 try{
                     runOnUiThread(() -> {
                         deviceStorage.setText("Storage : " + storageHandler.getFreeSpace() +
-                                " /Out Of" + storageHandler.getTotalStorage()+ " GB\n"+
+                                " Out Of" + storageHandler.getTotalStorage()+ " GB\n"+
                                 "Media : "  + dbHelper.getPhotosAndVideosStorage() + "\n");
                         displayDirectoriesUsagesButton.setVisibility(View.VISIBLE);
                         displayDirectoriesUsagesButton.setOnClickListener(view -> {
@@ -353,9 +349,10 @@
 
             final Thread[] updateAndroidFilesThread2 = {new Thread(updateAndroidFilesThread)};
             final Thread[] deleteRedundantAndroidThread2 = {new Thread(deleteRedundantDriveThread)};
+//            final Thread[] updateDriveFilesThread2 = {new Thread()}
+
             new Timer().scheduleAtFixedRate(new TimerTask() {
                 public void run() {
-                    System.out.println("inner timer");
                     boolean anyThreadAlive = false;
                     if (!isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
                         runOnUiThread(() -> {
@@ -382,7 +379,6 @@
                                 break;
                             }
                         }
-                        System.out.println("should run : " + !anyThreadAlive);
                         if(!updateAndroidFilesThread.isAlive() && !updateAndroidFilesThread2[0].isAlive()){
                             if(!anyThreadAlive){
 
@@ -405,15 +401,12 @@
                             }
                         }
 
-                        System.out.println("is alive: " + updateAndroidFilesThread.isAlive() + updateAndroidFilesThread2[0].isAlive());
                         if(!deleteRedundantAndroidThread.isAlive() && !anyThreadAlive){
                             deleteRedundantAndroidThread2[0] = new Thread(deleteRedundantAndroidThread);
-                            System.out.println("here running 1.1");
                             deleteRedundantAndroidThread2[0].start();
                         }
                         if(!updateAndroidFilesThread.isAlive() && !updateAndroidFilesThread2[0].isAlive() && !anyThreadAlive){
                             updateAndroidFilesThread2[0] = new Thread(updateAndroidFilesThread);
-                            System.out.println("here running 2.1");
                             updateAndroidFilesThread2[0].start();
                         }
                     }catch (Exception e){
@@ -511,16 +504,14 @@
                                                     }
                                                 }
                                                 try{
-                                                    String[] columns = {"refreshToken","userEmail", "type"};
+                                                    String[] columns = {"userEmail", "type"};
                                                     List<String[]> accounts_rows = dbHelper.getAccounts(columns);
 
                                                     for(String[] account_row : accounts_rows) {
-                                                        String type = account_row[2];
+                                                        String type = account_row[1];
                                                         if(type.equals("backup")){
-                                                            String userEmail = account_row[1];
-                                                            String refreshToken = account_row[0];
-                                                            String accessToken = googleCloud.updateAccessToken(refreshToken).getAccessToken();
-                                                            ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken, userEmail);
+                                                            String userEmail = account_row[0];
+                                                            ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail);
                                                             ArrayList<String> driveFileIds = new ArrayList<>();
 
                                                             for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
@@ -547,16 +538,14 @@
                                                     }
                                                 }
 
-                                                String[] columns = {"refreshToken", "userEmail","type"};
+                                                String[] columns = {"userEmail","type"};
                                                 List<String[]> account_rows = dbHelper.getAccounts(columns);
 
                                                 for(String[] account_row : account_rows){
-                                                    String type = account_row[2];
+                                                    String type = account_row[1];
                                                     if (type.equals("backup")){
-                                                        String refreshToken = account_row[0];
-                                                        String accessToken = googleCloud.updateAccessToken(refreshToken).getAccessToken();
-                                                        String userEmail = account_row[1];
-                                                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(accessToken, userEmail);
+                                                        String userEmail = account_row[0];
+                                                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail);
                                                         for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
                                                             Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
                                                             if (last_insertId != -1) {

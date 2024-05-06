@@ -77,7 +77,7 @@ public class GoogleDrive {
         return "notFound";
     }
 
-    public static ArrayList<DriveAccountInfo.MediaItem> getMediaItems(String accessToken, String userEmail) {
+    public static ArrayList<DriveAccountInfo.MediaItem> getMediaItems(String userEmail) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final ArrayList<DriveAccountInfo.MediaItem> mediaItems = new ArrayList<>();
         Callable<ArrayList<DriveAccountInfo.MediaItem>> backgroundTask = () -> {
@@ -88,7 +88,14 @@ public class GoogleDrive {
                     LogHandler.saveLog("No folder was found in Google Drive back up account",false);
                     return mediaItems;
                 }
-
+                String accessToken = "";
+                String[] selected_accounts_columns = {"userEmail","refreshToken"};
+                List<String[]> account_rows = DBHelper.getAccounts(selected_accounts_columns);
+                for (String[] account_row : account_rows) {
+                    if (account_row[0].equals(userEmail)) {
+                        accessToken = MainActivity.googleCloud.updateAccessToken(account_row[1]).getAccessToken();
+                    }
+                }
                 Drive driveService = initializeDrive(accessToken);
                 String nextPageToken = null;
                 do{
@@ -234,4 +241,68 @@ public class GoogleDrive {
         return files;
     }
 
+    public static void updateDriveAccountsFilesStatus(){
+        try {
+            Thread updateDriveFilesThread = new Thread(() -> {
+
+                String[] columns = {"userEmail","type"};
+                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
+
+                for(String[] account_row : account_rows){
+                    String type = account_row[1];
+                    if (type.equals("backup")){
+                        String userEmail = account_row[0];
+                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail);
+                        for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
+                            Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
+                            if (last_insertId != -1) {
+                                MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
+                                        driveMediaItem.getHash(), userEmail);
+                            } else {
+                                LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
+                            }
+                        }
+                    }
+                }
+            });
+            updateDriveFilesThread.start();
+            try {
+                updateDriveFilesThread.join();
+            } catch (Exception e) {
+                LogHandler.saveLog("Failed to join update drive files thread in  " +
+                            " updateDriveAccountsFilesStatus", true);
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to run delete redundant drive files from account : " +e.getLocalizedMessage(), true);
+        }
+    }
+
+    public static void deleteRedundantDriveFilesFromAccount(String userEmail) {
+        try {
+            Thread deleteRedundantDrive = new Thread(() -> {
+                ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail);
+                ArrayList<String> driveFileIds = new ArrayList<>();
+
+                for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+                    String fileId = driveMediaItem.getId();
+                    driveFileIds.add(fileId);
+                }
+                MainActivity.dbHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
+            });
+            deleteRedundantDrive.start();
+            try {
+                deleteRedundantDrive.join();
+            } catch (Exception e) {
+                LogHandler.saveLog("Failed to join delete " +
+                        " redundant drive thread when syncing android file.", true);
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to run delete redundant drive files from account : " +e.getLocalizedMessage(), true);
+        }
+    }
+
+
+
+
 }
+
