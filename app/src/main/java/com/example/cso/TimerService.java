@@ -46,22 +46,16 @@ public class TimerService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("TimerForegroundService", "Service onStartCommand");
         if (intent != null && intent.getAction() != null) {
-            System.out.println(startId);
-            System.out.println("i can reach here");
             if (intent.getAction().equals("STOP_SERVICE")) {
-                System.out.println("i can reach here 2 ");
                 TimerService.shouldCancel = true;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     stopForeground(STOP_FOREGROUND_DETACH);
                 }
-                stopSelf();
-                boolean result_of_stop = stopSelfResult(startId);
-                System.out.println("result of stop : " + result_of_stop);
-                getApplicationContext().stopService(MainActivity.serviceIntent);
+//                stopSelf();
+//                getApplicationContext().stopService(MainActivity.serviceIntent);
             }
         }
         else {
-            System.out.println("i can reach here 3 ");
             startForeground(NOTIFICATION_ID, notification);
         }
         return Service.START_STICKY;
