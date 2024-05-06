@@ -21,18 +21,15 @@ public class Support {
     public static boolean sendEmail(String accessToken, String message, File attachment) {
         final String[] accessTokens = {accessToken};
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        System.out.println("accessToken is "+accessToken);
         Callable<Boolean> uploadTask = () -> {
             boolean isSent = false;
             try {
-                System.out.println("try to send email ... ");
                 URL url = new URL("https://gmail.googleapis.com/gmail/v1/users/me/messages/send");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setRequestProperty("Authorization", "Bearer "+accessTokens[0]);
                 connection.setDoOutput(true);
-
                 StringBuilder emailContentBuilder = new StringBuilder();
                 emailContentBuilder.append("To: ").append(supportEmail).append("\r\n");
                 emailContentBuilder.append("Subject: ").append("LogHandler").append("\r\n");
@@ -42,14 +39,11 @@ public class Support {
                 emailContentBuilder.append("Content-Type: text/plain; charset=utf-8\r\n");
                 emailContentBuilder.append("\r\n");
                 emailContentBuilder.append(message).append("\r\n");
-
                 if (attachment != null) {
                     emailContentBuilder.append("--boundary123\r\n");
                     emailContentBuilder.append("Content-Type: application/octet-stream\r\n");
                     emailContentBuilder.append("Content-Disposition: attachment; filename=").append(attachment.getName()).append("\r\n");
                     emailContentBuilder.append("\r\n");
-
-
                     try (BufferedReader reader = new BufferedReader(new FileReader(attachment))) {
                         String line;
                         while ((line = reader.readLine()) != null) {
@@ -59,16 +53,13 @@ public class Support {
                 }
                 emailContentBuilder.append("--boundary123--\r\n");
                 String emailContent = emailContentBuilder.toString();
-
                 String payload = null;
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                     payload = "{\"raw\": \"" + Base64.getUrlEncoder().encodeToString(emailContent.getBytes()) + "\"}";
                 }
-
                 try (DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream())) {
                     outputStream.writeBytes(payload);
                 }
-
                 int responseCode = connection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     isSent = true;
@@ -85,9 +76,8 @@ public class Support {
                 connection.disconnect();
             } catch (Exception e) {
                 e.printStackTrace();
-            }finally {
-                return isSent;
             }
+            return isSent;
         };
         Future<Boolean> future = executor.submit(uploadTask);
         boolean is_ok = false;
@@ -101,7 +91,8 @@ public class Support {
 
 
     public static String getUserEmailForSupport(){
-        List<String []> accountRows = DBHelper.getAccounts(new String[]{"type","accessToken"});
+        List<String []> accountRows = DBHelper.getAccounts(new String[]{"type","refreshToken"});
+        //should be inside an executor service
         for (String[] row : accountRows) {
             if (row[0].equals("backup")) {
                 return row[1];

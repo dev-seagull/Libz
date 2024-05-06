@@ -14,7 +14,6 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 public class NotificationHandler {
-
     public static void sendNotification(String channelId, String channelName, Activity activity,
                                         String contentTitle, String contentText) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

@@ -789,6 +789,10 @@
                             if (!isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
                                 TimerService.shouldCancel = false;
                                 startService(serviceIntent);
+                                wifiOnlySwitchMaterial.setThumbTintList(UIHelper.onSwitchMaterialThumb);
+                                wifiOnlySwitchMaterial.setTrackTintList(UIHelper.onSwitchMaterialTrack);
+                                wifiOnlySwitchMaterial.setAlpha(1.0f);
+                                SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true,preferences);
                             }
                         }
                     }else{

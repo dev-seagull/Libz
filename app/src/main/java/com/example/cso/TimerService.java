@@ -19,9 +19,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class TimerService extends Service {
-
-
-    private static final String TAG = "TimerForegroundService";
     public Timer timer;
     public static boolean shouldCancel = false;
     public TimerTask timerTask;
@@ -32,7 +29,6 @@ public class TimerService extends Service {
     Thread deleteRedundantAndroidThreadTemp;
     Thread updateAndroidFilesThreadTemp;
     Thread deleteRedundantDriveThreadTemp;
-
     Thread updateDriveFilesThreadTemp;
     Thread deleteDuplicatedInDriveTemp;
     Notification notification;
@@ -40,7 +36,7 @@ public class TimerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d(TAG, "Service onCreate");
+        Log.d("TimerForegroundService", "Service onCreate");
         notification = createNotification();
         startTimer();
     }
@@ -48,7 +44,7 @@ public class TimerService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "Service onStartCommand");
+        Log.d("TimerForegroundService", "Service onStartCommand");
         if (intent != null && intent.getAction() != null) {
             System.out.println(startId);
             System.out.println("i can reach here");
@@ -72,7 +68,6 @@ public class TimerService extends Service {
     }
 
     private void startTimer() {
-        System.out.println("startTimer method called");
         timer = new Timer();
         initializeTimerTask();
         timer.schedule(timerTask, 5000 , 1000);
@@ -148,7 +143,7 @@ public class TimerService extends Service {
 
         final Thread[] updateDriveFilesThreadForService = {new Thread(() -> {
 
-            String[] columns = {"refreshTokne", "userEmail","type"};
+            String[] columns = {"refreshToken", "userEmail","type"};
             List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
 
             for(String[] account_row : account_rows){

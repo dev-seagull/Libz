@@ -11,9 +11,8 @@ public class UIHelper {
     public static ColorStateList addBackupAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#FF5722"));
     public static ColorStateList primaryAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#0D47A1"));
 
-    public static ColorStateList offSwitchMaterialThumb  = ColorStateList.valueOf(Color.parseColor("#BF2C2C"));
+    public static ColorStateList offSwitchMaterialThumb  = ColorStateList.valueOf(Color.parseColor("#850808"));
     public static ColorStateList offSwitchMaterialTrack  = ColorStateList.valueOf(Color.parseColor("#850808"));
-    //gray colors
     public static ColorStateList disabledSwitchMaterialThumb = ColorStateList.valueOf(Color.parseColor("#BDBDBD"));
     public static ColorStateList disabledSwitchMaterialTrack = ColorStateList.valueOf(Color.parseColor("#9E9E9E"));
     public static ColorStateList onSwitchMaterialThumb  = ColorStateList.valueOf(Color.GREEN);

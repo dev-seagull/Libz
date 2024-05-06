@@ -21,23 +21,6 @@ import java.util.concurrent.Future;
 public class GoogleDrive {
 
     public GoogleDrive() {}
-
-    public static String[] goodEmailAccount(){
-        // some check like capacity
-        String[] drive_backup_selected_columns = {"userEmail", "type", "accessToken"};
-        List<String[]> drive_backUp_accounts = DBHelper.getAccounts(drive_backup_selected_columns);
-        try {
-            for (String[] drive_backUp_account : drive_backUp_accounts) {
-                if (drive_backUp_account[1].equals("backup")) {
-                    return  drive_backUp_account;
-                }
-            }
-        }catch (Exception e){
-            LogHandler.saveLog("error in getting backup accounts from db : " + e.getLocalizedMessage());
-        }
-        return null;
-    }
-
     public static String createStashSyncedAssetsFolderInDrive(String userEmail){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         String syncAssetsFolderIdStr = null;
