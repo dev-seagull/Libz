@@ -7,6 +7,7 @@ import android.text.SpannableString;
 import android.text.style.AlignmentSpan;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -19,6 +20,7 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class UIHandler {
@@ -83,7 +85,6 @@ public class UIHandler {
     }
 
     public static void updateDirectoriesUsages(){
-        System.out.println("");
         HashMap<String,String> dirHashMap = MainActivity.storageHandler.directoryUIDisplay();
         directoryUsages.setText("");
         for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
@@ -108,5 +109,32 @@ public class UIHandler {
         infoButton.setOnClickListener(view -> drawerLayout.openDrawer(GravityCompat.END));
     }
 
+    public static void initializeButtons(Activity activity,GoogleCloud googleCloud){
+        String[] columnsList = {"userEmail", "type", "refreshToken"};
+        List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columnsList);
+        for (String[] account_row : account_rows) {
+            String userEmail = account_row[0];
+            String type = account_row[1];
+            if (type.equals("primary")){
+//                    LinearLayout primaryLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
+//                    Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
+//                    newGoogleLoginButton.setText(userEmail);
+            }else if (type.equals("backup")){
+                LinearLayout backupLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+                Button newGoogleLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
+                newGoogleLoginButton.setText(userEmail);
+            }
+        }
+        Button androidDeviceButton = activity.findViewById(R.id.androidDeviceButton);
+        androidDeviceButton.setText(MainActivity.androidDeviceName);
+
+//          LinearLayout primaryAccountsButtonsLayout= findViewById(R.id.primaryAccountsButtons);
+        LinearLayout backupAccountsButtonsLayout= activity.findViewById(R.id.backUpAccountsButtons);
+//           Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
+//           newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+        Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
+        newBackupLoginButton.setBackgroundTintList(UIHelper.addBackupAccountButtonColor);
+
+    }
 
 }

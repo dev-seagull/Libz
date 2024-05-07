@@ -16,7 +16,6 @@
     import android.view.View;
     import android.view.ViewGroup;
     import android.widget.Button;
-    import android.widget.ImageButton;
     import android.widget.LinearLayout;
     import android.widget.PopupMenu;
     import android.widget.TextView;
@@ -43,11 +42,9 @@
 //        ActivityResultLauncher<Intent> signInToPrimaryLauncher;
         public ActivityResultLauncher<Intent> signInToBackUpLauncher;
 //        GooglePhotos googlePhotos;
-//        HashMap<String, PhotosAccountInfo> primaryAccountHashMap = new HashMap<>();
         public static String androidDeviceName;
         static SharedPreferences preferences;
         public static DBHelper dbHelper;
-
         public static StorageHandler storageHandler;
         public Thread firstUiThread;
         public Thread secondUiThread;
@@ -57,7 +54,6 @@
         public Thread deleteRedundantDriveThread;
         public Thread updateDriveBackUpThread;
         public Thread deleteDuplicatedInDrive;
-        SwitchMaterial syncSwitchMaterialButton;
         SwitchMaterial wifiOnlySwitchMaterial;
         List<Thread> threads = new ArrayList<>(Arrays.asList(firstUiThread, secondUiThread,
                 backUpJsonThread, insertMediaItemsThread, deleteRedundantDriveThread, updateDriveBackUpThread, deleteDuplicatedInDrive));
@@ -71,7 +67,6 @@
             PermissionManager permissionManager = new PermissionManager();
             boolean isStorageAccessGranted = permissionManager.requestStorageAccess(activity);
 
-
             boolean hasCreated = LogHandler.createLogFile();
             System.out.println("Log file is created :"  + hasCreated);
 
@@ -79,46 +74,28 @@
             dbHelper = new DBHelper(this,"StashDatabase");
             googleCloud = new GoogleCloud(this);
             androidDeviceName = DeviceName.getDeviceName();
+            UIHelper uiHelper = new UIHelper();
+            storageHandler = new StorageHandler();
 
             LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
                     Build.VERSION_CODES.M, false);
 
+            UIHandler.initializeDrawerLayout(activity);
+            UIHandler.initializeButtons(this,googleCloud);
+            UIHandler.handleSwitchMaterials();
+            boolean areReadAndWritePermissionsAccessGranted = permissionManager.requestManageReadAndWritePermissions(activity);
+
             LogHandler.actionOnLogFile();
             Upgrade.versionHandler(preferences);
-            storageHandler = new StorageHandler();
             if(dbHelper.DATABASE_VERSION < 11) {
                 LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
             }
             dbHelper.insertSupportCredential();
 
-            UIHandler.initializeDrawerLayout(activity);
-
-            initializeButtons(this,googleCloud);
-            boolean areReadAndWritePermissionsAccessGranted = permissionManager.requestManageReadAndWritePermissions(activity);
-            Button androidDeviceButton = findViewById(R.id.androidDeviceButton);
-            androidDeviceButton.setText(androidDeviceName);
-//            LinearLayout primaryAccountsButtonsLayout= findViewById(R.id.primaryAccountsButtons);
-            LinearLayout backupAccountsButtonsLayout= findViewById(R.id.backUpAccountsButtons);
-//            Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
-//            newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-            Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
-            newBackupLoginButton.setBackgroundTintList(UIHelper.addBackupAccountButtonColor);
-            TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
-            TextView deviceStorage = findViewById(R.id.deviceStorage);
-            ImageButton displayDirectoriesUsagesButton = findViewById(R.id.directoriesButton);
-
-
             serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
-            new TimerService();
+//            new TimerService();
 
-            runOnUiThread(() ->{
-                TextView deviceStorageTextView = findViewById(R.id.deviceStorage);
-                deviceStorageTextView.setText("Wait until we get an update of your assets ...");
-                syncSwitchMaterialButton = findViewById(R.id.syncSwitchMaterial);
-                UIHandler.updateDirectoriesUsages();
-                UIHandler.handleSwitchMaterials();
-            });
-
+            uiHelper.deviceStorageTextView.setText("Wait until we get an update of your assets ...");
             Thread deleteRedundantAndroidThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -143,7 +120,6 @@
                     LogHandler.saveLog("End of getting files from your android device when starting the app.",false);
                 }
             });
-
 
             deleteRedundantDriveThread = new Thread(new Runnable() {
                 @Override
@@ -240,25 +216,25 @@
                 }
                 try{
                     runOnUiThread(() -> {
-                        deviceStorage.setText("Storage : " + storageHandler.getFreeSpace() +
+                        uiHelper.deviceStorage.setText("Storage : " + storageHandler.getFreeSpace() +
                                 " Out Of" + storageHandler.getTotalStorage()+ " GB\n"+
                                 "Media : "  + dbHelper.getPhotosAndVideosStorage() + "\n");
-                        displayDirectoriesUsagesButton.setVisibility(View.VISIBLE);
-                        displayDirectoriesUsagesButton.setOnClickListener(view -> {
+                        uiHelper.displayDirectoriesUsagesButton.setVisibility(View.VISIBLE);
+                        uiHelper.displayDirectoriesUsagesButton.setOnClickListener(view -> {
                             if (UIHandler.directoryUsages.getVisibility() == View.VISIBLE) {
                                 Drawable newBackground = getResources().getDrawable(R.drawable.down_vector_icon);
-                                displayDirectoriesUsagesButton.setBackground(newBackground);
+                                uiHelper.displayDirectoriesUsagesButton.setBackground(newBackground);
                                 UIHandler.directoryUsages.setVisibility(View.GONE);
                             } else {
                                 UIHandler.updateDirectoriesUsages();
                                 Drawable newBackground = getResources().getDrawable(R.drawable.up_vector_icon);
-                                displayDirectoriesUsagesButton.setBackground(newBackground);
+                                uiHelper.displayDirectoriesUsagesButton.setBackground(newBackground);
                                 UIHandler.directoryUsages.setVisibility(View.VISIBLE);
                             }
                         });
-                        androidStatisticsTextView.setVisibility(View.VISIBLE);
+                        uiHelper.androidStatisticsTextView.setVisibility(View.VISIBLE);
                         int total_androidAssets_count = dbHelper.countAndroidAssets();
-                        androidStatisticsTextView.setText("Sync Status : " + dbHelper.countAndroidSyncedAssets() +
+                        uiHelper.androidStatisticsTextView.setText("Sync Status : " + dbHelper.countAndroidSyncedAssets() +
                                 " Of " + total_androidAssets_count);
                     });
                 }catch (Exception e){
@@ -284,15 +260,15 @@
                     boolean anyThreadAlive = false;
                     if (!isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
                         runOnUiThread(() -> {
-                            syncSwitchMaterialButton.setChecked(false);
-                            syncSwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
-                            syncSwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
+                            uiHelper.syncSwitchMaterialButton.setChecked(false);
+                            uiHelper.syncSwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
+                            uiHelper.syncSwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
                         });
                     }else{
                         runOnUiThread(() -> {
-                            syncSwitchMaterialButton.setChecked(true);
-                            syncSwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
-                            syncSwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
+                            uiHelper.syncSwitchMaterialButton.setChecked(true);
+                            uiHelper.syncSwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
+                            uiHelper.syncSwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
                         });
                     }
 
@@ -342,10 +318,10 @@
             LogHandler.saveLog("--------------------------first threads were finished----------------------------",false);
         }
 
-
         @Override
         protected void onStart(){
             super.onStart();
+            UIHelper uiHelper = new UIHelper();
 //            dbHelper.backUpDataBase(getApplicationContext());
 //            String exportPath = getDatabasePath(DBHelper.NEW_DATABASE_NAME + "_decrypted.db").getPath();
 //            dbHelper.exportDecryptedDatabase(exportPath);
@@ -661,32 +637,13 @@
 //                }
 //            );
 
-            wifiOnlySwitchMaterial = findViewById(R.id.wifiOnlySwitchMaterial);
-            wifiOnlySwitchMaterial.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if(wifiOnlySwitchMaterial.isChecked()){
-                        runOnUiThread( () -> {
-                            wifiOnlySwitchMaterial.setThumbTintList(UIHelper.onSwitchMaterialThumb);
-                            wifiOnlySwitchMaterial.setTrackTintList(UIHelper.onSwitchMaterialTrack);
-                            wifiOnlySwitchMaterial.setAlpha(1.0f);
-                        });
-                        SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true,preferences);
-                    }else{
-                        runOnUiThread( () -> {
-                            wifiOnlySwitchMaterial.setThumbTintList(UIHelper.offSwitchMaterialThumb);
-                            wifiOnlySwitchMaterial.setTrackTintList(UIHelper.offSwitchMaterialTrack);
-                        });
-                        SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",false,preferences);
-                    }
-                }
-            });
 
-            syncSwitchMaterialButton = findViewById(R.id.syncSwitchMaterial);
-            syncSwitchMaterialButton.setOnClickListener(new View.OnClickListener() {
+
+            uiHelper.syncSwitchMaterialButton = findViewById(R.id.syncSwitchMaterial);
+            uiHelper.syncSwitchMaterialButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if(syncSwitchMaterialButton.isChecked()){
+                    if(uiHelper.syncSwitchMaterialButton.isChecked()){
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             if (!isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
                                 TimerService.shouldCancel = false;
@@ -707,7 +664,7 @@
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                UIHelper.syncMessageTextView.setVisibility(View.GONE);
+                                uiHelper.syncMessageTextView.setVisibility(View.GONE);
                             }
                         });
                     }
@@ -715,6 +672,26 @@
                 }
             });
 
+            wifiOnlySwitchMaterial = findViewById(R.id.wifiOnlySwitchMaterial);
+            wifiOnlySwitchMaterial.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if(wifiOnlySwitchMaterial.isChecked()){
+                        runOnUiThread( () -> {
+                            wifiOnlySwitchMaterial.setThumbTintList(UIHelper.onSwitchMaterialThumb);
+                            wifiOnlySwitchMaterial.setTrackTintList(UIHelper.onSwitchMaterialTrack);
+                            wifiOnlySwitchMaterial.setAlpha(1.0f);
+                        });
+                        SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true,preferences);
+                    }else{
+                        runOnUiThread( () -> {
+                            wifiOnlySwitchMaterial.setThumbTintList(UIHelper.offSwitchMaterialThumb);
+                            wifiOnlySwitchMaterial.setTrackTintList(UIHelper.offSwitchMaterialTrack);
+                        });
+                        SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",false,preferences);
+                    }
+                }
+            });
         }
 
         public static String isMyServiceRunning(Context context,Class<?> serviceClass) {
@@ -1000,25 +977,6 @@
             }
         }
 
-
-        public static void initializeButtons(Activity activity,GoogleCloud googleCloud){
-            String[] columnsList = {"userEmail", "type", "refreshToken"};
-            List<String[]> account_rows = dbHelper.getAccounts(columnsList);
-            for (String[] account_row : account_rows) {
-                String userEmail = account_row[0];
-                String type = account_row[1];
-                if (type.equals("primary")){
-//                    LinearLayout primaryLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
-//                    Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
-//                    newGoogleLoginButton.setText(userEmail);
-                }else if (type.equals("backup")){
-                    LinearLayout backupLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-                    Button newGoogleLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
-                    newGoogleLoginButton.setText(userEmail);
-                }
-            }
-        }
-
         public static void reInitializeButtons(Activity activity,GoogleCloud googleCloud){
 //            LinearLayout primaryLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
 //            for (int i = 0; i < primaryLinearLayout.getChildCount(); i++) {
@@ -1038,7 +996,7 @@
                 }
             }
 
-            initializeButtons(activity,googleCloud);
+            UIHandler.initializeButtons(activity,googleCloud);
 
 //            Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
 //            newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
