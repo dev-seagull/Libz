@@ -192,7 +192,7 @@
                             android:orientation="vertical"></LinearLayout>
 
                         <TextView
-                            android:id="@+id/syncToBackUpAccountTextView"
+                            android:id="@+id/syncMessageTextView"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="sans-serif-condensed"
@@ -201,20 +201,8 @@
                             android:shadowDy="2"
                             android:shadowRadius="5"
                             android:text=""
+                            android:visibility="gone"
                             android:textColor="@color/white" />
-
-                        <TextView
-                            android:id="@+id/restoreTextView"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="sans-serif-condensed"
-                            android:shadowColor="@color/black"
-                            android:shadowDx="2"
-                            android:shadowDy="2"
-                            android:shadowRadius="5"
-                            android:text=""
-                            android:textColor="@color/white" />
-
                     </LinearLayout>
 
 

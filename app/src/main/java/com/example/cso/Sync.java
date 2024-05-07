@@ -1,13 +1,18 @@
 package com.example.cso;
 
 import android.content.Context;
+import android.view.View;
+
+import org.checkerframework.checker.guieffect.qual.UI;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Sync {
+    private static  boolean isAllOfAccountsFull = true;
     public static void syncAndroidFiles(Context context){
         try{
+            isAllOfAccountsFull = true;
             MainActivity.storageHandler.freeStorageUpdater();
             double amountSpaceToFreeUp = MainActivity.storageHandler.getAmountSpaceToFreeUp();
 
@@ -20,6 +25,20 @@ public class Sync {
                     syncAndroidToBackupAccount(account_row,amountSpaceToFreeUp,context);
                 }
             }
+            MainActivity.activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if(!InternetManager.isInternetReachable("https://drive.google.com")){
+                        UIHelper.syncMessageTextView.setVisibility(View.VISIBLE);
+                        UIHelper.syncMessageTextView.setText("You're not connected to internet");
+                    }
+                    else if(isAllOfAccountsFull){
+                        UIHelper.syncMessageTextView.setVisibility(View.VISIBLE);
+                        UIHelper.syncMessageTextView.setText("Attention! All of your accounts are running out of storage. We may be not able" +
+                                " to back up and sync your medias. Please add a new back up account.");
+                    }
+                }
+            });
         }catch (Exception e){
             LogHandler.saveLog("Failed to sync files: " + e.getLocalizedMessage(), true);
         }
@@ -32,8 +51,13 @@ public class Sync {
             String syncedAssetsFolderId = GoogleDrive.createStashSyncedAssetsFolderInDrive(userEmail);
 
             double driveFreeSpace = calculateDriveFreeSpace(accountRow);
+            System.out.println("This is drive free space");
 
-            if (driveFreeSpace <= 0) return;
+            if (driveFreeSpace <= 100){
+                return;
+            }else{
+                isAllOfAccountsFull = false;
+            }
 
             List<String[]> sortedAndroidFiles = getSortedAndroidFiles();
 
@@ -59,6 +83,13 @@ public class Sync {
 
             boolean isWifiOnlySwitchOn = SharedPreferencesHandler.getWifiOnlySwitchState(MainActivity.preferences);
             if ((isWifiOnlySwitchOn && InternetManager.getInternetStatus(context).equals("wifi")) || (!isWifiOnlySwitchOn)){
+                MainActivity.activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        UIHelper.syncMessageTextView.setVisibility(View.VISIBLE);
+                        UIHelper.syncMessageTextView.setText("Syncing is in progress ...");
+                    }
+                });
                 if (!DBHelper.androidFileExistsInDrive(assetId, fileHash)){
                     String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
                     if(driveFreeSpace > Double.parseDouble(fileSize)) {

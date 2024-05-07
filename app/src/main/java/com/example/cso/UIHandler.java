@@ -1,10 +1,21 @@
 package com.example.cso;
 
 import android.app.Activity;
+import android.text.Layout;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.AlignmentSpan;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.widget.AppCompatButton;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+
+import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.util.HashMap;
@@ -79,4 +90,23 @@ public class UIHandler {
             directoryUsages.append(entry.getKey() + ": " + entry.getValue() + " GB\n");
         }
     }
+
+    public static void initializeDrawerLayout(Activity activity){
+        DrawerLayout drawerLayout = activity.findViewById(R.id.drawer_layout);
+        NavigationView navigationView = activity.findViewById(R.id.navigationView);
+        ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
+                activity, drawerLayout, R.string.navigation_drawer_open,
+                R.string.navigation_drawer_close);
+        drawerLayout.addDrawerListener(actionBarDrawerToggle);
+        actionBarDrawerToggle.syncState();
+        MenuItem menuItem1 = navigationView.getMenu().findItem(R.id.navMenuItem1);
+        String appVersion = BuildConfig.VERSION_NAME;
+        SpannableString centeredText = new SpannableString("Version: " + appVersion);
+        centeredText.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER), 0, appVersion.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+        menuItem1.setTitle(centeredText);
+        AppCompatButton infoButton = activity.findViewById(R.id.infoButton);
+        infoButton.setOnClickListener(view -> drawerLayout.openDrawer(GravityCompat.END));
+    }
+
+
 }

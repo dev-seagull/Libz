@@ -1,6 +1,5 @@
     package com.example.cso;
 
-    import android.Manifest;
     import android.app.Activity;
     import android.app.ActivityManager;
     import android.app.AlertDialog;
@@ -8,18 +7,12 @@
     import android.content.DialogInterface;
     import android.content.Intent;
     import android.content.SharedPreferences;
-    import android.content.pm.PackageManager;
     import android.content.res.ColorStateList;
     import android.graphics.Color;
     import android.graphics.drawable.Drawable;
     import android.os.Build;
     import android.os.Bundle;
-    import android.text.Layout;
-    import android.text.Spannable;
-    import android.text.SpannableString;
-    import android.text.style.AlignmentSpan;
     import android.view.Gravity;
-    import android.view.MenuItem;
     import android.view.View;
     import android.view.ViewGroup;
     import android.widget.Button;
@@ -30,15 +23,8 @@
 
     import androidx.activity.result.ActivityResultLauncher;
     import androidx.activity.result.contract.ActivityResultContracts;
-    import androidx.appcompat.app.ActionBarDrawerToggle;
     import androidx.appcompat.app.AppCompatActivity;
-    import androidx.appcompat.widget.AppCompatButton;
-    import androidx.core.app.ActivityCompat;
-    import androidx.core.content.ContextCompat;
-    import androidx.core.view.GravityCompat;
-    import androidx.drawerlayout.widget.DrawerLayout;
 
-    import com.google.android.material.navigation.NavigationView;
     import com.google.android.material.switchmaterial.SwitchMaterial;
     import com.google.gson.JsonArray;
     import com.google.gson.JsonObject;
@@ -46,16 +32,12 @@
 
     import java.util.ArrayList;
     import java.util.Arrays;
-    import java.util.HashMap;
     import java.util.List;
-    import java.util.Map;
     import java.util.Timer;
     import java.util.TimerTask;
 
 
     public class MainActivity extends AppCompatActivity {
-        private DrawerLayout drawerLayout;
-
         public static Activity activity ;
         static GoogleCloud googleCloud;
 //        ActivityResultLauncher<Intent> signInToPrimaryLauncher;
@@ -77,7 +59,6 @@
         public Thread deleteDuplicatedInDrive;
         SwitchMaterial syncSwitchMaterialButton;
         SwitchMaterial wifiOnlySwitchMaterial;
-        int buildSdkInt = Build.VERSION.SDK_INT;
         List<Thread> threads = new ArrayList<>(Arrays.asList(firstUiThread, secondUiThread,
                 backUpJsonThread, insertMediaItemsThread, deleteRedundantDriveThread, updateDriveBackUpThread, deleteDuplicatedInDrive));
 
@@ -86,14 +67,10 @@
             activity = this;
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
-            int requestCode =1;
-            String[] permissions = {
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            };
 
             PermissionManager permissionManager = new PermissionManager();
-            boolean isAccessGranted = permissionManager.requestStorageAccess(activity);
+            boolean isStorageAccessGranted = permissionManager.requestStorageAccess(activity);
+            boolean areReadAndWritePermissionsAccessGranted = permissionManager.requestManageReadAndWritePermissions(activity);
 
             boolean hasCreated = LogHandler.createLogFile();
             System.out.println("Log file is created :"  + hasCreated);
@@ -114,21 +91,7 @@
             }
             dbHelper.insertSupportCredential();
 
-            //done with cleaning this block of code but could be one method of initializer
-            drawerLayout = findViewById(R.id.drawer_layout);
-            NavigationView navigationView = findViewById(R.id.navigationView);
-            ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
-                    this, drawerLayout, R.string.navigation_drawer_open,
-                    R.string.navigation_drawer_close);
-            drawerLayout.addDrawerListener(actionBarDrawerToggle);
-            actionBarDrawerToggle.syncState();
-            MenuItem menuItem1 = navigationView.getMenu().findItem(R.id.navMenuItem1);
-            String appVersion = BuildConfig.VERSION_NAME;
-            SpannableString centeredText = new SpannableString("Version: " + appVersion);
-            centeredText.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER), 0, appVersion.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
-            menuItem1.setTitle(centeredText);
-            AppCompatButton infoButton = findViewById(R.id.infoButton);
-            infoButton.setOnClickListener(view -> drawerLayout.openDrawer(GravityCompat.END));
+            UIHandler.initializeDrawerLayout(activity);
 
             initializeButtons(this,googleCloud);
             Button androidDeviceButton = findViewById(R.id.androidDeviceButton);
@@ -142,23 +105,6 @@
             TextView androidStatisticsTextView = findViewById(R.id.androidStatistics);
             TextView deviceStorage = findViewById(R.id.deviceStorage);
             ImageButton displayDirectoriesUsagesButton = findViewById(R.id.directoriesButton);
-
-            Thread manageReadAndWritePermissonsThread = new Thread() {
-                @Override
-                public void run() {
-                    boolean isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
-                            (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
-                    while(!isWriteAndReadPermissionGranted){
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                                (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED |
-                                        ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)) {
-                            ActivityCompat.requestPermissions(MainActivity.this, permissions, requestCode);
-                        }
-                        isWriteAndReadPermissionGranted = (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
-                                (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED);
-                    }
-                }
-            };
 
 
             serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
@@ -321,7 +267,6 @@
 
             LogHandler.saveLog("---------------Start of app--------------",false);
 
-            manageReadAndWritePermissonsThread.start();
             deleteRedundantAndroidThread.start();
             updateAndroidFilesThread.start();
             deleteRedundantDriveThread.start();
@@ -758,6 +703,12 @@
                                 stopService(serviceIntent);
                             }
                         }
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                UIHelper.syncMessageTextView.setVisibility(View.GONE);
+                            }
+                        });
                     }
                     UIHandler.handleSwitchMaterials();
                 }

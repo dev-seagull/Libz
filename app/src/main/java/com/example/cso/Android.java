@@ -26,7 +26,6 @@ public class Android {
         "/Telegram/Telegram Documents"};
     public static int getGalleryMediaItems(Activity activity) {
         galleryItems[0] = 0;
-
         LogHandler.saveLog("Started to get android files from your device.", false);
         ExecutorService executor = Executors.newSingleThreadExecutor();
 

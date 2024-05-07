@@ -37,7 +37,7 @@ public class InternetManager {
     }
 
 
-    private static boolean isInternetReachable(String urlString) {
+    public static boolean isInternetReachable(String urlString) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<Boolean> callableTask = () -> {
             try {

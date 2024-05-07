@@ -3,9 +3,10 @@ package com.example.cso;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.widget.TextView;
 
 public class UIHelper {
-
+    static TextView syncMessageTextView = MainActivity.activity.findViewById(R.id.syncMessageTextView);
     public static ColorStateList backupAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#42A5F5"));
 
     public static ColorStateList addBackupAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#FF5722"));
