@@ -348,7 +348,7 @@ public class Profile {
                         isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(false,"");
                         System.out.println("Test of is backedUp: " + isBackedUp[0]);
                     }else{
-                        LogHandler.saveLog("login with back up launcher failed with response code ");
+                        LogHandler.saveLog("login with back up launcher failed with response code : " + signInResult.getHandleStatus());
                         MainActivity.activity.runOnUiThread(() -> {
                             LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
                             View child2 = backupButtonsLinearLayout.getChildAt(

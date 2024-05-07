@@ -70,7 +70,7 @@
 
             PermissionManager permissionManager = new PermissionManager();
             boolean isStorageAccessGranted = permissionManager.requestStorageAccess(activity);
-            boolean areReadAndWritePermissionsAccessGranted = permissionManager.requestManageReadAndWritePermissions(activity);
+
 
             boolean hasCreated = LogHandler.createLogFile();
             System.out.println("Log file is created :"  + hasCreated);
@@ -94,6 +94,7 @@
             UIHandler.initializeDrawerLayout(activity);
 
             initializeButtons(this,googleCloud);
+            boolean areReadAndWritePermissionsAccessGranted = permissionManager.requestManageReadAndWritePermissions(activity);
             Button androidDeviceButton = findViewById(R.id.androidDeviceButton);
             androidDeviceButton.setText(androidDeviceName);
 //            LinearLayout primaryAccountsButtonsLayout= findViewById(R.id.primaryAccountsButtons);
