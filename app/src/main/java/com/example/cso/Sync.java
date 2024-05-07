@@ -3,14 +3,13 @@ package com.example.cso;
 import android.content.Context;
 import android.view.View;
 
-import org.checkerframework.checker.guieffect.qual.UI;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class Sync {
     private static  boolean isAllOfAccountsFull = true;
     public static void syncAndroidFiles(Context context){
+        UIHelper uiHelper = new UIHelper();
         try{
             isAllOfAccountsFull = true;
             MainActivity.storageHandler.freeStorageUpdater();
@@ -29,12 +28,12 @@ public class Sync {
                 @Override
                 public void run() {
                     if(!InternetManager.isInternetReachable("https://drive.google.com")){
-                        UIHelper.syncMessageTextView.setVisibility(View.VISIBLE);
-                        UIHelper.syncMessageTextView.setText("You're not connected to internet");
+                        uiHelper.syncMessageTextView.setVisibility(View.VISIBLE);
+                        uiHelper.syncMessageTextView.setText("You're not connected to internet");
                     }
                     else if(isAllOfAccountsFull){
-                        UIHelper.syncMessageTextView.setVisibility(View.VISIBLE);
-                        UIHelper.syncMessageTextView.setText("Attention! All of your accounts are running out of storage. We may be not able" +
+                        uiHelper.syncMessageTextView.setVisibility(View.VISIBLE);
+                        uiHelper.syncMessageTextView.setText("Attention! All of your accounts are running out of storage. We may be not able" +
                                 " to back up and sync your medias. Please add a new back up account.");
                     }
                 }
@@ -74,6 +73,7 @@ public class Sync {
 
     private static void syncAndroidFile(String[] androidRow, String userEmail, String refreshToken, String syncedAssetsFolderId,
                                         double driveFreeSpace, double amountSpaceToFreeUp, Context context){
+        UIHelper uiHelper = new UIHelper();
         try{
             String fileName = androidRow[1];
             String fileHash = androidRow[5];
@@ -86,8 +86,8 @@ public class Sync {
                 MainActivity.activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        UIHelper.syncMessageTextView.setVisibility(View.VISIBLE);
-                        UIHelper.syncMessageTextView.setText("Syncing is in progress ...");
+                        uiHelper.syncMessageTextView.setVisibility(View.VISIBLE);
+                        uiHelper.syncMessageTextView.setText("Syncing is in progress ...");
                     }
                 });
                 if (!DBHelper.androidFileExistsInDrive(assetId, fileHash)){

@@ -9,7 +9,7 @@ import android.widget.TextView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 public class UIHelper {
-    public  TextView syncMessageTextView = MainActivity.activity.findViewById(R.id.syncMessageTextView);
+    public TextView syncMessageTextView = MainActivity.activity.findViewById(R.id.syncMessageTextView);
     public static ColorStateList backupAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#42A5F5"));
     public TextView deviceStorageTextView = MainActivity.activity.findViewById(R.id.deviceStorage);
     public SwitchMaterial syncSwitchMaterialButton = MainActivity.activity.findViewById(R.id.syncSwitchMaterial);
