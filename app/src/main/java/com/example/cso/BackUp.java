@@ -27,6 +27,7 @@ import java.util.concurrent.Future;
 public class BackUp {
     public boolean backupAndroidToDrive(Long fileId, String fileName, String filePath,
                                         String fileHash, String mimeType, String assetId,
+
                                         String driveBackupAccessToken, String driveEmailAccount, String syncAssetsFolderId){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final boolean[] isUploadValid = {false};
@@ -34,6 +35,7 @@ public class BackUp {
             try {
                 isUploadValid[0] = false;
                 File androidFile = new File(filePath);
+                Double androidFileSize = androidFile.length() / (Math.pow(10, 6));
                 Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                 com.google.api.services.drive.model.File fileMetadata =
                         new com.google.api.services.drive.model.File();
@@ -50,6 +52,9 @@ public class BackUp {
                 LogHandler.saveLog("Starting to upload file : " + fileName, false );
                 System.out.println("Starting to upload file : " + fileName);
                 String uploadType = "multipart" ; //task
+                if (androidFileSize >= 5){
+                    uploadType = "resumable";
+                }
                 HttpResponse uploadFile =
                         service.files().create(fileMetadata, mediaContent)
                                 .setFields("files(id)")
