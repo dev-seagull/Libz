@@ -49,6 +49,7 @@ public class BackUp {
 //                            if (!isVideo(memeType)) {
                 LogHandler.saveLog("Starting to upload file : " + fileName, false );
                 System.out.println("Starting to upload file : " + fileName);
+                String uploadType = "multipart" ; //task
                 HttpResponse uploadFile =
                         service.files().create(fileMetadata, mediaContent)
                                 .setFields("files(id)")
@@ -56,7 +57,7 @@ public class BackUp {
                                 .setChunkSize(MediaHttpUploader.MINIMUM_CHUNK_SIZE)
                                 .setDirectUploadEnabled(false)
                                 .upload(new GenericUrl("https://www.googleapis.com" +
-                                        "/upload/drive/v3/files?uploadType=multipart"));
+                                        "/upload/drive/v3/files?uploadType="+uploadType));
                 JSONObject responseJson = new JSONObject(uploadFile.parseAsString());
                 int uploadStatus = uploadFile.getStatusCode();
                 String uploadFileId = null;

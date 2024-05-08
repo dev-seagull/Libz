@@ -98,22 +98,22 @@
 
             new Timer().scheduleAtFixedRate(new TimerTask() {
                 public void run() {
-                    LogHandler.saveLog("Started the timer");
+                    LogHandler.saveLog("Started the timer",false);
                     boolean anyThreadAlive = false;
                     try{
-                        for(Thread thread : threads ){
-                            if (thread != null && thread.isAlive()) {
-                                anyThreadAlive = true;
-                                break;
-                            }
-                        }
-                        if(!anyThreadAlive){
+//                        for(Thread thread : threads ){
+//                            if (thread != null && thread.isAlive()) {
+//                                anyThreadAlive = true;
+//                                break;
+//                            }
+//                        }
+//                        if(!anyThreadAlive){
                             UIHandler.startUpdateUIThread(activity);
-                        }
+//                        }
                     }catch (Exception e){
                         LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
                     }
-                    LogHandler.saveLog("Finished the timer");
+                    LogHandler.saveLog("Finished the timer",false);
                 }
             }, 0, 3000);
 

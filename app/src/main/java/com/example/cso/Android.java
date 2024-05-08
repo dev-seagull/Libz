@@ -244,9 +244,6 @@ public class Android {
         Thread deleteRedundantAndroidThread = new Thread() {
             @Override
             public void run() {
-                if(!(Looper.getMainLooper() == Looper.myLooper())){
-                    System.out.println("Running it on main thread");
-                }
                 MainActivity.dbHelper.deleteRedundantAndroidFromDB();
             }
         };
