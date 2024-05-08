@@ -1,6 +1,7 @@
 package com.example.cso;
 
 import android.app.Activity;
+import android.graphics.drawable.Drawable;
 import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -135,6 +136,64 @@ public class UIHandler {
         Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
         newBackupLoginButton.setBackgroundTintList(UIHelper.addBackupAccountButtonColor);
 
+    }
+
+    private static void handeSyncSwitchMaterialButton(UIHelper uiHelper, Activity activity){
+        if (!MainActivity.isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
+            uiHelper.syncSwitchMaterialButton.setChecked(false);
+            uiHelper.syncSwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
+            uiHelper.syncSwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
+        }else{
+            uiHelper.syncSwitchMaterialButton.setChecked(true);
+            uiHelper.syncSwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
+            uiHelper.syncSwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
+        }
+    }
+
+    private static void handleStatistics(UIHelper uiHelper){
+        StorageHandler storageHandler = new StorageHandler();
+        uiHelper.deviceStorage.setText("Storage : " + storageHandler.getFreeSpace() +
+                " Out Of " + storageHandler.getTotalStorage()+ " GB\n"+
+                "Media : "  + MainActivity.dbHelper.getPhotosAndVideosStorage() + "\n");
+
+        uiHelper.androidStatisticsTextView.setVisibility(View.VISIBLE);
+        int total_androidAssets_count = MainActivity.dbHelper.countAndroidAssets();
+        uiHelper.androidStatisticsTextView.setText("Sync Status : " + MainActivity.dbHelper.countAndroidSyncedAssets() +
+                " Of " + total_androidAssets_count);
+    }
+
+    private static void handleDisplayDirectoriesUsagesButton(UIHelper uiHelper, Activity activity){
+        uiHelper.displayDirectoriesUsagesButton.setVisibility(View.VISIBLE);
+        uiHelper.displayDirectoriesUsagesButton.setOnClickListener(view -> {
+            if (UIHandler.directoryUsages.getVisibility() == View.VISIBLE) {
+                Drawable newBackground = activity.getResources().getDrawable(R.drawable.down_vector_icon);
+                uiHelper.displayDirectoriesUsagesButton.setBackground(newBackground);
+                UIHandler.directoryUsages.setVisibility(View.GONE);
+            } else {
+                updateDirectoriesUsages();
+                Drawable newBackground = activity.getResources().getDrawable(R.drawable.up_vector_icon);
+                uiHelper.displayDirectoriesUsagesButton.setBackground(newBackground);
+                UIHandler.directoryUsages.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    public static void startUpdateUIThread(Activity activity){
+        LogHandler.saveLog("Starting startUpdateUIThread", false);
+        Thread updateUIThread =  new Thread(() -> {
+            try{
+                UIHelper uiHelper = new UIHelper();
+                activity.runOnUiThread(() -> {
+                    handeSyncSwitchMaterialButton(uiHelper, activity);
+                    handleStatistics(uiHelper);
+                    handleDisplayDirectoriesUsagesButton(uiHelper, activity);
+                });
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
+            }
+        });
+        updateUIThread.start();
+        LogHandler.saveLog("Finished startUpdateUIThread", false);
     }
 
 }

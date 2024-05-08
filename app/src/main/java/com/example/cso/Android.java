@@ -3,6 +3,7 @@ package com.example.cso;
 import android.app.Activity;
 import android.database.Cursor;
 import android.os.Environment;
+import android.os.Looper;
 import android.provider.MediaStore;
 
 import java.io.File;
@@ -68,9 +69,6 @@ public class Android {
         } catch (Exception e) {
             LogHandler.saveLog("error when downloading user profile : " + e.getLocalizedMessage(), true);
         }
-        LogHandler.saveLog(result
-                + " files were found in your device",false);
-
         return result;
     }
 
@@ -240,6 +238,50 @@ public class Android {
         return isDeleted;
     }
 
+
+    private static void startDeleteRedundantAndroidThread(){
+        LogHandler.saveLog("Starting deleteRedundantAndroidThread", false);
+        Thread deleteRedundantAndroidThread = new Thread() {
+            @Override
+            public void run() {
+                if(!(Looper.getMainLooper() == Looper.myLooper())){
+                    System.out.println("Running it on main thread");
+                }
+                MainActivity.dbHelper.deleteRedundantAndroidFromDB();
+            }
+        };
+        deleteRedundantAndroidThread.start();
+        try{
+            deleteRedundantAndroidThread.join();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to join delete redundant android thread: " + e.getLocalizedMessage(), true );
+        }
+        LogHandler.saveLog("finished deleteRedundantAndroidThread", false);
+    }
+
+    private static void startUpdateAndroidThread(Activity activity){
+        LogHandler.saveLog("Starting startUpdateAndroidThread", false);
+        Thread updateAndroidThread = new Thread() {
+            @Override
+            public void run() {
+                int galleryItems = Android.getGalleryMediaItems(activity);
+                LogHandler.saveLog("End of getting files from your android " +
+                        "device and found : " + galleryItems + " gallery items",false);
+            }
+        };
+        updateAndroidThread.start();
+        try{
+            updateAndroidThread.join();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to join update android thread: " + e.getLocalizedMessage(), true );
+        }
+        LogHandler.saveLog("Finished startUpdateAndroidThread", false);
+    }
+
+    public static void startThreads(Activity activity){
+        startDeleteRedundantAndroidThread();
+        startUpdateAndroidThread(activity);
+    }
 }
 
 

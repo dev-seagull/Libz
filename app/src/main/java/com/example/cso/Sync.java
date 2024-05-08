@@ -95,7 +95,7 @@ public class Sync {
                     if(driveFreeSpace > Double.parseDouble(fileSize)) {
                         boolean isBackedUp = uploadAndroidToDrive(androidRow, userEmail, accessToken, syncedAssetsFolderId);
                         if (isBackedUp) {
-                            GoogleDrive.updateDriveAccountsFilesStatus();
+                            GoogleDrive.startUpdateDriveFilesThread();
                             driveFreeSpace -= Double.parseDouble(fileSize);
                             if(amountSpaceToFreeUp > 0){
                                 GoogleDrive.deleteRedundantDriveFilesFromAccount(userEmail);

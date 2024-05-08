@@ -574,4 +574,232 @@ public class GooglePhotos {
 //        LogHandler.saveLog("Failed to download " + item.getFileName() + " after " + MAX_RETRIES + " attempts.");
 //        return false;
 //    }
+
+
+
+
+    //            displayDialogForRestoreAccountsDecision(preferences);
+//            signInToPrimaryLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+//                result -> {
+//                    if(result.getResultCode() == RESULT_OK){
+//                        LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
+//                        View[] childview = {primaryAccountsButtonsLinearLayout.getChildAt(
+//                                primaryAccountsButtonsLinearLayout.getChildCount() - 1)};
+//                        runOnUiThread(() -> childview[0].setClickable(false));
+//                        Executor signInExecutor = Executors.newSingleThreadExecutor();
+//                        try {
+//                            Runnable backgroundTask = () -> {
+//                                GoogleCloud.signInResult signInResult = googleCloud.handleSignInToPrimaryResult(result.getData());
+//
+//                                if (signInResult.getHandleStatus() == true) {
+//                                    boolean[] isBackedUp = {false};
+//                                    backUpJsonThread = new Thread(new Runnable() {
+//                                        @Override
+//                                        public void run() {
+//                                            try {
+//                                                dbHelper.insertIntoAccounts(signInResult.getUserEmail(), "primary"
+//                                                        , signInResult.getTokens().getRefreshToken(), signInResult.getTokens().getAccessToken(),
+//                                                        signInResult.getStorage().getTotalStorage(), signInResult.getStorage().getUsedStorage(),
+//                                                        signInResult.getStorage().getUsedInDriveStorage(), signInResult.getStorage().getUsedInGmailAndPhotosStorage());
+//
+//                                                isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(false,"");
+//                                                System.out.println("isBackedUp "+isBackedUp[0]);
+//                                            }catch (Exception e){
+//                                                LogHandler.saveLog("failed to back up profile map in primary account: " + e.getLocalizedMessage());
+//                                            }
+//                                            synchronized (this){
+//                                                notify();
+//                                            }
+//                                        }
+//                                    });
+//
+//                                    Thread UIThread = new Thread(new Runnable() {
+//                                        @Override
+//                                        public void run() {
+//                                            synchronized (backUpJsonThread){
+//                                                try{
+//                                                    backUpJsonThread.join();
+//                                                }catch (Exception e){
+//                                                    LogHandler.saveLog("failed to join backUpJsonThread in primary account: " + e.getLocalizedMessage());
+//                                                }
+//                                            }
+//                                            if (isBackedUp[0] == true) {
+//                                                runOnUiThread(() -> {
+//                                                    Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLinearLayout);
+//                                                    newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+//                                                    childview[0] = primaryAccountsButtonsLinearLayout.getChildAt(
+//                                                            primaryAccountsButtonsLinearLayout.getChildCount() - 2);
+//                                                    LogHandler.saveLog(signInResult.getUserEmail()
+//                                                            + " has logged in to the primary account", false);
+//
+//                                                    if (childview[0] instanceof Button) {
+//                                                        Button bt = (Button) childview[0];
+//                                                        bt.setText(signInResult.getUserEmail());
+//                                                        bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
+//                                                    }
+//                                                    updateButtonsListeners();
+//                                                });
+//                                            }
+//                                        }
+//                                    });
+//                                    backUpJsonThread.start();
+//                                    UIThread.start();
+//                                }else{
+//                                    runOnUiThread(() -> {
+//                                            LogHandler.saveLog("login with launcher failed");
+//                                            LinearLayout primaryAccountsButtonsLinearLayout2 =
+//                                                    findViewById(R.id.primaryAccountsButtons);
+//                                            View childview2 = primaryAccountsButtonsLinearLayout2.getChildAt(
+//                                                    primaryAccountsButtonsLinearLayout2.getChildCount() - 1);
+//                                            if (childview2 instanceof Button) {
+//                                                Button bt = (Button) childview2;
+//                                                bt.setText("ADD A PRIMARY ACCOUNT");
+//                                            }
+//                                    updateButtonsListeners();
+//                                    });
+//                                }
+//                            };
+//                            signInExecutor.execute(backgroundTask);
+//                            runOnUiThread(() -> childview[0].setClickable(true));
+//                        }catch (Exception e){
+//                            LogHandler.saveLog("Failed to sign in to primary : "  + e.getLocalizedMessage());
+//                        }
+//                   }else{
+//                        runOnUiThread(() -> {
+//                            LogHandler.saveLog("login with primary launcher failed with response code :" + result.getResultCode());
+//                            LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
+//                            View childview = primaryAccountsButtonsLinearLayout.getChildAt(
+//                                    primaryAccountsButtonsLinearLayout.getChildCount() - 1);
+//                            if(childview instanceof Button){
+//                                Button bt = (Button) childview;
+//                                bt.setText("ADD A PRIMARY ACCOUNT");
+//                            }
+//                            updateButtonsListeners();
+//                        });
+//                    }
+//                }
+//            );
+
+
+    //        private void updatePrimaryButtonsListener(){
+//            LinearLayout primaryAccountsButtonsLinearLayout = findViewById(R.id.primaryAccountsButtons);
+//            for (int i = 0; i < primaryAccountsButtonsLinearLayout.getChildCount(); i++) {
+//                View childView = primaryAccountsButtonsLinearLayout.getChildAt(i);
+//                if (childView instanceof Button) {
+//                    Button button = (Button) childView;
+//                    button.setOnClickListener(
+//                            view -> {
+////                                syncToBackUpAccountButton.setClickable(false);
+////                                restoreButton.setClickable(false);
+//                                String buttonText = button.getText().toString().toLowerCase();
+//                                if (buttonText.equals("add a primary account")){
+//                                    button.setText("Wait");
+//                                    button.setClickable(false);
+//                                    googleCloud.signInToGoogleCloud(signInToPrimaryLauncher);
+//                                    button.setClickable(true);
+//                                }else if (buttonText.equals("wait")){
+//                                    button.setText("Add a primary account");
+//                                }
+//                                else {
+//                                    PopupMenu popupMenu = new PopupMenu(MainActivity.this,button, Gravity.CENTER);
+//                                    popupMenu.getMenuInflater().inflate(R.menu.account_button_menu,popupMenu.getMenu());
+//                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                                        popupMenu.setGravity(Gravity.CENTER);
+//                                    }
+//                                    popupMenu.setOnMenuItemClickListener(item -> {
+//                                        if (item.getItemId() == R.id.sign_out) {
+//                                            try {
+//                                                button.setText("Wait...");
+//                                            } catch (Exception e) {
+//                                                LogHandler.saveLog("Failed to set text to wait : " +
+//                                                e.getLocalizedMessage(), true);
+//                                            }
+//
+//                                            final boolean[] isSignedout = {false};
+//                                            final boolean[] isBackedUp = {false};
+//
+//                                            Thread signOutThread = new Thread(new Runnable() {
+//                                                @Override
+//                                                public void run() {
+//                                                    isSignedout[0] = googleCloud.signOut(buttonText);
+//                                                    System.out.println("isSignedOut " + isSignedout[0]);
+//                                                    synchronized (this){
+//                                                        notify();
+//                                                    }
+//                                                }
+//                                            });
+//
+//                                            backUpJsonThread = new Thread(new Runnable() {
+//                                                @Override
+//                                                public void run() {
+//                                                    synchronized (signOutThread){
+//                                                        try {
+//                                                            MainActivity.dbHelper.deleteFromAccountsTable(buttonText, "primary");
+//                                                            MainActivity.dbHelper.deleteAccountFromPhotosTable(buttonText);
+//                                                            dbHelper.deleteRedundantAsset();
+//                                                            signOutThread.join();
+//                                                        } catch (InterruptedException e) {
+//                                                            LogHandler.saveLog("Failed to join the signout thread" +
+//                                                                    " + " + e.getLocalizedMessage(), true);
+//                                                        }
+//                                                    }
+//                                                    if (isSignedout[0]) {
+//                                                        isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(true,buttonText);
+//                                                    }
+//                                                    System.out.println("isBackedUp " + isBackedUp[0]);
+//                                                }
+//                                            });
+//
+//                                            Thread uiThread = new Thread(new Runnable() {
+//                                                @Override
+//                                                public void run() {
+//                                                    synchronized (backUpJsonThread){
+//                                                        try {
+//                                                            backUpJsonThread.join();
+//                                                        } catch (InterruptedException e) {
+//                                                            LogHandler.saveLog("Failed to join " +
+//                                                                    " back up json thread : " + e.getLocalizedMessage(), true);
+//                                                        }
+//                                                    }
+//                                                    runOnUiThread(() -> {
+//                                                        System.out.println("isSigned " + isSignedout[0]);
+//                                                        if (isBackedUp[0]) {
+//                                                            try {
+//                                                                item.setEnabled(false);
+//                                                                ViewGroup parentView = (ViewGroup) button.getParent();
+//                                                                parentView.removeView(button);
+//                                                            } catch (Exception e) {
+//                                                                LogHandler.saveLog(
+//                                                                        "Failed to handle ui after signout : "
+//                                                                        + e.getLocalizedMessage(), true
+//                                                                );
+//                                                            }
+//                                                        } else {
+//                                                            try {
+//                                                                button.setText(buttonText);
+//                                                            } catch (Exception e) {
+//                                                                LogHandler.saveLog(" Failed to set text " +
+//                                                                        " to button text  : " + e.getLocalizedMessage()
+//                                                                , true);
+//                                                            }
+//                                                        }
+//                                                    });
+//                                                }
+//                                            });
+//
+//                                            signOutThread.start();
+//                                            backUpJsonThread.start();
+//                                            uiThread.start();
+//                                        }
+//                                        return true;
+//                                    });
+//                                    popupMenu.show();
+//                                }
+////                                syncToBackUpAccountButton.setClickable(true);
+////                                restoreButton.setClickable(true);
+//                            }
+//                        );
+//                }
+//            }
+//        }
 }

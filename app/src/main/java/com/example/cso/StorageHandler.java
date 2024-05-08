@@ -138,9 +138,7 @@ public class StorageHandler {
         HashMap<String, String> directorySizes = new HashMap<>();
         try {
             File rootDirectory = Environment.getExternalStorageDirectory();
-            System.out.println("Root Directory: " + rootDirectory);
             File[] rootFolder = rootDirectory.listFiles();
-
 
             for (File file : rootFolder) {
                 if (file.isDirectory()) {
@@ -149,7 +147,6 @@ public class StorageHandler {
             }
 
             List<String[]> androidRows = MainActivity.dbHelper.getAndroidTable(new String[]{"filePath", "fileSize"});
-
             for (String[] row : androidRows) {
                 String filePath = row[0];
                 double fileSize = Double.valueOf(row[1]);

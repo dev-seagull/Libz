@@ -241,18 +241,18 @@ public class GoogleDrive {
         return files;
     }
 
-    public static void updateDriveAccountsFilesStatus(){
+    public static void startUpdateDriveFilesThread(){
+        LogHandler.saveLog("Starting startUpdateDriveFilesThread", false);
         try {
             Thread updateDriveFilesThread = new Thread(() -> {
-
-                String[] columns = {"userEmail","type"};
-                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
-
+                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(new String[]{"userEmail","type"});
                 for(String[] account_row : account_rows){
                     String type = account_row[1];
                     if (type.equals("backup")){
                         String userEmail = account_row[0];
                         ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail);
+                        System.out.println(driveMediaItems.size()+" drive media items found");
+                        LogHandler.saveLog(driveMediaItems.size()+" drive media items found", false);
                         for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
                             Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
                             if (last_insertId != -1) {
@@ -275,6 +275,7 @@ public class GoogleDrive {
         }catch (Exception e){
             LogHandler.saveLog("Failed to run delete redundant drive files from account : " +e.getLocalizedMessage(), true);
         }
+        LogHandler.saveLog("Finished startUpdateDriveFilesThread", false);
     }
 
     public static void deleteRedundantDriveFilesFromAccount(String userEmail) {
@@ -294,15 +295,74 @@ public class GoogleDrive {
                 deleteRedundantDrive.join();
             } catch (Exception e) {
                 LogHandler.saveLog("Failed to join delete " +
-                        " redundant drive thread when syncing android file.", true);
+                        " redundant drive from accounts: " + e.getLocalizedMessage(), true);
             }
         }catch (Exception e){
             LogHandler.saveLog("Failed to run delete redundant drive files from account : " +e.getLocalizedMessage(), true);
         }
     }
 
+    private static void startDeleteRedundantDriveThread(){
+        LogHandler.saveLog("Starting startDeleteRedundantDriveThread", false);
+        Thread deleteRedundantDriveThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(new String[]{"userEmail", "type"});
+                for(String[] account_row : account_rows) {
+                    String type = account_row[1];
+                    if(type.equals("backup")){
+                        String userEmail = account_row[0];
+                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail);
+                        ArrayList<String> driveFileIds = new ArrayList<>();
+                        for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+                            String fileId = driveMediaItem.getId();
+                            driveFileIds.add(fileId);
+                        }
+                        MainActivity.dbHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
+                    }
+                }
+            }
+        });
+        deleteRedundantDriveThread.start();
+        try{
+            deleteRedundantDriveThread.join();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to join delete redundant drive thread: " + e.getLocalizedMessage(), true );
+        }
+        LogHandler.saveLog("Finished startDeleteRedundantDriveThread", false);
+    }
 
+    private static void startDeleteDuplicatedInDriveThread() {
+        LogHandler.saveLog("Starting startDeleteDuplicatedInDriveThread", false);
+        Thread deleteDuplicatedInDriveThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String[] columns = {"refreshToken","userEmail", "type"};
+                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
+                for(String[] account_row : account_rows) {
+                    String type = account_row[2];
+                    if(type.equals("backup")){
+                        String userEmail = account_row[1];
+                        String refreshToken = account_row[0];
+                        String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
+                        GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
+                    }
+                }
+            }
+        });
+        deleteDuplicatedInDriveThread.start();
+        try {
+            deleteDuplicatedInDriveThread.join();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to join delete duplicated in drive thread: " + e.getLocalizedMessage(), true);
+        }
+        LogHandler.saveLog("Finished startDeleteDuplicatedInDriveThread", false);
+    }
 
-
+    public static void startThreads(){
+        startDeleteRedundantDriveThread();
+        startUpdateDriveFilesThread();
+        startDeleteDuplicatedInDriveThread();
+    }
 }
 
