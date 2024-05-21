@@ -2,8 +2,8 @@ package com.example.cso;
 
 import android.app.Activity;
 import android.database.Cursor;
+import android.media.MediaScannerConnection;
 import android.os.Environment;
-import android.os.Looper;
 import android.provider.MediaStore;
 
 import java.io.File;
@@ -32,7 +32,9 @@ public class Android {
 
         Callable<Integer> backgroundTask = () -> {
             try (Cursor cursor = createAndroidCursor(activity)) {
-                if (cursor != null) {
+                if (cursor == null) {
+                    getFileManagerMediaItems();
+                } else {
                     int columnIndexPath = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA);
                     int columnIndexSize = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.SIZE);
                     int columnIndexMimeType = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MIME_TYPE);
@@ -44,14 +46,13 @@ public class Android {
             } catch (Exception e) {
                 LogHandler.saveLog("Failed to get gallery files : " + e.getLocalizedMessage(), true);
             }
-
-            try{
-                if(galleryItems[0] == 0){
-                    getFileManagerMediaItems();
-                }
-            }catch (Exception e){
-                LogHandler.saveLog("Getting device files failed: " + e.getLocalizedMessage(), true);
-            }
+//            try{
+//                if(galleryItems[0] == 0){
+//                    getFileManagerMediaItems();
+//                }
+//            }catch (Exception e){
+//                LogHandler.saveLog("Getting device files failed: " + e.getLocalizedMessage(), true);
+//            }
             return galleryItems[0];
         };
 
@@ -231,6 +232,8 @@ public class Android {
             androidFile.delete();
             if(!androidFile.exists()) {
                 isDeleted = MainActivity.dbHelper.deleteFromAndroidTable(assetId, fileSize, androidFilePath, fileName, fileHash);
+                MediaScannerConnection.scanFile(MainActivity.activity.getApplicationContext(),
+                        new String[]{androidFilePath}, null, (path, uri) -> {});
             }
         }catch (Exception e){
             LogHandler.saveLog("Failed to delete android file : " + e.getLocalizedMessage(), true);

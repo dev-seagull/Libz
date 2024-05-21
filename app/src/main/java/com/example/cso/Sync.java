@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Sync {
+    public static Thread syncThread;
     private static  boolean isAllOfAccountsFull = true;
     public static void syncAndroidFiles(Context context){
         UIHelper uiHelper = new UIHelper();
@@ -17,27 +18,42 @@ public class Sync {
 
             String[] selected_accounts_columns = {"userEmail","type", "totalStorage","usedStorage", "refreshToken"};
             List<String[]> account_rows = DBHelper.getAccounts(selected_accounts_columns);
+            boolean accountExists = false;
 
             for(String[] account_row: account_rows){
                 String[] type = {account_row[1]};
+                accountExists = true;
                 if(type[0].equals("backup")){
                     syncAndroidToBackupAccount(account_row,amountSpaceToFreeUp,context);
                 }
             }
-            MainActivity.activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if(!InternetManager.isInternetReachable("https://drive.google.com")){
+            if(!InternetManager.isInternetReachable("https://drive.google.com")){
+                MainActivity.activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
                         uiHelper.syncMessageTextView.setVisibility(View.VISIBLE);
                         uiHelper.syncMessageTextView.setText("You're not connected to internet");
                     }
-                    else if(isAllOfAccountsFull){
+                });
+            }
+            else if(isAllOfAccountsFull && accountExists){
+                MainActivity.activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        uiHelper.syncMessageTextView.setText("You are running out of space. Add more back up accounts.");
                         uiHelper.syncMessageTextView.setVisibility(View.VISIBLE);
-                        uiHelper.syncMessageTextView.setText("Attention! All of your accounts are running out of storage. We may be not able" +
-                                " to back up and sync your medias. Please add a new back up account.");
                     }
-                }
-            });
+                });
+            }
+            else if(!accountExists){
+                MainActivity.activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        uiHelper.syncMessageTextView.setText("Add an account to sync.");
+                        uiHelper.syncMessageTextView.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
         }catch (Exception e){
             LogHandler.saveLog("Failed to sync files: " + e.getLocalizedMessage(), true);
         }
@@ -47,10 +63,10 @@ public class Sync {
         try{
             String userEmail = accountRow[0];
             String refreshToken = accountRow[4];
-            String syncedAssetsFolderId = GoogleDrive.createStashSyncedAssetsFolderInDrive(userEmail);
+            String syncedAssetsFolderId = GoogleDrive.createOrGetStashSyncedAssetsFolderInDrive(userEmail);
 
             double driveFreeSpace = calculateDriveFreeSpace(accountRow);
-            System.out.println("This is drive free space");
+            System.out.println("This is drive free space " + driveFreeSpace);
 
             if (driveFreeSpace <= 100){
                 return;
@@ -82,7 +98,7 @@ public class Sync {
             Long assetId = Long.valueOf(androidRow[8]);
 
             boolean isWifiOnlySwitchOn = SharedPreferencesHandler.getWifiOnlySwitchState(MainActivity.preferences);
-            if ((isWifiOnlySwitchOn && InternetManager.getInternetStatus(context).equals("wifi")) || (!isWifiOnlySwitchOn)){
+            if (!Thread.currentThread().isInterrupted() && uiHelper.syncSwitchMaterialButton.isChecked() &&  (isWifiOnlySwitchOn && InternetManager.getInternetStatus(context).equals("wifi")) || (!isWifiOnlySwitchOn) ){
                 MainActivity.activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -105,7 +121,6 @@ public class Sync {
                                     if (isDeleted) {
                                         amountSpaceToFreeUp -= Double.parseDouble(fileSize);
                                         LogHandler.saveLog(fileName + " is deleted",false);
-                                        System.out.println(fileName + " is deleted");
                                     }
                                 }
                             }
@@ -191,6 +206,24 @@ public class Sync {
         }catch (Exception e) {
             LogHandler.saveLog("Failed to calculate drive free space: " + e.getLocalizedMessage(), true);
             return 0;
+        }
+    }
+
+    public static void startSyncThread(Context context){
+        LogHandler.saveLog("Starting the sync thread", false);
+        syncThread =  new Thread(() -> {
+            try{
+                System.out.println("Syncing android files");
+                Sync.syncAndroidFiles(context);
+            }catch (Exception e){
+                LogHandler.saveLog("Failed in start sync thread : " + e.getLocalizedMessage() , true);
+            }
+        });
+        syncThread.start();
+        try{
+            syncThread.join();
+        }catch (Exception e){
+            LogHandler.saveLog("Finished to join sync thread: " + e.getLocalizedMessage(), true);
         }
     }
 }

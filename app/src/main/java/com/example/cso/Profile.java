@@ -2,13 +2,13 @@ package com.example.cso;
 
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteConstraintException;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
 import androidx.activity.result.ActivityResultLauncher;
 
+import com.google.api.client.http.ByteArrayContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
 import com.google.gson.JsonArray;
@@ -16,58 +16,20 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.io.ByteArrayOutputStream;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class Profile {
-
-
     public static JsonObject createProfileMapContent(String userName){
-        List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
-        JsonArray profileJson = new JsonArray();
-        JsonArray backupAccountsJson = new JsonArray();
-        JsonArray primaryAccountsJson = new JsonArray();
-        JsonArray backUpDBJson = new JsonArray();
         JsonObject resultJson = new JsonObject();
-
-        String sqlQuery = "SELECT * FROM BACKUPDB";
-        Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery, null);
         try{
-            for (String[] account_row : account_rows){
-                if(account_row[1].equals("backup")) {
-                    JsonObject backupAccount = new JsonObject();
-                    backupAccount.addProperty("backupEmail", account_row[0]);
-                    backupAccount.addProperty("refreshToken", account_row[2]);
-                    backupAccountsJson.add(backupAccount);}
-                else if (account_row[1].equals("primary")){
-                    JsonObject primaryAccount = new JsonObject();
-                    primaryAccount.addProperty("primaryEmail", account_row[0]);
-                    primaryAccount.addProperty("refreshToken", account_row[2]);
-                    primaryAccountsJson.add(primaryAccount);
-                }
-            }
-
-            if(cursor != null && cursor.moveToFirst()){
-                int userEmailColumnIndex = cursor.getColumnIndex("userEmail");
-                int fileIdColumnIndex = cursor.getColumnIndex("fileId");
-                if(userEmailColumnIndex >= 0 && fileIdColumnIndex >= 0){
-                    JsonObject backUpDB = new JsonObject();
-                    String dbUserEmail = cursor.getString(userEmailColumnIndex);
-                    String dbFileId = cursor.getString(fileIdColumnIndex);
-                    backUpDB.addProperty("dbUserEmail", dbUserEmail);
-                    backUpDB.addProperty("dbFileId", dbFileId);
-                    backUpDBJson.add(backUpDB);
-                }
-            }
-
-            JsonObject profile = new JsonObject();
-            profile.addProperty("userName", userName);
-            profileJson.add(profile);
+            JsonArray profileJson = createProfileJson(userName);
+            JsonArray backupAccountsJson = createBackUpAccountsJson();
+            JsonArray primaryAccountsJson = createPrimaryAccountsJson();
+            JsonArray backUpDBJson = createBackUpDBJSON();
 
             resultJson.add("profile", profileJson);
             resultJson.add("backupAccounts", backupAccountsJson);
@@ -76,18 +38,89 @@ public class Profile {
         }catch (Exception e){
             LogHandler.saveLog("Failed to create profile map content : " + e.getLocalizedMessage() , true);
         }finally {
-            if(cursor != null){
-                cursor.close();
-            }
+            return  resultJson;
         }
-        return  resultJson;
+    }
+
+    private static JsonArray createProfileJson(String userName){
+        JsonArray profileJson = new JsonArray();
+        try{
+            JsonObject profile = new JsonObject();
+            profile.addProperty("userName", userName);
+            profileJson.add(profile);
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to create profile json : " + e.getLocalizedMessage(), true);
+        }
+        finally {
+            return profileJson;
+        }
+    }
+
+    private static JsonArray createBackUpDBJSON(){
+        JsonArray backUpDBJson = new JsonArray();
+        String sqlQuery = "SELECT * FROM BACKUPDB";
+        try (Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int userEmailColumnIndex = cursor.getColumnIndex("userEmail");
+                int fileIdColumnIndex = cursor.getColumnIndex("fileId");
+                if (userEmailColumnIndex >= 0 && fileIdColumnIndex >= 0) {
+                    JsonObject backUpDB = new JsonObject();
+                    String dbUserEmail = cursor.getString(userEmailColumnIndex);
+                    String dbFileId = cursor.getString(fileIdColumnIndex);
+                    backUpDB.addProperty("dbUserEmail", dbUserEmail);
+                    backUpDB.addProperty("dbFileId", dbFileId);
+                    backUpDBJson.add(backUpDB);
+                }
+            }
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to create back up db json: " + e.getLocalizedMessage(), true);
+        } finally {
+            return backUpDBJson;
+        }
+    }
+
+    private static JsonArray createBackUpAccountsJson(){
+        JsonArray backupAccountsJson = new JsonArray();
+        try{
+            List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
+            for (String[] account_row : account_rows){
+                if(account_row[1].equals("backup")) {
+                    JsonObject backupAccount = new JsonObject();
+                    backupAccount.addProperty("backupEmail", account_row[0]);
+                    backupAccount.addProperty("refreshToken", account_row[2]);
+                    backupAccountsJson.add(backupAccount);
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to create back up accounts json: " + e.getLocalizedMessage(), true);
+        }finally {
+            return backupAccountsJson;
+        }
+    }
+
+    private static JsonArray createPrimaryAccountsJson(){
+        JsonArray primaryAccountsJson = new JsonArray();
+        try{
+            List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
+            for (String[] account_row : account_rows){
+                if (account_row[1].equals("primary")){
+                    JsonObject primaryAccount = new JsonObject();
+                    primaryAccount.addProperty("primaryEmail", account_row[0]);
+                    primaryAccount.addProperty("refreshToken", account_row[2]);
+                    primaryAccountsJson.add(primaryAccount);
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to create primary accounts json: " + e.getLocalizedMessage(), true);
+        }finally {
+            return primaryAccountsJson;
+        }
     }
 
     public static JsonObject readProfileMapContent(String userEmail) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<JsonObject> uploadTask = () -> {
-            JsonObject result = null;
-            String driveBackupRefreshToken = "";
+            String driveBackupRefreshToken;
             String driveBackupAccessToken = "";
             try{
                 String[] drive_backup_selected_columns = {"userEmail", "type", "refreshToken"};
@@ -104,40 +137,10 @@ public class Profile {
             }
 
             Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
+            String folderName = "stash_user_profile";
+            String profileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folderName);
 
-            String profileFolderId = getDriveFolderId(service, "stash_user_profile");
-
-            List<com.google.api.services.drive.model.File> files = GoogleDrive.getDriveFolderFiles(service, profileFolderId);
-
-            boolean jsonFileExists = false;
-            try{
-                if(!profileFolderId.isEmpty() && profileFolderId != null){
-                    if(!files.isEmpty() && files != null){
-                        for (com.google.api.services.drive.model.File file : files) {
-                            if ("application/json".equals(file.getMimeType()) && file.getName().startsWith("profileMap")) {
-                                for (int i =0; i<3; i++){
-                                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                                    service.files().get(file.getId())
-                                            .executeMediaAndDownloadTo(outputStream);
-                                    String jsonString = outputStream.toString();
-                                    JsonObject resultJson = JsonParser.parseString(jsonString).getAsJsonObject();
-                                    outputStream.close();
-                                    if(resultJson != null) {
-                                        JsonArray profileArray = resultJson.get("profile").getAsJsonArray();
-                                        JsonObject profileJson = profileArray.get(0).getAsJsonObject();
-                                        jsonFileExists = true;
-                                        result = resultJson;
-                                        return result;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to read json file from stash folder in drive : " + e.getLocalizedMessage(), true);
-            }
-            return result;
+            return findProfileTxtFile(service,profileFolderId);
         };
 
         Future<JsonObject> future = null;
@@ -155,94 +158,34 @@ public class Profile {
         return resultJson;
     }
 
-    private static String getDriveFolderId(Drive service, String folderName){
-        String folderId = null;
-        String query = "mimeType='application/vnd.google-apps.folder' and name='" + folderName + "' and trashed=false";
+    private static JsonObject findProfileTxtFile(Drive service, String profileFolderId) {
         try{
-            FileList resultList = service.files().list()
-                    .setQ(query)
-                    .setSpaces("drive")
-                    .execute();
-            List<com.google.api.services.drive.model.File> folders = resultList.getFiles();
-            if (folders != null && !folders.isEmpty()) {
-                folderId = folders.get(0).getId();
+            if(profileFolderId != null && !profileFolderId.isEmpty()){
+                FileList fileList = service.files().list()
+                        .setQ("name contains 'profileMap' and '" + profileFolderId + "' in parents")
+                        .setSpaces("drive")
+                        .setFields("files(id)")
+                        .execute();
+                List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
+                for (com.google.api.services.drive.model.File existingFile : existingFiles) {
+                    for (int i =0; i<3; i++) {
+                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                        service.files().get(existingFile.getId())
+                                .executeMediaAndDownloadTo(outputStream);
+                        String jsonString = outputStream.toString();
+                        JsonObject resultJson = JsonParser.parseString(jsonString).getAsJsonObject();
+                        outputStream.close();
+                        if(resultJson != null) {
+                            return resultJson;
+                        }
+                    }
+                }
+
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to get stash user profile folder id from Drive : " + e.getLocalizedMessage(), true);
+            LogHandler.saveLog("Failed to find json file in drive : " + e.getLocalizedMessage(), true);
         }
-        return folderId;
-    }
-
-    public static void insertBackupFromMap(JsonArray backupAccounts){
-        String sqlQuery = "Insert into ACCOUNTS (userEmail,type,refreshToken) values (?,?,?)";
-        DBHelper.dbWritable.beginTransaction();
-        for (int i = 0; i < backupAccounts.size(); i++) {
-            try {
-                JsonObject backupAccount = backupAccounts.get(i).getAsJsonObject();
-                String backupEmail = backupAccount.get("backupEmail").getAsString();
-                String refreshToken = backupAccount.get("refreshToken").getAsString();
-                if(!DBHelper.accountExists(backupEmail, "backup")){
-                    DBHelper.dbWritable.execSQL(sqlQuery, new String[]{backupEmail, "backup", refreshToken});
-                    DBHelper.dbWritable.setTransactionSuccessful();
-                }
-            } catch (SQLiteConstraintException e) {
-                LogHandler.saveLog("SQLiteConstraintException in insert backup accounts method " + e.getLocalizedMessage(), false);
-            } catch (Exception e) {
-                LogHandler.saveLog("Failed to insert backup accounts data into ACCOUNTS  : " + e.getLocalizedMessage(), true);
-            }
-        }
-        DBHelper.dbWritable.endTransaction();
-    }
-
-    public static void insertPrimaryFromMap(JsonArray primaryAccounts){
-        String sqlQuery = "Insert into ACCOUNTS (userEmail,type,refreshToken) values (?,?,?)";
-        DBHelper.dbWritable.beginTransaction();
-        for (int i = 0; i < primaryAccounts.size(); i++) {
-            try {
-                JsonObject primaryAccount = primaryAccounts.get(i).getAsJsonObject();
-                String primaryEmail = primaryAccount.get("primaryEmail").getAsString();
-                String refreshToken = primaryAccount.get("refreshToken").getAsString();
-                if(!DBHelper.accountExists(primaryEmail, "primary")){
-                    DBHelper.dbWritable.execSQL(sqlQuery, new String[]{primaryEmail, "primary", refreshToken});
-                    DBHelper.dbWritable.setTransactionSuccessful();
-                }
-            } catch (SQLiteConstraintException e) {
-                LogHandler.saveLog("SQLiteConstraintException in insert primary accounts method " + e.getLocalizedMessage(), false);
-            } catch (Exception e) {
-                LogHandler.saveLog("Failed to insert primary accounts data into ACCOUNTS : " + e.getLocalizedMessage(), true);
-            }
-        }
-        DBHelper.dbWritable.endTransaction();
-    }
-
-    public boolean syncJsonAccounts(String status, String userEmail){
-        if (status.equals("sign-out")){
-            final boolean[] isDeleted = {false};
-                Thread deleteJsonThread = new Thread(() -> {
-                    isDeleted[0] = deleteProfileJson(userEmail);
-                    synchronized (this){
-                        notify();
-                    }
-                });
-
-                Thread backUpJsonThread = new Thread(() -> {
-                    synchronized (isDeleted){
-                        try {
-                            deleteJsonThread.join();
-                        } catch (InterruptedException e) {
-                            LogHandler.saveLog("Failed to join deleteJsonThread: " + e.getLocalizedMessage());
-                        }
-                        if(isDeleted[0]){
-                            boolean isBackedUp = MainActivity.dbHelper.backUpProfileMap(false,"");
-                        }
-                    }
-                });
-                deleteJsonThread.start();
-                backUpJsonThread.start();
-        } else if (status.equals("sign-in")) {
-            JsonObject profileMapContent = Profile.readProfileMapContent(userEmail);
-        }
-        return true;
+        return null;
     }
 
     public static boolean deleteProfileJson(String userEmail) {
@@ -250,10 +193,10 @@ public class Profile {
         final boolean[] isDeleted = {false};
         Callable<Boolean> uploadTask = () -> {
             try {
-                String driveBackupAccessToken = "";
-                String driveBackupRefreshToken = "";
+                String driveBackupAccessToken;
+                String driveBackupRefreshToken;
                 String[] selected_columns = {"userEmail", "type","refreshToken"};
-                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_columns);
+                List<String[]> account_rows = DBHelper.getAccounts(selected_columns);
                 for (String[] account_row : account_rows) {
                     if (account_row[1].equals("backup") && account_row[0].equals(userEmail)) {
                         driveBackupRefreshToken = account_row[2];
@@ -261,54 +204,9 @@ public class Profile {
 
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                         String folder_name = "stash_user_profile";
-                        String folderId = null;
-                        com.google.api.services.drive.model.File folder = null;
-
-                        FileList fileList = service.files().list()
-                                .setQ("mimeType='application/vnd.google-apps.folder' and name='"
-                                        + folder_name + "' and trashed=false")
-                                .setSpaces("drive")
-                                .setFields("files(id)")
-                                .execute();
-                        List<com.google.api.services.drive.model.File> driveFolders = fileList.getFiles();
-                        for (com.google.api.services.drive.model.File driveFolder : driveFolders) {
-                            folderId = driveFolder.getId();
-                        }
-
-                        if (folderId == null) {
-                            com.google.api.services.drive.model.File folder_metadata =
-                                    new com.google.api.services.drive.model.File();
-                            folder_metadata.setName(folder_name);
-                            folder_metadata.setMimeType("application/vnd.google-apps.folder");
-                            folder = service.files().create(folder_metadata)
-                                    .setFields("id").execute();
-
-                            folderId = folder.getId();
-                        }
-                        try {
-                            fileList = service.files().list()
-                                    .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
-                                    .setSpaces("drive")
-                                    .setFields("files(id)")
-                                    .execute();
-                            List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
-                            for (com.google.api.services.drive.model.File existingFile : existingFiles) {
-                                service.files().delete(existingFile.getId()).execute();
-                            }
-
-                            fileList = service.files().list()
-                                    .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
-                                    .setSpaces("drive")
-                                    .setFields("files(id)")
-                                    .execute();
-                            existingFiles = fileList.getFiles();
-                            System.out.println("fsize " + existingFiles.size());
-                            if (existingFiles.size() == 0) {
-                                isDeleted[0] = true;
-                            }
-                        }catch (Exception e){
-                            LogHandler.saveLog("Failed to delete profileMap from backup : " + e.getLocalizedMessage() , true);
-                        }
+                        String folderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folder_name);
+                        deleteProfileFiles(service, folderId);
+                        isDeleted[0] = checkDeletionStatus(service, folderId);
                     }
                 }
             } catch (Exception e) {
@@ -327,13 +225,46 @@ public class Profile {
         return isDeletedFuture;
     }
 
-    public static boolean backUpJsonFile(GoogleCloud.signInResult signInResult, ActivityResultLauncher<Intent> signInTobackUpLauncher){
+    private static void deleteProfileFiles(Drive service, String folderId){
+        try {
+            FileList fileList = service.files().list()
+                    .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
+                    .setSpaces("drive")
+                    .setFields("files(id)")
+                    .execute();
+            List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
+            for (com.google.api.services.drive.model.File existingFile : existingFiles) {
+                service.files().delete(existingFile.getId()).execute();
+            }
+        }catch (Exception e) {
+            LogHandler.saveLog("Failed to delete profile files: " + e.getLocalizedMessage(), true);
+        }
+    }
+
+    private static boolean checkDeletionStatus(Drive service, String folderId){
+        try{
+            FileList fileList = service.files().list()
+                    .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
+                    .setSpaces("drive")
+                    .setFields("files(id)")
+                    .execute();
+            List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
+            if (existingFiles.size() == 0) {
+                return true;
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to check deletion status of profile files: " + e.getLocalizedMessage(), true);
+        }
+        return false;
+    }
+
+    public static boolean backUpJsonFile(GoogleCloud.signInResult signInResult, ActivityResultLauncher<Intent> signInToBackUpLauncher){
         boolean[] isBackedUp = {false};
         Thread backUpJsonThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try{
-                    if (signInResult.getHandleStatus() == true) {
+                    if (signInResult.getHandleStatus()) {
                         String userEmail = signInResult.getUserEmail();
                         GoogleCloud.Tokens tokens = signInResult.getTokens();
                         String refreshToken = tokens.getRefreshToken();
@@ -345,8 +276,7 @@ public class Profile {
 
                         MainActivity.dbHelper.insertIntoAccounts(userEmail, "backup", refreshToken,accessToken,
                                 totalStorage, usedStorage, usedInDriveStorage, usedInGmailAndPhotosStorage);
-                        isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(false,"");
-                        System.out.println("Test of is backedUp: " + isBackedUp[0]);
+                        isBackedUp[0] = Profile.backUpProfileMap(false,"");
                     }else{
                         LogHandler.saveLog("login with back up launcher failed with response code : " + signInResult.getHandleStatus());
                         MainActivity.activity.runOnUiThread(() -> {
@@ -357,7 +287,7 @@ public class Profile {
                                 Button bt = (Button) child2;
                                 bt.setText("ADD A BACK UP ACCOUNT");
                             }
-                            MainActivity.updateButtonsListeners(signInTobackUpLauncher);
+                            MainActivity.updateButtonsListeners(signInToBackUpLauncher);
                         });
                     }
                 }catch (Exception e){
@@ -372,5 +302,77 @@ public class Profile {
             LogHandler.saveLog("failed to join backUpJsonThread in backup account: " + e.getLocalizedMessage());
         }
         return isBackedUp[0];
+    }
+
+    public static boolean backUpProfileMap(boolean hasRemoved, String signedOutEmail) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        final boolean[] isBackedUp = {false};
+        Callable<Boolean> uploadTask = () -> {
+            try {
+                String driveBackupAccessToken;
+                String driveBackupRefreshToken;
+                String[] selected_columns = {"userEmail", "type", "refreshToken"};
+                List<String[]> account_rows = DBHelper.getAccounts(selected_columns);
+                int backUpAccountCounts = 0;
+                for (String[] account_row : account_rows) {
+                    if (hasRemoved && account_row[0].equals(signedOutEmail)) {
+                        continue;
+                    }
+                    if (account_row[1].equals("backup")){
+                        backUpAccountCounts ++;
+                        driveBackupRefreshToken = account_row[2];
+                        driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
+                        Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
+                        String folder_name = "stash_user_profile";
+                        String profileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(account_row[0],folder_name);
+                        deleteProfileFiles(service, profileFolderId);
+                        boolean isDeleted = checkDeletionStatus(service,profileFolderId);
+                        if(isDeleted){
+                            String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,account_row[0]);
+                            if (uploadedFileId == null | uploadedFileId.isEmpty()) {
+                                LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
+                            }else{
+                                isBackedUp[0] = true;
+                            }
+                        }
+                    }
+                }
+                if(backUpAccountCounts == 0){
+                    isBackedUp[0] = true;
+                }
+            } catch (Exception e) {
+                LogHandler.saveLog("Failed to upload profileMap from Android to backup in backUpProfileMap: " + e.getLocalizedMessage());
+            }
+            return isBackedUp[0];
+        };
+
+        Future<Boolean> future = executor.submit(uploadTask);
+        boolean isBackedUpFuture = false;
+        try{
+            isBackedUpFuture = future.get();
+        }catch (Exception e){
+            System.out.println(e.getLocalizedMessage());
+        }
+        return isBackedUpFuture;
+    }
+
+    private static String setAndCreateProfileMapContent(Drive service,String profileFolderId, String userEmail){
+        String uploadFileId = "";
+        try{
+            com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+            fileMetadata.setName("profileMap.json");
+            fileMetadata.setParents(java.util.Collections.singletonList(profileFolderId));
+            String content = Profile.createProfileMapContent(userEmail).toString();
+            ByteArrayContent mediaContent = ByteArrayContent.fromString("application/json", content);
+            com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
+                    .setFields("id")
+                    .execute();
+            uploadFileId = uploadedFile.getId();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to set profile map content:" + e.getLocalizedMessage(), true);
+        }finally {
+            return uploadFileId;
+        }
+
     }
 }

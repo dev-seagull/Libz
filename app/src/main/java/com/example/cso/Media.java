@@ -8,7 +8,7 @@ public class Media {
     public static boolean isImage(String mimeType){
         mimeType = mimeType.toLowerCase();
         ArrayList<String> imageExtensions = new ArrayList<>(
-                Arrays.asList("jpeg", "jpg", "png", "gif", "bmp")
+                Arrays.asList("jpeg", "jpg", "png", "gif", "bmp","webp")
         );
         return imageExtensions.contains(mimeType);
     }
@@ -16,7 +16,7 @@ public class Media {
     public static boolean isVideo(String mimeType){
         mimeType = mimeType.toLowerCase();
         ArrayList<String> videoExtensions = new ArrayList<>(
-                Arrays.asList("mkv", "mp4")
+                Arrays.asList("mkv", "mp4","mov")
         );
         return videoExtensions.contains(mimeType);
     }

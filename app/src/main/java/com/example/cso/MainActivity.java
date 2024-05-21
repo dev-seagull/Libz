@@ -11,6 +11,7 @@
     import android.graphics.Color;
     import android.os.Build;
     import android.os.Bundle;
+    import android.util.Log;
     import android.view.Gravity;
     import android.view.View;
     import android.view.ViewGroup;
@@ -26,6 +27,8 @@
     import com.google.gson.JsonArray;
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
+
+    import org.checkerframework.checker.guieffect.qual.UI;
 
     import java.util.ArrayList;
     import java.util.Arrays;
@@ -44,14 +47,13 @@
         static SharedPreferences preferences;
         public static DBHelper dbHelper;
         public static StorageHandler storageHandler;
-        public Thread firstUiThread;
         public Thread secondUiThread;
+        public static Timer timer;
         public static Thread backUpJsonThread;
         public static Intent serviceIntent;
-        public Thread insertMediaItemsThread;
         SwitchMaterial wifiOnlySwitchMaterial;
-        List<Thread> threads = new ArrayList<>(Arrays.asList(firstUiThread, secondUiThread,
-                backUpJsonThread, insertMediaItemsThread));
+        List<Thread> threads = new ArrayList<>(Arrays.asList( secondUiThread,
+                backUpJsonThread));
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -96,20 +98,12 @@
 
             GoogleDrive.startThreads();
 
-            new Timer().scheduleAtFixedRate(new TimerTask() {
+            timer = new Timer();
+            timer.scheduleAtFixedRate(new TimerTask() {
                 public void run() {
                     LogHandler.saveLog("Started the timer",false);
-                    boolean anyThreadAlive = false;
                     try{
-//                        for(Thread thread : threads ){
-//                            if (thread != null && thread.isAlive()) {
-//                                anyThreadAlive = true;
-//                                break;
-//                            }
-//                        }
-//                        if(!anyThreadAlive){
-                            UIHandler.startUpdateUIThread(activity);
-//                        }
+                        UIHandler.startUpdateUIThread(activity);
                     }catch (Exception e){
                         LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
                     }
@@ -136,8 +130,9 @@
                             View[] child = {backupButtonsLinearLayout.getChildAt(
                                     backupButtonsLinearLayout.getChildCount() - 1)};
                             UIHandler.setLastBackupAccountButtonClickableFalse(activity);
+
                             try{
-                                Thread mainmThread = new Thread(new Runnable() {
+                                Thread signInToBackUpThread = new Thread(new Runnable() {
                                     @Override
                                     public void run() {
                                         final GoogleCloud.signInResult signInResult =
@@ -145,95 +140,26 @@
 
                                         boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
 
-                                        firstUiThread = new Thread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                if (isBackedUp) {
-                                                    runOnUiThread(() -> {
-                                                        Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupButtonsLinearLayout);
-                                                        newBackupLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
-                                                        child[0] = backupButtonsLinearLayout.getChildAt(
-                                                                backupButtonsLinearLayout.getChildCount() - 2);
-                                                        LogHandler.saveLog(signInResult.getUserEmail()
-                                                                + " has logged in to the backup account", false);
+                                        UIHandler.addAbackUpAccountToUI(activity,isBackedUp,signInToBackUpLauncher,child,signInResult);
 
-                                                        if (child[0] instanceof Button) {
-                                                            Button bt = (Button) child[0];
-                                                            bt.setText(signInResult.getUserEmail());
-                                                            bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
-                                                        }
-                                                        updateButtonsListeners(signInToBackUpLauncher);
-                                                    });
-                                                }
-                                            }
-                                        });
+                                        DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);
 
-                                        insertMediaItemsThread = new Thread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                synchronized (firstUiThread){
-                                                    try {
-                                                        firstUiThread.join();
-                                                    } catch (Exception e) {
-                                                        LogHandler.saveLog("failed to join backUpJsonThread in backup account: " + e.getLocalizedMessage());
-                                                    }
-                                                }
-                                                try{
-                                                    for(DriveAccountInfo.MediaItem mediaItem : signInResult.getMediaItems()){
-                                                        long last_insertId = MainActivity.dbHelper.insertAssetData(mediaItem.getHash());
-                                                        if (last_insertId != -1) {
-                                                            DBHelper.insertIntoDriveTable(last_insertId, mediaItem.getId(), mediaItem.getFileName(),
-                                                                    mediaItem.getHash(), signInResult.getUserEmail());
-                                                        } else {
-                                                            LogHandler.saveLog("Failed to insert file into drive table: " + mediaItem.getFileName());
-                                                        }
-                                                    }
-                                                }catch (Exception e){
-                                                    LogHandler.saveLog("failed to insert media items into drive table : " + e.getLocalizedMessage());
-                                                }
-                                            }
-                                        });
-                                        secondUiThread = new Thread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                runOnUiThread(() -> {
-                                                    child[0].setClickable(true);
-                                                });
-                                            }
-                                        });
-
-                                        firstUiThread.start();
-                                        insertMediaItemsThread.start();
                                         GoogleDrive.startThreads();
-                                        secondUiThread.start();
+
+                                        child[0].setClickable(true);
                                     }
                                 });
-                                mainmThread.start();
+                                signInToBackUpThread.start();
                             }catch (Exception e){
                                 LogHandler.saveLog("Failed to sign in to backup : "  + e.getLocalizedMessage());
                             }
                         }
                         else{
-                            runOnUiThread(() -> {
-                                LogHandler.saveLog("login with back up launcher failed with response code :" + result.getResultCode());
-                                LinearLayout backupAccountsButtonsLinearLayout = findViewById(R.id.backUpAccountsButtons);
-                                View childview = backupAccountsButtonsLinearLayout.getChildAt(
-                                        backupAccountsButtonsLinearLayout.getChildCount() - 1);
-                                if(childview instanceof Button){
-                                    Button bt = (Button) childview;
-                                    bt.setText("ADD A BACK UP ACCOUNT");
-                                }
-                                updateButtonsListeners(signInToBackUpLauncher);
-                            });
+                            UIHandler.handleFailedSignInToBackUp(activity, signInToBackUpLauncher, result);
                         }
                     });
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    updateButtonsListeners(signInToBackUpLauncher);
-                }
-            });
+            updateButtonsListeners(signInToBackUpLauncher);
 
             uiHelper.syncSwitchMaterialButton = findViewById(R.id.syncSwitchMaterial);
             uiHelper.syncSwitchMaterialButton.setOnClickListener(new View.OnClickListener() {
@@ -242,7 +168,6 @@
                     if(uiHelper.syncSwitchMaterialButton.isChecked()){
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             if (!isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
-                                TimerService.shouldCancel = false;
                                 startService(serviceIntent);
                                 wifiOnlySwitchMaterial.setThumbTintList(UIHelper.onSwitchMaterialThumb);
                                 wifiOnlySwitchMaterial.setTrackTintList(UIHelper.onSwitchMaterialTrack);
@@ -253,7 +178,6 @@
                     }else{
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             if (isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
-                                TimerService.shouldCancel = true;
                                 stopService(serviceIntent);
                             }
                         }
@@ -290,6 +214,19 @@
             });
 
             LogHandler.saveLog("--------------------------end of onStart----------------------------",false);
+        }
+
+        @Override
+        public void onPause(){
+            super.onPause();
+        }
+
+        @Override
+        public void onDestroy() {
+            super.onDestroy();
+            System.out.println("Here stopping the timer on ui in onDestroy");
+            timer.cancel();
+            timer.purge();
         }
 
         public static String isMyServiceRunning(Context context,Class<?> serviceClass) {
@@ -389,7 +326,7 @@
                                                         MainActivity.dbHelper.deleteFromAccountsTable(buttonText, "backup");
                                                         MainActivity.dbHelper.deleteAccountFromDriveTable(buttonText);
                                                         dbHelper.deleteRedundantAsset();
-                                                        isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(true,buttonText);
+                                                        isBackedUp[0] = Profile.backUpProfileMap(true,buttonText);
                                                     }
                                                     System.out.println("isBackedUp " + isBackedUp[0]);
                                                 }
@@ -436,12 +373,6 @@
                                             signOutThread.start();
                                             backUpJsonThread.start();
                                             uiThread.start();
-//                                            boolean isDeletedFromAccounts = dbHelper.deleteFromAccountsTable(buttonText,"backup");
-//                                            boolean isAccountDeletedFromDriveTable = dbHelper.deleteAccountFromDriveTable(buttonText);
-//                                            dbHelper.deleteRedundantAsset();
-//                                            ViewGroup parentView = (ViewGroup) button.getParent();
-//                                            parentView.removeView(button);
-//                                            googleCloud.signOut(buttonText);
                                         }
                                         return true;
                                     });
@@ -494,8 +425,8 @@
                     .setPositiveButton("Add", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             SharedPreferencesHandler.setDisplayDialogForRestoreAccountsDecision(preferences,false);
-                            Profile.insertBackupFromMap(profileMapContent.get("backupAccounts").getAsJsonArray());
-                            Profile.insertPrimaryFromMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
+                            DBHelper.insertBackupFromProfileMap(profileMapContent.get("backupAccounts").getAsJsonArray());
+                            DBHelper.insertPrimaryFromProfileMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
                             reInitializeButtons(activity, googleCloud);
                             dialog.dismiss();
                         }

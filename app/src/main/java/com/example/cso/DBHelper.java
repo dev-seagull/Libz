@@ -3,6 +3,7 @@ package com.example.cso;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteException;
 import android.text.TextUtils;
 
@@ -10,6 +11,8 @@ import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
@@ -1129,138 +1132,6 @@ public class DBHelper extends SQLiteOpenHelper {
         return result;
     }
 
-    public boolean backUpProfileMap(boolean hasRemoved,String signedOutEmail) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        final boolean[] isBackedUp = {false};
-        Callable<Boolean> uploadTask = () -> {
-            try {
-                String driveBackupAccessToken = "";
-                String driveBackupRefreshToken = "";
-                String[] selected_columns = {"userEmail", "type", "refreshToken"};
-                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(selected_columns);
-//                ArrayList<String> backupAccountsDb = new ArrayList<>();
-//                ArrayList<String> primaryAccountsDb  = new ArrayList<>();
-//                for(String[] account_row: account_rows){
-//                    if (account_row[1].equals("backup")) {
-//                        primaryAccountsDb.add(account_row[1]);
-//                    }else if(account_row[1].equals("primary")){
-//                        primaryAccountsDb.add(account_row[1]);
-//                    }
-//                }
-
-                int backUpAccountCounts = 0;
-                for (String[] account_row : account_rows) {
-                    if (hasRemoved == true && account_row[0].equals(signedOutEmail)) {
-                        continue;
-                    }
-                    if (account_row[1].equals("backup")){
-
-                        backUpAccountCounts ++;
-                        driveBackupRefreshToken = account_row[2];
-                        driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
-//                        String userEmail = account_row[0];
-                        Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                        String folder_name = "stash_user_profile";
-                        String profileFolderId = null;
-                        com.google.api.services.drive.model.File folder = null;
-
-                        FileList fileList = service.files().list()
-                                .setQ("mimeType='application/vnd.google-apps.folder' and name='"
-                                        + folder_name + "' and trashed=false")
-                                .setSpaces("drive")
-                                .setFields("files(id)")
-                                .execute();
-                        List<com.google.api.services.drive.model.File> driveFolders = fileList.getFiles();
-                        for(com.google.api.services.drive.model.File driveFolder: driveFolders){
-                            profileFolderId = driveFolder.getId();
-                        }
-
-                        if (profileFolderId == null) {
-                            com.google.api.services.drive.model.File folder_metadata =
-                                    new com.google.api.services.drive.model.File();
-                            folder_metadata.setName(folder_name);
-                            folder_metadata.setMimeType("application/vnd.google-apps.folder");
-                            folder = service.files().create(folder_metadata)
-                                    .setFields("id").execute();
-
-                            profileFolderId = folder.getId();
-                        }
-
-                        fileList = service.files().list()
-                                .setQ("name contains 'profileMap' and '" + profileFolderId + "' in parents")
-                                .setSpaces("drive")
-                                .setFields("files(id)")
-                                .execute();
-                        List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
-                        for (com.google.api.services.drive.model.File existingFile : existingFiles) {
-                            service.files().delete(existingFile.getId()).execute();
-                        }
-
-                        com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                        fileMetadata.setName("profileMap.json");
-                        fileMetadata.setParents(java.util.Collections.singletonList(profileFolderId));
-
-                        String content = Profile.createProfileMapContent(account_row[0]).toString();
-
-                        ByteArrayContent mediaContent = ByteArrayContent.fromString("application/json", content);
-
-                        com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
-                                .setFields("id")
-                                .execute();
-
-                        String uploadedFileId = uploadedFile.getId();
-
-//                        while (uploadedFileId == null) {
-//                            this.wait();");
-//                        }
-                        if (uploadedFileId == null | uploadedFileId.isEmpty()) {
-                            LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
-                        }else{
-                            isBackedUp[0] = true;
-                        }
-//                        JsonObject profileMapContent = Profile.readProfileMapContent(userEmail);
-//                        JsonArray backupAccounts = profileMapContent.get("backupAccounts").getAsJsonArray();
-//                        ArrayList<String> backUpUserEmails = new ArrayList<>();
-//                        for (int i = 0; i < backupAccounts.size(); i++) {
-//                            try {
-//                                JsonObject backupAccount = backupAccounts.get(i).getAsJsonObject();
-//                                String backupEmail = backupAccount.get("backupEmail").getAsString();
-//                                backUpUserEmails.add(backupEmail);
-//                            }catch (Exception e){}
-//                        }
-//                        JsonArray primaryAccounts = profileMapContent.get("backupAccounts").getAsJsonArray();
-//                        ArrayList<String> primaryUserEmails = new ArrayList<>();
-//                        for (int i = 0; i < primaryAccounts.size(); i++) {
-//                            try {
-//                                JsonObject primaryAccount = primaryAccounts.get(i).getAsJsonObject();
-//                                String primaryEmail = primaryAccount.get("primaryEmail").getAsString();
-//                                primaryUserEmails.add(primaryEmail);
-//                            }catch (Exception e){}
-//                        }
-//                        if(primaryUserEmails.containsAll(primaryAccountsDb) && backUpUserEmails.containsAll(backupAccountsDb)){
-//                            isBackedUp = true;
-//                        }
-                    }
-                }
-                if(backUpAccountCounts == 0){
-                    isBackedUp[0] = true;
-                }
-            } catch (Exception e) {
-                LogHandler.saveLog("Failed to upload profileMap from Android to backup in backUpProfileMap: " + e.getLocalizedMessage());
-            }
-            return isBackedUp[0];
-        };
-
-        Future<Boolean> future = executor.submit(uploadTask);
-        boolean isBackedUpFuture = false;
-        try{
-            isBackedUpFuture = future.get();
-        }catch (Exception e){
-            System.out.println(e.getLocalizedMessage());
-        }
-        return isBackedUpFuture;
-    }
-
     public static boolean insertIntoDeviceTable(String deviceName,String totalSpace,String freeSpace){
         if (deviceNameExists(deviceName)){
             return updateDeviceTable(deviceName, freeSpace);
@@ -1465,4 +1336,72 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    public static void insertMediaItemsAfterSignInToBackUp(GoogleCloud.signInResult signInResult){
+        Thread insertMediaItemsThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    for(DriveAccountInfo.MediaItem mediaItem : signInResult.getMediaItems()){
+                        long last_insertId = MainActivity.dbHelper.insertAssetData(mediaItem.getHash());
+                        if (last_insertId != -1) {
+                            DBHelper.insertIntoDriveTable(last_insertId, mediaItem.getId(), mediaItem.getFileName(),
+                                    mediaItem.getHash(), signInResult.getUserEmail());
+                        } else {
+                            LogHandler.saveLog("Failed to insert file into drive table: " + mediaItem.getFileName());
+                        }
+                    }
+                }catch (Exception e){
+                    LogHandler.saveLog("failed to insert media items into drive table : " + e.getLocalizedMessage());
+                }
+            }
+        });
+        insertMediaItemsThread.start();
+        try{
+            insertMediaItemsThread.join();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to join insert media items thread: " + e.getLocalizedMessage(), true);
+        }
+    }
+
+    public static void insertBackupFromProfileMap(JsonArray backupAccounts){
+        String sqlQuery = "Insert into ACCOUNTS (userEmail,type,refreshToken) values (?,?,?)";
+        DBHelper.dbWritable.beginTransaction();
+        for (int i = 0; i < backupAccounts.size(); i++) {
+            try {
+                JsonObject backupAccount = backupAccounts.get(i).getAsJsonObject();
+                String backupEmail = backupAccount.get("backupEmail").getAsString();
+                String refreshToken = backupAccount.get("refreshToken").getAsString();
+                if(!DBHelper.accountExists(backupEmail, "backup")){
+                    DBHelper.dbWritable.execSQL(sqlQuery, new String[]{backupEmail, "backup", refreshToken});
+                    DBHelper.dbWritable.setTransactionSuccessful();
+                }
+            } catch (SQLiteConstraintException e) {
+                LogHandler.saveLog("SQLiteConstraintException in insert backup accounts method " + e.getLocalizedMessage(), false);
+            } catch (Exception e) {
+                LogHandler.saveLog("Failed to insert backup accounts data into ACCOUNTS  : " + e.getLocalizedMessage(), true);
+            }
+        }
+        DBHelper.dbWritable.endTransaction();
+    }
+
+    public static void insertPrimaryFromProfileMap(JsonArray primaryAccounts){
+        String sqlQuery = "Insert into ACCOUNTS (userEmail,type,refreshToken) values (?,?,?)";
+        DBHelper.dbWritable.beginTransaction();
+        for (int i = 0; i < primaryAccounts.size(); i++) {
+            try {
+                JsonObject primaryAccount = primaryAccounts.get(i).getAsJsonObject();
+                String primaryEmail = primaryAccount.get("primaryEmail").getAsString();
+                String refreshToken = primaryAccount.get("refreshToken").getAsString();
+                if(!DBHelper.accountExists(primaryEmail, "primary")){
+                    DBHelper.dbWritable.execSQL(sqlQuery, new String[]{primaryEmail, "primary", refreshToken});
+                    DBHelper.dbWritable.setTransactionSuccessful();
+                }
+            } catch (SQLiteConstraintException e) {
+                LogHandler.saveLog("SQLiteConstraintException in insert primary accounts method " + e.getLocalizedMessage(), false);
+            } catch (Exception e) {
+                LogHandler.saveLog("Failed to insert primary accounts data into ACCOUNTS : " + e.getLocalizedMessage(), true);
+            }
+        }
+        DBHelper.dbWritable.endTransaction();
+    }
 }

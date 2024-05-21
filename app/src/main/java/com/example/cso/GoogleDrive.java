@@ -1,5 +1,7 @@
 package com.example.cso;
 
+import android.view.FocusFinder;
+
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -12,6 +14,7 @@ import com.google.api.services.drive.model.FileList;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -21,7 +24,7 @@ import java.util.concurrent.Future;
 public class GoogleDrive {
 
     public GoogleDrive() {}
-    public static String createStashSyncedAssetsFolderInDrive(String userEmail){
+    public static String createOrGetStashSyncedAssetsFolderInDrive(String userEmail){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         String syncAssetsFolderIdStr = null;
         Callable<String> createFolderTask = () -> {
@@ -36,18 +39,16 @@ public class GoogleDrive {
                         driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
                     }
                 }
+
                 Drive service = initializeDrive(driveBackupAccessToken);
-                String folder_name = "stash_synced_assets";
-                syncAssetsFolderId = getStashSyncedAssetsFolderInDrive(service,folder_name);
-                if(syncAssetsFolderId != null && !syncAssetsFolderId.isEmpty() && !syncAssetsFolderId.equals("notFound")){
+                FileList result = getStashSyncedAssetsFolderInDrive(service);
+                if (result != null && !result.getFiles().isEmpty()) {
+                    syncAssetsFolderId = result.getFiles().get(0).getId();
+                    System.out.println("sync asset folder id:" + syncAssetsFolderId);
                     return syncAssetsFolderId;
                 }
-                com.google.api.services.drive.model.File folder_metadata =
-                        new com.google.api.services.drive.model.File();
-                folder_metadata.setName(folder_name);
-                folder_metadata.setMimeType("application/vnd.google-apps.folder");
-                com.google.api.services.drive.model.File folder = service.files().create(folder_metadata).setFields("id").execute();
-                syncAssetsFolderId = folder.getId();
+
+                syncAssetsFolderId = createStashSyncedAssetFolder(service);
             }catch (Exception e){
                 LogHandler.saveLog("Error in creating stash synced assets folder in drive : "+ userEmail + e.getLocalizedMessage(),true);
             }
@@ -62,19 +63,111 @@ public class GoogleDrive {
         return syncAssetsFolderIdStr;
     }
 
-    private static String getStashSyncedAssetsFolderInDrive(Drive service, String folder_name){
-        String syncAssetsFolderId = null;
-        List<com.google.api.services.drive.model.File> files = getDriveFolderFiles(service, "root");
-        for (com.google.api.services.drive.model.File file : files) {
-            if (file.getName().equals(folder_name)) {
-                syncAssetsFolderId = file.getId();
-                break;
+    public static String createOrGetSubDirectoryInStashSyncedAssetsFolder(String userEmail, String folderName){
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        String folderIdStr = null;
+        Callable<String> createFolderTask = () -> {
+            String folderId = null;
+            try {
+                List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","refreshToken"});
+                String driveBackupAccessToken = "";
+                for(String[] account_row: account_rows){
+                    String selectedUserEmail = account_row[0];
+                    if(selectedUserEmail.equals(userEmail)){
+                        String driveBackupRefreshToken = account_row[1];
+                        driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
+                    }
+                }
+
+                Drive service = initializeDrive(driveBackupAccessToken);
+                String parentFolderId =  GoogleDrive.createOrGetStashSyncedAssetsFolderInDrive(userEmail);
+                if (parentFolderId == null){
+                    LogHandler.saveLog("No parent folder was found in Google Drive back up account when creating sub directory",true);
+                }
+                FileList result = getSubDirectoryInStashSyncedAssetsFolder(service,folderName,parentFolderId);
+                if (result != null && !result.getFiles().isEmpty()) {
+                    folderId = result.getFiles().get(0).getId();
+                    System.out.println("sync asset folder id:" + folderId);
+                    return folderId;
+                }
+
+                folderId = createSubDirectoryInStashSyncedAssetsFolder(service,folderName,parentFolderId);
+            }catch (Exception e){
+                LogHandler.saveLog("Error in creating stash synced assets folder in drive : "+ userEmail + e.getLocalizedMessage(),true);
             }
+            return folderId;
+        };
+        Future<String> future = executor.submit(createFolderTask);
+        try{
+            folderIdStr = future.get();
+        }catch (Exception e){
+            LogHandler.saveLog("Error in creating stash synced assets folder in drive : "+ userEmail + e.getLocalizedMessage(),true);
         }
-        if (syncAssetsFolderId != null) {
-            return syncAssetsFolderId;
+        return folderIdStr;
+    }
+
+
+    private static FileList getStashSyncedAssetsFolderInDrive(Drive service){
+        FileList result = null;
+        try{
+            String folderName = "stash_synced_assets";
+            String query = "mimeType='application/vnd.google-apps.folder' and name='" + folderName + "' and 'root' in parents and trashed=false";
+            result = service.files().list()
+                    .setQ(query)
+                    .setSpaces("drive")
+                    .setFields("files(id)")
+                    .execute();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to get stash synced folder in drive", true);
         }
-        return "notFound";
+        return result;
+    }
+
+    private static String createStashSyncedAssetFolder(Drive service){
+        String syncAssetsFolderId = "";
+        try{
+            com.google.api.services.drive.model.File folder_metadata =
+                    new com.google.api.services.drive.model.File();
+            String folderName = "stash_synced_assets";
+            folder_metadata.setName(folderName);
+            folder_metadata.setMimeType("application/vnd.google-apps.folder");
+            com.google.api.services.drive.model.File folder = service.files().create(folder_metadata).setFields("id").execute();
+            syncAssetsFolderId = folder.getId();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to create stash synced asset folder : " + e.getLocalizedMessage(), true);
+        }
+        return syncAssetsFolderId;
+    }
+
+    private static FileList getSubDirectoryInStashSyncedAssetsFolder(Drive service,String folderName, String parentFolderId){
+        String query = "mimeType='application/vnd.google-apps.folder' and name='" + folderName + "' and '" + parentFolderId + "' in parents and trashed=false";
+        FileList result = null;
+        try{
+            result = service.files().list()
+                    .setQ(query)
+                    .setSpaces("drive")
+                    .setFields("files(id)")
+                    .execute();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to get sub directory in stash synced asset folder :" + e.getLocalizedMessage(), true);
+        }
+        return result;
+    }
+
+    private static String createSubDirectoryInStashSyncedAssetsFolder(Drive service,String folderName, String parentFolderId){
+        File folderMetadata = new File();
+        File folder = null;
+        try{
+            folderMetadata.setName(folderName);
+            folderMetadata.setMimeType("application/vnd.google-apps.folder");
+            folderMetadata.setParents(Collections.singletonList(parentFolderId));
+            folder = service.files().create(folderMetadata)
+                    .setFields("id")
+                    .execute();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to create sub directory in stash synced asset folder :" + e.getLocalizedMessage(), true);
+        }
+        return folder.getId();
     }
 
     public static ArrayList<DriveAccountInfo.MediaItem> getMediaItems(String userEmail) {
@@ -82,8 +175,7 @@ public class GoogleDrive {
         final ArrayList<DriveAccountInfo.MediaItem> mediaItems = new ArrayList<>();
         Callable<ArrayList<DriveAccountInfo.MediaItem>> backgroundTask = () -> {
             try {
-                String syncAssetsFolderId =  GoogleDrive.createStashSyncedAssetsFolderInDrive(userEmail);
-
+                String syncAssetsFolderId =  GoogleDrive.createOrGetStashSyncedAssetsFolderInDrive(userEmail);
                 if (syncAssetsFolderId == null){
                     LogHandler.saveLog("No folder was found in Google Drive back up account",false);
                     return mediaItems;
@@ -101,11 +193,11 @@ public class GoogleDrive {
                 do{
                     FileList result = driveService.files().list()
                             .setFields("files(id, name, sha256Checksum),nextPageToken")
-                            .setQ("'" +syncAssetsFolderId + "' in parents")
+                            .setQ("'" +syncAssetsFolderId + "' in parents and trashed=false")
                             .setPageToken(nextPageToken)
                             .execute();
                     List<com.google.api.services.drive.model.File> files = result.getFiles();
-                    if (files != null && !files.isEmpty()) {
+                    if (files != null && !result.getFiles().isEmpty()) {
                         for (File file : files) {
                             if (Media.isVideo(GoogleCloud.getMimeType(file.getName())) |
                                     Media.isImage(GoogleCloud.getMimeType(file.getName()))){
@@ -231,7 +323,7 @@ public class GoogleDrive {
             String query = "'" + folderId + "' in parents and trashed=false";
             FileList resultJson = service.files().list()
                     .setQ(query)
-                    .setSpaces("drive")
+                    .setFields("files(id, name)")
                     .execute();
 
              files = resultJson.getFiles();

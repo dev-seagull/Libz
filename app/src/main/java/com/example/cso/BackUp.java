@@ -2,9 +2,8 @@ package com.example.cso;
 
 
 import com.google.api.client.googleapis.media.MediaHttpUploader;
+import com.google.api.client.googleapis.media.MediaHttpUploaderProgressListener;
 import com.google.api.client.http.FileContent;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpResponse;
 import com.google.api.services.drive.Drive;
 
 import org.json.JSONObject;
@@ -27,7 +26,6 @@ import java.util.concurrent.Future;
 public class BackUp {
     public boolean backupAndroidToDrive(Long fileId, String fileName, String filePath,
                                         String fileHash, String mimeType, String assetId,
-
                                         String driveBackupAccessToken, String driveEmailAccount, String syncAssetsFolderId){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final boolean[] isUploadValid = {false};
@@ -36,6 +34,8 @@ public class BackUp {
                 isUploadValid[0] = false;
                 File androidFile = new File(filePath);
                 Double androidFileSize = androidFile.length() / (Math.pow(10, 6));
+                System.out.println("file size for android file is: " + androidFileSize);
+
                 Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                 com.google.api.services.drive.model.File fileMetadata =
                         new com.google.api.services.drive.model.File();
@@ -50,40 +50,17 @@ public class BackUp {
 
 //                            if (!isVideo(memeType)) {
                 LogHandler.saveLog("Starting to upload file : " + fileName, false );
-                System.out.println("Starting to upload file : " + fileName);
-                String uploadType = "multipart" ; //task
-                if (androidFileSize >= 5){
-                    uploadType = "resumable";
-                }
-                HttpResponse uploadFile =
-                        service.files().create(fileMetadata, mediaContent)
-                                .setFields("files(id)")
-                                .getMediaHttpUploader()
-                                .setChunkSize(MediaHttpUploader.MINIMUM_CHUNK_SIZE)
-                                .setDirectUploadEnabled(false)
-                                .upload(new GenericUrl("https://www.googleapis.com" +
-                                        "/upload/drive/v3/files?uploadType="+uploadType));
-                JSONObject responseJson = new JSONObject(uploadFile.parseAsString());
-                int uploadStatus = uploadFile.getStatusCode();
-                String uploadFileId = null;
-                uploadFileId = uploadFile.getStatusMessage();
-                if (uploadStatus != HttpURLConnection.HTTP_OK) {
-                    LogHandler.saveLog("Failed to upload " + fileName + " from Android to backup "+
-                            driveEmailAccount +" because of response : " + uploadStatus, true);
-                }else{
-                    if (responseJson.has("id")) {
-                        uploadFileId = responseJson.getString("id");
-                    }else{
-                        LogHandler.saveLog("Failed to find id after back up of android file: ", true);
-                    }
-                }
-                while (uploadFileId == null) {
+                com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
+                        .setFields("id")
+                        .execute();
+                String uploadFileId = uploadedFile.getId();
+                while (uploadedFile == null){
                     wait();
                 }
-                if (uploadFileId == null | uploadFileId.isEmpty()) {
-                    LogHandler.saveLog("Failed to upload " + fileName + " from Android to drive " +
-                            driveEmailAccount + " with status of " + uploadStatus, true);
-                } else {
+                if (uploadedFile == null | uploadFileId.isEmpty()) {
+                    LogHandler.saveLog("Failed to upload " + fileName + " from Android to backup "+
+                            driveEmailAccount, true);
+                }else {
                     if(isUploadHashEqual(fileHash,uploadFileId,driveBackupAccessToken)){
                         isUploadValid[0] = true;
 //                        DBHelper.insertIntoDriveTable(Long.valueOf(assetId),String.valueOf(fileId)
@@ -116,6 +93,31 @@ public class BackUp {
         return isUploadValidFuture;
     }
 
+    private static class FileUploadProgressListener implements MediaHttpUploaderProgressListener {
+        @Override
+        public void progressChanged(MediaHttpUploader uploader) {
+            try{
+                switch (uploader.getUploadState()) {
+                    case INITIATION_STARTED:
+                        LogHandler.saveLog("Initiation Started", false);
+                        break;
+                    case INITIATION_COMPLETE:
+                        LogHandler.saveLog("Initiation Completed", false);
+                        break;
+                    case MEDIA_IN_PROGRESS:
+                        LogHandler.saveLog("Upload in progress", false);
+                        break;
+                    case MEDIA_COMPLETE:
+                        LogHandler.saveLog("Upload Completed", false);
+                        break;
+                    default:
+                        break;
+                }
+            }catch (Exception e){
+                LogHandler.saveLog("Failed in http progress listener: " + e.getLocalizedMessage(), true);
+            }
+        }
+    }
     private static FileContent handleMediaFileContent(String mimeTypeToUpload, File androidFile, String mimeType,String filePath, String fileName){
         FileContent mediaContent = null;
         try{
@@ -131,7 +133,7 @@ public class BackUp {
                 } else {
                     LogHandler.saveLog("The android file " + fileName + " doesn't exists in upload method");
                 }
-            } else if (Media.isVideo(mimeTypeToUpload)) {
+            } else if (Media.isVideo(mimeTypeToUpload)) {   
                 if (new File(filePath).exists()) {
                     if (mimeType.toLowerCase().endsWith("mkv")) {
                         mediaContent = new FileContent("video/x-matroska",

@@ -1,6 +1,9 @@
 package com.example.cso;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.text.Layout;
 import android.text.Spannable;
@@ -12,6 +15,8 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.view.GravityCompat;
@@ -19,6 +24,8 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
+
+import org.checkerframework.checker.guieffect.qual.UI;
 
 import java.util.HashMap;
 import java.util.List;
@@ -90,6 +97,44 @@ public class UIHandler {
         directoryUsages.setText("");
         for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
             directoryUsages.append(entry.getKey() + ": " + entry.getValue() + " GB\n");
+        }
+    }
+
+    public static void addAbackUpAccountToUI(Activity activity, boolean isBackedUp,
+                                             ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
+                                             GoogleCloud.signInResult signInResult){
+        Thread uiThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    if (isBackedUp) {
+                        activity.runOnUiThread(() -> {
+                            LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+                            Button newBackupLoginButton = MainActivity.googleCloud.createBackUpLoginButton(backupButtonsLinearLayout);
+                            newBackupLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
+                            child[0] = backupButtonsLinearLayout.getChildAt(
+                                    backupButtonsLinearLayout.getChildCount() - 2);
+                            LogHandler.saveLog(signInResult.getUserEmail()
+                                    + " has logged in to the backup account", false);
+
+                            if (child[0] instanceof Button) {
+                                Button bt = (Button) child[0];
+                                bt.setText(signInResult.getUserEmail());
+                                bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
+                            }
+                            MainActivity.updateButtonsListeners(signInToBackUpLauncher);
+                        });
+                    }
+                }catch (Exception e){
+                    LogHandler.saveLog("Failed to add a backup account to ui: " + e.getLocalizedMessage(), true);
+                }
+            }
+        });
+        uiThread.start();
+        try{
+            uiThread.join();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to join add a backup account to ui thread: " + e.getLocalizedMessage(), true);
         }
     }
 
@@ -178,6 +223,13 @@ public class UIHandler {
         });
     }
 
+    private static void handleSyncTextViewStatus(){
+        UIHelper uiHelper = new UIHelper();
+        if(!uiHelper.syncSwitchMaterialButton.isChecked()){
+            uiHelper.syncMessageTextView.setVisibility(View.GONE);
+        }
+    }
+
     public static void startUpdateUIThread(Activity activity){
         LogHandler.saveLog("Starting startUpdateUIThread", false);
         Thread updateUIThread =  new Thread(() -> {
@@ -187,6 +239,7 @@ public class UIHandler {
                     handeSyncSwitchMaterialButton(uiHelper, activity);
                     handleStatistics(uiHelper);
                     handleDisplayDirectoriesUsagesButton(uiHelper, activity);
+                    handleSyncTextViewStatus();
                 });
             }catch (Exception e){
                 LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
@@ -194,6 +247,21 @@ public class UIHandler {
         });
         updateUIThread.start();
         LogHandler.saveLog("Finished startUpdateUIThread", false);
+    }
+
+    public static void handleFailedSignInToBackUp(Activity activity, ActivityResultLauncher<Intent> signInToBackUpLauncher,
+                                                  ActivityResult result){
+        activity.runOnUiThread(() -> {
+            LogHandler.saveLog("login with back up launcher failed with response code :" + result.getResultCode());
+            LinearLayout backupAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+            View childview = backupAccountsButtonsLinearLayout.getChildAt(
+                    backupAccountsButtonsLinearLayout.getChildCount() - 1);
+            if(childview instanceof Button){
+                Button bt = (Button) childview;
+                bt.setText("ADD A BACK UP ACCOUNT");
+            }
+            MainActivity.updateButtonsListeners(signInToBackUpLauncher);
+        });
     }
 
 }

@@ -8,29 +8,23 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.Looper;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class TimerService extends Service {
-    public Timer timer;
-    public static boolean shouldCancel = false;
-    public TimerTask timerTask;
+    public static Timer timer;
+    private Thread androidThreads;
+    private Thread driveThreads;
+    private Thread syncThreads;
+    public boolean isTimerRunning = false;
+    public static TimerTask timerTask;
     private static final int NOTIFICATION_ID = 12345;
     private static final String CHANNEL_ID = "TimerServiceChannel";
     private static final String CHANNEL_NAME = "Syncing Channel";
-    Thread storageUpdaterThreadTemp;
-    Thread deleteRedundantAndroidThreadTemp;
-    Thread updateAndroidFilesThreadTemp;
-    Thread deleteRedundantDriveThreadTemp;
-    Thread updateDriveFilesThreadTemp;
-    Thread deleteDuplicatedInDriveTemp;
     Notification notification;
 
     @Override
@@ -38,32 +32,88 @@ public class TimerService extends Service {
         super.onCreate();
         Log.d("TimerForegroundService", "Service onCreate");
         notification = createNotification();
+        startForeground(NOTIFICATION_ID, notification);
         startTimer();
     }
-
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("TimerForegroundService", "Service onStartCommand");
         if (intent != null && intent.getAction() != null) {
             if (intent.getAction().equals("STOP_SERVICE")) {
-                TimerService.shouldCancel = true;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    stopForeground(STOP_FOREGROUND_DETACH);
-                }
-//                stopSelf();
-//                getApplicationContext().stopService(MainActivity.serviceIntent);
+                Log.d("TimerForegroundService","Service stopped");
+                stopTimer();
+                stopService(MainActivity.serviceIntent);
             }
-        }
-        else {
-            startForeground(NOTIFICATION_ID, notification);
         }
         return Service.START_STICKY;
     }
 
     private void startTimer() {
         timer = new Timer();
-        initializeTimerTask();
+        timerTask = new TimerTask() {
+            @Override
+            public void run() {
+//                try{
+
+                if (isTimerRunning) {
+                    return;
+                }
+                isTimerRunning = true;
+
+                androidThreads = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Android.startThreads(MainActivity.activity);
+                        } catch (Exception e) {
+                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
+                        }
+                    }
+                });
+                androidThreads.start();
+
+                driveThreads = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            GoogleDrive.startThreads();
+                        } catch (Exception e) {
+                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
+                        }
+                    }
+                });
+                driveThreads.start();
+
+                syncThreads = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Sync.startSyncThread(getApplicationContext());
+                        } catch (Exception e) {
+                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
+                        } finally {
+                            System.out.println("here setting it to timer running false");
+                            isTimerRunning = false;
+                        }
+                    }
+                });
+                syncThreads.start();
+//
+//                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
+//                    storageUpdaterThreadTemp.start();
+//                    try{
+//                        storageUpdaterThreadTemp.join();
+//                    }catch (InterruptedException e) {
+//                        LogHandler.saveLog("Failed to join storage update temp : " +
+//                                e.getLocalizedMessage(), true);
+//                    }
+//                }catch (Exception e){
+//                    LogHandler.saveLog("Failed to run timer in service" + e.getLocalizedMessage() , true);
+//                }
+            }
+        };
+
         timer.schedule(timerTask, 5000 , 1000);
     }
 
@@ -91,9 +141,9 @@ public class TimerService extends Service {
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText("Syncing process is running in the background"));
 
-        Intent actionIntent = new Intent(this, TimerService.class);
+        Intent actionIntent = new Intent(getApplicationContext(), TimerService.class);
         actionIntent.setAction("STOP_SERVICE");
-        PendingIntent actionPendingIntent = PendingIntent.getService(this, 0, actionIntent, PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent actionPendingIntent = PendingIntent.getService(getApplicationContext(), 5, actionIntent, PendingIntent.FLAG_IMMUTABLE);
         builder.addAction(R.drawable.googledriveimage, "Stop Service", actionPendingIntent);
 
         return builder.build();
@@ -104,183 +154,33 @@ public class TimerService extends Service {
         return null;
     }
 
-
-    private void initializeTimerTask() {
-        final Thread[] deleteRedundantAndroidThreadForService = {new Thread(() -> {MainActivity.dbHelper.deleteRedundantAndroidFromDB();})};
-
-        final Thread[] updateAndroidFilesThreadForService = {new Thread(() -> {Android.getGalleryMediaItems(MainActivity.activity);})};
-
-        final Thread[] storageUpdaterThreadForService = {new Thread(() -> {MainActivity.storageHandler.freeStorageUpdater();})};
-
-        final Thread[] deleteRedundantDriveThreadForService = {new Thread(() -> {
-
-            String[] columns = {"userEmail", "type"};
-            List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
-
-            for(String[] account_row : account_rows) {
-                String type = account_row[1];
-                if(type.equals("backup")){
-                    String userEmail = account_row[0];
-                    ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail);
-                    ArrayList<String> driveFileIds = new ArrayList<>();
-
-                    for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
-                        String fileId = driveMediaItem.getId();
-                        driveFileIds.add(fileId);
-                    }
-                    MainActivity.dbHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
-                }
-            }
-        })};
-
-        final Thread[] updateDriveFilesThreadForService = {new Thread(() -> {
-
-            String[] columns = {"userEmail","type"};
-            List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
-
-            for(String[] account_row : account_rows){
-                String type = account_row[1];
-                if (type.equals("backup")){
-                    String userEmail = account_row[0];
-                    ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail);
-                    for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
-                        Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
-                        if (last_insertId != -1) {
-                            MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
-                                    driveMediaItem.getHash(), userEmail);
-                        } else {
-                            LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
-                        }
-                    }
-                }
-            }
-        })};
-
-        final Thread[] deleteDuplicatedInDriveForService = {new Thread(() -> {
-
-            String[] columns = {"refreshToken","userEmail", "type"};
-            List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
-
-            for(String[] account_row : account_rows) {
-                String type = account_row[2];
-                if(type.equals("backup")){
-                    String userEmail = account_row[1];
-                    String refreshToken = account_row[0];
-                    String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
-                    GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
-                }
-            }
-        })};
-
-        timerTask = new TimerTask() {
-            public void run() {
-                System.out.println("Running Timer service");
-                try{
-                    if (shouldCancel == true){
-                        timer.cancel();
-                        timer.purge();
-                        return;
-                    }
-//                    if(Looper.myLooper() == Looper.getMainLooper()){
-//                        System.out.println("Running on ui thread on run timer task");
-//                    }
-
-//                    if (
-//                        (deleteRedundantAndroidThreadTemp != null && deleteRedundantAndroidThreadTemp.isAlive()) ||
-//                            (updateAndroidFilesThreadTemp != null && updateAndroidFilesThreadTemp.isAlive()) ||
-//                            (storageUpdaterThreadTemp != null && storageUpdaterThreadTemp.isAlive()) ||
-//                            (deleteRedundantDriveThreadTemp != null && deleteRedundantDriveThreadTemp.isAlive()) ||
-//                            (updateDriveFilesThreadTemp != null && updateDriveFilesThreadTemp.isAlive()) ||
-//                            (deleteDuplicatedInDriveTemp != null && deleteDuplicatedInDriveTemp.isAlive())
-//                    ){
-//                        return;
-//                    }
-//                    deleteRedundantAndroidThreadTemp = new Thread(deleteRedundantAndroidThreadForService[0]);
-//                    deleteRedundantAndroidThreadTemp.start();
-//                    try {
-//                        deleteRedundantAndroidThreadTemp.join();
-//                    } catch (InterruptedException e) {
-//                        LogHandler.saveLog("Failed to join delete redundant temp : "  +
-//                                e.getLocalizedMessage(), true);
-//                    }
-//
-//                    updateAndroidFilesThreadTemp = new Thread(updateAndroidFilesThreadForService[0]);
-//                    updateAndroidFilesThreadTemp.start();
-//                    try{
-//                        updateAndroidFilesThreadTemp.join();
-//                    }catch (InterruptedException e){
-//                        LogHandler.saveLog("Failed to join update android temp : "  +
-//                                e.getLocalizedMessage(), true);
-//                    }
-
-                    Android.startThreads(MainActivity.activity);
-
-                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
-                    storageUpdaterThreadTemp.start();
-                    try{
-                        storageUpdaterThreadTemp.join();
-                    }catch (InterruptedException e) {
-                        LogHandler.saveLog("Failed to join storage update temp : " +
-                                e.getLocalizedMessage(), true);
-                    }
-                    System.out.println("Android Status is up-to-date and storageUpdaterThreadTemp is done");
-
-
-//                    deleteRedundantDriveThreadTemp = new Thread(deleteRedundantDriveThreadForService[0]);
-//                    deleteRedundantDriveThreadTemp.start();
-//                    try{
-//                        deleteRedundantDriveThreadTemp.join();
-//                    }catch (InterruptedException e){
-//                        LogHandler.saveLog("Failed to join delete redundant drive temp : "  +
-//                                e.getLocalizedMessage(), true);
-//                    }
-//
-//                    updateDriveFilesThreadTemp = new Thread(updateDriveFilesThreadForService[0]);
-//                    updateDriveFilesThreadTemp.start();
-//                    try{
-//                        updateDriveFilesThreadTemp.join();
-//                    }catch (InterruptedException e){
-//                        LogHandler.saveLog("Failed to join update drive temp : "  +
-//                                e.getLocalizedMessage(), true);
-//                    }
-//
-//                    deleteDuplicatedInDriveTemp = new Thread(deleteDuplicatedInDriveForService[0]);
-//                    deleteDuplicatedInDriveTemp.start();
-//
-//                    try{
-//                        deleteDuplicatedInDriveTemp.join();
-//                    }catch (InterruptedException e){
-//                        LogHandler.saveLog("Failed to join delete duplicated drive temp : "  +
-//                                e.getLocalizedMessage(), true);
-//                    }
-                    GoogleDrive.startThreads();
-
-
-                    try{
-                        Sync.syncAndroidFiles(getApplicationContext());
-                    }catch (Exception e){
-                        LogHandler.saveLog("Error in Sync.syncAndroidFiles : " + e.getLocalizedMessage());
-                    }
-//                    syncAndroidToDriveThreadTemp = new Thread(syncAndroidToDriveThreadForService[0]);
-//                    syncAndroidToDriveThreadTemp.start();
-//                    try{
-//                        syncAndroidToDriveThreadTemp.join();
-//                    }catch (Exception e){
-//                        LogHandler.saveLog("Failed to join syncAndroidToDrive thread in timer :" +
-//                                e.getLocalizedMessage(),true);
-//                    }
-
-                    // need to free up ?
-                        //if duplicate in android -> delete the duplicate
-                        //if duplicate between android and drive -> delete the duplicate in android
-                        //else first upload then delete the duplicate in android
-
-                    System.out.println("MainActivity.dbHelper.countAndroidAssets() : " + MainActivity.dbHelper.countAndroidAssets());
-                }catch (Exception e){
-                    LogHandler.saveLog("Failed to run timer in service" + e.getLocalizedMessage() , true);
-                }
-            }
-        };
+    private void stopTimer() {
+        if (Sync.syncThread != null && Sync.syncThread.isAlive()) {
+            Sync.syncThread.interrupt();
+        }
+        if (syncThreads != null && syncThreads.isAlive()) {
+            syncThreads.interrupt();
+        }
+        if (driveThreads != null && driveThreads.isAlive()) {
+            driveThreads.interrupt();
+        }
+        if (androidThreads != null && androidThreads.isAlive()) {
+            androidThreads.interrupt();
+        }
+        if (timerTask != null) {
+            timerTask.cancel();
+        }
+        if (timer != null) {
+            timer.cancel();
+            timer.purge();
+        }
+        Log.d("TimerForegroundService", "Timer stopped");
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stopTimer();
+        Log.d("TimerForegroundService", "Service onDestroy");
+    }
 }
