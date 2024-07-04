@@ -23,7 +23,6 @@ public class Support {
     public static boolean sendEmail(String message, File attachment) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<Boolean> uploadTask = () -> {
-            boolean isSent = false;
             try {
                 String refreshToken = getSupportRefreshToken();
                 String accessToken = requestAccessToken(refreshToken).getAccessToken();
@@ -31,14 +30,14 @@ public class Support {
 
                 String emailContent = createEmailContent(message,attachment);
                 if(emailContent != null){
-                    isSent = sendEmailRequest(emailContent, accessToken);
+                    return sendEmailRequest(emailContent, accessToken);
                 }else{
                     System.out.println("Support email content is null");
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            return isSent;
+            return false;
         };
         Future<Boolean> future = executor.submit(uploadTask);
         boolean isSentFuture = false;
@@ -58,7 +57,7 @@ public class Support {
         StringBuilder emailContentBuilder = new StringBuilder();
         try{
             emailContentBuilder.append("To: ").append(supportEmail).append("\r\n");
-            emailContentBuilder.append("Subject: ").append("LogHandler from " + MainActivity.androidDeviceName).append("\r\n");
+            emailContentBuilder.append("Subject: ").append("LogHandler from " + MainActivity.androidUniqueDeviceIdentifier).append("\r\n");
             emailContentBuilder.append("Content-Type: multipart/mixed; boundary=boundary123\r\n");
             emailContentBuilder.append("\r\n");
             emailContentBuilder.append("--boundary123\r\n");
@@ -117,7 +116,9 @@ public class Support {
             }
             System.out.println("response "  + connection.getResponseMessage());
             connection.disconnect();
-            return responseCode == HttpURLConnection.HTTP_OK;
+            if(responseCode == 200){
+                return true;
+            }
         }catch (Exception e){
             System.out.println("Failed to send email request: " + e.getLocalizedMessage());
         }finally {

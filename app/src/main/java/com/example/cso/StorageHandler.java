@@ -66,19 +66,19 @@ public class StorageHandler {
         this.totalStorage = getDeviceTotalStorage();
         this.optimizedFreeSpace = this.totalStorage * optimizedPercent;
         this.freeSpace = getDeviceFreeStorage();
-        MainActivity.dbHelper.insertIntoDeviceTable(MainActivity.androidDeviceName,
+        MainActivity.dbHelper.insertIntoDeviceTable(MainActivity.androidUniqueDeviceIdentifier,
                 String.format(Locale.US,"%.1f", this.totalStorage), String.format(Locale.US,"%.1f", this.freeSpace));
     }
 
     public void freeStorageUpdater(){
         this.freeSpace = getDeviceFreeStorage();
-        MainActivity.dbHelper.updateDeviceTable(MainActivity.androidDeviceName,String.valueOf(this.freeSpace));
+        MainActivity.dbHelper.updateDeviceTable(MainActivity.androidUniqueDeviceIdentifier,String.valueOf(this.freeSpace));
     }
 
 
     public double getAmountSpaceToFreeUp() {
         String sqlQuery = "SELECT freeStorage FROM DEVICE WHERE deviceName = ?;";
-        Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery,new String[]{MainActivity.androidDeviceName});
+        Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery,new String[]{MainActivity.androidUniqueDeviceIdentifier});
         try{
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);

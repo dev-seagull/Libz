@@ -21,6 +21,7 @@
     import com.google.android.material.switchmaterial.SwitchMaterial;
     import com.google.gson.JsonArray;
     import com.google.gson.JsonObject;
+    import com.jaredrummler.android.device.DeviceName;
 
     import java.util.Timer;
     import java.util.TimerTask;
@@ -32,6 +33,7 @@
 //        ActivityResultLauncher<Intent> signInToPrimaryLauncher;
         public ActivityResultLauncher<Intent> signInToBackUpLauncher;
 //        GooglePhotos googlePhotos;
+        public static String androidUniqueDeviceIdentifier;
         public static String androidDeviceName;
         static SharedPreferences preferences;
         public static boolean isLoginProcessOn = false;
@@ -55,9 +57,6 @@
             boolean hasCreated = LogHandler.createLogFile();
             System.out.println("Log file is created :"  + hasCreated);
 
-            MyAlarmManager myAlarmManager = new MyAlarmManager();
-            myAlarmManager.scheduleDailyDataAnalysisAlarm(getApplicationContext(),14,22);
-
             preferences = getPreferences(Context.MODE_PRIVATE);
             boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
             if(isFirstTime){
@@ -68,7 +67,8 @@
 
             dbHelper = new DBHelper(this,DBHelper.NEW_DATABASE_NAME);
             googleCloud = new GoogleCloud(this);
-            androidDeviceName = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
+            androidUniqueDeviceIdentifier = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
+            androidDeviceName = DeviceName.getDeviceName();
             UIHelper uiHelper = new UIHelper();
             storageHandler = new StorageHandler();
 

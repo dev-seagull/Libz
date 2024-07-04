@@ -697,7 +697,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.endTransaction();
         }
 
-        boolean existsInAndroid = existsInAndroid(Long.valueOf(assetId), filePath, MainActivity.androidDeviceName,
+        boolean existsInAndroid = existsInAndroid(Long.valueOf(assetId), filePath, MainActivity.androidUniqueDeviceIdentifier,
                 Double.valueOf(fileSize), fileHash);
         if(!existsInAndroid){
             return true;
@@ -801,7 +801,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public int countAndroidAssetsOnThisDevice(){
         String sqlQuery = "SELECT COUNT(DISTINCT assetId) AS pathCount FROM ANDROID where device = ?";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidDeviceName});
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidUniqueDeviceIdentifier});
         int pathCount = 0;
         if(cursor != null){
             cursor.moveToFirst();
@@ -864,7 +864,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public int countAndroidSyncedAssetsOnThisDevice(){
         String sqlQuery = "SELECT COUNT(DISTINCT androidTable.assetId) AS rowCount FROM ANDROID androidTable\n" +
                 "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId WHERE androidTable.device = ?;";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidDeviceName});
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidUniqueDeviceIdentifier});
         int count = 0;
         if(cursor != null && cursor.moveToFirst()){
             count = cursor.getInt(0);
@@ -1082,7 +1082,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
 
                 File androidFile = new File(filePath);
-                if (!androidFile.exists() && device.equals(MainActivity.androidDeviceName)){
+                if (!androidFile.exists() && device.equals(MainActivity.androidUniqueDeviceIdentifier)){
                     deleteFromAndroidTable(filePath, assetId);
                     insertTransactionsData(filePath,fileName,device,assetId,"deletedInDevice",fileHash);
 

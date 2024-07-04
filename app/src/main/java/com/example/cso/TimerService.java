@@ -35,6 +35,11 @@ public class TimerService extends Service {
         Log.d("TimerForegroundService", "Service onCreate");
         notification = createNotification();
         startForeground(NOTIFICATION_ID, notification);
+
+        MyAlarmManager myAlarmManager = new MyAlarmManager();
+        myAlarmManager.scheduleDailyDataAnalysisAlarm(getApplicationContext(),15,32);
+        myAlarmManager.scheduleDailyDataAnalysisAlarm(getApplicationContext(),12,0);
+
         startTimer();
     }
 
@@ -101,7 +106,7 @@ public class TimerService extends Service {
                     }
                 });
                 syncThreads.start();
-//
+
 //                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
 //                    storageUpdaterThreadTemp.start();
 //                    try{

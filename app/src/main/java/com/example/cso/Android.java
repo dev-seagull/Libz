@@ -123,7 +123,7 @@ public class Android {
             String mediaItemMimeType = Media.getMimeType(mediaItemFile);
             if(mediaItemFile.exists()){
                 galleryItems[0]++;
-                if(!MainActivity.dbHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidDeviceName,
+                if(!MainActivity.dbHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidUniqueDeviceIdentifier,
                         mediaItemDateModified, mediaItemSize)){
                     processFileManagerItem(mediaItemFile, mediaItemName, mediaItemPath, mediaItemSize,
                             mediaItemDateModified, mediaItemMimeType);
@@ -155,7 +155,7 @@ public class Android {
         long lastInsertedId =
                 MainActivity.dbHelper.insertAssetData(mediaItemHash);
         if(lastInsertedId != -1){
-            MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+            MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidUniqueDeviceIdentifier,
                     mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMimeType);
         }else{
             LogHandler.saveLog("Failed to insert file into android table in file manager : " + mediaItemFile.getName(), true);
@@ -175,7 +175,7 @@ public class Android {
 
         if(androidFile.exists()){
             galleryItems[0]++;
-            if(!MainActivity.dbHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidDeviceName,
+            if(!MainActivity.dbHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidUniqueDeviceIdentifier,
                     mediaItemDateModified, mediaItemSize)){
                 String fileHash = "";
                 try {
@@ -188,7 +188,7 @@ public class Android {
                         MainActivity.dbHelper.insertAssetData(fileHash);
                 if(lastInsertedId != -1){
                     MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,
-                            mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
+                            mediaItemName, mediaItemPath, MainActivity.androidUniqueDeviceIdentifier,
                             fileHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
                 }else{
                     LogHandler.saveLog("Failed to insert file into android table: " + mediaItemFile.getName(), true);
