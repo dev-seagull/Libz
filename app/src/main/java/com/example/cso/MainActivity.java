@@ -1,7 +1,6 @@
     package com.example.cso;
 
     import android.app.Activity;
-    import android.app.ActivityManager;
     import android.app.AlertDialog;
     import android.content.Context;
     import android.content.DialogInterface;
@@ -9,15 +8,10 @@
     import android.content.SharedPreferences;
     import android.os.Build;
     import android.os.Bundle;
-    import android.os.PowerManager;
     import android.provider.Settings;
-    import android.view.Gravity;
     import android.view.View;
-    import android.view.ViewGroup;
     import android.widget.Button;
-    import android.widget.ImageView;
     import android.widget.LinearLayout;
-    import android.widget.PopupMenu;
 
     import androidx.activity.result.ActivityResultLauncher;
     import androidx.activity.result.contract.ActivityResultContracts;
@@ -27,11 +21,7 @@
     import com.google.android.material.switchmaterial.SwitchMaterial;
     import com.google.gson.JsonArray;
     import com.google.gson.JsonObject;
-    import com.jaredrummler.android.device.DeviceName;
 
-    import java.util.ArrayList;
-    import java.util.Arrays;
-    import java.util.List;
     import java.util.Timer;
     import java.util.TimerTask;
 
@@ -64,6 +54,9 @@
 
             boolean hasCreated = LogHandler.createLogFile();
             System.out.println("Log file is created :"  + hasCreated);
+
+            MyAlarmManager myAlarmManager = new MyAlarmManager();
+            myAlarmManager.scheduleDailyDataAnalysisAlarm(getApplicationContext(),14,22);
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
@@ -134,7 +127,7 @@
 
             new Thread(() -> {
                 if(!InternetManager.getInternetStatus(getApplicationContext()).equals("noInternet")) {
-                    boolean databaseIsBackedUp = dbHelper.backUpDataBase(getApplicationContext());
+                    boolean databaseIsBackedUp = dbHelper.backUpDataBaseToDrive(getApplicationContext());
                     if(!databaseIsBackedUp){
                         LogHandler.saveLog("Database is not backed up ", true);
                     }

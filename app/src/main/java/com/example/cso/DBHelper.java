@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteException;
-import android.os.Looper;
 import android.text.TextUtils;
 
 import com.google.api.client.http.FileContent;
@@ -1129,7 +1128,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return assetIds;
     }
 
-    public static boolean backUpDataBase(Context context) {
+    public static boolean backUpDataBaseToDrive(Context context) {
         String dataBasePath = context.getDatabasePath(NEW_DATABASE_NAME).getPath();
         final String[] userEmail = {""};
         final String[] uploadFileId = new String[1];
@@ -1245,7 +1244,6 @@ public class DBHelper extends SQLiteOpenHelper {
         }finally {
             return uploadFileId;
         }
-
     }
 
     public static boolean insertIntoDeviceTable(String deviceName,String totalSpace,String freeSpace){

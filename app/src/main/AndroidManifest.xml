@@ -59,6 +59,8 @@
             android:exported="false"
             />
 
+        <receiver android:name=".MyBroadcastReceiver" />
+
     </application>
 
 
