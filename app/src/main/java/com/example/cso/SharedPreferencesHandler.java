@@ -13,6 +13,15 @@ public class SharedPreferencesHandler {
         return sharedPreferences.getBoolean("wifiOnlySwitchState", false);
     }
 
+    public static void setFirstTime(SharedPreferences sharedPreferences, boolean isFirstTime){
+        android.content.SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("firstTime", false);
+        editor.apply();
+    }
+
+    public static boolean getFirstTime(SharedPreferences sharedPreferences){
+        return sharedPreferences.getBoolean("firstTime", true);
+    }
 
     public static void setSwitchState(String switchStateKey, boolean state, SharedPreferences sharedPreferences) {
         android.content.SharedPreferences.Editor editor = sharedPreferences.edit();

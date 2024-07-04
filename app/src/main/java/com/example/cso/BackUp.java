@@ -1,6 +1,10 @@
 package com.example.cso;
 
 
+import android.app.Activity;
+import android.view.View;
+
+import com.bumptech.glide.Glide;
 import com.google.api.client.googleapis.media.MediaHttpUploader;
 import com.google.api.client.googleapis.media.MediaHttpUploaderProgressListener;
 import com.google.api.client.http.FileContent;
@@ -18,6 +22,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -133,7 +138,7 @@ public class BackUp {
                 } else {
                     LogHandler.saveLog("The android file " + fileName + " doesn't exists in upload method");
                 }
-            } else if (Media.isVideo(mimeTypeToUpload)) {   
+            } else if (Media.isVideo(mimeTypeToUpload)) {
                 if (new File(filePath).exists()) {
                     if (mimeType.toLowerCase().endsWith("mkv")) {
                         mediaContent = new FileContent("video/x-matroska",
@@ -156,7 +161,7 @@ public class BackUp {
         Collections.sort(android_items, new Comparator<String[]>() {
             @Override
             public int compare(String[] item1, String[] item2) {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy");
+                SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.US);
                 try {
                     Date date1 = dateFormat.parse(item1[6]);
                     Date date2 = dateFormat.parse(item2[6]);

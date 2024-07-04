@@ -15,7 +15,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -175,8 +177,8 @@ public class GoogleDrive {
         final ArrayList<DriveAccountInfo.MediaItem> mediaItems = new ArrayList<>();
         Callable<ArrayList<DriveAccountInfo.MediaItem>> backgroundTask = () -> {
             try {
-                String syncAssetsFolderId =  GoogleDrive.createOrGetStashSyncedAssetsFolderInDrive(userEmail);
-                if (syncAssetsFolderId == null){
+                String assetsSubFolderId = createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,"assets");
+                if (assetsSubFolderId == null){
                     LogHandler.saveLog("No folder was found in Google Drive back up account",false);
                     return mediaItems;
                 }
@@ -193,7 +195,7 @@ public class GoogleDrive {
                 do{
                     FileList result = driveService.files().list()
                             .setFields("files(id, name, sha256Checksum),nextPageToken")
-                            .setQ("'" +syncAssetsFolderId + "' in parents and trashed=false")
+                            .setQ("'" +assetsSubFolderId + "' in parents and trashed=false")
                             .setPageToken(nextPageToken)
                             .execute();
                     List<com.google.api.services.drive.model.File> files = result.getFiles();
@@ -451,7 +453,51 @@ public class GoogleDrive {
         LogHandler.saveLog("Finished startDeleteDuplicatedInDriveThread", false);
     }
 
+    private static void startUpdateDriveStorageThread() {
+        LogHandler.saveLog("Starting startUpdateDriveStorageThread", false);
+        Thread updateDriveStorage = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String[] columns = {"refreshToken","userEmail", "type"};
+                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
+                for(String[] account_row : account_rows) {
+                    String type = account_row[2];
+//                    if(type.equals("backup")){
+                        String userEmail = account_row[1];
+                        String refreshToken = account_row[0];
+                        String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
+                        GoogleCloud.Storage storage = MainActivity.googleCloud.getStorage(new GoogleCloud.Tokens(accessToken,refreshToken));
+                        Map<String, Object> updatedValues = new HashMap<String, Object>() {{
+                            put("totalStorage", storage.getTotalStorage());
+                        }};
+                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                        updatedValues = new HashMap<String, Object>() {{
+                            put("usedStorage", storage.getUsedStorage());
+                         }};
+                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                        updatedValues = new HashMap<String, Object>() {{
+                            put("usedInDriveStorage", storage.getUsedInDriveStorage());
+                        }};
+                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                        updatedValues = new HashMap<String, Object>() {{
+                            put("UsedInGmailAndPhotosStorage", storage.getUsedInGmailAndPhotosStorage());
+                         }};
+                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+//                    }
+                }
+            }
+        });
+        updateDriveStorage.start();
+        try {
+            updateDriveStorage.join();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to join update drive storage thread: " + e.getLocalizedMessage(), true);
+        }
+        LogHandler.saveLog("Finished startDeleteDuplicatedInDriveThread", false);
+    }
+
     public static void startThreads(){
+        startUpdateDriveStorageThread();
         startDeleteRedundantDriveThread();
         startUpdateDriveFilesThread();
         startDeleteDuplicatedInDriveThread();

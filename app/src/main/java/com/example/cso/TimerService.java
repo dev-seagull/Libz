@@ -1,10 +1,12 @@
 package com.example.cso;
 
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
@@ -56,7 +58,7 @@ public class TimerService extends Service {
             public void run() {
 //                try{
 
-                if (isTimerRunning) {
+                if (isTimerRunning || MainActivity.isLoginProcessOn) {
                     return;
                 }
                 isTimerRunning = true;
@@ -125,19 +127,10 @@ public class TimerService extends Service {
             notificationManager.createNotificationChannel(notificationChannel);
         }
 
-        Intent intent = new Intent(MainActivity.activity, MainActivity.class);
-        PendingIntent pendingIntent ;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-            pendingIntent = PendingIntent.getActivity(MainActivity.activity, 0, intent, PendingIntent.FLAG_IMMUTABLE);
-        }else{
-            pendingIntent = PendingIntent.getActivity(MainActivity.activity, 0, intent, PendingIntent.FLAG_MUTABLE);
-        }
-
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.android_device_icon)
                 .setContentTitle("Syncing Service")
                 .setContentText("Syncing process is running in the background")
-                .setContentIntent(pendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText("Syncing process is running in the background"));
 
@@ -182,5 +175,17 @@ public class TimerService extends Service {
         super.onDestroy();
         stopTimer();
         Log.d("TimerForegroundService", "Service onDestroy");
+    }
+
+    public static String isMyServiceRunning(Context context, Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                System.out.println("isMyServiceRunning : true");
+                return "on";
+            }
+        }
+        System.out.println("isMyServiceRunning : false");
+        return "off";
     }
 }

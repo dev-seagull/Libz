@@ -1,18 +1,26 @@
 package com.example.cso;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.AlignmentSpan;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResult;
@@ -22,10 +30,10 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
-
-import org.checkerframework.checker.guieffect.qual.UI;
+import com.jaredrummler.android.device.DeviceName;
 
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +48,7 @@ public class UIHandler {
 
     public static void handleSyncSwitchMaterials(){
         SwitchMaterial syncSwitchMaterialButton = MainActivity.activity.findViewById(R.id.syncSwitchMaterial);
-        if (!MainActivity.isMyServiceRunning(MainActivity.activity.getApplicationContext(),TimerService.class).equals("on")){
+        if (!TimerService.isMyServiceRunning(MainActivity.activity.getApplicationContext(),TimerService.class).equals("on")){
             MainActivity.activity.runOnUiThread(() -> {
                 syncSwitchMaterialButton.setChecked(false);
                 syncSwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
@@ -93,7 +101,7 @@ public class UIHandler {
     }
 
     public static void updateDirectoriesUsages(){
-        HashMap<String,String> dirHashMap = MainActivity.storageHandler.directoryUIDisplay();
+        HashMap<String,String> dirHashMap = StorageHandler.directoryUIDisplay();
         directoryUsages.setText("");
         for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
             directoryUsages.append(entry.getKey() + ": " + entry.getValue() + " GB\n");
@@ -122,7 +130,7 @@ public class UIHandler {
                                 bt.setText(signInResult.getUserEmail());
                                 bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
                             }
-                            MainActivity.updateButtonsListeners(signInToBackUpLauncher);
+                            updateButtonsListeners(signInToBackUpLauncher);
                         });
                     }
                 }catch (Exception e){
@@ -157,7 +165,7 @@ public class UIHandler {
 
     public static void initializeButtons(Activity activity,GoogleCloud googleCloud){
         String[] columnsList = {"userEmail", "type", "refreshToken"};
-        List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columnsList);
+        List<String[]> account_rows = DBHelper.getAccounts(columnsList);
         for (String[] account_row : account_rows) {
             String userEmail = account_row[0];
             String type = account_row[1];
@@ -172,7 +180,10 @@ public class UIHandler {
             }
         }
         Button androidDeviceButton = activity.findViewById(R.id.androidDeviceButton);
-        androidDeviceButton.setText(MainActivity.androidDeviceName);
+        androidDeviceButton.setText(DeviceName.getDeviceName());
+        AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
+        fadeIn.setDuration(2000);
+        androidDeviceButton.startAnimation(fadeIn);
 
 //          LinearLayout primaryAccountsButtonsLayout= findViewById(R.id.primaryAccountsButtons);
         LinearLayout backupAccountsButtonsLayout= activity.findViewById(R.id.backUpAccountsButtons);
@@ -180,11 +191,10 @@ public class UIHandler {
 //           newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
         Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
         newBackupLoginButton.setBackgroundTintList(UIHelper.addBackupAccountButtonColor);
-
     }
 
     private static void handeSyncSwitchMaterialButton(UIHelper uiHelper, Activity activity){
-        if (!MainActivity.isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
+        if (!TimerService.isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
             uiHelper.syncSwitchMaterialButton.setChecked(false);
             uiHelper.syncSwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
             uiHelper.syncSwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
@@ -200,14 +210,18 @@ public class UIHandler {
         uiHelper.deviceStorage.setText("Storage : " + storageHandler.getFreeSpace() +
                 " Out Of " + storageHandler.getTotalStorage()+ " GB\n"+
                 "Media : "  + MainActivity.dbHelper.getPhotosAndVideosStorage() + "\n");
-
         uiHelper.androidStatisticsTextView.setVisibility(View.VISIBLE);
-        int total_androidAssets_count = MainActivity.dbHelper.countAndroidAssets();
-        uiHelper.androidStatisticsTextView.setText("Sync Status : " + MainActivity.dbHelper.countAndroidSyncedAssets() +
-                " Of " + total_androidAssets_count);
+        int total_Assets_count = MainActivity.dbHelper.countAssets();
+        int total_android_assets = MainActivity.dbHelper.countAndroidAssetsOnThisDevice();
+        int android_synced_assets_count = MainActivity.dbHelper.countAndroidSyncedAssetsOnThisDevice();
+        int unsynced_android_assets =  total_android_assets - android_synced_assets_count;
+        int synced_assets = total_Assets_count -(MainActivity.dbHelper.countAndroidAssets() - MainActivity.dbHelper.countAndroidUnsyncedAssets());
+        uiHelper.androidStatisticsTextView.setText("Sync Status : " + synced_assets +
+                " Out Of " + total_Assets_count + "\n" + "Unsynced assets of this device : " + unsynced_android_assets);
     }
 
     private static void handleDisplayDirectoriesUsagesButton(UIHelper uiHelper, Activity activity){
+        UIHelper.waitingGif.setVisibility(View.GONE);
         uiHelper.displayDirectoriesUsagesButton.setVisibility(View.VISIBLE);
         uiHelper.displayDirectoriesUsagesButton.setOnClickListener(view -> {
             if (UIHandler.directoryUsages.getVisibility() == View.VISIBLE) {
@@ -227,6 +241,7 @@ public class UIHandler {
         UIHelper uiHelper = new UIHelper();
         if(!uiHelper.syncSwitchMaterialButton.isChecked()){
             uiHelper.syncMessageTextView.setVisibility(View.GONE);
+            UIHelper.waitingSyncGif.setVisibility(View.GONE);
         }
     }
 
@@ -260,8 +275,92 @@ public class UIHandler {
                 Button bt = (Button) childview;
                 bt.setText("ADD A BACK UP ACCOUNT");
             }
-            MainActivity.updateButtonsListeners(signInToBackUpLauncher);
+            updateButtonsListeners(signInToBackUpLauncher);
         });
     }
 
+    public static void updateButtonsListeners(ActivityResultLauncher<Intent> signInToBackUpLauncher) {
+//            updatePrimaryButtonsListener();
+        updateBackupButtonsListener(MainActivity.activity, signInToBackUpLauncher);
+    }
+
+    public static void updateBackupButtonsListener(Activity activity, ActivityResultLauncher<Intent> signInToBackUpLauncher){
+        LinearLayout backUpAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+        for (int i = 0; i < backUpAccountsButtonsLinearLayout.getChildCount(); i++) {
+            View childView = backUpAccountsButtonsLinearLayout.getChildAt(i);
+            if (childView instanceof Button) {
+                Button button = (Button) childView;
+                button.setOnClickListener(
+                        view -> {
+                            String buttonText = button.getText().toString().toLowerCase();
+                            if (buttonText.equals("add a back up account")) {
+                                button.setText("Wait");
+                                button.setClickable(false);
+                                MainActivity.googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
+                                button.setClickable(true);
+                            } else if (buttonText.equals("wait")){
+                                button.setText("add a back up account");
+                            }
+                            else {
+                                PopupMenu popupMenu = setPopUpMenuOnButton(activity, button);
+                                popupMenu.setOnMenuItemClickListener(item -> {
+                                    if (item.getItemId() == R.id.sign_out) {
+                                        try {
+                                            button.setText("Wait...");
+                                        }catch (Exception e){}
+
+                                        GoogleCloud.startSignOutThreads(buttonText, item, button);
+                                    }
+                                    return true;
+                                });
+                                popupMenu.show();
+                            }
+                        }
+                );
+            }
+        }
+    }
+
+    public static void startUiThreadForSignOut(MenuItem item, Button button, String buttonText, boolean isBackedUp){
+        LogHandler.saveLog("Starting Ui Thread For Sign Out Thread", false);
+        Thread uiThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                MainActivity.activity.runOnUiThread(() -> {
+                    if(isBackedUp){
+                        try {
+                            item.setEnabled(false);
+                            ViewGroup parentView = (ViewGroup) button.getParent();
+                            parentView.removeView(button);
+                        } catch (Exception e) {
+                            LogHandler.saveLog(
+                                    "Failed to handle ui after signout : "
+                                            + e.getLocalizedMessage(), true
+                            );
+                        }
+                    } else {
+                        try {
+                            button.setText(buttonText);
+                        } catch (Exception e) {
+                            LogHandler.saveLog(
+                                    "Failed to handle ui when signout : "
+                                            + e.getLocalizedMessage(), true
+                            );
+                        }
+                    }
+                });
+            }
+        });
+        uiThread.start();
+        LogHandler.saveLog("Finished Ui Thread For Sign Out Thread", false);
+    }
+
+    private static PopupMenu setPopUpMenuOnButton(Activity activity, Button button){
+        PopupMenu popupMenu = new PopupMenu(activity.getApplicationContext(), button, Gravity.CENTER);
+        popupMenu.getMenuInflater().inflate(R.menu.account_button_menu, popupMenu.getMenu());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            popupMenu.setGravity(Gravity.CENTER);
+        }
+        return popupMenu;
+    }
 }

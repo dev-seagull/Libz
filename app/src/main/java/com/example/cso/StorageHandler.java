@@ -1,12 +1,15 @@
 package com.example.cso;
 
+import android.database.Cursor;
 import android.os.Environment;
 import android.os.StatFs;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 public class StorageHandler {
 
@@ -54,7 +57,6 @@ public class StorageHandler {
     private long blockSize;
     private double optimizedFreeSpace = 0;
     private double optimizedPercent = 0.15;
-//    private double maxFreeStorageNeeded = 80;
     private double freeSpace;
     private BackUp backUp = new BackUp();
 
@@ -65,7 +67,7 @@ public class StorageHandler {
         this.optimizedFreeSpace = this.totalStorage * optimizedPercent;
         this.freeSpace = getDeviceFreeStorage();
         MainActivity.dbHelper.insertIntoDeviceTable(MainActivity.androidDeviceName,
-                String.format("%.1f", this.totalStorage), String.format("%.1f", this.freeSpace));
+                String.format(Locale.US,"%.1f", this.totalStorage), String.format(Locale.US,"%.1f", this.freeSpace));
     }
 
     public void freeStorageUpdater(){
@@ -75,28 +77,26 @@ public class StorageHandler {
 
 
     public double getAmountSpaceToFreeUp() {
-        return 3.3;
-//        String sqlQuery = "SELECT freeStorage FROM DEVICE WHERE deviceName = ?;";
-//        Cursor cursor = MainActivity.dbHelper.getReadableDatabase()
-//                .rawQuery(sqlQuery,new String[]{MainActivity.androidDeviceName});
-//        try{
-//            if(cursor != null && cursor.moveToFirst()){
-//                int result = cursor.getInt(0);
-//                if(result == 1){
-//                    this.freeSpace = cursor.getDouble(1);
-//                }
-//            }
-//        }catch (Exception e){
-//            LogHandler.saveLog("Failed to read free space from database method: " + e.getLocalizedMessage());
-//        }finally {
-//            if(cursor != null){
-//                cursor.close();
-//            }
-//        }
-//        if (this.freeSpace <= optimizedFreeSpace) {
-//            return optimizedFreeSpace - this.freeSpace;
-//        }
-//        return 0.0;
+        String sqlQuery = "SELECT freeStorage FROM DEVICE WHERE deviceName = ?;";
+        Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery,new String[]{MainActivity.androidDeviceName});
+        try{
+            if(cursor != null && cursor.moveToFirst()){
+                int result = cursor.getInt(0);
+                if(result == 1){
+                    this.freeSpace = cursor.getDouble(1);
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to read free space from database method: " + e.getLocalizedMessage());
+        }finally {
+            if(cursor != null){
+                cursor.close();
+            }
+        }
+        if (this.freeSpace <= optimizedFreeSpace) {
+            return optimizedFreeSpace - this.freeSpace;
+        }
+        return 0.0;
     }
 
 
@@ -111,7 +111,7 @@ public class StorageHandler {
         StatFs statFs = new StatFs(externalStorageDirectory);
         long totalBlocks = statFs.getBlockCountLong();
         double totalSpaceGB = (totalBlocks * blockSize) / (1024.0 * 1024.0 * 1024.0);
-        return Double.valueOf(String.format("%.1f", totalSpaceGB));
+        return Double.valueOf(String.format(Locale.US,"%.1f", totalSpaceGB));
     }
 
     public double getDeviceFreeStorage(){
@@ -119,7 +119,7 @@ public class StorageHandler {
         StatFs statFs = new StatFs(externalStorageDirectory);
         long availableBlocks = statFs.getAvailableBlocksLong();;
         double freeSpaceGB = (availableBlocks * blockSize) / (1024.0 * 1024.0 * 1024.0);
-        return Double.valueOf(String.format("%.1f", freeSpaceGB));
+        return Double.valueOf(String.format(Locale.US,"%.1f", freeSpaceGB));
     }
 
 
@@ -127,7 +127,7 @@ public class StorageHandler {
         double divider = (Math.pow(1024,3));
         double result = storage / divider;
 
-        DecimalFormat decimalFormat = new DecimalFormat("#.###");
+        DecimalFormat decimalFormat = new DecimalFormat("#.###",new DecimalFormatSymbols(Locale.US));
         Double formattedResult = Double.parseDouble(decimalFormat.format(result));
 
         return formattedResult;
@@ -165,7 +165,7 @@ public class StorageHandler {
                 } else if (0.0 <= size && size <= 1000) {
                     directorySizes.put(directoryName,"less than one ");
                 }else {
-                    directorySizes.put(directoryName,String.format("%.1f", size / 1000));
+                    directorySizes.put(directoryName,String.format(Locale.US,"%.1f", size / 1000));
                 }
             }
         }catch (Exception e){

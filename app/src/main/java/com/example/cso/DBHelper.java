@@ -5,9 +5,9 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteException;
+import android.os.Looper;
 import android.text.TextUtils;
 
-import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
@@ -20,9 +20,9 @@ import net.sqlcipher.database.SQLiteOpenHelper;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -31,12 +31,11 @@ import java.util.concurrent.Future;
 
 
 public class DBHelper extends SQLiteOpenHelper {
-    private static final String OLD_DATABASE_NAME = "CSODatabase";
+//    private static final String OLD_DATABASE_NAME = "CSODatabase";
     public static final String NEW_DATABASE_NAME =  "StashDatabase";
     public static final int DATABASE_VERSION = 12;
     public static SQLiteDatabase dbReadable;
     public static SQLiteDatabase dbWritable;
-
     private static final String ENCRYPTION_KEY = MainActivity.activity.getResources().getString(R.string.ENCRYPTION_KEY);
 
 
@@ -136,6 +135,35 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
     }
 
+    public static void startOldDatabaseDeletionThread(Context context) {
+        Thread deleteOldDataBaseThread = new Thread() {
+            @Override
+            public void run() {
+                try{
+                    File oldDatabaseFile = context.getDatabasePath(NEW_DATABASE_NAME);
+                    if (oldDatabaseFile.exists()) {
+                        boolean deleted = oldDatabaseFile.delete();
+                        if (deleted) {
+                            System.out.println("Old database deleted successfully.");
+                        } else {
+                            System.out.println("Failed to delete old database.");
+                        }
+                    } else {
+                        System.out.println("Old database does not exist.");
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        };
+        deleteOldDataBaseThread.start();
+        try {
+            deleteOldDataBaseThread.join();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void copyDataFromOldToNew(DBHelper newDBHelper){
         String[] tableNames = {"ACCOUNTS", "DEVICE", "ASSET", "BACKUPDB", "DRIVE", "ANDROID", "PHOTOS", "ERRORS", "TRANSACTIONS"};
         SQLiteDatabase oldDatabase = getReadableDatabase(ENCRYPTION_KEY);
@@ -147,7 +175,6 @@ public class DBHelper extends SQLiteOpenHelper {
             try {
                 while (cursor.moveToNext()) {
                     ContentValues values = new ContentValues();
-                    // Map column names to values
                     for (int i = 0; i < cursor.getColumnCount(); i++) {
                         String columnName = cursor.getColumnName(i);
                         switch (cursor.getType(i)) {
@@ -163,7 +190,6 @@ public class DBHelper extends SQLiteOpenHelper {
                             // Handle other data types if necessary
                         }
                     }
-                    // Insert data into the corresponding table in the new database
                     newDBHelper.getWritableDatabase(ENCRYPTION_KEY).insert(tableName, null, values);
                 }
                 newDBHelper.getWritableDatabase(ENCRYPTION_KEY).setTransactionSuccessful();
@@ -427,7 +453,7 @@ public class DBHelper extends SQLiteOpenHelper {
        try{
             String sqlQuery = "INSERT INTO TRANSACTIONS(source, fileName, destination, assetId, operation, hash, date)" +
                     " VALUES (?,?,?,?,?,?,?);";
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
             String timestamp = dateFormat.format(new Date());
             dbWritable.execSQL(sqlQuery, new Object[]{source,fileName, destination, assetId, operation, fileHash, timestamp});
             dbWritable.setTransactionSuccessful();
@@ -774,8 +800,8 @@ public class DBHelper extends SQLiteOpenHelper {
         return resultList;
     }
 
-    public int countAndroidAssets(){
-        String sqlQuery = "SELECT COUNT(filePath) AS pathCount FROM ANDROID where device = ?";
+    public int countAndroidAssetsOnThisDevice(){
+        String sqlQuery = "SELECT COUNT(DISTINCT assetId) AS pathCount FROM ANDROID where device = ?";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidDeviceName});
         int pathCount = 0;
         if(cursor != null){
@@ -792,8 +818,52 @@ public class DBHelper extends SQLiteOpenHelper {
         return pathCount;
     }
 
-    public int countAndroidSyncedAssets(){
-        String sqlQuery = "SELECT COUNT(DISTINCT androidTable.filePath) AS rowCount FROM ANDROID androidTable\n" +
+    public int countAndroidAssets(){
+        String sqlQuery = "SELECT COUNT(DISTINCT assetId) AS pathCount FROM ANDROID;";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{});
+        int pathCount = 0;
+        if(cursor != null){
+            cursor.moveToFirst();
+            int pathCountColumnIndex = cursor.getColumnIndex("pathCount");
+            if(pathCountColumnIndex >= 0){
+                pathCount = cursor.getInt(pathCountColumnIndex);
+            }
+        }
+        if(pathCount == 0){
+            LogHandler.saveLog("No android file was found in count android assets.",false);
+        }
+        cursor.close();
+        return pathCount;
+    }
+
+    public int countAssets(){
+        int assetsCount = 0;
+        Cursor cursor = null;
+        String sqlQuery = "SELECT COUNT(id) AS assetsCount FROM ASSET";
+        try{
+            cursor = dbReadable.rawQuery(sqlQuery, null);
+            if(cursor != null){
+                cursor.moveToFirst();
+                int pathCountColumnIndex = cursor.getColumnIndex("assetsCount");
+                if(pathCountColumnIndex >= 0){
+                    assetsCount = cursor.getInt(pathCountColumnIndex);
+                }
+            }
+            if(assetsCount == 0){
+                LogHandler.saveLog("No asset was found.",false);
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to count assets: " + e.getLocalizedMessage(), true);
+        }finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return assetsCount;
+    }
+
+    public int countAndroidSyncedAssetsOnThisDevice(){
+        String sqlQuery = "SELECT COUNT(DISTINCT androidTable.assetId) AS rowCount FROM ANDROID androidTable\n" +
                 "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId WHERE androidTable.device = ?;";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidDeviceName});
         int count = 0;
@@ -803,7 +873,26 @@ public class DBHelper extends SQLiteOpenHelper {
         if(count == 0){
             LogHandler.saveLog("No android synced asset was found in countAndroidSyncedAssets",false);
         }
-        cursor.close();
+        if (cursor != null) {
+            cursor.close();
+        }
+        return count;
+    }
+
+    public int countAndroidUnsyncedAssets(){
+        String sqlQuery = "SELECT COUNT(DISTINCT androidTable.assetId) AS rowCount FROM ANDROID androidTable\n" +
+                "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId;";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{});
+        int count = 0;
+        if(cursor != null && cursor.moveToFirst()){
+            count = cursor.getInt(0);
+        }
+        if(count == 0){
+            LogHandler.saveLog("No android synced asset was found in countAndroidSyncedAssets",false);
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
         return count;
     }
 
@@ -1002,7 +1091,6 @@ public class DBHelper extends SQLiteOpenHelper {
                     existsInDatabase = assetExistsInDatabase(assetId);
 
                     if(existsInDatabase == false){
-                        dbWritable.beginTransaction();
                         deleteFromAssetTable(assetId);
                     }
                 }
@@ -1041,95 +1129,123 @@ public class DBHelper extends SQLiteOpenHelper {
         return assetIds;
     }
 
-    public List<String> backUpDataBase(Context context) {
-
+    public static boolean backUpDataBase(Context context) {
         String dataBasePath = context.getDatabasePath(NEW_DATABASE_NAME).getPath();
         final String[] userEmail = {""};
         final String[] uploadFileId = new String[1];
+        final boolean[] isBackedUp = {false};
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Callable<String> uploadTask = () -> {
+        Callable<Boolean> uploadTask = () -> {
             try {
                 String driveBackupAccessToken = "";
                 String driveBackUpRefreshToken = "";
-                String[] drive_backup_selected_columns = {"userEmail", "type", "refreshToken"};
+                int backUpAccountCounts = 0;
+
+                String[] drive_backup_selected_columns = {"userEmail","type", "totalStorage","usedStorage", "refreshToken"};
                 List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getAccounts(drive_backup_selected_columns);
                 for (String[] drive_backUp_account : drive_backUp_accounts) {
                     if (drive_backUp_account[1].equals("backup")) {
-                        driveBackUpRefreshToken = drive_backUp_account[2];
+                        backUpAccountCounts++;
+//                        double driveFreeSpace = Sync.calculateDriveFreeSpace(drive_backUp_account);
+//                        System.out.println("This is drive free space " + driveFreeSpace);
+//                        if (driveFreeSpace > 30){
+                        driveBackUpRefreshToken = drive_backUp_account[4];
                         driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackUpRefreshToken).getAccessToken();
                         userEmail[0] = drive_backUp_account[0];
-                        break;
+                        Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
+                        String folder_name = "stash_database";
+                        String databaseFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail[0],folder_name);
+                        deleteDatabaseFiles(service, databaseFolderId);
+                        boolean isDeleted = checkDeletionStatus(service,databaseFolderId);
+                        if(isDeleted){
+                            String uploadedFileId = setAndCreateDatabaseContent(service,databaseFolderId,dataBasePath);
+                            //while (uploadFileId == null) {
+                            // wait();
+                            //}
+                            if (uploadedFileId == null | uploadedFileId.isEmpty()) {
+                                LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
+                            }else{
+                                isBackedUp[0] = true;
+                            }
+                        }
+                        //}
                     }
                 }
-                Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                String folder_name = "Stash_DataBase";
-                String backupDbFolderId = null;
-                com.google.api.services.drive.model.File folder = null;
-
-                FileList fileList = service.files().list()
-                        .setQ("mimeType='application/vnd.google-apps.folder' and name='"
-                                + folder_name + "'")
-                        .setSpaces("drive")
-                        .setFields("files(id)")
-                        .execute();
-                List<com.google.api.services.drive.model.File> driveFolders = fileList.getFiles();
-                for(com.google.api.services.drive.model.File driveFolder: driveFolders){
-                    backupDbFolderId = driveFolder.getId();
-                }
-
-                if (backupDbFolderId == null) {
-                    com.google.api.services.drive.model.File folder_metadata =
-                            new com.google.api.services.drive.model.File();
-                    folder_metadata.setName(folder_name);
-                    folder_metadata.setMimeType("application/vnd.google-apps.folder");
-                    folder = service.files().create(folder_metadata)
-                            .setFields("id").execute();
-
-                    backupDbFolderId = folder.getId();
-                }
-
-
-                com.google.api.services.drive.model.File fileMetadata =
-                            new com.google.api.services.drive.model.File();
-                fileMetadata.setName(NEW_DATABASE_NAME + ".db");
-                fileMetadata.setParents(java.util.Collections.singletonList(backupDbFolderId));
-
-                File androidFile = new File(dataBasePath);
-                if (!androidFile.exists()) {
-                    LogHandler.saveLog("Failed to upload database from Android to backup because it doesn't exist");
-                }
-                FileContent mediaContent = new FileContent("application/x-sqlite3", androidFile);
-                if (mediaContent == null) {
-                    LogHandler.saveLog("Failed to upload database from Android to backup because it's null");
-                }
-                com.google.api.services.drive.model.File uploadFile =
-                        service.files().create(fileMetadata, mediaContent).setFields("id").execute();
-                uploadFileId[0] = uploadFile.getId();
-//                while (uploadFileId[0] == null) {
-//                    wait();
-//                }
-                if (uploadFileId[0] == null | uploadFileId[0].isEmpty()) {
-                    LogHandler.saveLog("Failed to upload database from Android to backup because it's null");
-                } else {
-                    LogHandler.saveLog("Uploading database from android into backup " +
-                            "account uploadId : " + uploadFileId[0], false);
+                if(backUpAccountCounts == 0){
+                    isBackedUp[0] = true;
+                    return isBackedUp[0];
                 }
             } catch (Exception e) {
                 LogHandler.saveLog("Failed to upload database from Android to backup : " + e.getLocalizedMessage());
             }
-            System.out.println("i reach here in backupDatabase");
-            return uploadFileId[0];
+            return isBackedUp[0];
         };
-        Future<String> future = executor.submit(uploadTask);
-        String uploadFileIdFuture = new String();
+        Future<Boolean> isBackedUpFuture = executor.submit(uploadTask);
         try{
-            uploadFileIdFuture = future.get();
+            isBackedUp[0] = isBackedUpFuture.get();
         }catch (Exception e){
             System.out.println(e.getLocalizedMessage());
         }
-        List<String> result = Arrays.asList(userEmail[0],uploadFileIdFuture);
-        return result;
+        return isBackedUp[0];
+    }
+
+    public static void deleteDatabaseFiles(Drive service, String folderId){
+        try {
+            FileList fileList = service.files().list()
+                    .setQ("name contains 'stashDatabase' and '" + folderId + "' in parents")
+                    .setSpaces("drive")
+                    .setFields("files(id)")
+                    .execute();
+            List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
+            for (com.google.api.services.drive.model.File existingFile : existingFiles) {
+                service.files().delete(existingFile.getId()).execute();
+            }
+        }catch (Exception e) {
+            LogHandler.saveLog("Failed to delete database files: " + e.getLocalizedMessage(), true);
+        }
+    }
+
+    public static boolean checkDeletionStatus(Drive service, String folderId){
+        try{
+            FileList fileList = service.files().list()
+                    .setQ("name contains 'stashDatabase' and '" + folderId + "' in parents")
+                    .setSpaces("drive")
+                    .setFields("files(id)")
+                    .execute();
+            List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
+            if (existingFiles.size() == 0) {
+                return true;
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to check deletion status of database files: " + e.getLocalizedMessage(), true);
+        }
+        return false;
+    }
+
+    private static String setAndCreateDatabaseContent(Drive service,String databaseFolderId, String dataBasePath){
+        String uploadFileId = "";
+        try{
+            com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+            fileMetadata.setName("stashDatabase.db");
+            fileMetadata.setParents(java.util.Collections.singletonList(databaseFolderId));
+            File androidFile = new File(dataBasePath);
+            if (!androidFile.exists()) {
+                LogHandler.saveLog("Failed to upload database from Android to backup because it doesn't exist", true);
+            }
+            FileContent mediaContent = new FileContent("application/x-sqlite3", androidFile);
+            if (mediaContent == null) {
+                LogHandler.saveLog("Failed to upload database from Android to backup because it's null", true);
+            }
+            com.google.api.services.drive.model.File uploadFile =
+                    service.files().create(fileMetadata, mediaContent).setFields("id").execute();
+            uploadFileId = uploadFile.getId();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to set profile map content:" + e.getLocalizedMessage(), true);
+        }finally {
+            return uploadFileId;
+        }
+
     }
 
     public static boolean insertIntoDeviceTable(String deviceName,String totalSpace,String freeSpace){
@@ -1241,22 +1357,22 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-//    public void exportDecryptedDatabase(String exportPath) {
-//        SQLiteDatabase encryptedDatabase = getWritableDatabase(ENCRYPTION_KEY);
-//        encryptedDatabase.rawExecSQL(String.format("ATTACH DATABASE '%s' AS plaintext KEY '';", exportPath));
-//        encryptedDatabase.rawExecSQL("SELECT sqlcipher_export('plaintext')");
-//
-//        Cursor cursor = encryptedDatabase.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null);
-//        if (cursor != null) {
-//            while (cursor.moveToNext()) {
-//                String tableName = cursor.getString(0);
-//                System.out.println("Table Name: " + tableName);
-//            }
-//            cursor.close();
-//        }
-//
-//        encryptedDatabase.rawExecSQL("DETACH DATABASE plaintext");
-//    }
+    public void exportDecryptedDatabase(String exportPath) {
+        SQLiteDatabase encryptedDatabase = getWritableDatabase(ENCRYPTION_KEY);
+        encryptedDatabase.rawExecSQL(String.format("ATTACH DATABASE '%s' AS plaintext KEY '';", exportPath));
+        encryptedDatabase.rawExecSQL("SELECT sqlcipher_export('plaintext')");
+
+        Cursor cursor = encryptedDatabase.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null);
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                String tableName = cursor.getString(0);
+                System.out.println("Table Name: " + tableName);
+            }
+            cursor.close();
+        }
+
+        encryptedDatabase.rawExecSQL("DETACH DATABASE plaintext");
+    }
 
     public static void deleteTableContent(String tableName){
         try{
@@ -1270,20 +1386,6 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.endTransaction();
         }
     }
-
-    public void insertSupportCredential(){
-        try {
-            String supportEmail = MainActivity.activity.getResources().getString(R.string.supportEmail);
-            String supportRefreshToken = MainActivity.activity.getResources().getString(R.string.supportRefreshToken);
-            deleteFromAccountsTable(supportEmail,"support");
-            GoogleCloud.Tokens tokens = MainActivity.googleCloud.updateAccessToken(supportRefreshToken);
-            insertIntoAccounts(supportEmail,"support",supportRefreshToken,tokens.getAccessToken(),
-                    0.0,0.0,0.0,0.0);
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to insertSupportCredential : " + e.getLocalizedMessage() , true);
-        }
-    }
-
 
     public static void alterAccountsTableConstraint() {
         try {

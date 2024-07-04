@@ -29,12 +29,10 @@ public class Profile {
             JsonArray profileJson = createProfileJson(userName);
             JsonArray backupAccountsJson = createBackUpAccountsJson();
             JsonArray primaryAccountsJson = createPrimaryAccountsJson();
-            JsonArray backUpDBJson = createBackUpDBJSON();
 
             resultJson.add("profile", profileJson);
             resultJson.add("backupAccounts", backupAccountsJson);
             resultJson.add("primaryAccounts", primaryAccountsJson);
-            resultJson.add("backUpDB", backUpDBJson);
         }catch (Exception e){
             LogHandler.saveLog("Failed to create profile map content : " + e.getLocalizedMessage() , true);
         }finally {
@@ -53,29 +51,6 @@ public class Profile {
         }
         finally {
             return profileJson;
-        }
-    }
-
-    private static JsonArray createBackUpDBJSON(){
-        JsonArray backUpDBJson = new JsonArray();
-        String sqlQuery = "SELECT * FROM BACKUPDB";
-        try (Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery, null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                int userEmailColumnIndex = cursor.getColumnIndex("userEmail");
-                int fileIdColumnIndex = cursor.getColumnIndex("fileId");
-                if (userEmailColumnIndex >= 0 && fileIdColumnIndex >= 0) {
-                    JsonObject backUpDB = new JsonObject();
-                    String dbUserEmail = cursor.getString(userEmailColumnIndex);
-                    String dbFileId = cursor.getString(fileIdColumnIndex);
-                    backUpDB.addProperty("dbUserEmail", dbUserEmail);
-                    backUpDB.addProperty("dbFileId", dbFileId);
-                    backUpDBJson.add(backUpDB);
-                }
-            }
-        } catch (Exception e) {
-            LogHandler.saveLog("Failed to create back up db json: " + e.getLocalizedMessage(), true);
-        } finally {
-            return backUpDBJson;
         }
     }
 
@@ -287,7 +262,7 @@ public class Profile {
                                 Button bt = (Button) child2;
                                 bt.setText("ADD A BACK UP ACCOUNT");
                             }
-                            MainActivity.updateButtonsListeners(signInToBackUpLauncher);
+                            UIHandler.updateButtonsListeners(signInToBackUpLauncher);
                         });
                     }
                 }catch (Exception e){

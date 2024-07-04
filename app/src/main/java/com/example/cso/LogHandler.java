@@ -14,36 +14,26 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 
 public class LogHandler extends Application {
-    static String LOG_DIR_PATH = Environment.getExternalStoragePublicDirectory
+    public static String LOG_DIR_PATH = Environment.getExternalStoragePublicDirectory
             (Environment.DIRECTORY_DOWNLOADS).getPath() + File.separator + "stash";
     public static String logFileName = "stash_log.txt";
+    public static File logDir = new File(LOG_DIR_PATH);
+    public  static File logFile = new File(logDir, logFileName);
 
     public static boolean createLogFile() {
         for(int i=0 ; i < 2;i++){
             try {
-                System.out.println("try to create file " + i);
-                File logDir = new File(LOG_DIR_PATH);
-                if (!logDir.exists()) {
-                    logDir.mkdirs();
-                }
-                File logFile = new File(LOG_DIR_PATH + File.separator + logFileName);
-                if (!logFile.exists()){
-                    try{
-                        logFile.createNewFile();
-                        if(logFile.exists()){
-                            return true;
-                        }
-                    }catch (SecurityException e){
-                        System.out.println("error in creating log file (security)" + e.getLocalizedMessage());
-                    }catch (Exception e){
-                        System.out.println("error in creating log file (exception)" + e.getLocalizedMessage());
+                System.out.println("Trying to create file for " + i + " time");
+                if(ensureLogDirectoryExists()){
+                    if (createNewLogFile()) {
+                        return true;
                     }
                 }else{
-                    System.out.println("Log file exists");
-                    return true;
+                    System.out.println("Log directory doesn't exist.");
                 }
             } catch (Exception e) {
                 System.out.println("error in creating log file in existing directory" + e.getLocalizedMessage());
@@ -52,125 +42,140 @@ public class LogHandler extends Application {
         return false;
     }
 
-    private static boolean logFileContainsError(File logFile){
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(logFile)))) {
-            if (logFile.exists()) {
-                try{
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        if (line.startsWith("Err")) {
-                            return true;
-                        }
-                    }
-                }catch (Exception e){
-                    System.out.println("Error in buffer reader log handler" + e.getLocalizedMessage());
-                }
+    private static boolean ensureLogDirectoryExists() {
+        if (!logDir.exists()) {
+            return logDir.mkdirs();
+        }
+        return true;
+    }
+
+    private static boolean createNewLogFile(){
+        if (!logFile.exists()){
+            try{
+                logFile.createNewFile();
+                return logFile.exists();
+            }catch (SecurityException e){
+                System.out.println("error in creating log file (security)" + e.getLocalizedMessage());
+            }catch (Exception e){
+                System.out.println("error in creating log file (exception)" + e.getLocalizedMessage());
             }
+        }else{
+            try{
+                performActionOnLogFile();
+                logFile.createNewFile();
+                return logFile.exists();
+            }catch (SecurityException e){
+                System.out.println("error in creating log file (security)" + e.getLocalizedMessage());
+            }catch (Exception e){
+                System.out.println("error in creating log file (exception)" + e.getLocalizedMessage());
+            }
+        }
+        return false;
+    }
+
+    private static boolean logFileContainsError(){
+        if(!logFile.exists()){
+            return false;
+        }
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(logFile)))) {
+            return checkForErrorsInLogFile(reader);
         }catch (Exception e){
             System.out.println("Error in log file contains error" + e.getLocalizedMessage());
         }
         return false;
     }
 
-    public static void actionOnLogFile() {
-        File logFile = new File(LOG_DIR_PATH + File.separator + logFileName);
-        if (logFileContainsError(logFile)) {
-            String accessToken = Support.getUserEmailForSupport();
-            if (accessToken != null) {
-                boolean isSent = Support.sendEmail(accessToken, "Log file has errors", logFile);
-                if (isSent){
-                    cleanLogFile(logFile);
+    private static boolean checkForErrorsInLogFile(BufferedReader reader) {
+        try {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("Err")) {
+                    return true;
                 }
+            }
+        } catch (Exception e) {
+            System.out.println("Error in buffer reader log handler: " + e.getLocalizedMessage());
+        }
+        return false;
+    }
+
+    public static void performActionOnLogFile() {
+        if (logFileContainsError()) {
+            boolean isSent = Support.sendEmail("Log file has errors", logFile);
+            if (isSent){
+                logFile.delete();
             }
         }else{
-            cleanLogFile(logFile);
+            logFile.delete();
         }
     }
-
-    public static void cleanLogFile(File logFile){
-        try{
-            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(logFile)))) {
-                writer.write("");
-                System.out.println("All existing lines removed from the log file: " + logFile.getAbsolutePath());
-            }catch (Exception e){
-                System.out.println("Error when cleaning log file: " + e.getLocalizedMessage());
-            }
-        }catch (Exception e){
-            System.out.println("Error when cleaning log file: " + e.getLocalizedMessage());
-        }
-    }
-
 
     public static void saveLog(String text, boolean isError) {
-        File logDir = new File(LOG_DIR_PATH);
-        File logFile = new File(logDir, logFileName);
-        List<String> existingLines = new ArrayList<>();
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(logFile)))) {
-            if (logFile.exists()) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-//                    System.out.println("line is : " + line);
-                    existingLines.add(line);
-                }
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                String timestamp = dateFormat.format(new Date());
-                String logEntry;
-                if (isError) {
-                    logEntry = "Err " + timestamp + " --------- " + text;
-                    System.out.println("Err IS SAVED: " + text);
-                } else {
-                    logEntry = "Log " + timestamp + " --------- " + text;
-                    System.out.println("LOG IS SAVED: " + text);
-                }
-                existingLines.add(Math.min(2, existingLines.size()), logEntry);
-                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(logFile)))) {
-                    for (String existingLine : existingLines) {
-//                        System.out.println("existing line is : " + existingLine);
-//                        System.out.println("writer is " + writer);
-                        writer.write(existingLine);
-                        writer.newLine();
-                    }
-                }catch (Exception e){
-                    System.out.println("Failed to write log: " + e.getLocalizedMessage());
-                }
+        new Thread(() -> {
+            if (!logFile.exists()) {
+                System.out.println("Log file does not exist.");
+                return;
             }
-        }catch (Exception e){
-            System.out.println("Error when saving log: " + e.getLocalizedMessage());
-        }
+            List<String> existingLines = readExistingLogLines();
+            String logEntry = createLogEntry(text,isError);
+            if(logEntry != null){
+                existingLines.add(logEntry);
+                writeLogLines(existingLines);
+            }else{
+                System.out.println("Log entry is null.");
+            }
+        }).start();
     }
 
     public static void saveLog(String text) {
-        File logDir = new File(LOG_DIR_PATH);
-        File logFile = new File(logDir, logFileName);
+        saveLog(text, true);
+    }
+
+    private static List<String> readExistingLogLines() {
         List<String> existingLines = new ArrayList<>();
-
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(logFile)))) {
-            if (logFile.exists()) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-//                    System.out.println(" line is : " + line);
-                    existingLines.add(line);
-                }
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                String timestamp = dateFormat.format(new Date());
-                String logEntry;
+            String line;
+            while ((line = reader.readLine()) != null) {
+                existingLines.add(line);
+            }
+        } catch (Exception e) {
+            System.out.println("Error when reading log file: " + e.getLocalizedMessage());
+            return null;
+        }
+        return existingLines;
+    }
 
-                logEntry = "Err " + timestamp + " --------- " + text;
-                System.out.println("Err IS SAVED: " + text);
-                existingLines.add(logEntry);
+    private static String createLogEntry(String text, boolean isError){
+        String logEntry = null;
+        try{
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+            String timestamp = dateFormat.format(new Date());
+            String logType;
+            if (isError) {
+                logType = "Err";
+            } else {
+                logType = "Log";
+            }
+            logEntry = logType + " " + timestamp + " --------- " + text;
+        }catch (Exception e){
+            System.out.println("Failed to create log entry.");
+        }
+        if (isError) {
+            System.out.println("Err IS SAVED: " + text);
+        } else {
+            System.out.println("LOG IS SAVED: " + text);
+        }
+        return logEntry;
+    }
 
-                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(logFile)))) {
-                    for (String existingLine : existingLines) {
-                        writer.write(existingLine);
-                        writer.newLine();
-                    }
-                }catch (Exception e){
-                    System.out.println("Failed to write log: " + e.getLocalizedMessage());
-                }
+    private static void writeLogLines(List<String> existingLines){
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(logFile)))) {
+            for (String existingLine : existingLines) {
+                writer.write(existingLine);
+                writer.newLine();
             }
         }catch (Exception e){
-            System.out.println("Error when saving log: " + e.getLocalizedMessage());
+            System.out.println("Failed to write log: " + e.getLocalizedMessage());
         }
     }
 }

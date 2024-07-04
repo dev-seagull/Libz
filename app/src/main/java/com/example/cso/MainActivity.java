@@ -7,15 +7,15 @@
     import android.content.DialogInterface;
     import android.content.Intent;
     import android.content.SharedPreferences;
-    import android.content.res.ColorStateList;
-    import android.graphics.Color;
     import android.os.Build;
     import android.os.Bundle;
-    import android.util.Log;
+    import android.os.PowerManager;
+    import android.provider.Settings;
     import android.view.Gravity;
     import android.view.View;
     import android.view.ViewGroup;
     import android.widget.Button;
+    import android.widget.ImageView;
     import android.widget.LinearLayout;
     import android.widget.PopupMenu;
 
@@ -23,12 +23,11 @@
     import androidx.activity.result.contract.ActivityResultContracts;
     import androidx.appcompat.app.AppCompatActivity;
 
+    import com.bumptech.glide.Glide;
     import com.google.android.material.switchmaterial.SwitchMaterial;
     import com.google.gson.JsonArray;
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
-
-    import org.checkerframework.checker.guieffect.qual.UI;
 
     import java.util.ArrayList;
     import java.util.Arrays;
@@ -45,15 +44,13 @@
 //        GooglePhotos googlePhotos;
         public static String androidDeviceName;
         static SharedPreferences preferences;
+        public static boolean isLoginProcessOn = false;
         public static DBHelper dbHelper;
         public static StorageHandler storageHandler;
-        public Thread secondUiThread;
         public static Timer timer;
         public static Thread backUpJsonThread;
         public static Intent serviceIntent;
         SwitchMaterial wifiOnlySwitchMaterial;
-        List<Thread> threads = new ArrayList<>(Arrays.asList( secondUiThread,
-                backUpJsonThread));
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -63,45 +60,55 @@
 
             PermissionManager permissionManager = new PermissionManager();
             boolean isStorageAccessGranted = permissionManager.requestStorageAccess(activity);
+            boolean areReadAndWritePermissionsAccessGranted = permissionManager.requestManageReadAndWritePermissions(activity);
 
             boolean hasCreated = LogHandler.createLogFile();
             System.out.println("Log file is created :"  + hasCreated);
 
             preferences = getPreferences(Context.MODE_PRIVATE);
-            dbHelper = new DBHelper(this,"StashDatabase");
+            boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
+            if(isFirstTime){
+                System.out.println("it is first time!");
+                DBHelper.startOldDatabaseDeletionThread(getApplicationContext());
+                SharedPreferencesHandler.setFirstTime(preferences, false);
+            }
+
+            dbHelper = new DBHelper(this,DBHelper.NEW_DATABASE_NAME);
             googleCloud = new GoogleCloud(this);
-            androidDeviceName = DeviceName.getDeviceName();
+            androidDeviceName = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
             UIHelper uiHelper = new UIHelper();
             storageHandler = new StorageHandler();
 
-            LogHandler.saveLog("---------------Start of app--------------",false);
-            LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
-                    Build.VERSION_CODES.M, false);
+            LogHandler.saveLog("---------------Start of app--------------", false);
 
             UIHandler.initializeDrawerLayout(activity);
             UIHandler.initializeButtons(this,googleCloud);
             UIHandler.handleSwitchMaterials();
-            boolean areReadAndWritePermissionsAccessGranted = permissionManager.requestManageReadAndWritePermissions(activity);
 
-//            LogHandler.actionOnLogFile();
 //            Upgrade.versionHandler(preferences);
 //            if(dbHelper.DATABASE_VERSION < 11) {
 //                LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
 //            }
-//            dbHelper.insertSupportCredential();
 
             serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
 
             uiHelper.deviceStorageTextView.setText("Wait until we get an update of your assets ...");
-
-            Android.startThreads(activity);
-
-            GoogleDrive.startThreads();
+            Glide.with(this).asGif().load(R.drawable.gifwaiting).into(UIHelper.waitingGif);
+            new Thread(() -> { Android.startThreads(activity); }).start();
 
             timer = new Timer();
             timer.scheduleAtFixedRate(new TimerTask() {
                 public void run() {
                     LogHandler.saveLog("Started the timer",false);
+                    Thread androidUpdate = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(!TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on")){
+                                Android.startThreads(activity);
+                            }
+                        }
+                    });
+                    androidUpdate.start();
                     try{
                         UIHandler.startUpdateUIThread(activity);
                     }catch (Exception e){
@@ -111,21 +118,33 @@
                 }
             }, 0, 3000);
 
-            LogHandler.saveLog("--------------------------end of onCreate----------------------------",false);
+
+            LogHandler.saveLog("--------------------------end of onCreate----------------------------", false);
         }
 
         @Override
         protected void onStart(){
-            LogHandler.saveLog("--------------------------start of onStart----------------------------",false);
             super.onStart();
+            LogHandler.saveLog("--------------------------start of onStart----------------------------",false);
+            LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
+                    Build.VERSION_CODES.M, false);
+            LogHandler.saveLog("The action on log file was performed", false);
+
             UIHelper uiHelper = new UIHelper();
-//            dbHelper.backUpDataBase(getApplicationContext());
-//            String exportPath = getDatabasePath(DBHelper.NEW_DATABASE_NAME + "_decrypted.db").getPath();
-//            dbHelper.exportDecryptedDatabase(exportPath);
+
+            new Thread(() -> {
+                if(!InternetManager.getInternetStatus(getApplicationContext()).equals("noInternet")) {
+                    boolean databaseIsBackedUp = dbHelper.backUpDataBase(getApplicationContext());
+                    if(!databaseIsBackedUp){
+                        LogHandler.saveLog("Database is not backed up ", true);
+                    }
+                }
+            }).start();
 
             signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                     result -> {
                         if(result.getResultCode() == RESULT_OK){
+                            isLoginProcessOn = true;
                             LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
                             View[] child = {backupButtonsLinearLayout.getChildAt(
                                     backupButtonsLinearLayout.getChildCount() - 1)};
@@ -152,6 +171,8 @@
                                 signInToBackUpThread.start();
                             }catch (Exception e){
                                 LogHandler.saveLog("Failed to sign in to backup : "  + e.getLocalizedMessage());
+                            }finally {
+                                isLoginProcessOn = false;
                             }
                         }
                         else{
@@ -159,7 +180,7 @@
                         }
                     });
 
-            updateButtonsListeners(signInToBackUpLauncher);
+            UIHandler.updateButtonsListeners(signInToBackUpLauncher);
 
             uiHelper.syncSwitchMaterialButton = findViewById(R.id.syncSwitchMaterial);
             uiHelper.syncSwitchMaterialButton.setOnClickListener(new View.OnClickListener() {
@@ -167,7 +188,7 @@
                 public void onClick(View view) {
                     if(uiHelper.syncSwitchMaterialButton.isChecked()){
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            if (!isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
+                            if (!TimerService.isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
                                 startService(serviceIntent);
                                 wifiOnlySwitchMaterial.setThumbTintList(UIHelper.onSwitchMaterialThumb);
                                 wifiOnlySwitchMaterial.setTrackTintList(UIHelper.onSwitchMaterialTrack);
@@ -177,7 +198,7 @@
                         }
                     }else{
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            if (isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
+                            if (TimerService.isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
                                 stopService(serviceIntent);
                             }
                         }
@@ -185,6 +206,7 @@
                             @Override
                             public void run() {
                                 uiHelper.syncMessageTextView.setVisibility(View.GONE);
+                                UIHelper.waitingSyncGif.setVisibility(View.GONE);
                             }
                         });
                     }
@@ -217,6 +239,11 @@
         }
 
         @Override
+        public void onResume(){
+            super.onResume();
+        }
+
+        @Override
         public void onPause(){
             super.onPause();
         }
@@ -229,162 +256,7 @@
             timer.purge();
         }
 
-        public static String isMyServiceRunning(Context context,Class<?> serviceClass) {
-            ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-            for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-                if (serviceClass.getName().equals(service.service.getClassName())) {
-                    System.out.println("isMyServiceRunning : true");
-                    return "on";
-                }
-            }
-            System.out.println("isMyServiceRunning : false");
-            return "off";
-        }
 
-        public static void updateButtonsListeners(ActivityResultLauncher<Intent> signInToBackUpLauncher) {
-//            updatePrimaryButtonsListener();
-            updateBackupButtonsListener(activity, signInToBackUpLauncher);
-        }
-
-        public static void updateBackupButtonsListener(Activity activity, ActivityResultLauncher<Intent> signInToBackUpLauncher){
-            LinearLayout backUpAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-            for (int i = 0; i < backUpAccountsButtonsLinearLayout.getChildCount(); i++) {
-                View childView = backUpAccountsButtonsLinearLayout.getChildAt(i);
-                if (childView instanceof Button) {
-                    Button button = (Button) childView;
-                    button.setOnClickListener(
-                            view -> {
-//                                syncToBackUpAccountButton.setClickable(false);
-//                                restoreButton.setClickable(false);
-                                String buttonText = button.getText().toString().toLowerCase();
-                                if (buttonText.equals("add a back up account")) {
-                                    button.setText("Wait");
-                                    button.setClickable(false);
-                                    googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
-                                    button.setClickable(true);
-                                } else if (buttonText.equals("wait")){
-                                    button.setText("add a back up account");
-                                }
-                                else {
-                                    PopupMenu popupMenu = new PopupMenu(activity.getApplicationContext(), button, Gravity.CENTER);
-                                    popupMenu.getMenuInflater().inflate(R.menu.account_button_menu, popupMenu.getMenu());
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                        popupMenu.setGravity(Gravity.CENTER);
-                                    }
-                                    popupMenu.setOnMenuItemClickListener(item -> {
-                                        if (item.getItemId() == R.id.sign_out) {
-                                            try {
-                                                button.setText("Wait...");
-                                            }catch (Exception e){}
-
-                                            final boolean[] isSignedout = {false};
-                                            final boolean[] isDeleted = {false};
-                                            final boolean[] isBackedUp = {false};
-
-
-                                            Thread deleteProfileJsonThread = new Thread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    isDeleted[0] = Profile.deleteProfileJson(buttonText);
-                                                    System.out.println("isDeleted " + isDeleted[0]);
-                                                    synchronized (this){
-                                                        notify();
-                                                    }
-                                                }
-                                            });
-
-                                            Thread signOutThread = new Thread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    try {
-                                                        deleteProfileJsonThread.join();
-                                                    } catch (Exception e) {
-                                                        LogHandler.saveLog("Failed to join " +
-                                                                " delete json thread : "  +e.getLocalizedMessage(), true);
-                                                    }
-                                                    if(isDeleted[0]){
-                                                        isSignedout[0] = googleCloud.signOut(buttonText);
-                                                        System.out.println("isSignedOut " + isSignedout[0]);
-                                                    }
-                                                }
-                                            });
-
-
-                                            backUpJsonThread = new Thread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    synchronized (signOutThread){
-                                                        try {
-                                                            signOutThread.join();
-                                                        } catch (Exception e) {
-                                                            LogHandler.saveLog("Failed to join the" +
-                                                                    " signout thread : " +
-                                                                     e.getLocalizedMessage(), true);
-                                                        }
-                                                    }
-                                                    if (isSignedout[0]) {
-                                                        MainActivity.dbHelper.deleteFromAccountsTable(buttonText, "backup");
-                                                        MainActivity.dbHelper.deleteAccountFromDriveTable(buttonText);
-                                                        dbHelper.deleteRedundantAsset();
-                                                        isBackedUp[0] = Profile.backUpProfileMap(true,buttonText);
-                                                    }
-                                                    System.out.println("isBackedUp " + isBackedUp[0]);
-                                                }
-                                            });
-
-                                            Thread uiThread = new Thread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    synchronized (backUpJsonThread){
-                                                        try {
-                                                            backUpJsonThread.join();
-                                                        } catch (Exception e) {
-                                                            LogHandler.saveLog("Failed to join backup json thread : " +
-                                                                    e.getLocalizedMessage(), true);
-                                                        }
-                                                    }
-                                                    activity.runOnUiThread(() -> {
-                                                        if (isBackedUp[0]) {
-                                                            try {
-                                                                item.setEnabled(false);
-                                                                ViewGroup parentView = (ViewGroup) button.getParent();
-                                                                parentView.removeView(button);
-                                                            } catch (Exception e) {
-                                                                LogHandler.saveLog(
-                                                                        "Failed to handle ui after signout : "
-                                                                        + e.getLocalizedMessage(), true
-                                                                );
-                                                            }
-                                                        } else {
-                                                            try {
-                                                                button.setText(buttonText);
-                                                            } catch (Exception e) {
-                                                                LogHandler.saveLog(
-                                                                        "Failed to handle ui when signout : "
-                                                                                + e.getLocalizedMessage(), true
-                                                                );
-                                                            }
-                                                        }
-                                                    });
-                                                }
-                                            });
-
-                                            deleteProfileJsonThread.start();
-                                            signOutThread.start();
-                                            backUpJsonThread.start();
-                                            uiThread.start();
-                                        }
-                                        return true;
-                                    });
-                                    popupMenu.show();
-                                }
-//                                syncToBackUpAccountButton.setClickable(true);
-//                                restoreButton.setClickable(true);
-                            }
-                    );
-                }
-            }
-        }
 
         public static void reInitializeButtons(Activity activity,GoogleCloud googleCloud){
 //            LinearLayout primaryLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);

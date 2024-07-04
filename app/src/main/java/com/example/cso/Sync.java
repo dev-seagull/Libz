@@ -1,7 +1,10 @@
 package com.example.cso;
 
+import android.app.Activity;
 import android.content.Context;
 import android.view.View;
+
+import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +66,7 @@ public class Sync {
         try{
             String userEmail = accountRow[0];
             String refreshToken = accountRow[4];
-            String syncedAssetsFolderId = GoogleDrive.createOrGetStashSyncedAssetsFolderInDrive(userEmail);
+            String syncedAssetsSubFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,"assets");
 
             double driveFreeSpace = calculateDriveFreeSpace(accountRow);
             System.out.println("This is drive free space " + driveFreeSpace);
@@ -78,7 +81,7 @@ public class Sync {
 
             for (String[] androidRow : sortedAndroidFiles) {
                 MainActivity.storageHandler.freeStorageUpdater();
-                syncAndroidFile(androidRow, userEmail, refreshToken, syncedAssetsFolderId,
+                syncAndroidFile(androidRow, userEmail, refreshToken, syncedAssetsSubFolderId,
                         driveFreeSpace, amountSpaceToFreeUp, context);
             }
         }catch (Exception e){
@@ -102,8 +105,17 @@ public class Sync {
                 MainActivity.activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        UIHelper uiHelper = new UIHelper();
                         uiHelper.syncMessageTextView.setVisibility(View.VISIBLE);
-                        uiHelper.syncMessageTextView.setText("Syncing is in progress ...");
+                        uiHelper.syncMessageTextView.setText("Syncing is in progress");
+                        try{
+                            if(!MainActivity.activity.isDestroyed()){
+                                Glide.with(MainActivity.activity).asGif().load(R.drawable.gifwaiting).into(UIHelper.waitingSyncGif);
+                                UIHelper.waitingSyncGif.setVisibility(View.VISIBLE);
+                            }
+                        }catch (Exception e){
+                            System.out.println(e.getLocalizedMessage());
+                        }
                     }
                 });
                 if (!DBHelper.androidFileExistsInDrive(assetId, fileHash)){
@@ -198,7 +210,7 @@ public class Sync {
         return unique_android_rows;
     }
 
-    private static double calculateDriveFreeSpace(String[] accountRow){
+    public static double calculateDriveFreeSpace(String[] accountRow){
         try{
             String[] totalStorage = {accountRow[2]};
             String[] usedStorage = {accountRow[3]};

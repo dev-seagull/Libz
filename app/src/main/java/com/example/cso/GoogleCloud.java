@@ -5,8 +5,10 @@
     import android.graphics.Color;
     import android.graphics.drawable.Drawable;
     import android.view.Gravity;
+    import android.view.MenuItem;
     import android.view.View;
     import android.view.ViewGroup;
+    import android.view.animation.AlphaAnimation;
     import android.widget.Button;
     import android.widget.LinearLayout;
     import android.widget.Toast;
@@ -36,6 +38,7 @@
     import java.util.ArrayList;
     import java.util.HashMap;
     import java.util.List;
+    import java.util.Locale;
     import java.util.Map;
     import java.util.concurrent.Callable;
     import java.util.concurrent.ExecutorService;
@@ -179,7 +182,6 @@
             private boolean isInAccounts;
             private GoogleCloud.Tokens tokens;
             private Storage storage;
-
             private ArrayList<DriveAccountInfo.MediaItem> mediaItems;
 
             private signInResult(String userEmail, boolean isHandled, boolean isInAccounts,
@@ -317,7 +319,7 @@
             newLoginButton.setVisibility(View.VISIBLE);
             newLoginButton.setBackgroundTintList(UIHelper.primaryAccountButtonColor);
             newLoginButton.setPadding(40,0,150,0);
-            newLoginButton.setTextSize(18);
+            newLoginButton.setTextSize(12);
             newLoginButton.setTextColor(Color.WHITE);
             newLoginButton.setId(View.generateViewId());
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
@@ -326,6 +328,10 @@
             );
             layoutParams.setMargins(0,20,0,16);
             newLoginButton.setLayoutParams(layoutParams);
+
+            AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
+            fadeIn.setDuration(2000);
+            newLoginButton.startAnimation(fadeIn);
 
             if(linearLayout != null){
                 linearLayout.addView(newLoginButton);
@@ -346,7 +352,7 @@
             newLoginButton.setVisibility(View.VISIBLE);
             newLoginButton.setBackgroundTintList(UIHelper.addBackupAccountButtonColor);
             newLoginButton.setPadding(40,0,150,0);
-            newLoginButton.setTextSize(18);
+            newLoginButton.setTextSize(15);
             newLoginButton.setTextColor(UIHelper.buttonTextColor);
             newLoginButton.setId(View.generateViewId());
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
@@ -355,6 +361,10 @@
             );
             layoutParams.setMargins(0,20,0,16);
             newLoginButton.setLayoutParams(layoutParams);
+
+            AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
+            fadeIn.setDuration(2000);
+            newLoginButton.startAnimation(fadeIn);
 
             if(linearLayout != null){
                 linearLayout.addView(newLoginButton);
@@ -539,7 +549,6 @@
         public static class Tokens {
             private String refreshToken;
             private String accessToken;
-
             public Tokens(String accessToken, String refreshToken) {
                 this.accessToken = accessToken;
                 this.refreshToken = refreshToken;
@@ -573,10 +582,18 @@
                 this.usedInDriveStorage = usedInDriveStorage * 1000;
                 this.UsedInGmailAndPhotosStorage = usedStorage - usedInDriveStorage;
             }
-            public Double getUsedInDriveStorage() {return usedInDriveStorage;}
-            public Double getUsedInGmailAndPhotosStorage() {return UsedInGmailAndPhotosStorage;}
-            public Double getTotalStorage() {return totalStorage;}
-            public Double getUsedStorage() {return usedStorage;}
+            public Double getUsedInDriveStorage() {
+                return usedInDriveStorage;
+            }
+            public Double getUsedInGmailAndPhotosStorage() {
+                return UsedInGmailAndPhotosStorage;
+            }
+            public Double getTotalStorage() {
+                return totalStorage;
+            }
+            public Double getUsedStorage() {
+                return usedStorage;
+            }
         }
 
         public boolean updateAccessTokens(){
@@ -607,6 +624,127 @@
                 executor.shutdown();
             }
             return tokens_fromFuture;
+        }
+
+        private static boolean startInvalidateTokenThread(String buttonText){
+            LogHandler.saveLog("Starting invalidate token Thread", false);
+            final boolean[] isInvalidated = {false};
+            Thread invalidateTokenThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    isInvalidated[0] = MainActivity.googleCloud.signOut(buttonText);
+                    if(!isInvalidated[0]){
+                        LogHandler.saveLog("token is not invalidated." , true);
+                    }
+                }
+            });
+            invalidateTokenThread.start();
+            try{
+                invalidateTokenThread.join();
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to join invalidate token Thread: " + e.getLocalizedMessage(), true );
+            }
+            LogHandler.saveLog("Finished  Invalidate token Thread : " + isInvalidated[0], false);
+            return isInvalidated[0];
+        }
+
+        private static boolean startDeleteProfileJsonThread(String buttonText){
+            LogHandler.saveLog("Starting Delete Profile Json Thread", false);
+            final boolean[] isDeleted = {false};
+            Thread deleteProfileJsonThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    isDeleted[0] = Profile.deleteProfileJson(buttonText);
+                    if(!isDeleted[0]){
+                        LogHandler.saveLog("Profile Json is not deleted when signing out.");
+                    }
+                }
+            });
+            deleteProfileJsonThread.start();
+            try{
+                deleteProfileJsonThread.join();
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to join Delete Profile Json Thread: " + e.getLocalizedMessage(), true );
+            }
+            LogHandler.saveLog("Finished  Delete Profile Json Thread : " + isDeleted[0], false);
+            return isDeleted[0];
+        }
+
+        private static boolean startDeleteDatabaseThread(String buttonText){
+            LogHandler.saveLog("Starting Delete Database Thread", false);
+            final boolean[] isDeleted = {false};
+            Thread deleteDatabaseThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String driveBackupAccessToken = null;
+                    String driveBackupRefreshToken;
+                    String[] selected_columns = {"userEmail", "type","refreshToken"};
+                    List<String[]> account_rows = DBHelper.getAccounts(selected_columns);
+                    for (String[] account_row : account_rows) {
+                        if (account_row[1].equals("backup") && account_row[0].equals(buttonText)) {
+                            driveBackupRefreshToken = account_row[2];
+                            driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
+                        }
+                    }
+                    if((driveBackupAccessToken != null) && !driveBackupAccessToken.isEmpty()){
+                        Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
+                        String folder_name = "stash_database";
+                        String databaseFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(buttonText,folder_name);
+                        DBHelper.deleteDatabaseFiles(service,databaseFolderId);
+                        isDeleted[0] = DBHelper.checkDeletionStatus(service,databaseFolderId);
+                        if(!isDeleted[0]){
+                            LogHandler.saveLog("Database is not deleted when signing out.");
+                        }
+                    }
+                }
+            });
+            deleteDatabaseThread.start();
+            try{
+                deleteDatabaseThread.join();
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to join Delete Database Thread: " + e.getLocalizedMessage(), true );
+            }
+            LogHandler.saveLog("Finished  Delete Database Thread : " + isDeleted[0], false);
+            return isDeleted[0];
+        }
+
+        private static boolean startProfileJsonBackUpAfterSignOutThread(String buttonText){
+            LogHandler.saveLog("Starting Profile Json BackUp After Sign Out Thread", false);
+            final boolean[] isBackedUp = {false};
+            Thread profileJsonBackUpAfterSignOutThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    MainActivity.dbHelper.deleteFromAccountsTable(buttonText, "backup");
+                    MainActivity.dbHelper.deleteAccountFromDriveTable(buttonText);
+                    MainActivity.dbHelper.deleteRedundantAsset();
+                    isBackedUp[0] = Profile.backUpProfileMap(true,buttonText);
+                    if(!isBackedUp[0]){
+                        LogHandler.saveLog("Profile Json back up is not working when signing out.", true);
+                    }
+                }
+            });
+            profileJsonBackUpAfterSignOutThread.start();
+            try{
+                profileJsonBackUpAfterSignOutThread.join();
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to join Profile Json Back Up After Sign Out Thread: " + e.getLocalizedMessage(), true );
+            }
+            LogHandler.saveLog("Finished  Profile Json Back Up After Sign Out Thread : " + isBackedUp[0], false);
+            return isBackedUp[0];
+        }
+
+        public static void startSignOutThreads(String buttonText, MenuItem item, Button button){
+            boolean isProfileJsonDeleted = startDeleteProfileJsonThread(buttonText);
+            if(isProfileJsonDeleted){
+                boolean isDatabaseDeleted = startDeleteDatabaseThread(buttonText);
+                boolean isInvalidated = startInvalidateTokenThread(buttonText);
+                if(isInvalidated){
+                    boolean isBackedUp = startProfileJsonBackUpAfterSignOutThread(buttonText);
+                    if(isBackedUp){
+                        UIHandler.startUiThreadForSignOut(item,button,buttonText,isBackedUp);
+                    }
+                }
+            }
         }
     }
 

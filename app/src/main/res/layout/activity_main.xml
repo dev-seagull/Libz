@@ -87,7 +87,7 @@
                         android:gravity="center"
                         android:paddingRight="84dp"
                         android:textColor="@color/white"
-                        android:textSize="18dp"
+                        android:textSize="16dp"
                         app:backgroundTint="@null" />
 <!--                        android:layout_marginTop="20dp"-->
 
@@ -99,11 +99,10 @@
                         android:gravity="center">
 
                         <LinearLayout
-                            xmlns:android="http://schemas.android.com/apk/res/android"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-
+                            android:orientation="horizontal"
+                            android:padding="8dp">
                             <TextView
                                 android:id="@+id/deviceStorage"
                                 android:layout_width="0dp"
@@ -121,8 +120,15 @@
                                 android:text=""
                                 android:textColor="@color/white"
                                 android:textSize="20sp" />
-
-
+                            <ImageView
+                                android:layout_width="0dp"
+                                android:id="@+id/waitingGif"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginTop="30dp"
+                                android:layout_marginLeft="3dp"
+                                android:layout_marginRight="3dp"
+                                android:adjustViewBounds="true"/>
                             <ImageButton
                                 android:id="@+id/directoriesButton"
                                 android:layout_width="0dp"
@@ -191,18 +197,36 @@
                             android:gravity="center"
                             android:orientation="vertical"></LinearLayout>
 
-                        <TextView
-                            android:id="@+id/syncMessageTextView"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="sans-serif-condensed"
-                            android:shadowColor="@color/black"
-                            android:shadowDx="2"
-                            android:shadowDy="2"
-                            android:shadowRadius="5"
-                            android:text=""
-                            android:visibility="gone"
-                            android:textColor="@color/white" />
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/syncMessageTextView"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:fontFamily="sans-serif-condensed"
+                                android:shadowColor="@color/black"
+                                android:shadowDx="2"
+                                android:paddingRight="0dp"
+                                android:paddingLeft="32dp"
+                                android:shadowDy="2"
+                                android:shadowRadius="5"
+                                android:text=""
+                                android:textSize="20sp"
+                                android:visibility="gone"
+                                android:textColor="@color/white" />
+                            <ImageView
+                                android:layout_width="wrap_content"
+                                android:id="@+id/waitingSyncGif"
+                                android:layout_height="40dp"
+                                android:visibility="gone"
+                                android:paddingLeft="0dp"
+                                />
+                        </LinearLayout>
+
                     </LinearLayout>
 
 

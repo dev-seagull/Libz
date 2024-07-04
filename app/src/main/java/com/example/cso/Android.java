@@ -155,7 +155,6 @@ public class Android {
         long lastInsertedId =
                 MainActivity.dbHelper.insertAssetData(mediaItemHash);
         if(lastInsertedId != -1){
-
             MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidDeviceName,
                     mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMimeType);
         }else{

@@ -117,7 +117,7 @@ public class Upgrade {
 
     public static void upgrade_20_to_21(){
         DBHelper oldDBHelper = new DBHelper(MainActivity.activity.getApplicationContext(), "CSODatabase");
-        oldDBHelper.copyDataFromOldToNew(MainActivity.dbHelper);
+//        oldDBHelper.copyDataFromOldToNew(MainActivity.dbHelper);
         upgrade_21_to_22();
     }
 
