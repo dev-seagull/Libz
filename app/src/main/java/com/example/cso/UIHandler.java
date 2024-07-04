@@ -159,6 +159,10 @@ public class UIHandler {
         SpannableString centeredText = new SpannableString("Version: " + appVersion);
         centeredText.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER), 0, appVersion.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
         menuItem1.setTitle(centeredText);
+        MenuItem menuItem2 = navigationView.getMenu().findItem(R.id.navMenuItem2);
+        SpannableString centeredText2 = new SpannableString("Device id: " + MainActivity.androidUniqueDeviceIdentifier);
+        centeredText2.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER), 0, appVersion.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+        menuItem2.setTitle(centeredText2);
         AppCompatButton infoButton = activity.findViewById(R.id.infoButton);
         infoButton.setOnClickListener(view -> drawerLayout.openDrawer(GravityCompat.END));
     }

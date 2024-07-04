@@ -4,4 +4,8 @@
         android:id="@+id/navMenuItem1"
         android:title=""
         />
+    <item
+        android:id="@+id/navMenuItem2"
+        android:title=""
+        />
 </menu>
