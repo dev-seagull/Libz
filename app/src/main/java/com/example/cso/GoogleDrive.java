@@ -1,7 +1,5 @@
 package com.example.cso;
 
-import android.view.FocusFinder;
-
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -501,6 +499,42 @@ public class GoogleDrive {
         startDeleteRedundantDriveThread();
         startUpdateDriveFilesThread();
         startDeleteDuplicatedInDriveThread();
+    }
+
+    private void refactorFolders(){
+        List<String[]> accounts_rows = DBHelper.getAccounts(new String[]{"refreshToken","userEmail"});
+        try{
+            for(String[] account_row: accounts_rows){
+                String accessToken = MainActivity.googleCloud.updateAccessToken(account_row[0]).getAccessToken();
+                Drive service = initializeDrive(accessToken);
+                FileList stashSyncedAssetsFolders_result = getStashSyncedAssetsFolderInDrive(service);
+                int stashSyncedAssetsFolders_size = stashSyncedAssetsFolders_result.getFiles().size();
+                System.out.println("Number of stash synced asset folders: " + stashSyncedAssetsFolders_size);
+                if (stashSyncedAssetsFolders_size > 1) {
+
+                }
+
+                String parentFolderId =  GoogleDrive.createOrGetStashSyncedAssetsFolderInDrive(account_row[1]);
+                if (parentFolderId == null){
+                    LogHandler.saveLog("No parent folder was found in Google Drive back up account when creating sub directory and refactoring",true);
+                }
+                FileList stashDatabase_result = getSubDirectoryInStashSyncedAssetsFolder(service,"stash_database",parentFolderId);
+                int stashDatabaseFolders_size = stashDatabase_result.getFiles().size();
+                System.out.println("Number of stash database folders: " + stashDatabaseFolders_size);
+                if (stashDatabaseFolders_size > 1){
+
+                }
+
+                FileList stashProfileFolders_result = getSubDirectoryInStashSyncedAssetsFolder(service,"stash_user_profile",parentFolderId);
+                int stashProfileFolders_size = stashProfileFolders_result.getFiles().size();
+                System.out.println("Number of stash profile folders: " + stashProfileFolders_size);
+                if (stashProfileFolders_size > 1){
+
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to refactor folders: " + e.getLocalizedMessage());
+        }
     }
 }
 
