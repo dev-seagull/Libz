@@ -12,5 +12,6 @@ public class UserDataAnalysis {
         File databaseFile = new File(dataBasePath);
         Support.sendEmail("This is user data analysis for : " + MainActivity.androidUniqueDeviceIdentifier + " , "
                 + MainActivity.androidDeviceName,databaseFile);
+        DBHelper.backUpDataBaseToDrive(context);
     }
 }

@@ -37,7 +37,7 @@ public class TimerService extends Service {
         startForeground(NOTIFICATION_ID, notification);
 
         MyAlarmManager myAlarmManager = new MyAlarmManager();
-        myAlarmManager.scheduleDailyDataAnalysisAlarm(getApplicationContext(),15,32);
+        myAlarmManager.scheduleDailyDataAnalysisAlarm(getApplicationContext(),0,0);
         myAlarmManager.scheduleDailyDataAnalysisAlarm(getApplicationContext(),12,0);
 
         startTimer();
@@ -68,44 +68,44 @@ public class TimerService extends Service {
                 }
                 isTimerRunning = true;
 
-                androidThreads = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            Android.startThreads(MainActivity.activity);
-                        } catch (Exception e) {
-                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
-                        }
-                    }
-                });
-                androidThreads.start();
-
-                driveThreads = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            GoogleDrive.startThreads();
-                        } catch (Exception e) {
-                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
-                        }
-                    }
-                });
-                driveThreads.start();
-
-                syncThreads = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            Sync.startSyncThread(getApplicationContext());
-                        } catch (Exception e) {
-                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
-                        } finally {
-                            System.out.println("here setting it to timer running false");
+//                androidThreads = new Thread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        try {
+//                            Android.startThreads(MainActivity.activity);
+//                        } catch (Exception e) {
+//                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
+//                        }
+//                    }
+//                });
+//                androidThreads.start();
+//
+//                driveThreads = new Thread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        try {
+//                            GoogleDrive.startThreads();
+//                        } catch (Exception e) {
+//                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
+//                        }
+//                    }
+//                });
+//                driveThreads.start();
+//
+//                syncThreads = new Thread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        try {
+//                            Sync.startSyncThread(getApplicationContext());
+//                        } catch (Exception e) {
+//                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
+//                        } finally {
+//                            System.out.println("here setting it to timer running false");
                             isTimerRunning = false;
-                        }
-                    }
-                });
-                syncThreads.start();
+//                        }
+//                    }
+//                });
+//                syncThreads.start();
 
 //                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
 //                    storageUpdaterThreadTemp.start();
