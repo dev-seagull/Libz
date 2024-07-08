@@ -12,6 +12,7 @@ import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.AlignmentSpan;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
@@ -188,13 +189,24 @@ public class UIHandler {
         AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
         fadeIn.setDuration(2000);
         androidDeviceButton.startAnimation(fadeIn);
+        androidDeviceButton.setPadding(40,0,150,0);
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int windowWidth = displayMetrics.widthPixels;
+        int buttonWidth = (int) (windowWidth * 0.6);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                buttonWidth,
+                200
+        );
+        layoutParams.setMargins(0,20,0,16);
+        androidDeviceButton.setLayoutParams(layoutParams);
 
 //          LinearLayout primaryAccountsButtonsLayout= findViewById(R.id.primaryAccountsButtons);
         LinearLayout backupAccountsButtonsLayout= activity.findViewById(R.id.backUpAccountsButtons);
 //           Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
 //           newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
         Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
-        newBackupLoginButton.setBackgroundTintList(UIHelper.addBackupAccountButtonColor);
+        newBackupLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
     }
 
     private static void handeSyncSwitchMaterialButton(UIHelper uiHelper, Activity activity){

@@ -14,7 +14,6 @@ public class UIHelper {
     public static ColorStateList backupAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#42A5F5"));
     public TextView deviceStorageTextView = MainActivity.activity.findViewById(R.id.deviceStorage);
     public SwitchMaterial syncSwitchMaterialButton = MainActivity.activity.findViewById(R.id.syncSwitchMaterial);
-    public static ColorStateList addBackupAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#FF5722"));
     public static ColorStateList primaryAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#0D47A1"));
     public static ImageView waitingGif = MainActivity.activity.findViewById(R.id.waitingGif);
     public static ImageView waitingSyncGif = MainActivity.activity.findViewById(R.id.waitingSyncGif);

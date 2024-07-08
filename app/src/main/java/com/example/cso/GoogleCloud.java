@@ -4,6 +4,7 @@
     import android.content.Intent;
     import android.graphics.Color;
     import android.graphics.drawable.Drawable;
+    import android.util.DisplayMetrics;
     import android.view.Gravity;
     import android.view.MenuItem;
     import android.view.View;
@@ -347,16 +348,22 @@
             newLoginButton.setCompoundDrawablesWithIntrinsicBounds
                     (loginButtonLeftDrawable, null, null, null);
             newLoginButton.setText("Add a back up account");
+            newLoginButton.setBackgroundResource(R.drawable.round_button);
             newLoginButton.setGravity(Gravity.CENTER);
             newLoginButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             newLoginButton.setVisibility(View.VISIBLE);
-            newLoginButton.setBackgroundTintList(UIHelper.addBackupAccountButtonColor);
+            newLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
             newLoginButton.setPadding(40,0,150,0);
             newLoginButton.setTextSize(15);
             newLoginButton.setTextColor(UIHelper.buttonTextColor);
             newLoginButton.setId(View.generateViewId());
+
+            DisplayMetrics displayMetrics = new DisplayMetrics();
+            activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+            int windowWidth = displayMetrics.widthPixels;
+            int buttonWidth = (int) (windowWidth * 0.6);
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    buttonWidth,
                     200
             );
             layoutParams.setMargins(0,20,0,16);
