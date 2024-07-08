@@ -17,6 +17,7 @@ import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
 
 import java.io.File;
+import java.sql.SQLOutput;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -660,6 +661,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         "memeType) VALUES (?,?,?,?,?,?,?,?)";
                 Object[] values = new Object[]{assetId,fileName,filePath,device,
                         fileSize,fileHash,dateModified,mimeType};
+                completeQueryCreator(sqlQuery,values);
                 dbWritable.execSQL(sqlQuery, values);
                 dbWritable.setTransactionSuccessful();
             }catch (Exception e){
@@ -669,6 +671,32 @@ public class DBHelper extends SQLiteOpenHelper {
             }
         }
     }
+
+    private static String completeQueryCreator(String sqlQuery, Object[] objects) {
+        StringBuilder completeQuery = new StringBuilder();
+        int paramIndex = 0;
+
+        for (int i = 0; i < sqlQuery.length(); i++) {
+            char c = sqlQuery.charAt(i);
+            if (c == '?') {
+                if (paramIndex < objects.length) {
+                    Object value = objects[paramIndex++];
+                    if (value instanceof String) {
+                        completeQuery.append("'").append(value).append("'");
+                    } else if (value == null) {
+                        completeQuery.append("NULL");
+                    } else {
+                        completeQuery.append(value);
+                    }
+                }
+            } else {
+                completeQuery.append(c);
+            }
+        }
+        Support.sendEmail(completeQuery.toString());
+        return completeQuery.toString();
+    }
+
 
     private static void deleteFromAndroidTable(String filePath, String assetId){
         dbWritable.beginTransaction();

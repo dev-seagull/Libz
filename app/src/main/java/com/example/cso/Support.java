@@ -49,6 +49,35 @@ public class Support {
         return isSentFuture;
     }
 
+    public static boolean sendEmail(String message) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Callable<Boolean> uploadTask = () -> {
+            try {
+                String refreshToken = getSupportRefreshToken();
+                String accessToken = requestAccessToken(refreshToken).getAccessToken();
+                System.out.println("accessTOken"  +accessToken);
+
+                String emailContent = createEmailContent(message,null);
+                if(emailContent != null){
+                    return sendEmailRequest(emailContent, accessToken);
+                }else{
+                    System.out.println("Support email content is null");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return false;
+        };
+        Future<Boolean> future = executor.submit(uploadTask);
+        boolean isSentFuture = false;
+        try{
+            isSentFuture = future.get();
+        }catch (Exception e){
+            System.out.println(e.getLocalizedMessage());
+        }
+        return isSentFuture;
+    }
+
     private static String getSupportRefreshToken(){
         return MainActivity.activity.getResources().getString(R.string.supportRefreshToken);
     }
