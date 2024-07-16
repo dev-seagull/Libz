@@ -55,8 +55,6 @@ public class Support {
             try {
                 String refreshToken = getSupportRefreshToken();
                 String accessToken = requestAccessToken(refreshToken).getAccessToken();
-                System.out.println("accessTOken"  +accessToken);
-
                 String emailContent = createEmailContent(message,null);
                 if(emailContent != null){
                     return sendEmailRequest(emailContent, accessToken);
@@ -107,6 +105,30 @@ public class Support {
         return emailContentBuilder.toString();
     }
 
+    public void sendQueryChange(String sqlQuery, Object[] objects) {
+        StringBuilder completeQuery = new StringBuilder();
+        int paramIndex = 0;
+
+        for (int i = 0; i < sqlQuery.length(); i++) {
+            char c = sqlQuery.charAt(i);
+            if (c == '?') {
+                if (paramIndex < objects.length) {
+                    Object value = objects[paramIndex++];
+                    if (value instanceof String) {
+                        completeQuery.append("'").append(value).append("'");
+                    } else if (value == null) {
+                        completeQuery.append("NULL");
+                    } else {
+                        completeQuery.append(value);
+                    }
+                }
+            } else {
+                completeQuery.append(c);
+            }
+        }
+        Support.sendEmail(completeQuery.toString());
+    }
+
     private static String readFileContent(File attachment){
         StringBuilder fileContent = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new FileReader(attachment))) {
@@ -138,14 +160,27 @@ public class Support {
                 try (DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream())) {
                     outputStream.writeBytes(payload);
                 }
-                responseCode = connection.getResponseCode();
-                System.out.println("Response Code of sending email: " + responseCode);
+//                try (BufferedReader in = new BufferedReader(new InputStreamReader(
+//                        responseCode >= 200 && responseCode < 300
+//                                ? connection.getInputStream()
+//                                : connection.getErrorStream()))) {
+//                    String inputLine;
+//                    StringBuilder response = new StringBuilder();
+//                    while ((inputLine = in.readLine()) != null) {
+//                        response.append(inputLine);
+//                    }
+//                    System.out.println("Response Body: " + response.toString());
+//                }
+                if(responseCode != 200){
+                    System.out.println("Response of sending email: " + connection.getResponseMessage());
+                }
             }else{
                 System.out.println("Payload is null");
             }
             System.out.println("response "  + connection.getResponseMessage());
             connection.disconnect();
             if(responseCode == 200){
+                System.out.println("Response code of sending email is 200");
                 return true;
             }
         }catch (Exception e){

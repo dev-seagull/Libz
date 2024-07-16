@@ -17,7 +17,6 @@ import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
 
 import java.io.File;
-import java.sql.SQLOutput;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -37,6 +36,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public static SQLiteDatabase dbReadable;
     public static SQLiteDatabase dbWritable;
     private static final String ENCRYPTION_KEY = MainActivity.activity.getResources().getString(R.string.ENCRYPTION_KEY);
+    Support support = new Support();
 
 
     public DBHelper(Context context, String databaseName) {
@@ -661,41 +661,28 @@ public class DBHelper extends SQLiteOpenHelper {
                         "memeType) VALUES (?,?,?,?,?,?,?,?)";
                 Object[] values = new Object[]{assetId,fileName,filePath,device,
                         fileSize,fileHash,dateModified,mimeType};
-                completeQueryCreator(sqlQuery,values);
+                String finalSqlQuery = sqlQuery;
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        for(int i=0; i<500;i++){
+                            support.sendQueryChange(finalSqlQuery,values);
+                        }
+                    }
+                }).start();
+
                 dbWritable.execSQL(sqlQuery, values);
                 dbWritable.setTransactionSuccessful();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to save into the database.in insertIntoAndroidTable method. "+e.getLocalizedMessage());
+                LogHandler.saveLog("Failed to save into the database in insertIntoAndroidTable method. "+e.getLocalizedMessage());
             }finally {
                 dbWritable.endTransaction();
             }
         }
     }
 
-    private static String completeQueryCreator(String sqlQuery, Object[] objects) {
-        StringBuilder completeQuery = new StringBuilder();
-        int paramIndex = 0;
 
-        for (int i = 0; i < sqlQuery.length(); i++) {
-            char c = sqlQuery.charAt(i);
-            if (c == '?') {
-                if (paramIndex < objects.length) {
-                    Object value = objects[paramIndex++];
-                    if (value instanceof String) {
-                        completeQuery.append("'").append(value).append("'");
-                    } else if (value == null) {
-                        completeQuery.append("NULL");
-                    } else {
-                        completeQuery.append(value);
-                    }
-                }
-            } else {
-                completeQuery.append(c);
-            }
-        }
-        Support.sendEmail(completeQuery.toString());
-        return completeQuery.toString();
-    }
 
 
     private static void deleteFromAndroidTable(String filePath, String assetId){
