@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextSwitcher;
 import android.widget.TextView;
 
 import com.google.android.material.switchmaterial.SwitchMaterial;
