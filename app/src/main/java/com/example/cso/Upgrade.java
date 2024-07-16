@@ -47,6 +47,9 @@ public class Upgrade {
                 case 23:
                     upgrade_23_to_24();
                     break;
+                case 24:
+                    upgrade_24_to_25();
+                    break;
                 default:
                     lastVersion();
             }
@@ -71,7 +74,7 @@ public class Upgrade {
 
     public static void lastVersion() {
         MainActivity.activity.runOnUiThread(() -> {
-            Toast.makeText(MainActivity.activity, "You are upgraded to last version", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.activity, "You are Using last version (0.0.25)", Toast.LENGTH_SHORT).show();
         });
 //        MainActivity.dbHelper.deleteFromAccountsTable("stashdevteam","support");
 //        DBHelper.deleteTableContent("ACCOUNTS");
@@ -134,4 +137,9 @@ public class Upgrade {
         DBHelper.alterAccountsTableConstraint();
     }
 
+    public static void upgrade_24_to_25() {
+        MainActivity.activity.runOnUiThread(() -> {
+            Toast.makeText(MainActivity.activity, "You are upgraded to last version (0.0.25)", Toast.LENGTH_SHORT).show();
+        });
+        Support.sendEmail("Some one installed last version of apk, Device ID : " + MainActivity.androidUniqueDeviceIdentifier);}
 }

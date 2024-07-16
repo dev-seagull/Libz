@@ -26,7 +26,7 @@ public class Support {
             try {
                 String refreshToken = getSupportRefreshToken();
                 String accessToken = requestAccessToken(refreshToken).getAccessToken();
-                System.out.println("accessTOken"  +accessToken);
+                System.out.println("accessToken" + accessToken);
 
                 String emailContent = createEmailContent(message,attachment);
                 if(emailContent != null){
@@ -55,7 +55,7 @@ public class Support {
             try {
                 String refreshToken = getSupportRefreshToken();
                 String accessToken = requestAccessToken(refreshToken).getAccessToken();
-                System.out.println("accessTOken"  +accessToken);
+                System.out.println("accessToken" + accessToken);
 
                 String emailContent = createEmailContent(message,null);
                 if(emailContent != null){
