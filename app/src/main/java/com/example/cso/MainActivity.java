@@ -78,7 +78,7 @@
             UIHandler.initializeButtons(this,googleCloud);
             UIHandler.handleSwitchMaterials();
 
-            Upgrade.versionHandler(preferences);
+//            Upgrade.versionHandler(preferences);
 //            if(dbHelper.DATABASE_VERSION < 11) {
 //                LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
 //            }
