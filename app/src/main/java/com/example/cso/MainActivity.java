@@ -23,6 +23,8 @@
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
 
+    import java.io.IOException;
+    import java.util.List;
     import java.util.Timer;
     import java.util.TimerTask;
 
@@ -49,7 +51,7 @@
             activity = this;
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
-
+            System.out.println("I'm here and alive 1 ");
             PermissionManager permissionManager = new PermissionManager();
             boolean isStorageAccessGranted = permissionManager.requestStorageAccess(activity);
             boolean areReadAndWritePermissionsAccessGranted = permissionManager.requestManageReadAndWritePermissions(activity);
@@ -64,7 +66,7 @@
                 DBHelper.startOldDatabaseDeletionThread(getApplicationContext());
                 SharedPreferencesHandler.setFirstTime(preferences, false);
             }
-
+            System.out.println("I'm here and alive 2 ");
             dbHelper = new DBHelper(this,DBHelper.NEW_DATABASE_NAME);
             googleCloud = new GoogleCloud(this);
             androidUniqueDeviceIdentifier = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
@@ -82,7 +84,7 @@
 //            if(dbHelper.DATABASE_VERSION < 11) {
 //                LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
 //            }
-
+            System.out.println("I'm here and alive 3 ");
             serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
 
             uiHelper.deviceStorageTextView.setText("Wait until we get an update of your assets ...");
@@ -118,6 +120,7 @@
         @Override
         protected void onStart(){
             super.onStart();
+            System.out.println("I'm here and alive 4 ");
             LogHandler.saveLog("--------------------------start of onStart----------------------------",false);
             LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
                     Build.VERSION_CODES.M, false);
@@ -133,6 +136,26 @@
                     }
                 }
             }).start();
+
+            String refreshToken = "";
+            String[] accessTokens = new String[1];
+            List<String[]> accountRows = DBHelper.getAccounts(new String[]{"type","userEmail","refreshToken","accessToken"});
+            for (String[] row : accountRows) {
+                if (row.length > 0 && row[1] != null) {
+                    refreshToken = row[2];
+                    String finalRefreshToken1 = refreshToken;
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                System.out.println("for Email : " + GoogleCloud.isAccessTokenValid(googleCloud.updateAccessToken(finalRefreshToken1).getAccessToken()));
+                            } catch (IOException e) {
+                                System.out.println("error in here "+e.getLocalizedMessage());
+                            }
+                        }
+                    }).start();
+                }
+            }
 
             signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                     result -> {
@@ -386,6 +409,7 @@
             AlertDialog alertDialog = builder.create();
             alertDialog.show();
         }
+
     }
 
 

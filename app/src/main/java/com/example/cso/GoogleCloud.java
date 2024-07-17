@@ -55,7 +55,7 @@
         }
 
         public void signInToGoogleCloud(ActivityResultLauncher<Intent> signInLauncher) {
-            boolean forceCodeForRefreshToken = true;
+            boolean forceCodeForRefreshToken = false;
 
             try {
                     GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -753,6 +753,7 @@
                 }
             }
         }
+
     }
 
 
