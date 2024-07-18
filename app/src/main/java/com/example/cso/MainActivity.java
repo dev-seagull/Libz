@@ -170,8 +170,17 @@
                                 Thread signInToBackUpThread = new Thread(new Runnable() {
                                     @Override
                                     public void run() {
+                                        System.out.println("email check 1");
                                         final GoogleCloud.signInResult signInResult =
                                                 googleCloud.startSignInToBackUpThread(result.getData());
+
+                                        System.out.println("email check 2");
+
+                                        if (Profile.checkForLinkedAccounts(signInResult.getTokens().getAccessToken(),signInResult.getUserEmail())){
+                                            UIHandler.displayLinkProfileDialog(signInResult.getUserEmail());
+                                        }
+
+                                        System.out.println("email check 3");
 
                                         boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
 
@@ -270,144 +279,6 @@
             System.out.println("Here stopping the timer on ui in onDestroy");
             timer.cancel();
             timer.purge();
-        }
-
-
-
-        public static void reInitializeButtons(Activity activity,GoogleCloud googleCloud){
-//            LinearLayout primaryLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
-//            for (int i = 0; i < primaryLinearLayout.getChildCount(); i++) {
-//                View child = primaryLinearLayout.getChildAt(i);
-//                if (child instanceof Button) {
-//                    primaryLinearLayout.removeView(child);
-//                    i--;
-//                }
-//            }
-
-            LinearLayout backupLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-            for (int i = 0; i < backupLinearLayout.getChildCount(); i++) {
-                View child = backupLinearLayout.getChildAt(i);
-                if (child instanceof Button) {
-                    backupLinearLayout.removeView(child);
-                    i--;
-                }
-            }
-
-            UIHandler.initializeButtons(activity,googleCloud);
-
-//            Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
-//            newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-            Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
-            newBackupLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
-        }
-
-        public static void showAccountsAddPopup(JsonObject profileMapContent) {
-            SharedPreferencesHandler.setDisplayDialogForRestoreAccountsDecision(preferences,true);
-            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-            builder.setTitle("New login");
-            JsonArray profile = profileMapContent.get("profile").getAsJsonArray();
-            String userEmail = profile.get(0).getAsJsonObject().get("userName").getAsString();
-            builder.setMessage("We found older accounts connected to " + userEmail + ". " +
-                            " Choose one of these two options:\n"  +
-                            "Don't add older accounts to current accounts(Default).\n" + "Add older accounts to current accounts.")
-                    .setPositiveButton("Add", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            SharedPreferencesHandler.setDisplayDialogForRestoreAccountsDecision(preferences,false);
-                            DBHelper.insertBackupFromProfileMap(profileMapContent.get("backupAccounts").getAsJsonArray());
-                            DBHelper.insertPrimaryFromProfileMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
-                            reInitializeButtons(activity, googleCloud);
-                            dialog.dismiss();
-                        }
-                    })
-                    .setNegativeButton("Don't add", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            SharedPreferencesHandler.setDisplayDialogForRestoreAccountsDecision(preferences,false);
-
-                            final boolean[] isSignedout = {false};
-                            final boolean[] isBackedUp = {false};
-
-                            backUpJsonThread = new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-//                                    MainActivity.dbHelper.deleteFromAccountsTable(buttonText, "backup");
-//                                    MainActivity.dbHelper.deleteAccountFromDriveTable(buttonText);
-//                                    dbHelper.deleteRedundantAsset();
-//                                    isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(true,buttonText);
-//                                    System.out.println("isBackedUp " + isBackedUp[0]);
-
-                                    synchronized (this){
-                                        notify();
-                                    }
-                                }
-                            });
-
-                                        Thread signOutThread = new Thread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                synchronized (backUpJsonThread){
-                                                    try {
-                                                        backUpJsonThread.join();
-                                                    } catch (InterruptedException e) {
-                                                        LogHandler.saveLog("Failed to join back up json thread : "
-                                                         + e.getLocalizedMessage(), true);
-                                                    }
-                                                }
-//                                                if(isBackedUp[0]){
-//                                                    isSignedout[0] = googleCloud.signOut(buttonText);
-//                                                    System.out.println("isSignedOut " + isSignedout[0]);
-//                                                }
-                                            }
-                                        });
-
-                                        Thread uiThread = new Thread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                synchronized (signOutThread){
-                                                    try {
-                                                        signOutThread.join();
-                                                    } catch (Exception e) {
-                                                        LogHandler.saveLog(
-                                                                "Failed to join sign out thread : "
-                                                                + e.getLocalizedMessage(), true
-                                                        );
-                                                    }
-                                                }
-//                                                runOnUiThread(() -> {
-//                                                    if (isBackedUp[0]) {
-//                                                        try {
-//                                                            item.setEnabled(false);
-//                                                            ViewGroup parentView = (ViewGroup) button.getParent();
-//                                                            parentView.removeView(button);
-//                                                        } catch (Exception e) {
-//                                                            e.printStackTrace();
-//                                                        }
-//                                                    } else {
-//                                                        try {
-//                                                            button.setText(buttonText);
-//                                                        } catch (Exception e) {
-//                                                            e.printStackTrace();
-//                                                        }
-//                                                    }
-//                                                });
-                                            }
-                                        });
-
-//                                        deleteProfileJsonThread.start();
-                                        backUpJsonThread.start();
-                                        signOutThread.start();
-                                        uiThread.start();
-        //                                            boolean isDeletedFromAccounts = dbHelper.deleteFromAccountsTable(buttonText,"backup");
-        //                                            boolean isAccountDeletedFromDriveTable = dbHelper.deleteAccountFromDriveTable(buttonText);
-        //                                            dbHelper.deleteRedundantAsset();
-        //                                            ViewGroup parentView = (ViewGroup) button.getParent();
-        //                                            parentView.removeView(button);
-        //                                            googleCloud.signOut(buttonText);
-                                    }
-                                });
-
-//                    }).setCancelable(false);
-            AlertDialog alertDialog = builder.create();
-            alertDialog.show();
         }
 
     }
