@@ -168,7 +168,13 @@ public class UIHandler {
         centeredText2.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER), 0, appVersion.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
         menuItem2.setTitle(centeredText2);
         AppCompatButton infoButton = activity.findViewById(R.id.infoButton);
-        infoButton.setOnClickListener(view -> drawerLayout.openDrawer(GravityCompat.END));
+        infoButton.setOnClickListener(view -> {
+            if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
+                drawerLayout.closeDrawer(GravityCompat.END);
+            } else {
+                drawerLayout.openDrawer(GravityCompat.END);
+            }
+        });
     }
 
     public static void initializeButtons(Activity activity,GoogleCloud googleCloud){

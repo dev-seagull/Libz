@@ -1,16 +1,13 @@
     package com.example.cso;
 
     import android.app.Activity;
-    import android.app.AlertDialog;
     import android.content.Context;
-    import android.content.DialogInterface;
     import android.content.Intent;
     import android.content.SharedPreferences;
     import android.os.Build;
     import android.os.Bundle;
     import android.provider.Settings;
     import android.view.View;
-    import android.widget.Button;
     import android.widget.LinearLayout;
 
     import androidx.activity.result.ActivityResultLauncher;
@@ -19,8 +16,6 @@
 
     import com.bumptech.glide.Glide;
     import com.google.android.material.switchmaterial.SwitchMaterial;
-    import com.google.gson.JsonArray;
-    import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
 
     import java.io.IOException;
@@ -64,7 +59,7 @@
             if(isFirstTime){
                 System.out.println("it is first time!");
                 DBHelper.startOldDatabaseDeletionThread(getApplicationContext());
-                SharedPreferencesHandler.setFirstTime(preferences, false);
+                SharedPreferencesHandler.setFirstTime(preferences);
             }
             System.out.println("I'm here and alive 2 ");
             dbHelper = new DBHelper(this,DBHelper.NEW_DATABASE_NAME);
@@ -120,7 +115,6 @@
         @Override
         protected void onStart(){
             super.onStart();
-            System.out.println("I'm here and alive 4 ");
             LogHandler.saveLog("--------------------------start of onStart----------------------------",false);
             LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
                     Build.VERSION_CODES.M, false);
