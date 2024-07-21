@@ -163,7 +163,7 @@
                     LogHandler.saveLog("access token validity " + response, false);
                     boolean isValid = response.toString().contains("error");
                     return !isValid;
-                } finally {
+                    } finally {
                     connection.disconnect();
                 }
             };
