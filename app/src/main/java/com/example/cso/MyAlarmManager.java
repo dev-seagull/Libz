@@ -3,6 +3,7 @@ package com.example.cso;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 
 import java.util.Calendar;
 
@@ -12,7 +13,14 @@ public class MyAlarmManager {
         android.app.AlarmManager alarmManager = (android.app.AlarmManager) 
                 context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, MyBroadcastReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context,unique_requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        int flagForAlarm ;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            flagForAlarm = PendingIntent.FLAG_IMMUTABLE;
+        }else{
+            flagForAlarm = PendingIntent.FLAG_UPDATE_CURRENT;
+        }
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context,unique_requestCode, intent, flagForAlarm);
 
         alarmManager.cancel(pendingIntent);
         Calendar calendar = Calendar.getInstance();
