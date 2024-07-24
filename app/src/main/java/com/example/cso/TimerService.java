@@ -74,44 +74,44 @@ public class TimerService extends Service {
 
                 Support.sendEmail("test");
 
-//                androidThreads = new Thread(new Runnable( ) {
-//                    @Override
-//                    public void run() {
-//                        try {
-//                            Android.startThreads(MainActivity.activity);
-//                        } catch (Exception e) {
-//                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
-//                        }
-//                    }
-//                });
-//                androidThreads.start();
-//
-//                driveThreads = new Thread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        try {
-//                            GoogleDrive.startThreads();
-//                        } catch (Exception e) {
-//                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
-//                        }
-//                    }
-//                });
-//                driveThreads.start();
-//
-//                syncThreads = new Thread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        try {
-//                            Sync.startSyncThread(getApplicationContext());
-//                        } catch (Exception e) {
-//                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
-//                        } finally {
-//                            System.out.println("here setting it to timer running false");
-                isTimerRunning = false;
-//                        }
-//                    }
-//                });
-//                syncThreads.start();
+                androidThreads = new Thread(new Runnable( ) {
+                    @Override
+                    public void run() {
+                        try {
+                            Android.startThreads(MainActivity.activity);
+                        } catch (Exception e) {
+                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
+                        }
+                    }
+                });
+                androidThreads.start();
+
+                driveThreads = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            GoogleDrive.startThreads();
+                        } catch (Exception e) {
+                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
+                        }
+                    }
+                });
+                driveThreads.start();
+
+                syncThreads = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Sync.startSyncThread(getApplicationContext());
+                        } catch (Exception e) {
+                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
+                        } finally {
+                            System.out.println("here setting it to timer running false");
+                            isTimerRunning = false;
+                        }
+                    }
+                });
+                syncThreads.start();
 
 //                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
 //                    storageUpdaterThreadTemp.start();
@@ -136,7 +136,7 @@ public class TimerService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 int REQUEST_CODE = 1;
-                ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE);
+                ActivityCompat.requestPermissions(MainActivity.activity, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE);
             }
         }
 
