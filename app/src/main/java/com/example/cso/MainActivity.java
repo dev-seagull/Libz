@@ -165,12 +165,11 @@
                                 Thread signInToBackUpThread = new Thread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        System.out.println("here login1");
                                         final GoogleCloud.signInResult signInResult =
                                                 googleCloud.startSignInToBackUpThread(result.getData());
+                                        System.out.println("Refresh token is " + signInResult.getTokens().getRefreshToken());
+                                        System.out.println("Access token is " + signInResult.getTokens().getAccessToken());
 
-                                        System.out.println("here login2");
-                                        System.out.println(signInResult.getTokens().getRefreshToken());
                                         if (Profile.checkForLinkedAccounts(signInResult.getTokens().getAccessToken(),signInResult.getUserEmail())){
                                             UIHandler.displayLinkProfileDialog(signInResult.getUserEmail());
                                         }
