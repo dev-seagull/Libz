@@ -56,7 +56,7 @@
 
         public void signInToGoogleCloud(ActivityResultLauncher<Intent> signInLauncher) {
             boolean forceCodeForRefreshToken = true;
-
+            
             try {
                     GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                     .requestScopes(new Scope("https://www.googleapis.com/auth/drive"),
