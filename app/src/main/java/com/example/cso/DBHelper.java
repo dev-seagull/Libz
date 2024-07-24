@@ -1170,9 +1170,9 @@ public class DBHelper extends SQLiteOpenHelper {
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                         String folder_name = "stash_database";
                         String databaseFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail[0],folder_name);
-                        deleteDatabaseFiles(service, databaseFolderId);
-                        boolean isDeleted = checkDeletionStatus(service,databaseFolderId);
-                        if(isDeleted){
+//                        deleteDatabaseFiles(service, databaseFolderId);
+//                        boolean isDeleted = checkDeletionStatus(service,databaseFolderId);
+                        if(true){
                             String uploadedFileId = setAndCreateDatabaseContent(service,databaseFolderId,dataBasePath);
                             //while (uploadFileId == null) {
                             // wait();

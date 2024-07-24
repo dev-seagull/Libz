@@ -74,7 +74,7 @@ public class TimerService extends Service {
 
                 Support.sendEmail("test");
 
-//                androidThreads = new Thread(new Runnable() {
+//                androidThreads = new Thread(new Runnable( ) {
 //                    @Override
 //                    public void run() {
 //                        try {
