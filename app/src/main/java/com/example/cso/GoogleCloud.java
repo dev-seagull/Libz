@@ -37,6 +37,7 @@
     import java.net.URL;
     import java.nio.charset.StandardCharsets;
     import java.util.ArrayList;
+    import java.util.Arrays;
     import java.util.HashMap;
     import java.util.List;
     import java.util.Locale;
@@ -51,13 +52,15 @@
         private GoogleSignInClient googleSignInClient;
 
         public GoogleCloud(FragmentActivity activity){
+            System.out.println("activity in google cloud constructor : " + activity);
             this.activity = activity;
         }
 
         public void signInToGoogleCloud(ActivityResultLauncher<Intent> signInLauncher) {
 
-            boolean forceCodeForRefreshToken = false;
-
+            boolean forceCodeForRefreshToken = true;
+            System.out.println("email login 1");
+            System.out.println("web client id : " + activity.getResources().getString(R.string.web_client_id));
             try {
                     GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                     .requestScopes(new Scope("https://www.googleapis.com/auth/drive"),
@@ -68,13 +71,16 @@
                     .requestServerAuthCode(activity.getResources().getString(R.string.web_client_id), forceCodeForRefreshToken)
                     .requestEmail()
                      .build();
-
+                System.out.println("email login 2 " + googleSignInClient);
                 googleSignInClient = GoogleSignIn.getClient(activity, googleSignInOptions);
-
+                System.out.println("email login 3 : " + googleSignInClient);
                 googleSignInClient.signOut().addOnCompleteListener(task -> {
                     Intent signInIntent = googleSignInClient.getSignInIntent();
+                    System.out.println("signInIntent launched : " + signInIntent);
+                    System.out.println("signInIntent launched : " + signInIntent.getData());
                     signInLauncher.launch(signInIntent);
                 });
+                System.out.println("email login 4");
             } catch (Exception e){
                 LogHandler.saveLog("login failed in signInGoogleCloud : "+e.getLocalizedMessage(),true);
             }
@@ -249,7 +255,9 @@
                 @Override
                 public void run() {
                     try{
+                        System.out.println("email login 9");
                         signInResult[0] = handleSignInToBackupResult(data);
+                        System.out.println("email login 10");
                     }catch (Exception e){
                         LogHandler.saveLog("Failed to join and run sign in to backUp thread : " + e.getLocalizedMessage(), true);
                     }
@@ -271,10 +279,11 @@
             Storage storage = null;
             ArrayList<DriveAccountInfo.MediaItem> mediaItems  = null;
             try{
+                System.out.println("email login 11");
                 Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
                 GoogleSignInAccount account = googleSignInTask.getResult(ApiException.class);
                 userEmail = account.getEmail();
-
+                System.out.println("email login 12");
                 if (userEmail != null && userEmail.toLowerCase().endsWith("@gmail.com")) {
                     userEmail = userEmail.replace("@gmail.com", "");
                 }
@@ -303,7 +312,12 @@
                         Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
                     });
                 }
-            }catch (Exception e){
+            }catch (ApiException e){
+                System.out.println("error api exception code : " + e.getStatusCode() + "And result : "
+                        + e.getLocalizedMessage() + "and cause : " + e.getCause() + "and stack trace : "
+                        + Arrays.toString(e.getStackTrace()));
+            }
+            catch (Exception e){
                 LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
             }
             return new signInResult(userEmail, false, isInAccounts, tokens, storage, mediaItems);

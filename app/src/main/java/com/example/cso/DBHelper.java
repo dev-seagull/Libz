@@ -1019,7 +1019,7 @@ public class DBHelper extends SQLiteOpenHelper {
                             existsInDatabase = assetExistsInDatabase(assetId);
                         }
 
-                        if (existsInDatabase == false) {
+                        if (!existsInDatabase) {
                             deleteFromAssetTable(assetId);
                         }
                     }
@@ -1036,7 +1036,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, new Object[]{fileId});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete the database in DRIVE, deleteRedundantDRIVE method. " + e.getLocalizedMessage());
+            LogHandler.saveLog("Failed to delete the database in DRIVE, deleteDriveEntry method. " + e.getLocalizedMessage());
         } finally {
             dbWritable.endTransaction();
         }
@@ -1049,7 +1049,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, new Object[]{assetId});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete the database in ASSET , deleteRedundantDrive method. " + e.getLocalizedMessage());
+            LogHandler.saveLog("Failed to delete the database in ASSET , deleteRedundantAssets method. " + e.getLocalizedMessage());
         } finally {
             dbWritable.endTransaction();
         }
@@ -1119,7 +1119,7 @@ public class DBHelper extends SQLiteOpenHelper {
             boolean existsInDatabase = false;
             existsInDatabase = assetExistsInDatabase(assetId);
 
-            if (existsInDatabase == false) {
+            if (!existsInDatabase) {
                 deleteFromAssetTable(assetId);
             }
         }
@@ -1519,4 +1519,28 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         DBHelper.dbWritable.endTransaction();
     }
+
+    public void deleteAllAccountsAndRelatedAssets() {
+        List<String[]> accounts = getAccounts(new String[]{"userEmail"});
+        for (String[] account : accounts) {
+            deleteAccountAndRelatedAssets(account[0]);
+        }
+        deleteRedundantAsset();
+    }
+
+    public void deleteAccountAndRelatedAssets(String userEmail) {
+        try {
+            DBHelper.dbWritable.beginTransaction();
+            String deleteAccountQuery = "DELETE FROM ACCOUNTS WHERE userEmail =?";
+            DBHelper.dbWritable.execSQL(deleteAccountQuery, new String[]{userEmail});
+            DBHelper.dbWritable.setTransactionSuccessful();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to delete account and related assets : " + e.getLocalizedMessage(), true);
+        } finally {
+            DBHelper.dbWritable.endTransaction();
+        }
+        deleteAccountFromDriveTable(userEmail);
+        deleteRedundantAsset();
+    }
+
 }

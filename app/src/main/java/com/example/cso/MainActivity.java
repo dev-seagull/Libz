@@ -153,7 +153,6 @@
 
             signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                     result -> {
-                        System.out.println("result of login is: " + result.toString());
                         if(result.getResultCode() == RESULT_OK){
                             isLoginProcessOn = true;
                             LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
@@ -165,20 +164,20 @@
                                 Thread signInToBackUpThread = new Thread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        System.out.println("here login1");
+                                        System.out.println("email check 1");
                                         final GoogleCloud.signInResult signInResult =
                                                 googleCloud.startSignInToBackUpThread(result.getData());
 
-                                        System.out.println("here login2");
-                                        System.out.println(signInResult.getTokens().getRefreshToken());
+                                        System.out.println("email check 2");
+
                                         if (Profile.checkForLinkedAccounts(signInResult.getTokens().getAccessToken(),signInResult.getUserEmail())){
                                             UIHandler.displayLinkProfileDialog(signInResult.getUserEmail());
                                         }
 
-                                        System.out.println("here login3");
+                                        System.out.println("email check 3");
+
                                         boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
 
-                                        System.out.println("here login4");
                                         UIHandler.addAbackUpAccountToUI(activity,isBackedUp,signInToBackUpLauncher,child,signInResult);
 
                                         DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);

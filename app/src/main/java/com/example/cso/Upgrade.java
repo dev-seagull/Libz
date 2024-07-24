@@ -53,7 +53,7 @@ public class Upgrade {
                 default:
                     lastVersion();
             }
-        } else if (savedVersionCode > currentVersionCode) {
+        } else {
             Toast.makeText(MainActivity.activity, "Please install last version of App", Toast.LENGTH_SHORT).show();
         }
         SharedPreferences.Editor editor = preferences.edit();
@@ -74,10 +74,9 @@ public class Upgrade {
 
     public static void lastVersion() {
         MainActivity.activity.runOnUiThread(() -> {
-            Toast.makeText(MainActivity.activity, "You are Using last version (0.0.25)", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.activity, "You are Using last version (0.0.31)", Toast.LENGTH_SHORT).show();
         });
-//        MainActivity.dbHelper.deleteFromAccountsTable("stashdevteam","support");
-//        DBHelper.deleteTableContent("ACCOUNTS");
+        MainActivity.dbHelper.deleteAllAccountsAndRelatedAssets();
     }
 
 

@@ -131,14 +131,18 @@ public class TimerService extends Service {
     }
 
     public Notification createNotification() {
-
+//        if (MainActivity.activity == null) {
+//            Log.e("TimerForegroundService", "MainActivity is null");
+//            return null;
+//        }
         Context context = getApplicationContext();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                int REQUEST_CODE = 1;
-                ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE);
-            }
-        }
+
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+//            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+//                int REQUEST_CODE = 1;
+//                ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE);
+//            }
+//        }
 
         System.out.println("activity : " + MainActivity.activity);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
