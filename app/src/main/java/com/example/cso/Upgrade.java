@@ -10,7 +10,7 @@ public class Upgrade {
         int currentVersionCode = BuildConfig.VERSION_CODE;
         if (savedVersionCode == -1){
             DBHelper.deleteTableContent("PROFILE");
-        DBHelper.deleteTableContent("ACCOUNTS");
+            DBHelper.deleteTableContent("ACCOUNTS");
         }
         else if (savedVersionCode <= currentVersionCode) {
             switch (savedVersionCode){
@@ -53,7 +53,7 @@ public class Upgrade {
                 default:
                     lastVersion();
             }
-        } else {
+        } else if (savedVersionCode > currentVersionCode) {
             Toast.makeText(MainActivity.activity, "Please install last version of App", Toast.LENGTH_SHORT).show();
         }
         SharedPreferences.Editor editor = preferences.edit();
@@ -74,9 +74,10 @@ public class Upgrade {
 
     public static void lastVersion() {
         MainActivity.activity.runOnUiThread(() -> {
-            Toast.makeText(MainActivity.activity, "You are Using last version (0.0.31)", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.activity, "You are Using last version (0.0.25)", Toast.LENGTH_SHORT).show();
         });
-        MainActivity.dbHelper.deleteAllAccountsAndRelatedAssets();
+//        MainActivity.dbHelper.deleteFromAccountsTable("stashdevteam","support");
+//        DBHelper.deleteTableContent("ACCOUNTS");
     }
 
 

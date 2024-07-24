@@ -174,5 +174,5 @@ public class StorageHandler {
         return directorySizes;
     }
 
-    
+
 }

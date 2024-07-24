@@ -31,8 +31,8 @@ public class InternetManager {
                             return "data";
                         }
                     }
-                }
             }
+        }
         return "noInternet";
     }
 

@@ -20,11 +20,11 @@ import java.util.concurrent.Future;
 public class Android {
     static int[] galleryItems = {0};
     static String[] forbiddenFolders = {"/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Private",
-        "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Stickers",
-        "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video/Private",
-        "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Animated Gifs/Private",
-        "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents/Private",
-        "/Telegram/Telegram Documents"};
+            "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Stickers",
+            "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video/Private",
+            "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Animated Gifs/Private",
+            "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Documents/Private",
+            "/Telegram/Telegram Documents"};
     public static int getGalleryMediaItems(Activity activity) {
         galleryItems[0] = 0;
         LogHandler.saveLog("Started to get android files from your device.", false);
@@ -163,7 +163,7 @@ public class Android {
     }
 
     private static void processGalleryItem(Cursor cursor,int columnIndexPath, int columnIndexSize
-                                           ,int columnIndexMimeType){
+            ,int columnIndexMimeType){
         String mediaItemPath = cursor.getString(columnIndexPath);
         File mediaItemFile = new File(mediaItemPath);
         String mediaItemName = mediaItemFile.getName();

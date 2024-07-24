@@ -10,7 +10,7 @@ import java.util.Calendar;
 public class MyAlarmManager {
     public void scheduleDailyDataAnalysisAlarm(Context context, int hour, int minute){
         int unique_requestCode = hour * 1000 + minute;
-        android.app.AlarmManager alarmManager = (android.app.AlarmManager) 
+        android.app.AlarmManager alarmManager = (android.app.AlarmManager)
                 context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, MyBroadcastReceiver.class);
 

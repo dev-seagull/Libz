@@ -21,61 +21,59 @@ import java.util.concurrent.Future;
 public class Support {
     public static String supportEmail = MainActivity.activity.getResources().getString(R.string.supportEmail);
     public static boolean sendEmail(String message, File attachment) {
-//        ExecutorService executor = Executors.newSingleThreadExecutor();
-//        Callable<Boolean> uploadTask = () -> {
-//            try {
-//                String refreshToken = getSupportRefreshToken();
-//                String accessToken = requestAccessToken(refreshToken).getAccessToken();
-//                System.out.println("accessTOken"  +accessToken);
-//
-//                String emailContent = createEmailContent(message,attachment);
-//                if(emailContent != null){
-//                    return sendEmailRequest(emailContent, accessToken);
-//                }else{
-//                    System.out.println("Support email content is null");
-//                }
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//            return false;
-//        };
-//        Future<Boolean> future = executor.submit(uploadTask);
-//        boolean isSentFuture = false;
-//        try{
-//            isSentFuture = future.get();
-//        }catch (Exception e){
-//            System.out.println(e.getLocalizedMessage());
-//        }
-//        return isSentFuture;
-        return true;
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Callable<Boolean> uploadTask = () -> {
+            try {
+                String refreshToken = getSupportRefreshToken();
+                String accessToken = requestAccessToken(refreshToken).getAccessToken();
+                System.out.println("accessTOken"  +accessToken);
+
+                String emailContent = createEmailContent(message,attachment);
+                if(emailContent != null){
+                    return sendEmailRequest(emailContent, accessToken);
+                }else{
+                    System.out.println("Support email content is null");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return false;
+        };
+        Future<Boolean> future = executor.submit(uploadTask);
+        boolean isSentFuture = false;
+        try{
+            isSentFuture = future.get();
+        }catch (Exception e){
+            System.out.println(e.getLocalizedMessage());
+        }
+        return isSentFuture;
     }
 
     public static boolean sendEmail(String message) {
-//        ExecutorService executor = Executors.newSingleThreadExecutor();
-//        Callable<Boolean> uploadTask = () -> {
-//            try {
-//                String refreshToken = getSupportRefreshToken();
-//                String accessToken = requestAccessToken(refreshToken).getAccessToken();
-//                String emailContent = createEmailContent(message,null);
-//                if(emailContent != null){
-//                    return sendEmailRequest(emailContent, accessToken);
-//                }else{
-//                    System.out.println("Support email content is null");
-//                }
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//            return false;
-//        };
-//        Future<Boolean> future = executor.submit(uploadTask);
-//        boolean isSentFuture = false;
-//        try{
-//            isSentFuture = future.get();
-//        }catch (Exception e){
-//            System.out.println(e.getLocalizedMessage());
-//        }
-//        return isSentFuture;
-        return true;
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Callable<Boolean> uploadTask = () -> {
+            try {
+                String refreshToken = getSupportRefreshToken();
+                String accessToken = requestAccessToken(refreshToken).getAccessToken();
+                String emailContent = createEmailContent(message,null);
+                if(emailContent != null){
+                    return sendEmailRequest(emailContent, accessToken);
+                }else{
+                    System.out.println("Support email content is null");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return false;
+        };
+        Future<Boolean> future = executor.submit(uploadTask);
+        boolean isSentFuture = false;
+        try{
+            isSentFuture = future.get();
+        }catch (Exception e){
+            System.out.println(e.getLocalizedMessage());
+        }
+        return isSentFuture;
     }
 
     private static String getSupportRefreshToken(){
@@ -108,41 +106,40 @@ public class Support {
     }
 
     public void sendQueryChange(String sqlQuery, Object[] objects) {
-//        StringBuilder completeQuery = new StringBuilder();
-//        int paramIndex = 0;
-//
-//        for (int i = 0; i < sqlQuery.length(); i++) {
-//            char c = sqlQuery.charAt(i);
-//            if (c == '?') {
-//                if (paramIndex < objects.length) {
-//                    Object value = objects[paramIndex++];
-//                    if (value instanceof String) {
-//                        completeQuery.append("'").append(value).append("'");
-//                    } else if (value == null) {
-//                        completeQuery.append("NULL");
-//                    } else {
-//                        completeQuery.append(value);
-//                    }
-//                }
-//            } else {
-//                completeQuery.append(c);
-//            }
-//        }
-//        Support.sendEmail(completeQuery.toString());
+        StringBuilder completeQuery = new StringBuilder();
+        int paramIndex = 0;
+
+        for (int i = 0; i < sqlQuery.length(); i++) {
+            char c = sqlQuery.charAt(i);
+            if (c == '?') {
+                if (paramIndex < objects.length) {
+                    Object value = objects[paramIndex++];
+                    if (value instanceof String) {
+                        completeQuery.append("'").append(value).append("'");
+                    } else if (value == null) {
+                        completeQuery.append("NULL");
+                    } else {
+                        completeQuery.append(value);
+                    }
+                }
+            } else {
+                completeQuery.append(c);
+            }
+        }
+        Support.sendEmail(completeQuery.toString());
     }
 
     private static String readFileContent(File attachment){
-//        StringBuilder fileContent = new StringBuilder();
-//        try (BufferedReader reader = new BufferedReader(new FileReader(attachment))) {
-//            String line;
-//            while ((line = reader.readLine()) != null) {
-//                fileContent.append(line).append("\r\n");
-//            }
-//        }catch (Exception e) {
-//            System.out.println("Failed to read file content: "  +e.getLocalizedMessage());
-//        }
-//        return fileContent.toString();
-        return "";
+        StringBuilder fileContent = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(attachment))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                fileContent.append(line).append("\r\n");
+            }
+        }catch (Exception e) {
+            System.out.println("Failed to read file content: "  +e.getLocalizedMessage());
+        }
+        return fileContent.toString();
     }
 
     private static boolean sendEmailRequest(String emailContent, String accessToken){

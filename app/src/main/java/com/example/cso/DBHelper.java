@@ -30,7 +30,7 @@ import java.util.concurrent.Future;
 
 
 public class DBHelper extends SQLiteOpenHelper {
-//    private static final String OLD_DATABASE_NAME = "CSODatabase";
+    //    private static final String OLD_DATABASE_NAME = "CSODatabase";
     public static final String NEW_DATABASE_NAME =  "StashDatabase";
     public static final int DATABASE_VERSION = 12;
     public static SQLiteDatabase dbReadable;
@@ -252,7 +252,7 @@ public class DBHelper extends SQLiteOpenHelper {
         Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{fileHash});
         boolean existsInAsset = false;
         try{
-           if(cursor != null && cursor.moveToFirst()){
+            if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
                 if(result == 1){
                     existsInAsset = true;
@@ -363,7 +363,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public void insertIntoPhotosTable(Long assetId, String fileId,String fileName, String fileHash,
-                                     String userEmail, String creationTime, String baseUrl){
+                                      String userEmail, String creationTime, String baseUrl){
         boolean existsInPhotos = false;
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?" +
                 " and fileHash = ? and fileId =? and userEmail = ?)";
@@ -390,7 +390,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         "creationTime, " +
                         "fileHash, " +
                         "baseUrl) VALUES (?,?,?,?,?,?,?)";
-                   Object[] values = new Object[]{assetId,fileId,
+                Object[] values = new Object[]{assetId,fileId,
                         fileName,userEmail,creationTime,fileHash,baseUrl};
                 dbWritable.execSQL(sqlQuery, values);
                 dbWritable.setTransactionSuccessful();
@@ -450,7 +450,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public void insertTransactionsData(String source, String fileName, String destination
             ,String assetId, String operation, String fileHash) {
         dbWritable.beginTransaction();
-       try{
+        try{
             String sqlQuery = "INSERT INTO TRANSACTIONS(source, fileName, destination, assetId, operation, hash, date)" +
                     " VALUES (?,?,?,?,?,?,?);";
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
@@ -465,7 +465,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public void insertIntoAccounts(String userEmail,String type,String refreshToken ,String accessToken,
-                            Double totalStorage , Double usedStorage , Double usedInDriveStorage ,
+                                   Double totalStorage , Double usedStorage , Double usedInDriveStorage ,
                                    Double UsedInGmailAndPhotosStorage) {
         dbWritable.beginTransaction();
         try{
@@ -744,7 +744,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public boolean existsInAndroidWithoutHash(String filePath, String device,String date,
-                                    Double fileSize){
+                                              Double fileSize){
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE" +
                 " filePath = ? and fileSize = ? and device = ? and dateModified = ?)";
         Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{filePath,
@@ -1019,7 +1019,7 @@ public class DBHelper extends SQLiteOpenHelper {
                             existsInDatabase = assetExistsInDatabase(assetId);
                         }
 
-                        if (!existsInDatabase) {
+                        if (existsInDatabase == false) {
                             deleteFromAssetTable(assetId);
                         }
                     }
@@ -1036,7 +1036,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, new Object[]{fileId});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete the database in DRIVE, deleteDriveEntry method. " + e.getLocalizedMessage());
+            LogHandler.saveLog("Failed to delete the database in DRIVE, deleteRedundantDRIVE method. " + e.getLocalizedMessage());
         } finally {
             dbWritable.endTransaction();
         }
@@ -1049,7 +1049,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, new Object[]{assetId});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete the database in ASSET , deleteRedundantAssets method. " + e.getLocalizedMessage());
+            LogHandler.saveLog("Failed to delete the database in ASSET , deleteRedundantDrive method. " + e.getLocalizedMessage());
         } finally {
             dbWritable.endTransaction();
         }
@@ -1119,7 +1119,7 @@ public class DBHelper extends SQLiteOpenHelper {
             boolean existsInDatabase = false;
             existsInDatabase = assetExistsInDatabase(assetId);
 
-            if (!existsInDatabase) {
+            if (existsInDatabase == false) {
                 deleteFromAssetTable(assetId);
             }
         }
@@ -1519,28 +1519,4 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         DBHelper.dbWritable.endTransaction();
     }
-
-    public void deleteAllAccountsAndRelatedAssets() {
-        List<String[]> accounts = getAccounts(new String[]{"userEmail"});
-        for (String[] account : accounts) {
-            deleteAccountAndRelatedAssets(account[0]);
-        }
-        deleteRedundantAsset();
-    }
-
-    public void deleteAccountAndRelatedAssets(String userEmail) {
-        try {
-            DBHelper.dbWritable.beginTransaction();
-            String deleteAccountQuery = "DELETE FROM ACCOUNTS WHERE userEmail =?";
-            DBHelper.dbWritable.execSQL(deleteAccountQuery, new String[]{userEmail});
-            DBHelper.dbWritable.setTransactionSuccessful();
-        } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete account and related assets : " + e.getLocalizedMessage(), true);
-        } finally {
-            DBHelper.dbWritable.endTransaction();
-        }
-        deleteAccountFromDriveTable(userEmail);
-        deleteRedundantAsset();
-    }
-
 }

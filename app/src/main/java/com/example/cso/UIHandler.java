@@ -73,21 +73,21 @@ public class UIHandler {
         SwitchMaterial wifiOnlySwitchMaterialButton = MainActivity.activity.findViewById(R.id.wifiOnlySwitchMaterial);
         MainActivity.activity.runOnUiThread(() -> {
             if (SharedPreferencesHandler.getWifiOnlySwitchState(MainActivity.preferences)){
-                    wifiOnlySwitchMaterialButton.setChecked(true);
-                    wifiOnlySwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
-                    wifiOnlySwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
+                wifiOnlySwitchMaterialButton.setChecked(true);
+                wifiOnlySwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
+                wifiOnlySwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
             }else{
-                    wifiOnlySwitchMaterialButton.setChecked(false);
-                    wifiOnlySwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
-                    wifiOnlySwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
+                wifiOnlySwitchMaterialButton.setChecked(false);
+                wifiOnlySwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
+                wifiOnlySwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
             }
             if (syncSwitchMaterialButton.isChecked()){
-                    wifiOnlySwitchMaterialButton.setAlpha(1.0f);
-                    wifiOnlySwitchMaterialButton.setEnabled(true);
+                wifiOnlySwitchMaterialButton.setAlpha(1.0f);
+                wifiOnlySwitchMaterialButton.setEnabled(true);
 
             }else{
-                    wifiOnlySwitchMaterialButton.setAlpha(0.5f);
-                    wifiOnlySwitchMaterialButton.setEnabled(false);
+                wifiOnlySwitchMaterialButton.setAlpha(0.5f);
+                wifiOnlySwitchMaterialButton.setEnabled(false);
             }
         });
     }
@@ -403,7 +403,7 @@ public class UIHandler {
                         DBHelper.insertPrimaryFromProfileMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
                         reInitializeButtons(MainActivity.activity, MainActivity.googleCloud);
                         dialog.dismiss();
-                }}).setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    }}).setNegativeButton("No", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         Thread detachThread = new Thread(new Runnable() {
                             @Override

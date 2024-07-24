@@ -242,7 +242,7 @@ public class GoogleDrive {
             if(fileHashChecker.contains(fileHash)){
                 ExecutorService executor = Executors.newSingleThreadExecutor();
                 Callable<Boolean> backgroundTask = () -> {
-                   Boolean[] isDeleted = new Boolean[1];
+                    Boolean[] isDeleted = new Boolean[1];
                     try{
                         isDeleted[0] = deleteMediaItem(accessToken, fileId, assetId, fileName);
                     }catch (Exception e){
@@ -326,7 +326,7 @@ public class GoogleDrive {
                     .setFields("files(id, name)")
                     .execute();
 
-             files = resultJson.getFiles();
+            files = resultJson.getFiles();
         }catch (Exception e){
             LogHandler.saveLog("Failed to get drive folder files : " + e.getLocalizedMessage(), true);
         }
@@ -362,7 +362,7 @@ public class GoogleDrive {
                 updateDriveFilesThread.join();
             } catch (Exception e) {
                 LogHandler.saveLog("Failed to join update drive files thread in  " +
-                            " updateDriveAccountsFilesStatus", true);
+                        " updateDriveAccountsFilesStatus", true);
             }
         }catch (Exception e){
             LogHandler.saveLog("Failed to run delete redundant drive files from account : " +e.getLocalizedMessage(), true);
@@ -461,26 +461,26 @@ public class GoogleDrive {
                 for(String[] account_row : account_rows) {
                     String type = account_row[2];
 //                    if(type.equals("backup")){
-                        String userEmail = account_row[1];
-                        String refreshToken = account_row[0];
-                        String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
-                        GoogleCloud.Storage storage = MainActivity.googleCloud.getStorage(new GoogleCloud.Tokens(accessToken,refreshToken));
-                        Map<String, Object> updatedValues = new HashMap<String, Object>() {{
-                            put("totalStorage", storage.getTotalStorage());
-                        }};
-                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
-                        updatedValues = new HashMap<String, Object>() {{
-                            put("usedStorage", storage.getUsedStorage());
-                         }};
-                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
-                        updatedValues = new HashMap<String, Object>() {{
-                            put("usedInDriveStorage", storage.getUsedInDriveStorage());
-                        }};
-                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
-                        updatedValues = new HashMap<String, Object>() {{
-                            put("UsedInGmailAndPhotosStorage", storage.getUsedInGmailAndPhotosStorage());
-                         }};
-                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                    String userEmail = account_row[1];
+                    String refreshToken = account_row[0];
+                    String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
+                    GoogleCloud.Storage storage = MainActivity.googleCloud.getStorage(new GoogleCloud.Tokens(accessToken,refreshToken));
+                    Map<String, Object> updatedValues = new HashMap<String, Object>() {{
+                        put("totalStorage", storage.getTotalStorage());
+                    }};
+                    MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                    updatedValues = new HashMap<String, Object>() {{
+                        put("usedStorage", storage.getUsedStorage());
+                    }};
+                    MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                    updatedValues = new HashMap<String, Object>() {{
+                        put("usedInDriveStorage", storage.getUsedInDriveStorage());
+                    }};
+                    MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                    updatedValues = new HashMap<String, Object>() {{
+                        put("UsedInGmailAndPhotosStorage", storage.getUsedInGmailAndPhotosStorage());
+                    }};
+                    MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
 //                    }
                 }
             }
