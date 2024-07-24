@@ -55,8 +55,9 @@
         }
 
         public void signInToGoogleCloud(ActivityResultLauncher<Intent> signInLauncher) {
-            boolean forceCodeForRefreshToken = true;
-            
+
+            boolean forceCodeForRefreshToken = false;
+
             try {
                     GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                     .requestScopes(new Scope("https://www.googleapis.com/auth/drive"),
@@ -163,7 +164,7 @@
                     LogHandler.saveLog("access token validity " + response, false);
                     boolean isValid = response.toString().contains("error");
                     return !isValid;
-                } finally {
+                    } finally {
                     connection.disconnect();
                 }
             };
@@ -418,6 +419,7 @@
                         }
                         String response = responseBuilder.toString();
                         JSONObject responseJSONObject = new JSONObject(response);
+                        System.out.println("here is response json object : " + responseJSONObject.toString());
                         accessToken = responseJSONObject.getString("access_token");
                         refreshToken = responseJSONObject.getString("refresh_token");
                         return new GoogleCloud.Tokens(accessToken, refreshToken);
@@ -753,6 +755,7 @@
                 }
             }
         }
+
     }
 
 

@@ -1,5 +1,7 @@
 package com.example.cso;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -8,10 +10,12 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
 import java.util.Timer;
@@ -127,10 +131,21 @@ public class TimerService extends Service {
     }
 
     public Notification createNotification() {
+
+        Context context = getApplicationContext();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                int REQUEST_CODE = 1;
+                ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE);
+            }
+        }
+
+        System.out.println("activity : " + MainActivity.activity);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel notificationChannel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME,
                     NotificationManager.IMPORTANCE_DEFAULT);
-            NotificationManager notificationManager = MainActivity.activity.getSystemService(NotificationManager.class);
+            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+//            NotificationManager notificationManager = MainActivity.activity.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(notificationChannel);
         }
 
@@ -143,7 +158,15 @@ public class TimerService extends Service {
 
         Intent actionIntent = new Intent(getApplicationContext(), TimerService.class);
         actionIntent.setAction("STOP_SERVICE");
-        PendingIntent actionPendingIntent = PendingIntent.getService(getApplicationContext(), 5, actionIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        PendingIntent actionPendingIntent ;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            actionPendingIntent = PendingIntent.getActivity(getApplicationContext(), 5, actionIntent, PendingIntent.FLAG_IMMUTABLE);
+        }else{
+            actionPendingIntent = PendingIntent.getActivity(getApplicationContext(), 5, actionIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        }
+
+//        PendingIntent actionPendingIntent = PendingIntent.getService(getApplicationContext(), 5, actionIntent, PendingIntent.FLAG_IMMUTABLE);
         builder.addAction(R.drawable.googledriveimage, "Stop Service", actionPendingIntent);
 
         return builder.build();

@@ -3,6 +3,8 @@ package com.example.cso;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -34,6 +36,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.bumptech.glide.Glide;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.gson.JsonObject;
 import com.jaredrummler.android.device.DeviceName;
 
 import java.util.HashMap;
@@ -165,7 +168,13 @@ public class UIHandler {
         centeredText2.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER), 0, appVersion.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
         menuItem2.setTitle(centeredText2);
         AppCompatButton infoButton = activity.findViewById(R.id.infoButton);
-        infoButton.setOnClickListener(view -> drawerLayout.openDrawer(GravityCompat.END));
+        infoButton.setOnClickListener(view -> {
+            if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
+                drawerLayout.closeDrawer(GravityCompat.END);
+            } else {
+                drawerLayout.openDrawer(GravityCompat.END);
+            }
+        });
     }
 
     public static void initializeButtons(Activity activity,GoogleCloud googleCloud){
@@ -379,4 +388,71 @@ public class UIHandler {
         }
         return popupMenu;
     }
+
+    public static void displayLinkProfileDialog(String userEmail){
+        JsonObject profileMapContent = Profile.readProfileMapContent(userEmail);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
+        builder.setTitle("Link Profile");
+        builder.setMessage("We found linked accounts to " + userEmail + ". " +
+                        "Do you want to add linked accounts to current profile ?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // should be thread
+                        DBHelper.insertBackupFromProfileMap(profileMapContent.get("backupAccounts").getAsJsonArray());
+                        DBHelper.insertPrimaryFromProfileMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
+                        reInitializeButtons(MainActivity.activity, MainActivity.googleCloud);
+                        dialog.dismiss();
+                }}).setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        Thread detachThread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try{
+                                    Profile.detachAccount(profileMapContent,userEmail);
+                                    dialog.dismiss();
+                                }catch (Exception e){
+                                    LogHandler.saveLog("Failed to join and run sign in to backUp thread : " + e.getLocalizedMessage(), true);
+                                }
+                            }
+                        });
+                        detachThread.start();
+                        try {
+                            detachThread.join();
+                        }catch (Exception e){
+                            LogHandler.saveLog("Failed to join sign in to backUp thread : " + e.getLocalizedMessage(), true);
+                        }
+
+                    }});
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+
+    public static void reInitializeButtons(Activity activity,GoogleCloud googleCloud){
+//            LinearLayout primaryLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
+//            for (int i = 0; i < primaryLinearLayout.getChildCount(); i++) {
+//                View child = primaryLinearLayout.getChildAt(i);
+//                if (child instanceof Button) {
+//                    primaryLinearLayout.removeView(child);
+//                    i--;
+//                }
+//            }
+
+        LinearLayout backupLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+        for (int i = 0; i < backupLinearLayout.getChildCount(); i++) {
+            View child = backupLinearLayout.getChildAt(i);
+            if (child instanceof Button) {
+                backupLinearLayout.removeView(child);
+                i--;
+            }
+        }
+
+        UIHandler.initializeButtons(activity,googleCloud);
+
+//            Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
+//            newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+        Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
+        newBackupLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
+    }
+
 }
