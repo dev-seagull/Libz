@@ -412,7 +412,7 @@ public class UIHandler {
                                 dialog.dismiss();
                             }});
 
-                builder.setCancelable(true);
+                builder.setCancelable(false);
 
                 AlertDialog alertDialog = builder.create();
                 alertDialog.show();

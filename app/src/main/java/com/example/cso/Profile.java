@@ -17,6 +17,7 @@ import com.google.gson.JsonParser;
 
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -112,64 +113,68 @@ public class Profile {
     }
 
     public static JsonObject readProfileMapContent(String userEmail, String accessToken) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Callable<JsonObject> uploadTask = () -> {
-            JsonObject resultJson = null;
-            try{
-                String folderName = "stash_user_profile";
-                String stashUserProfileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folderName, true, accessToken);
+        JsonObject[] resultJson = {null};
+        Thread readProdileMapContentThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    String folderName = "stash_user_profile";
+                    String stashUserProfileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folderName, true, accessToken);
 
-                Drive service = GoogleDrive.initializeDrive(accessToken);
-                if(stashUserProfileFolderId != null && !stashUserProfileFolderId.isEmpty()) {
-                    FileList fileList = service.files().list()
-                            .setQ("name contains 'profileMap_' and '" + stashUserProfileFolderId + "' in parents")
-                            .setSpaces("drive")
-                            .setFields("files(id)")
-                            .execute();
-                    List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
-                    for (com.google.api.services.drive.model.File existingFile : existingFiles) {
-                        for (int i = 0; i < 3; i++) {
-                            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                            service.files().get(existingFile.getId())
-                                    .executeMediaAndDownloadTo(outputStream);
-                            String jsonString = outputStream.toString();
-                            resultJson = JsonParser.parseString(jsonString).getAsJsonObject();
-                            outputStream.close();
-                            if (resultJson != null) {
-                                return resultJson;
+                    Drive service = GoogleDrive.initializeDrive(accessToken);
+                    if(stashUserProfileFolderId != null && !stashUserProfileFolderId.isEmpty()) {
+                        FileList fileList = service.files().list()
+                                .setQ("name contains 'profileMap_' and '" + stashUserProfileFolderId + "' in parents")
+                                .setSpaces("drive")
+                                .setFields("files(id)")
+                                .execute();
+                        List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
+                        for (com.google.api.services.drive.model.File existingFile : existingFiles) {
+                            for (int i = 0; i < 3; i++) {
+                                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                                service.files().get(existingFile.getId())
+                                        .executeMediaAndDownloadTo(outputStream);
+                                String jsonString = outputStream.toString();
+                                resultJson[0] = JsonParser.parseString(jsonString).getAsJsonObject();
+                                outputStream.close();
                             }
                         }
                     }
+                }catch (Exception e){
+                    LogHandler.saveLog("Failed to read profile map content : " + e.getLocalizedMessage(), true);
                 }
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to read profile map content : " + e.getLocalizedMessage(), true);
             }
-            return null;
-        };
-
-        Future<JsonObject> future = null;
-        JsonObject resultJson = new JsonObject();
-        try{
-            future = executor.submit(uploadTask);
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to submit executor: " + e.getLocalizedMessage(), true);
-        }
+        });
+        readProdileMapContentThread.start();
         try {
-            resultJson = future.get();
-        } catch (Exception e) {
-            LogHandler.saveLog("error when downloading user profile : " + e.getLocalizedMessage());
+            readProdileMapContentThread.join();
+        } catch (InterruptedException e) {
+            LogHandler.saveLog("Interrupted while waiting for read profile map content thread to finish: " + e.getLocalizedMessage());
         }
-        return resultJson;
+        return resultJson[0];
     }
 
 
     private static boolean isNewJsonProfile(JsonObject resultJson, String userEmail){
         try{
+
+            List<String[]> accountRows = DBHelper.getAccounts(new String[]{"userEmail", "type"});
+            List<String> backupAccountsInDevice = new ArrayList<>();
+            for (String[] accountRow : accountRows) {
+                if (accountRow[1].equals("backup")){
+                    backupAccountsInDevice.add(accountRow[0]);
+                }
+
+            }
+            backupAccountsInDevice.add(userEmail);
+            System.out.println("backup accounts in device: " + backupAccountsInDevice);
+
             JsonArray backupAccountsArray = resultJson.getAsJsonArray("backupAccounts");
+            System.out.println("backup accounts in json: " + backupAccountsArray);
             for (JsonElement element : backupAccountsArray) {
                 JsonObject accountObject = element.getAsJsonObject();
                 String backupEmail = accountObject.get("backupEmail").getAsString();
-                if (!backupEmail.equals(userEmail)) {
+                if (!backupAccountsInDevice.contains(backupEmail)) {
                     System.out.println("A new email found:" + backupEmail);
                     return true;
                 }
@@ -389,7 +394,6 @@ public class Profile {
         Thread detachLinkedAccountsProfileJsonThread = new Thread(new Runnable() {
             @Override
             public void run() {
-//                readProfileMapContent()
                 JsonArray backupAccounts =  profileMapContent.get("backupAccounts").getAsJsonArray();
                 JsonObject editedProfileContent = editProfileJson(profileMapContent,userEmail);
 
