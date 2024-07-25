@@ -292,7 +292,7 @@
                     String authCode = account.getServerAuthCode();
                     tokens = getTokens(authCode);
                     storage = getStorage(tokens);
-                    mediaItems = GoogleDrive.getMediaItems(userEmail);
+                    mediaItems = GoogleDrive.getMediaItems(userEmail, true, tokens.getAccessToken());
                     if (userEmail != null && tokens.getRefreshToken() != null && tokens.getAccessToken() != null) {
                         return new signInResult(userEmail, true, false,
                                 tokens, storage, mediaItems);
@@ -698,7 +698,7 @@
                     if((driveBackupAccessToken != null) && !driveBackupAccessToken.isEmpty()){
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                         String folder_name = "stash_database";
-                        String databaseFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(buttonText,folder_name);
+                        String databaseFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(buttonText,folder_name, false, null);
                         DBHelper.deleteDatabaseFiles(service,databaseFolderId);
                         isDeleted[0] = DBHelper.checkDeletionStatus(service,databaseFolderId);
                         if(!isDeleted[0]){

@@ -24,19 +24,23 @@ import java.util.concurrent.Future;
 public class GoogleDrive {
 
     public GoogleDrive() {}
-    public static String createOrGetStashSyncedAssetsFolderInDrive(String userEmail){
+    public static String createOrGetStashSyncedAssetsFolderInDrive(String userEmail, boolean isLogin, String accessToken){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         String syncAssetsFolderIdStr = null;
         Callable<String> createFolderTask = () -> {
             String syncAssetsFolderId = null;
             try {
-                List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","refreshToken"});
                 String driveBackupAccessToken = "";
-                for(String[] account_row: account_rows){
-                    String selectedUserEmail = account_row[0];
-                    if(selectedUserEmail.equals(userEmail)){
-                        String driveBackupRefreshToken = account_row[1];
-                        driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
+                if(isLogin){
+                    driveBackupAccessToken = accessToken;
+                }else{
+                    List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","refreshToken"});
+                    for(String[] account_row: account_rows){
+                        String selectedUserEmail = account_row[0];
+                        if(selectedUserEmail.equals(userEmail)){
+                            String driveBackupRefreshToken = account_row[1];
+                            driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
+                        }
                     }
                 }
 
@@ -63,24 +67,28 @@ public class GoogleDrive {
         return syncAssetsFolderIdStr;
     }
 
-    public static String createOrGetSubDirectoryInStashSyncedAssetsFolder(String userEmail, String folderName){
+    public static String createOrGetSubDirectoryInStashSyncedAssetsFolder(String userEmail, String folderName, boolean isLogin, String accessToken){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         String folderIdStr = null;
         Callable<String> createFolderTask = () -> {
             String folderId = null;
             try {
-                List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","refreshToken"});
                 String driveBackupAccessToken = "";
-                for(String[] account_row: account_rows){
-                    String selectedUserEmail = account_row[0];
-                    if(selectedUserEmail.equals(userEmail)){
-                        String driveBackupRefreshToken = account_row[1];
-                        driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
+                if(isLogin){
+                    driveBackupAccessToken = accessToken;
+                }else{
+                    List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","refreshToken"});
+                    for(String[] account_row: account_rows){
+                        String selectedUserEmail = account_row[0];
+                        if(selectedUserEmail.equals(userEmail)){
+                            String driveBackupRefreshToken = account_row[1];
+                            driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
+                        }
                     }
                 }
 
                 Drive service = initializeDrive(driveBackupAccessToken);
-                String parentFolderId =  GoogleDrive.createOrGetStashSyncedAssetsFolderInDrive(userEmail);
+                String parentFolderId =  GoogleDrive.createOrGetStashSyncedAssetsFolderInDrive(userEmail, isLogin, driveBackupAccessToken);
                 if (parentFolderId == null){
                     LogHandler.saveLog("No parent folder was found in Google Drive back up account when creating sub directory",true);
                 }
@@ -170,25 +178,30 @@ public class GoogleDrive {
         return folder.getId();
     }
 
-    public static ArrayList<DriveAccountInfo.MediaItem> getMediaItems(String userEmail) {
+    public static ArrayList<DriveAccountInfo.MediaItem> getMediaItems(String userEmail, boolean isLogin, String accessToken) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final ArrayList<DriveAccountInfo.MediaItem> mediaItems = new ArrayList<>();
         Callable<ArrayList<DriveAccountInfo.MediaItem>> backgroundTask = () -> {
             try {
-                String assetsSubFolderId = createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,"assets");
+                String backupAccessToken = "";
+                if(isLogin){
+                    backupAccessToken = accessToken;
+                }else{
+                    String[] selected_accounts_columns = {"userEmail","refreshToken"};
+                    List<String[]> account_rows = DBHelper.getAccounts(selected_accounts_columns);
+                    for (String[] account_row : account_rows) {
+                        if (account_row[0].equals(userEmail)) {
+                            backupAccessToken = MainActivity.googleCloud.updateAccessToken(account_row[1]).getAccessToken();
+                        }
+                    }
+                }
+                String assetsSubFolderId = createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,"assets", isLogin, backupAccessToken);
                 if (assetsSubFolderId == null){
                     LogHandler.saveLog("No folder was found in Google Drive back up account",false);
                     return mediaItems;
                 }
-                String accessToken = "";
-                String[] selected_accounts_columns = {"userEmail","refreshToken"};
-                List<String[]> account_rows = DBHelper.getAccounts(selected_accounts_columns);
-                for (String[] account_row : account_rows) {
-                    if (account_row[0].equals(userEmail)) {
-                        accessToken = MainActivity.googleCloud.updateAccessToken(account_row[1]).getAccessToken();
-                    }
-                }
-                Drive driveService = initializeDrive(accessToken);
+
+                Drive driveService = initializeDrive(backupAccessToken);
                 String nextPageToken = null;
                 do{
                     FileList result = driveService.files().list()
@@ -342,7 +355,7 @@ public class GoogleDrive {
                     String type = account_row[1];
                     if (type.equals("backup")){
                         String userEmail = account_row[0];
-                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail);
+                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail, false, null);
                         System.out.println(driveMediaItems.size()+" drive media items found");
                         LogHandler.saveLog(driveMediaItems.size()+" drive media items found", false);
                         for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
@@ -373,7 +386,7 @@ public class GoogleDrive {
     public static void deleteRedundantDriveFilesFromAccount(String userEmail) {
         try {
             Thread deleteRedundantDrive = new Thread(() -> {
-                ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail);
+                ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail, false, null);
                 ArrayList<String> driveFileIds = new ArrayList<>();
 
                 for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
@@ -404,7 +417,7 @@ public class GoogleDrive {
                     String type = account_row[1];
                     if(type.equals("backup")){
                         String userEmail = account_row[0];
-                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail);
+                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail, false, null);
                         ArrayList<String> driveFileIds = new ArrayList<>();
                         for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
                             String fileId = driveMediaItem.getId();
@@ -514,7 +527,7 @@ public class GoogleDrive {
 
                 }
 
-                String parentFolderId =  GoogleDrive.createOrGetStashSyncedAssetsFolderInDrive(account_row[1]);
+                String parentFolderId =  GoogleDrive.createOrGetStashSyncedAssetsFolderInDrive(account_row[1], false, null);
                 if (parentFolderId == null){
                     LogHandler.saveLog("No parent folder was found in Google Drive back up account when creating sub directory and refactoring",true);
                 }
