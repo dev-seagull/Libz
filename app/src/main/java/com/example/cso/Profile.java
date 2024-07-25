@@ -1,10 +1,6 @@
 package com.example.cso;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -15,9 +11,10 @@ import com.google.api.client.http.ByteArrayContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
@@ -35,10 +32,12 @@ public class Profile {
             JsonArray profileJson = createProfileJson(userName);
             JsonArray backupAccountsJson = createBackUpAccountsJson();
             JsonArray primaryAccountsJson = createPrimaryAccountsJson();
+            JsonArray deviceInfoJson = createDeviceInfoJson();
 
             resultJson.add("profile", profileJson);
             resultJson.add("backupAccounts", backupAccountsJson);
             resultJson.add("primaryAccounts", primaryAccountsJson);
+            resultJson.add("deviceInfo", deviceInfoJson);
         }catch (Exception e){
             LogHandler.saveLog("Failed to create profile map content : " + e.getLocalizedMessage() , true);
         }finally {
@@ -57,6 +56,21 @@ public class Profile {
         }
         finally {
             return profileJson;
+        }
+    }
+
+    private static JsonArray createDeviceInfoJson(){
+        JsonArray deviceInfoJson = new JsonArray();
+        try{
+            JsonObject deviceInfo = new JsonObject();
+            deviceInfo.addProperty("deviceName", MainActivity.androidDeviceName);
+            deviceInfo.addProperty("deviceId", MainActivity.androidUniqueDeviceIdentifier);
+            deviceInfoJson.add(deviceInfo);
+
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to create back up accounts json: " + e.getLocalizedMessage(), true);
+        }finally {
+            return deviceInfoJson;
         }
     }
 
@@ -119,9 +133,9 @@ public class Profile {
 
             Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
             String folderName = "stash_user_profile";
-            String profileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folderName);
+            String profileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folderName, false, null);
 
-            return findProfileJsonFile(service,profileFolderId);
+            return findProfileJsonFile(driveBackupAccessToken,profileFolderId);
         };
 
         Future<JsonObject> future = null;
@@ -141,8 +155,9 @@ public class Profile {
 
 
 
-    private static JsonObject findProfileJsonFile(Drive service, String profileFolderId) {
+    private static JsonObject findProfileJsonFile(String accessToken, String profileFolderId) {
         try{
+            Drive service = GoogleDrive.initializeDrive(accessToken);
             if(profileFolderId != null && !profileFolderId.isEmpty()){
                 FileList fileList = service.files().list()
                         .setQ("name contains 'profileMap_' and '" + profileFolderId + "' in parents")
@@ -159,6 +174,7 @@ public class Profile {
                         JsonObject resultJson = JsonParser.parseString(jsonString).getAsJsonObject();
                         outputStream.close();
                         if(resultJson != null) {
+                            isNewProfile();
                             return resultJson;
                         }
                     }
@@ -169,6 +185,10 @@ public class Profile {
             LogHandler.saveLog("Failed to find json file in drive : " + e.getLocalizedMessage(), true);
         }
         return null;
+    }
+
+    private void isNewProfile(JSONObject resultJson){
+
     }
 
     public static boolean deleteProfileJson(String userEmail) {
@@ -187,7 +207,7 @@ public class Profile {
 
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                         String folder_name = "stash_user_profile";
-                        String folderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folder_name);
+                        String folderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folder_name, false, null);
                         deleteProfileFiles(service, folderId);
                         isDeleted[0] = checkDeletionStatus(service, folderId);
                     }
@@ -307,7 +327,7 @@ public class Profile {
                         driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                         String folder_name = "stash_user_profile";
-                        String profileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(account_row[0],folder_name);
+                        String profileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(account_row[0],folder_name, false, null);
                         deleteProfileFiles(service, profileFolderId);
                         boolean isDeleted = checkDeletionStatus(service,profileFolderId);
                         if(isDeleted){
@@ -521,7 +541,7 @@ public class Profile {
                 String driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
                 Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                 String folder_name = "stash_user_profile";
-                String profileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folder_name);
+                String profileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folder_name, false, null);
                 deleteProfileFiles(service, profileFolderId);
                 boolean isDeleted = checkDeletionStatus(service,profileFolderId);
                 if(isDeleted){
@@ -548,35 +568,30 @@ public class Profile {
         return isBackedUpFuture;
     }
 
-    public static boolean checkForLinkedAccounts(String driveBackupAccessToken,String userEmail){
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Callable<JsonObject> uploadTask = () -> {
-
-            Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-            String folderName = "stash_user_profile";
-            String profileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folderName);
-
-            return findProfileJsonFile(service,profileFolderId);
-
-        };
-//        readProfileMapContent()
-
-        Future<JsonObject> future = null;
-        JsonObject resultJson = new JsonObject();
-        try{
-            future = executor.submit(uploadTask);
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to submit executor: " + e.getLocalizedMessage(), true);
-        }
+    public static boolean isLinkedToAccounts(String driveBackupAccessToken, String userEmail){
+        boolean[] isLinked = {false};
+        Thread isLinkedToAccountsThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    String folderName = "stash_user_profile";
+                    String profileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folderName, true, driveBackupAccessToken);
+                    JsonObject profileJsonFile = findProfileJsonFile(driveBackupAccessToken,profileFolderId);
+                    if(profileJsonFile != null){
+                        isLinked[0] = true;
+                    }
+                }catch (Exception e){
+                    LogHandler.saveLog("Failed to join and run isLinkedToAccounts Thread : " + e.getLocalizedMessage(), true);
+                }
+            }
+        });
+        isLinkedToAccountsThread.start();
         try {
-            resultJson = future.get();
-        } catch (Exception e) {
-            LogHandler.saveLog("error when downloading user profile : " + e.getLocalizedMessage());
+            isLinkedToAccountsThread.join();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to join sign in to isLinkedToAccounts thread : " + e.getLocalizedMessage(), true);
         }
-        if (resultJson == null){
-            return false;
-        }
-        return true;
+        return isLinked[0];
     }
 
 }

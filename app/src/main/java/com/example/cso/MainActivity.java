@@ -167,22 +167,22 @@
                                     public void run() {
                                         final GoogleCloud.signInResult signInResult =
                                                 googleCloud.startSignInToBackUpThread(result.getData());
-                                        System.out.println("Refresh token is " + signInResult.getTokens().getRefreshToken());
-                                        System.out.println("Access token is " + signInResult.getTokens().getAccessToken());
 
-                                        if (Profile.checkForLinkedAccounts(signInResult.getTokens().getAccessToken(),signInResult.getUserEmail())){
+                                        boolean isLinked = Profile.isLinkedToAccounts(signInResult.getTokens().getAccessToken(),signInResult.getUserEmail());
+                                        System.out.println("test is:" + isLinked);
+                                        if (isLinked){
                                             UIHandler.displayLinkProfileDialog(signInResult.getUserEmail());
                                         }
 
                                         System.out.println("here login3");
-                                        boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
-
+//                                        boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
+//
                                         System.out.println("here login4");
-                                        UIHandler.addAbackUpAccountToUI(activity,isBackedUp,signInToBackUpLauncher,child,signInResult);
-
-                                        DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);
-
-                                        GoogleDrive.startThreads();
+                                        UIHandler.addAbackUpAccountToUI(activity,true,signInToBackUpLauncher,child,signInResult);
+//
+//                                        DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);
+//
+//                                        GoogleDrive.startThreads();
 
                                         child[0].setClickable(true);
                                     }
