@@ -32,6 +32,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.gson.JsonObject;
 import com.jaredrummler.android.device.DeviceName;
 
 import java.util.HashMap;
@@ -384,40 +385,35 @@ public class UIHandler {
         return popupMenu;
     }
 
-    public static void displayLinkProfileDialog(String userEmail){
+    public static void displayLinkProfileDialog(JsonObject resultJson,String userEmail){
         MainActivity.activity.runOnUiThread(() -> {
             try{
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
+
                 builder.setTitle("Link Profile");
+
                 builder.setMessage("We found linked accounts to " + userEmail + ". " +
-                                "Do you want to add linked accounts to current profile ?")
-                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                "Do you want to add linked accounts to current profile ?");
+
+                builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 // should be thread
 //                                DBHelper.insertBackupFromProfileMap(profileMapContent.get("backupAccounts").getAsJsonArray());
 //                                DBHelper.insertPrimaryFromProfileMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
 //                                reInitializeButtons(MainActivity.activity, MainActivity.googleCloud);
                                 dialog.dismiss();
-                            }}).setNegativeButton("No", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-//                                Thread detachThread = new Thread(new Runnable() {
-//                                    @Override
-//                                    public void run() {
-//                                        try{
-//                                            Profile.detachAccount(profileMapContent,userEmail);
-//                                            dialog.dismiss();
-//                                        }catch (Exception e){
-//                                            LogHandler.saveLog("Failed to join and run sign in to backUp thread : " + e.getLocalizedMessage(), true);
-//                                        }
-//                                    }
-//                                });
-//                                detachThread.start();
-//                                try {
-//                                    detachThread.join();
-//                                }catch (Exception e){
-//                                    LogHandler.saveLog("Failed to join sign in to backUp thread : " + e.getLocalizedMessage(), true);
-//                                }
                             }});
+
+                builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                LogHandler.saveLog("Start detaching account thread", false);
+                                Profile.detachAccount(resultJson,userEmail);
+                                LogHandler.saveLog("Finished detaching account thread", false);
+                                dialog.dismiss();
+                            }});
+
+                builder.setCancelable(true);
+
                 AlertDialog alertDialog = builder.create();
                 alertDialog.show();
             }catch (Exception e){

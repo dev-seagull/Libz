@@ -386,12 +386,10 @@ public class Profile {
 
     public static void detachAccount(JsonObject profileMapContent,String userEmail){
 
-        final boolean[] isSignedout = {false};
-        final boolean[] isBackedUp = {false};
-
         Thread detachLinkedAccountsProfileJsonThread = new Thread(new Runnable() {
             @Override
             public void run() {
+//                readProfileMapContent()
                 JsonArray backupAccounts =  profileMapContent.get("backupAccounts").getAsJsonArray();
                 JsonObject editedProfileContent = editProfileJson(profileMapContent,userEmail);
 
@@ -407,91 +405,18 @@ public class Profile {
             }
         });
 
-
-        Thread backUpJsonThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                //                                    MainActivity.dbHelper.deleteFromAccountsTable(buttonText, "backup");
-                //                                    MainActivity.dbHelper.deleteAccountFromDriveTable(buttonText);
-                //                                    dbHelper.deleteRedundantAsset();
-                //                                    isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(true,buttonText);
-                //                                    System.out.println("isBackedUp " + isBackedUp[0]);
-
-                synchronized (this){
-                    notify();
-                }
-            }
-        });
-
-        Thread signOutThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (backUpJsonThread){
-                    try {
-                        backUpJsonThread.join();
-                    } catch (InterruptedException e) {
-                        LogHandler.saveLog("Failed to join back up json thread : "
-                                + e.getLocalizedMessage(), true);
-                    }
-                }
-//                                                if(isBackedUp[0]){
-//                                                    isSignedout[0] = googleCloud.signOut(buttonText);
-//                                                    System.out.println("isSignedOut " + isSignedout[0]);
-//                                                }
-            }
-        });
-
-        Thread uiThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (signOutThread){
-                    try {
-                        signOutThread.join();
-                    } catch (Exception e) {
-                        LogHandler.saveLog(
-                                "Failed to join sign out thread : "
-                                        + e.getLocalizedMessage(), true
-                        );
-                    }
-                }
-//                                                runOnUiThread(() -> {
-//                                                    if (isBackedUp[0]) {
-//                                                        try {
-//                                                            item.setEnabled(false);
-//                                                            ViewGroup parentView = (ViewGroup) button.getParent();
-//                                                            parentView.removeView(button);
-//                                                        } catch (Exception e) {
-//                                                            e.printStackTrace();
-//                                                        }
-//                                                    } else {
-//                                                        try {
-//                                                            button.setText(buttonText);
-//                                                        } catch (Exception e) {
-//                                                            e.printStackTrace();
-//                                                        }
-//                                                    }
-//                                                });
-            }
-        });
-
-//                                        deleteProfileJsonThread.start();
-//        backUpJsonThread.start();
-//        signOutThread.start();
-//        uiThread.start();
         detachLinkedAccountsProfileJsonThread.start();
-
-        //                                            boolean isDeletedFromAccounts = dbHelper.deleteFromAccountsTable(buttonText,"backup");
-        //                                            boolean isAccountDeletedFromDriveTable = dbHelper.deleteAccountFromDriveTable(buttonText);
-        //                                            dbHelper.deleteRedundantAsset();
-        //                                            ViewGroup parentView = (ViewGroup) button.getParent();
-        //                                            parentView.removeView(button);
-        //                                            googleCloud.signOut(buttonText);
+        try {
+            detachLinkedAccountsProfileJsonThread.join();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to join detachLinkedAccountsProfileJsonThread: " + e.getLocalizedMessage());
+        }
     }
 
     public static JsonObject editProfileJson(JsonObject profileJson, String emailToDelete) {
         try {
             JsonArray backupAccounts = profileJson.get("backupAccounts").getAsJsonArray();
-
+            profileJson.remove("backupAccounts");
             JsonArray updatedBackupAccounts = new JsonArray();
 
             for (int i = 0; i < backupAccounts.size(); i++) {
@@ -505,7 +430,7 @@ public class Profile {
             return profileJson;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LogHandler.saveLog("Failed to edit profile json : " + e.getLocalizedMessage());
             return null;
         }
     }
@@ -570,13 +495,12 @@ public class Profile {
         return isBackedUpFuture;
     }
 
-    public static boolean isLinkedToAccounts(String driveBackupAccessToken, String userEmail){
+    public static boolean isLinkedToAccounts(JsonObject resultJson, String userEmail){
         boolean[] isLinked = {false};
         Thread isLinkedToAccountsThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try{
-                    JsonObject resultJson = Profile.readProfileMapContent(userEmail,driveBackupAccessToken);
                     if(resultJson != null){
                         isLinked[0] = isNewJsonProfile(resultJson, userEmail);
                     }

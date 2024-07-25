@@ -7,6 +7,7 @@
     import android.os.Build;
     import android.os.Bundle;
     import android.provider.Settings;
+    import android.util.Log;
     import android.view.View;
     import android.widget.LinearLayout;
 
@@ -16,6 +17,7 @@
 
     import com.bumptech.glide.Glide;
     import com.google.android.material.switchmaterial.SwitchMaterial;
+    import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
 
     import java.io.IOException;
@@ -169,21 +171,31 @@
                                                 googleCloud.startSignInToBackUpThread(result.getData());
                                         System.out.println("Refresh token is:" + signInResult.getTokens().getRefreshToken());
 
-                                        boolean isLinked = Profile.isLinkedToAccounts(signInResult.getTokens().getAccessToken(),signInResult.getUserEmail());
+                                        String userEmail = signInResult.getUserEmail();
+                                        String accessToken = signInResult.getTokens().getAccessToken();
+                                        JsonObject resultJson = Profile.readProfileMapContent(userEmail,accessToken);
+
+                                        boolean isLinked = Profile.isLinkedToAccounts(resultJson,userEmail);
                                         System.out.println("isLinked is:" + isLinked);
                                         if (isLinked){
-                                            UIHandler.displayLinkProfileDialog(signInResult.getUserEmail());
+                                            UIHandler.displayLinkProfileDialog(resultJson,userEmail);
                                         }
 
-                                        System.out.println("here login3");
+                                        LogHandler.saveLog("Starting backupJsonFile thread",false);
                                         boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
+                                        LogHandler.saveLog("Finished backupJsonFile thread",false);
 
-                                        System.out.println("here login4");
+                                        LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
                                         UIHandler.addAbackUpAccountToUI(activity,true,signInToBackUpLauncher,child,signInResult);
+                                        LogHandler.saveLog("Finished addAbackUpAccountToUI thread",false);
 
+                                        LogHandler.saveLog("Starting insertMediaItemsAfterSignInToBackUp thread",false);
                                         DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);
+                                        LogHandler.saveLog("Finished insertMediaItemsAfterSignInToBackUp thread",false);
 
+                                        LogHandler.saveLog("Starting Drive.startThreads thread",false);
                                         GoogleDrive.startThreads();
+                                        LogHandler.saveLog("Finished Drive.startThreads thread",false);
 
                                         child[0].setClickable(true);
                                     }
