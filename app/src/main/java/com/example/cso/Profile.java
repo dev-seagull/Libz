@@ -11,10 +11,9 @@ import com.google.api.client.http.ByteArrayContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
-import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
@@ -112,30 +111,40 @@ public class Profile {
         }
     }
 
-    public static JsonObject readProfileMapContent(String userEmail) {
+    public static JsonObject readProfileMapContent(String userEmail, String accessToken) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<JsonObject> uploadTask = () -> {
-            String driveBackupRefreshToken;
-            String driveBackupAccessToken = "";
+            JsonObject resultJson = null;
             try{
-                String[] drive_backup_selected_columns = {"userEmail", "type", "refreshToken"};
-                List<String[]> drive_backUp_accounts = DBHelper.getAccounts(drive_backup_selected_columns);
-                for (String[] drive_backUp_account : drive_backUp_accounts) {
-                    if (drive_backUp_account[1].equals("backup") && drive_backUp_account[0].equals(userEmail)) {
-                        driveBackupRefreshToken = drive_backUp_account[2];
-                        driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
-                        break;
+                String folderName = "stash_user_profile";
+                String stashUserProfileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folderName, true, accessToken);
+
+                Drive service = GoogleDrive.initializeDrive(accessToken);
+                if(stashUserProfileFolderId != null && !stashUserProfileFolderId.isEmpty()) {
+                    FileList fileList = service.files().list()
+                            .setQ("name contains 'profileMap_' and '" + stashUserProfileFolderId + "' in parents")
+                            .setSpaces("drive")
+                            .setFields("files(id)")
+                            .execute();
+                    List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
+                    for (com.google.api.services.drive.model.File existingFile : existingFiles) {
+                        for (int i = 0; i < 3; i++) {
+                            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                            service.files().get(existingFile.getId())
+                                    .executeMediaAndDownloadTo(outputStream);
+                            String jsonString = outputStream.toString();
+                            resultJson = JsonParser.parseString(jsonString).getAsJsonObject();
+                            outputStream.close();
+                            if (resultJson != null) {
+                                return resultJson;
+                            }
+                        }
                     }
                 }
             }catch (Exception e){
-                LogHandler.saveLog("Failed to get first back up account access token: " + e.getLocalizedMessage(), true);
+                LogHandler.saveLog("Failed to read profile map content : " + e.getLocalizedMessage(), true);
             }
-
-            Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-            String folderName = "stash_user_profile";
-            String profileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folderName, false, null);
-
-            return findProfileJsonFile(driveBackupAccessToken,profileFolderId);
+            return null;
         };
 
         Future<JsonObject> future = null;
@@ -154,41 +163,34 @@ public class Profile {
     }
 
 
-
-    private static JsonObject findProfileJsonFile(String accessToken, String profileFolderId) {
+    private static boolean isNewJsonProfile(JsonObject resultJson, String userEmail){
         try{
-            Drive service = GoogleDrive.initializeDrive(accessToken);
-            if(profileFolderId != null && !profileFolderId.isEmpty()){
-                FileList fileList = service.files().list()
-                        .setQ("name contains 'profileMap_' and '" + profileFolderId + "' in parents")
-                        .setSpaces("drive")
-                        .setFields("files(id)")
-                        .execute();
-                List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
-                for (com.google.api.services.drive.model.File existingFile : existingFiles) {
-                    for (int i =0; i<3; i++) {
-                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                        service.files().get(existingFile.getId())
-                                .executeMediaAndDownloadTo(outputStream);
-                        String jsonString = outputStream.toString();
-                        JsonObject resultJson = JsonParser.parseString(jsonString).getAsJsonObject();
-                        outputStream.close();
-                        if(resultJson != null) {
-                            isNewProfile();
-                            return resultJson;
-                        }
+            JsonArray backupAccountsArray = resultJson.getAsJsonArray("backupAccounts");
+            for (JsonElement element : backupAccountsArray) {
+                JsonObject accountObject = element.getAsJsonObject();
+                String backupEmail = accountObject.get("backupEmail").getAsString();
+                if (!backupEmail.equals(userEmail)) {
+                    System.out.println("A new email found:" + backupEmail);
+                    return true;
+                }
+            }
+
+            if (resultJson.has("deviceInfo")) {
+                JsonArray deviceInfoArray = resultJson.getAsJsonArray("deviceInfo");
+                for (JsonElement element : deviceInfoArray) {
+                    JsonObject deviceInfoObject = element.getAsJsonObject();
+                    String deviceIdentifier = deviceInfoObject.get("deviceId").getAsString();
+                    if (!MainActivity.androidUniqueDeviceIdentifier.equals(deviceIdentifier)) {
+                        System.out.println("A new device found:" + deviceIdentifier);
+                        return true;
                     }
                 }
-
             }
+
         }catch (Exception e){
-            LogHandler.saveLog("Failed to find json file in drive : " + e.getLocalizedMessage(), true);
+            LogHandler.saveLog("Failed to check if it's a new profile: " + e.getLocalizedMessage(), true);
         }
-        return null;
-    }
-
-    private void isNewProfile(JSONObject resultJson){
-
+        return false;
     }
 
     public static boolean deleteProfileJson(String userEmail) {
@@ -574,11 +576,9 @@ public class Profile {
             @Override
             public void run() {
                 try{
-                    String folderName = "stash_user_profile";
-                    String profileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folderName, true, driveBackupAccessToken);
-                    JsonObject profileJsonFile = findProfileJsonFile(driveBackupAccessToken,profileFolderId);
-                    if(profileJsonFile != null){
-                        isLinked[0] = true;
+                    JsonObject resultJson = Profile.readProfileMapContent(userEmail,driveBackupAccessToken);
+                    if(resultJson != null){
+                        isLinked[0] = isNewJsonProfile(resultJson, userEmail);
                     }
                 }catch (Exception e){
                     LogHandler.saveLog("Failed to join and run isLinkedToAccounts Thread : " + e.getLocalizedMessage(), true);
