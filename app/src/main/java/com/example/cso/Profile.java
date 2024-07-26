@@ -26,15 +26,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class Profile {
-    public static JsonObject createProfileMapContent(String userName){
+    public static JsonObject createProfileMapContent(){
         JsonObject resultJson = new JsonObject();
         try{
-            JsonArray profileJson = createProfileJson(userName);
             JsonArray backupAccountsJson = createBackUpAccountsJson();
             JsonArray primaryAccountsJson = createPrimaryAccountsJson();
             JsonArray deviceInfoJson = createDeviceInfoJson();
 
-            resultJson.add("profile", profileJson);
             resultJson.add("backupAccounts", backupAccountsJson);
             resultJson.add("primaryAccounts", primaryAccountsJson);
             resultJson.add("deviceInfo", deviceInfoJson);
@@ -44,21 +42,7 @@ public class Profile {
             return  resultJson;
         }
     }
-
-    private static JsonArray createProfileJson(String userName){
-        JsonArray profileJson = new JsonArray();
-        try{
-            JsonObject profile = new JsonObject();
-            profile.addProperty("userName", userName);
-            profileJson.add(profile);
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to create profile json : " + e.getLocalizedMessage(), true);
-        }
-        finally {
-            return profileJson;
-        }
-    }
-
+    
     private static JsonArray createDeviceInfoJson(){
         JsonArray deviceInfoJson = new JsonArray();
         try{
@@ -338,7 +322,7 @@ public class Profile {
                         deleteProfileFiles(service, profileFolderId);
                         boolean isDeleted = checkDeletionStatus(service,profileFolderId);
                         if(isDeleted){
-                            String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,account_row[0]);
+                            String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId);
                             if (uploadedFileId == null | uploadedFileId.isEmpty()) {
                                 LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
                             }else{
@@ -366,7 +350,7 @@ public class Profile {
         return isBackedUpFuture;
     }
 
-    private static String setAndCreateProfileMapContent(Drive service,String profileFolderId, String userEmail){
+    private static String setAndCreateProfileMapContent(Drive service,String profileFolderId){
         String uploadFileId = "";
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date date = new Date();
@@ -376,7 +360,7 @@ public class Profile {
             com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
             fileMetadata.setName(fileName);
             fileMetadata.setParents(java.util.Collections.singletonList(profileFolderId));
-            String content = Profile.createProfileMapContent(userEmail).toString();
+            String content = Profile.createProfileMapContent().toString();
             ByteArrayContent mediaContent = ByteArrayContent.fromString("application/json", content);
             com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
                     .setFields("id")
@@ -404,7 +388,9 @@ public class Profile {
                     if (linkedUserEmail.equals(userEmail)){
                         continue;
                     }
+                    LogHandler.saveLog("Starting to detach account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail);
                     backUpProfileMapToLinkedAccounts(editedProfileContent,refreshToken,userEmail);
+                    LogHandler.saveLog("Finished detaching account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail);
                 }
             }
         });
@@ -440,7 +426,7 @@ public class Profile {
     }
 
 
-    private static String uploadProfileContent(Drive service,String profileFolderId, String userEmail,JsonObject profileContent){
+    private static String uploadProfileContent(Drive service, String profileFolderId, JsonObject profileContent){
         String uploadFileId = "";
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date date = new Date();
@@ -472,11 +458,11 @@ public class Profile {
                 String driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
                 Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                 String folder_name = "stash_user_profile";
-                String profileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folder_name, false, null);
+                String profileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folder_name, true, driveBackupAccessToken);
                 deleteProfileFiles(service, profileFolderId);
                 boolean isDeleted = checkDeletionStatus(service,profileFolderId);
                 if(isDeleted){
-                    String uploadedFileId = uploadProfileContent(service,profileFolderId,userEmail,profileContent);
+                    String uploadedFileId = uploadProfileContent(service,profileFolderId, profileContent);
                     if (uploadedFileId == null | uploadedFileId.isEmpty()) {
                         LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
                     }else{
