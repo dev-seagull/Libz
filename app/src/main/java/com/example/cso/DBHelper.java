@@ -11,6 +11,7 @@ import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import net.sqlcipher.database.SQLiteDatabase;
@@ -1519,4 +1520,61 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         DBHelper.dbWritable.endTransaction();
     }
+
+    public void updateDatabaseBasedOnJson(){
+        // isNotThereThisDeviceInJson
+        List<String[]> accounts = getAccounts(new String[]{"userEmail", "type", "refreshToken"});
+        ArrayList<String> emailsInDevice = new ArrayList<>();
+        for (String[] account : accounts) {
+            if (account[1].equals("backup")){
+                emailsInDevice.add(account[0]);
+            }
+        }
+
+        for (String[] account : accounts) {
+            if (account[1].equals("backup")) {
+                String accessToken = MainActivity.googleCloud.updateAccessToken(account[2]).getAccessToken();
+                JsonObject resultJson = Profile.readProfileMapContent(account[0], accessToken);
+
+                if (!jsonBelongsToThisDevice(resultJson)){// this means no in other device
+                    //should handle device state
+                    JsonArray accountsInJson = resultJson.get("backupAccounts").getAsJsonArray();
+                    ArrayList<String> emailsInJson = new ArrayList<>();
+                    for (int i = 0; i < accountsInJson.size(); i++) {
+                        JsonObject backupAccount = accountsInJson.get(i).getAsJsonObject();
+                        String backupEmail = backupAccount.get("backupEmail").getAsString();
+                        System.out.println("backup email in json is : " + backupEmail);
+                    }
+                }else{// this means yes in other device
+                    // should handle device state
+                    System.out.println("test : this means yes in other device");
+                }
+
+            }
+        }
+    }
+
+
+    public boolean jsonBelongsToThisDevice(JsonObject resultJson){
+        try {
+            JsonArray devicesInJson = resultJson.get("deviceInfo").getAsJsonArray();
+            for (JsonElement device : devicesInJson){
+                String deviceIdInJson = device.getAsJsonObject().get("deviceId").getAsString();
+                System.out.println("device id in json is : " + deviceIdInJson);
+                if (deviceIdInJson.equals(MainActivity.androidUniqueDeviceIdentifier)){
+                    return true;
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("failed to get device id from json : " + e.getLocalizedMessage());
+        }
+        return false;
+    }
+
+    private void deleteAccountAndRelatedAssets(String userEmail){
+        deleteFromAccountsTable(userEmail,"backup");
+        deleteAccountFromDriveTable(userEmail);
+        deleteRedundantAsset();
+    }
+
 }

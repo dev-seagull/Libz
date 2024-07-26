@@ -175,10 +175,7 @@
                                         String accessToken = signInResult.getTokens().getAccessToken();
                                         JsonObject resultJson = Profile.readProfileMapContent(userEmail,accessToken);
 
-
-                                        LogHandler.saveLog("resultJson is: " + resultJson.toString(),false);
                                         boolean isLinked = Profile.isLinkedToAccounts(resultJson,userEmail);
-                                        LogHandler.saveLog("isLinked is:" + isLinked,false);
                                         if (isLinked){
                                             UIHandler.displayLinkProfileDialog(resultJson,userEmail);
                                         }
@@ -268,7 +265,6 @@
                     }
                 }
             });
-
             LogHandler.saveLog("--------------------------end of onStart----------------------------",false);
         }
 

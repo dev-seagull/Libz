@@ -42,7 +42,7 @@ public class Profile {
             return  resultJson;
         }
     }
-    
+
     private static JsonArray createDeviceInfoJson(){
         JsonArray deviceInfoJson = new JsonArray();
         try{
@@ -102,26 +102,20 @@ public class Profile {
             @Override
             public void run() {
                 try{
-                    String folderName = "stash_user_profile";
-                    String stashUserProfileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folderName, true, accessToken);
-
                     Drive service = GoogleDrive.initializeDrive(accessToken);
-                    if(stashUserProfileFolderId != null && !stashUserProfileFolderId.isEmpty()) {
-                        FileList fileList = service.files().list()
-                                .setQ("name contains 'profileMap_' and '" + stashUserProfileFolderId + "' in parents")
-                                .setSpaces("drive")
-                                .setFields("files(id)")
-                                .execute();
-                        List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
-                        for (com.google.api.services.drive.model.File existingFile : existingFiles) {
-                            for (int i = 0; i < 3; i++) {
-                                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                                service.files().get(existingFile.getId())
-                                        .executeMediaAndDownloadTo(outputStream);
-                                String jsonString = outputStream.toString();
-                                resultJson[0] = JsonParser.parseString(jsonString).getAsJsonObject();
-                                outputStream.close();
-                            }
+                    List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(service,userEmail, accessToken);
+                    for (com.google.api.services.drive.model.File existingFile : existingFiles) {
+                        for (int i = 0; i < 3; i++) {
+                            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                            service.files().get(existingFile.getId())
+                                    .executeMediaAndDownloadTo(outputStream);
+
+                            String jsonString = outputStream.toString();
+                            resultJson[0] = JsonParser.parseString(jsonString).getAsJsonObject();
+
+                            LogHandler.saveLog("resultJson is: " + resultJson[0].toString() + " [Thread: " + Thread.currentThread().getName() + "]", false);
+
+                            outputStream.close();
                         }
                     }
                 }catch (Exception e){
@@ -138,6 +132,51 @@ public class Profile {
         return resultJson[0];
     }
 
+    public static String readProfileMapName(String userEmail, String accessToken) {
+        String[] resultJsonName = {null};
+        Thread readProdileMapContentThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    Drive service = GoogleDrive.initializeDrive(accessToken);
+                    List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(service,userEmail, accessToken);
+                    for (com.google.api.services.drive.model.File existingFile : existingFiles) {
+                        resultJsonName[0] = existingFile.getName();
+                    }
+                }catch (Exception e){
+                    LogHandler.saveLog("Failed to read profile map content : " + e.getLocalizedMessage(), true);
+                }
+            }
+        });
+        readProdileMapContentThread.start();
+        try {
+            readProdileMapContentThread.join();
+        } catch (InterruptedException e) {
+            LogHandler.saveLog("Interrupted while waiting for read profile map content thread to finish: " + e.getLocalizedMessage());
+        }
+        return resultJsonName[0];
+    }
+
+    private static List<com.google.api.services.drive.model.File> getFilesInProfileFolder(Drive service, String userEmail, String accessToken){
+        List<com.google.api.services.drive.model.File> existingFiles = null;
+        try {
+            String folderName = "stash_user_profile";
+            String stashUserProfileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail, folderName, true, accessToken);
+
+            if (stashUserProfileFolderId != null && !stashUserProfileFolderId.isEmpty()) {
+                FileList fileList = service.files().list()
+                        .setQ("name contains 'profileMap_' and '" + stashUserProfileFolderId + "' in parents")
+                        .setSpaces("drive")
+                        .setFields("files(id)")
+                        .execute();
+                existingFiles = fileList.getFiles();
+                return existingFiles;
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to get files in profile folder : " + e.getLocalizedMessage(), true);
+        }
+        return existingFiles;
+    }
 
     private static boolean isNewJsonProfile(JsonObject resultJson, String userEmail){
         try{
@@ -374,7 +413,6 @@ public class Profile {
     }
 
     public static void detachAccount(JsonObject profileMapContent,String userEmail){
-
         Thread detachLinkedAccountsProfileJsonThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -388,9 +426,9 @@ public class Profile {
                     if (linkedUserEmail.equals(userEmail)){
                         continue;
                     }
-                    LogHandler.saveLog("Starting to detach account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail);
+                    LogHandler.saveLog("Starting to detach account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail,false);
                     backUpProfileMapToLinkedAccounts(editedProfileContent,refreshToken,userEmail);
-                    LogHandler.saveLog("Finished detaching account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail);
+                    LogHandler.saveLog("Finished detaching account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail,false);
                 }
             }
         });
@@ -425,7 +463,6 @@ public class Profile {
         }
     }
 
-
     private static String uploadProfileContent(Drive service, String profileFolderId, JsonObject profileContent){
         String uploadFileId = "";
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
@@ -448,7 +485,6 @@ public class Profile {
             return uploadFileId;
         }
     }
-
 
     public static boolean backUpProfileMapToLinkedAccounts(JsonObject profileContent,String refreshToken,String userEmail) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -493,6 +529,7 @@ public class Profile {
                 try{
                     if(resultJson != null){
                         isLinked[0] = isNewJsonProfile(resultJson, userEmail);
+                        LogHandler.saveLog("isLinked is: " + isLinked + " [Thread: " + Thread.currentThread().getName() + "]", false);
                     }
                 }catch (Exception e){
                     LogHandler.saveLog("Failed to join and run isLinkedToAccounts Thread : " + e.getLocalizedMessage(), true);
@@ -507,5 +544,12 @@ public class Profile {
         }
         return isLinked[0];
     }
+
+    private boolean isJsonDateNew(){
+        //exlude date from file name
+        // compare with last stored date
+        return true;
+    }
+
 
 }

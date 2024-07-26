@@ -397,19 +397,34 @@ public class UIHandler {
 
                 builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
+                                dialog.dismiss();
+
                                 // should be thread
 //                                DBHelper.insertBackupFromProfileMap(profileMapContent.get("backupAccounts").getAsJsonArray());
 //                                DBHelper.insertPrimaryFromProfileMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
 //                                reInitializeButtons(MainActivity.activity, MainActivity.googleCloud);
-                                dialog.dismiss();
+
                             }});
 
                 builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
-                                LogHandler.saveLog("Start detaching account thread", false);
-                                Profile.detachAccount(resultJson,userEmail);
-                                LogHandler.saveLog("Finished detaching account thread", false);
                                 dialog.dismiss();
+                                LogHandler.saveLog("Start detaching account thread", false);
+                                Thread detachAccountThread = new Thread(() -> {
+                                    try {
+                                        Profile.detachAccount(resultJson,userEmail);
+                                    } catch (Exception e) {
+                                        LogHandler.saveLog("Failed to detach account: " + e.getLocalizedMessage(), true);
+                                    }
+                                });
+                                detachAccountThread.start();
+                                try {
+                                    detachAccountThread.join();
+                                }catch (InterruptedException e) {
+                                    LogHandler.saveLog("Interrupted detaching account thread: " + e.getLocalizedMessage(), true);
+                                }finally {
+                                    LogHandler.saveLog("Finished detaching account thread", false);
+                                }
                             }});
 
                 builder.setCancelable(false);
