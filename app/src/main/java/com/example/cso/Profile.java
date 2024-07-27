@@ -16,6 +16,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.io.ByteArrayOutputStream;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -24,6 +25,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class Profile {
     public static JsonObject createProfileMapContent(){
@@ -138,10 +140,18 @@ public class Profile {
             @Override
             public void run() {
                 try{
+                    System.out.println("access token in method readProfileMapName: " + accessToken);
                     Drive service = GoogleDrive.initializeDrive(accessToken);
+                    System.out.println("user email in method readProfileMapName: " + userEmail);
                     List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(service,userEmail, accessToken);
+                    System.out.println("size of files in profile folder: " + existingFiles.size());
                     for (com.google.api.services.drive.model.File existingFile : existingFiles) {
                         resultJsonName[0] = existingFile.getName();
+                        System.out.println("existing file name: " + existingFile.getName());
+                        if (resultJsonName[0]!= null && !resultJsonName[0].isEmpty() && resultJsonName[0].contains("profileMap_")) {
+                            System.out.println("result json name : " + resultJsonName[0] + " found. Exiting loop. ");
+                            break;
+                        }
                     }
                 }catch (Exception e){
                     LogHandler.saveLog("Failed to read profile map content : " + e.getLocalizedMessage(), true);
@@ -162,14 +172,15 @@ public class Profile {
         try {
             String folderName = "stash_user_profile";
             String stashUserProfileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail, folderName, true, accessToken);
-
+            System.out.println("stash user profile folder id: " + stashUserProfileFolderId);
             if (stashUserProfileFolderId != null && !stashUserProfileFolderId.isEmpty()) {
                 FileList fileList = service.files().list()
                         .setQ("name contains 'profileMap_' and '" + stashUserProfileFolderId + "' in parents")
                         .setSpaces("drive")
-                        .setFields("files(id)")
+                        .setFields("files(id,name)")
                         .execute();
                 existingFiles = fileList.getFiles();
+                System.out.println("size of files in profile folder: " + existingFiles.size());
                 return existingFiles;
             }
         }catch (Exception e){
@@ -309,6 +320,7 @@ public class Profile {
 
                         MainActivity.dbHelper.insertIntoAccounts(userEmail, "backup", refreshToken,accessToken,
                                 totalStorage, usedStorage, usedInDriveStorage, usedInGmailAndPhotosStorage);
+
                         isBackedUp[0] = Profile.backUpProfileMap(false,"");
                     }else{
                         LogHandler.saveLog("login with back up launcher failed with response code : " + signInResult.getHandleStatus());
@@ -392,7 +404,7 @@ public class Profile {
     private static String setAndCreateProfileMapContent(Drive service,String profileFolderId){
         String uploadFileId = "";
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
-        Date date = new Date();
+        Date date = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
         String currentDate = formatter.format(date);
         String fileName = "profileMap_" + currentDate + ".json";
         try{
@@ -466,7 +478,7 @@ public class Profile {
     private static String uploadProfileContent(Drive service, String profileFolderId, JsonObject profileContent){
         String uploadFileId = "";
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
-        Date date = new Date();
+        Date date = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
         String currentDate = formatter.format(date);
         String fileName = "profileMap_" + currentDate + ".json";
         try{
@@ -545,10 +557,35 @@ public class Profile {
         return isLinked[0];
     }
 
-    private boolean isJsonDateNew(){
-        //exlude date from file name
-        // compare with last stored date
+    public static boolean hasJsonChanged(){
+        List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
+        for (String[] account : accounts) {
+            if (account[1].equals("backup")) {
+                String resultJsonName = readProfileMapName(account[0], MainActivity.googleCloud.updateAccessToken(account[2]).getAccessToken());
+                if (resultJsonName!= null &&!resultJsonName.isEmpty()){
+                    continue;
+                }
+                Date lastModifiedDateOfJson = convertFileNameToTimeStamp(resultJsonName);
+                Date lastModifiedDateOfPreferences =  SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
+                if (lastModifiedDateOfJson!= null && lastModifiedDateOfPreferences!= null && lastModifiedDateOfJson.after(lastModifiedDateOfPreferences)){
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
         return true;
+    }
+
+    public static Date convertFileNameToTimeStamp(String fileName){
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+            String timestamp = fileName.substring(fileName.indexOf('_') + 1, fileName.lastIndexOf('.'));
+            return dateFormat.parse(timestamp);
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to convert filename ("+fileName +") to timestamp : " + e.getLocalizedMessage(), true);
+            return null;
+        }
     }
 
 

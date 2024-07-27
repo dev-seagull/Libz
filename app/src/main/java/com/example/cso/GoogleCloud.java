@@ -726,6 +726,7 @@
                     MainActivity.dbHelper.deleteFromAccountsTable(buttonText, "backup");
                     MainActivity.dbHelper.deleteAccountFromDriveTable(buttonText);
                     MainActivity.dbHelper.deleteRedundantAsset();
+                    SharedPreferencesHandler.setJsonModifiedTime(MainActivity.preferences);
                     isBackedUp[0] = Profile.backUpProfileMap(true,buttonText);
                     if(!isBackedUp[0]){
                         LogHandler.saveLog("Profile Json back up is not working when signing out.", true);

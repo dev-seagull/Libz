@@ -21,6 +21,8 @@
     import com.jaredrummler.android.device.DeviceName;
 
     import java.io.IOException;
+    import java.text.SimpleDateFormat;
+    import java.util.Date;
     import java.util.List;
     import java.util.Timer;
     import java.util.TimerTask;
@@ -133,6 +135,16 @@
                 }
             }).start();
 
+            new Thread(() -> {
+                if (Profile.hasJsonChanged()){
+                    System.out.println("profile json changed");
+                    dbHelper.updateDatabaseBasedOnJson();
+                }else{
+                    System.out.println("profile json not changed");
+                    dbHelper.updateDatabaseBasedOnJson();
+                }
+            }).start();
+
             String refreshToken = "";
             String[] accessTokens = new String[1];
             List<String[]> accountRows = DBHelper.getAccounts(new String[]{"type","userEmail","refreshToken","accessToken"});
@@ -174,6 +186,9 @@
                                         String userEmail = signInResult.getUserEmail();
                                         String accessToken = signInResult.getTokens().getAccessToken();
                                         JsonObject resultJson = Profile.readProfileMapContent(userEmail,accessToken);
+
+                                        // time of modify for json (save in share preferences because of unitness)
+                                        SharedPreferencesHandler.setJsonModifiedTime(preferences);
 
                                         boolean isLinked = Profile.isLinkedToAccounts(resultJson,userEmail);
                                         if (isLinked){

@@ -1531,12 +1531,12 @@ public class DBHelper extends SQLiteOpenHelper {
             }
         }
 
-        for (String[] account : accounts) {
-            if (account[1].equals("backup")) {
+        for (String[] account : accounts) { // iterate over all accounts in our device (old version)
+            if (account[1].equals("backup")) { // just backup accounts
                 String accessToken = MainActivity.googleCloud.updateAccessToken(account[2]).getAccessToken();
-                JsonObject resultJson = Profile.readProfileMapContent(account[0], accessToken);
+                JsonObject resultJson = Profile.readProfileMapContent(account[0], accessToken); // check json in backup accounts
 
-                if (!jsonBelongsToThisDevice(resultJson)){// this means no in other device
+                if (!jsonBelongsToThisDeviceProfile(resultJson)){// this means no in other device
                     //should handle device state
                     JsonArray accountsInJson = resultJson.get("backupAccounts").getAsJsonArray();
                     ArrayList<String> emailsInJson = new ArrayList<>();
@@ -1544,10 +1544,12 @@ public class DBHelper extends SQLiteOpenHelper {
                         JsonObject backupAccount = accountsInJson.get(i).getAsJsonObject();
                         String backupEmail = backupAccount.get("backupEmail").getAsString();
                         System.out.println("backup email in json is : " + backupEmail);
+                        deleteAccountAndRelatedAssets(backupEmail);
                     }
+//                    break;
                 }else{// this means yes in other device
                     // should handle device state
-                    System.out.println("test : this means yes in other device");
+                    System.out.println("test : this means yes in other device (need no work)");
                 }
 
             }
@@ -1555,7 +1557,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-    public boolean jsonBelongsToThisDevice(JsonObject resultJson){
+    public boolean jsonBelongsToThisDeviceProfile(JsonObject resultJson){
         try {
             JsonArray devicesInJson = resultJson.get("deviceInfo").getAsJsonArray();
             for (JsonElement device : devicesInJson){
@@ -1571,10 +1573,14 @@ public class DBHelper extends SQLiteOpenHelper {
         return false;
     }
 
+
     private void deleteAccountAndRelatedAssets(String userEmail){
         deleteFromAccountsTable(userEmail,"backup");
         deleteAccountFromDriveTable(userEmail);
         deleteRedundantAsset();
+        // delete button
+        System.out.println("------------------------------------- email " + userEmail + "deleted from this profile");
     }
+
 
 }
