@@ -364,7 +364,7 @@ public class UIHandler {
                             button.setText(buttonText);
                         } catch (Exception e) {
                             LogHandler.saveLog(
-                                    "Failed to handle ui when signout : "
+                                    "Failed to handle ui when sign out : "
                                             + e.getLocalizedMessage(), true
                             );
                         }
@@ -387,7 +387,7 @@ public class UIHandler {
 
     public static void displayLinkProfileDialog(ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
                                                 JsonObject resultJson,String userEmail){
-        MainActivity.activity.runOnUiThread(() -> {
+//        MainActivity.activity.runOnUiThread(() -> {
             try{
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
 
@@ -446,7 +446,7 @@ public class UIHandler {
             }catch (Exception e){
                 LogHandler.saveLog("Failed to display link profile dialog: " + e.getLocalizedMessage(), true);
             }
-        });
+//        });
     }
 
     public static void reInitializeButtons(Activity activity,GoogleCloud googleCloud){
