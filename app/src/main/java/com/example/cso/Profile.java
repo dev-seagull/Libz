@@ -541,7 +541,7 @@ public class Profile {
                 try{
                     if(resultJson != null){
                         isLinked[0] = isNewJsonProfile(resultJson, userEmail);
-                        LogHandler.saveLog("isLinked is: " + isLinked + " [Thread: " + Thread.currentThread().getName() + "]", false);
+                        LogHandler.saveLog("isLinked is: " + isLinked[0], false);
                     }
                 }catch (Exception e){
                     LogHandler.saveLog("Failed to join and run isLinkedToAccounts Thread : " + e.getLocalizedMessage(), true);

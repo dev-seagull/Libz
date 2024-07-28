@@ -1522,37 +1522,34 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public void updateDatabaseBasedOnJson(){
-        // isNotThereThisDeviceInJson
-        List<String[]> accounts = getAccounts(new String[]{"userEmail", "type", "refreshToken"});
-        ArrayList<String> emailsInDevice = new ArrayList<>();
-        for (String[] account : accounts) {
-            if (account[1].equals("backup")){
-                emailsInDevice.add(account[0]);
-            }
-        }
-
-        for (String[] account : accounts) { // iterate over all accounts in our device (old version)
-            if (account[1].equals("backup")) { // just backup accounts
-                String accessToken = MainActivity.googleCloud.updateAccessToken(account[2]).getAccessToken();
-                JsonObject resultJson = Profile.readProfileMapContent(account[0], accessToken); // check json in backup accounts
-
-                if (!jsonBelongsToThisDeviceProfile(resultJson)){// this means no in other device
-                    //should handle device state
-                    JsonArray accountsInJson = resultJson.get("backupAccounts").getAsJsonArray();
-                    ArrayList<String> emailsInJson = new ArrayList<>();
-                    for (int i = 0; i < accountsInJson.size(); i++) {
-                        JsonObject backupAccount = accountsInJson.get(i).getAsJsonObject();
-                        String backupEmail = backupAccount.get("backupEmail").getAsString();
-                        System.out.println("backup email in json is : " + backupEmail);
-                        deleteAccountAndRelatedAssets(backupEmail);
-                    }
-//                    break;
-                }else{// this means yes in other device
-                    // should handle device state
-                    System.out.println("test : this means yes in other device (need no work)");
+        try{
+            List<String[]> accounts = getAccounts(new String[]{"userEmail", "type", "refreshToken"});
+            ArrayList<String> emailsInDevice = new ArrayList<>();
+            for (String[] account : accounts) {
+                if (account[1].equals("backup")){
+                    emailsInDevice.add(account[0]);
                 }
-
             }
+
+            for (String[] account : accounts) {
+                if (account[1].equals("backup")) {
+                    String accessToken = MainActivity.googleCloud.updateAccessToken(account[2]).getAccessToken();
+                    JsonObject resultJson = Profile.readProfileMapContent(account[0], accessToken);
+                    if (!jsonBelongsToThisDeviceProfile(resultJson)){
+                        JsonArray accountsInJson = resultJson.get("backupAccounts").getAsJsonArray();
+                        for (int i = 0; i < accountsInJson.size(); i++) {
+                            JsonObject backupAccount = accountsInJson.get(i).getAsJsonObject();
+                            String backupEmail = backupAccount.get("backupEmail").getAsString();
+                            System.out.println("backup email in json is : " + backupEmail);
+                            deleteAccountAndRelatedAssets(backupEmail);
+                        }
+//                    break;
+                    }
+
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("update database based on json failed: " + e.getLocalizedMessage());
         }
     }
 

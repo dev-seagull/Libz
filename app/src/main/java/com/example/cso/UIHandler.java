@@ -387,7 +387,8 @@ public class UIHandler {
 
     public static void displayLinkProfileDialog(ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
                                                 JsonObject resultJson,String userEmail){
-//        MainActivity.activity.runOnUiThread(() -> {
+        MainActivity.activity.runOnUiThread(() -> {
+            final boolean[] state = {false};
             try{
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
 
@@ -398,6 +399,7 @@ public class UIHandler {
 
                 builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
+                                state[0] = true;
                                 dialog.dismiss();
                                 LogHandler.saveLog("Start adding linked accounts thread", false);
                                 Thread addingLinkedAccountsThread = new Thread(() -> {
@@ -408,18 +410,11 @@ public class UIHandler {
                                     }
                                 });
                                 addingLinkedAccountsThread.start();
-                                try {
-                                    addingLinkedAccountsThread.join();
-                                }catch (InterruptedException e) {
-                                    LogHandler.saveLog("Interrupted adding linked accounts thread: " + e.getLocalizedMessage(), true);
-                                }finally {
-                                    LogHandler.saveLog("Finished adding linked accounts thread", false);
-                                }
-
                             }});
 
                 builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
+                                state[0] = false;
                                 dialog.dismiss();
                                 LogHandler.saveLog("Start detaching account thread", false);
                                 Thread detachAccountThread = new Thread(() -> {
@@ -430,13 +425,6 @@ public class UIHandler {
                                     }
                                 });
                                 detachAccountThread.start();
-                                try {
-                                    detachAccountThread.join();
-                                }catch (InterruptedException e) {
-                                    LogHandler.saveLog("Interrupted detaching account thread: " + e.getLocalizedMessage(), true);
-                                }finally {
-                                    LogHandler.saveLog("Finished detaching account thread", false);
-                                }
                             }});
 
                 builder.setCancelable(false);
@@ -446,7 +434,7 @@ public class UIHandler {
             }catch (Exception e){
                 LogHandler.saveLog("Failed to display link profile dialog: " + e.getLocalizedMessage(), true);
             }
-//        });
+        });
     }
 
     public static void reInitializeButtons(Activity activity,GoogleCloud googleCloud){

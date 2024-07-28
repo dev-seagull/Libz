@@ -136,9 +136,6 @@
                 if (Profile.hasJsonChanged()){
                     System.out.println("profile json changed");
                     dbHelper.updateDatabaseBasedOnJson();
-                }else{
-                    System.out.println("profile json not changed");
-                    dbHelper.updateDatabaseBasedOnJson();
                 }
             }).start();
 
@@ -184,7 +181,6 @@
                                         String accessToken = signInResult.getTokens().getAccessToken();
                                         JsonObject resultJson = Profile.readProfileMapContent(userEmail,accessToken);
 
-                                        // time of modify for json (save in share preferences because of unitness)
                                         SharedPreferencesHandler.setJsonModifiedTime(preferences);
 
                                         boolean isLinked = Profile.isLinkedToAccounts(resultJson,userEmail);

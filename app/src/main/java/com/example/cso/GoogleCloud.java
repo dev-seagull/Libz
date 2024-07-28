@@ -642,36 +642,6 @@
             }
         }
 
-        public boolean updateAccessTokens(){
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            Callable<Boolean> backgroundTokensTask = () -> {
-                boolean isUpdated = false;
-                try {
-                    List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
-                    for (String[] account_row: account_rows){
-                        String userEmail = account_row[0];
-                        String type = account_row[1];
-                        String refreshToken = account_row[2];
-                        GoogleCloud.Tokens tokens = updateAccessToken(refreshToken);
-                    }
-                    isUpdated = true;
-                } catch (Exception e) {
-                    LogHandler.saveLog("Getting access token failed: " + e.getLocalizedMessage(), true);
-                }
-                return isUpdated;
-            };
-            Future<Boolean> future = executor.submit(backgroundTokensTask);
-            boolean tokens_fromFuture = false;
-            try {
-                tokens_fromFuture = future.get();
-            }catch (Exception e){
-                LogHandler.saveLog("failed to get access token from the future: " + e.getLocalizedMessage(), true);
-            }finally {
-                executor.shutdown();
-            }
-            return tokens_fromFuture;
-        }
-
         private static boolean startInvalidateTokenThread(String buttonText){
             LogHandler.saveLog("Starting invalidate token Thread", false);
             final boolean[] isInvalidated = {false};
@@ -814,7 +784,7 @@
 
                 if(isBackedUp){
                     LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
-                    UIHandler.addAbackUpAccountToUI(activity,true,signInToBackUpLauncher,child,signInResult);
+                    UIHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,child,signInResult);
                     LogHandler.saveLog("Finished addAbackUpAccountToUI thread",false);
 
                     LogHandler.saveLog("Starting insertMediaItemsAfterSignInToBackUp thread",false);
