@@ -806,7 +806,7 @@
                     continue;
                 }
                 final GoogleCloud.signInResult signInResult =
-                        handleSignInLinkedBackupResult(userEmail,refreshToken);
+                        handleSignInLinkedBackupResult(linkedUserEmail,refreshToken);
 
                 LogHandler.saveLog("Starting backupJsonFile thread",false);
                 boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
