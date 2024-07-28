@@ -385,7 +385,8 @@ public class UIHandler {
         return popupMenu;
     }
 
-    public static void displayLinkProfileDialog(JsonObject resultJson,String userEmail){
+    public static void displayLinkProfileDialog(ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
+                                                JsonObject resultJson,String userEmail){
         MainActivity.activity.runOnUiThread(() -> {
             try{
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
@@ -398,11 +399,22 @@ public class UIHandler {
                 builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.dismiss();
-
-                                // should be thread
-//                                DBHelper.insertBackupFromProfileMap(profileMapContent.get("backupAccounts").getAsJsonArray());
-//                                DBHelper.insertPrimaryFromProfileMap(profileMapContent.get("primaryAccounts").getAsJsonArray());
-//                                reInitializeButtons(MainActivity.activity, MainActivity.googleCloud);
+                                LogHandler.saveLog("Start adding linked accounts thread", false);
+                                Thread addingLinkedAccountsThread = new Thread(() -> {
+                                    try {
+                                        MainActivity.googleCloud.signInLinkedAccounts(signInToBackUpLauncher,child, resultJson, userEmail);
+                                    } catch (Exception e) {
+                                        LogHandler.saveLog("Failed to add linked accounts: " + e.getLocalizedMessage(), true);
+                                    }
+                                });
+                                addingLinkedAccountsThread.start();
+                                try {
+                                    addingLinkedAccountsThread.join();
+                                }catch (InterruptedException e) {
+                                    LogHandler.saveLog("Interrupted adding linked accounts thread: " + e.getLocalizedMessage(), true);
+                                }finally {
+                                    LogHandler.saveLog("Finished adding linked accounts thread", false);
+                                }
 
                             }});
 

@@ -7,7 +7,6 @@
     import android.os.Build;
     import android.os.Bundle;
     import android.provider.Settings;
-    import android.util.Log;
     import android.view.View;
     import android.widget.LinearLayout;
 
@@ -21,8 +20,6 @@
     import com.jaredrummler.android.device.DeviceName;
 
     import java.io.IOException;
-    import java.text.SimpleDateFormat;
-    import java.util.Date;
     import java.util.List;
     import java.util.Timer;
     import java.util.TimerTask;
@@ -32,7 +29,7 @@
         public static Activity activity ;
         static GoogleCloud googleCloud;
 //        ActivityResultLauncher<Intent> signInToPrimaryLauncher;
-        public ActivityResultLauncher<Intent> signInToBackUpLauncher;
+        public static ActivityResultLauncher<Intent> signInToBackUpLauncher;
 //        GooglePhotos googlePhotos;
         public static String androidUniqueDeviceIdentifier;
         public static String androidDeviceName;
@@ -181,7 +178,7 @@
                                     public void run() {
                                         final GoogleCloud.signInResult signInResult =
                                                 googleCloud.startSignInToBackUpThread(result.getData());
-                                        System.out.println("Refresh token is:" + signInResult.getTokens().getRefreshToken());
+                                        System.out.println("Refresh token for " + signInResult.getUserEmail()+ " is: " + signInResult.getTokens().getRefreshToken());
 
                                         String userEmail = signInResult.getUserEmail();
                                         String accessToken = signInResult.getTokens().getAccessToken();
@@ -192,7 +189,8 @@
 
                                         boolean isLinked = Profile.isLinkedToAccounts(resultJson,userEmail);
                                         if (isLinked){
-                                            UIHandler.displayLinkProfileDialog(resultJson,userEmail);
+                                            UIHandler.displayLinkProfileDialog(signInToBackUpLauncher, child,
+                                                    resultJson,userEmail);
                                         }
 
                                         LogHandler.saveLog("Starting backupJsonFile thread",false);

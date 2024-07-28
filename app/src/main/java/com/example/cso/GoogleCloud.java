@@ -26,6 +26,8 @@
     import com.google.android.gms.common.api.Scope;
     import com.google.android.gms.tasks.Task;
     import com.google.api.services.drive.Drive;
+    import com.google.gson.JsonArray;
+    import com.google.gson.JsonObject;
 
     import org.json.JSONObject;
 
@@ -262,6 +264,41 @@
                 LogHandler.saveLog("Failed to join sign in to backUp thread : " + e.getLocalizedMessage(), true);
             }
             return signInResult[0];
+        }
+
+        public signInResult handleSignInLinkedBackupResult(String userEmail, String refreshToken){
+            boolean isInAccounts = false;
+            GoogleCloud.Tokens tokens = null;
+            Storage storage = null;
+            ArrayList<DriveAccountInfo.MediaItem> mediaItems  = null;
+            try{
+                String[] columnsList = new String[]{"userEmail","type"};
+                List<String[]> accounts_rows = DBHelper.getAccounts(columnsList);
+                for (String[] row : accounts_rows) {
+                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
+                        isInAccounts = true;
+                        break;
+                    }
+                }
+                if(!isInAccounts){
+                    String accessToken = updateAccessToken(refreshToken).getAccessToken();
+                    tokens = new Tokens(accessToken,refreshToken);
+                    storage = getStorage(tokens);
+                    mediaItems = GoogleDrive.getMediaItems(userEmail, true, tokens.getAccessToken());
+                    if (userEmail != null && tokens.getRefreshToken() != null && tokens.getAccessToken() != null) {
+                        return new signInResult(userEmail, true, false,
+                                tokens, storage, mediaItems);
+                    }
+                }else {
+                    runOnUiThread(() -> {
+                        CharSequence text = "This Account Already Exists !";
+                        Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
+                    });
+                }
+            }catch (Exception e){
+                LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
+            }
+            return new signInResult(userEmail, false, isInAccounts, tokens, storage, mediaItems);
         }
 
         public signInResult handleSignInToBackupResult(Intent data){
@@ -755,6 +792,43 @@
                     }
                 }
             }
+        }
+
+        public void signInLinkedAccounts(ActivityResultLauncher<Intent> signInToBackUpLauncher,
+                                         View[] child, JsonObject resultJson, String userEmail){
+            JsonArray backupAccounts =  resultJson.get("backupAccounts").getAsJsonArray();
+
+            for (int i = 0;i < backupAccounts.size();i++){
+                JsonObject backupAccount = backupAccounts.get(i).getAsJsonObject();
+                String linkedUserEmail = backupAccount.get("backupEmail").getAsString();
+                String refreshToken = backupAccount.get("refreshToken").getAsString();
+                if (linkedUserEmail.equals(userEmail)){
+                    continue;
+                }
+                final GoogleCloud.signInResult signInResult =
+                        handleSignInLinkedBackupResult(userEmail,refreshToken);
+
+                LogHandler.saveLog("Starting backupJsonFile thread",false);
+                boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
+                LogHandler.saveLog("Finished backupJsonFile thread",false);
+
+                if(isBackedUp){
+                    LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
+                    UIHandler.addAbackUpAccountToUI(activity,true,signInToBackUpLauncher,child,signInResult);
+                    LogHandler.saveLog("Finished addAbackUpAccountToUI thread",false);
+
+                    LogHandler.saveLog("Starting insertMediaItemsAfterSignInToBackUp thread",false);
+                    DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);
+                    LogHandler.saveLog("Finished insertMediaItemsAfterSignInToBackUp thread",false);
+
+                    LogHandler.saveLog("Starting Drive.startThreads thread",false);
+                    GoogleDrive.startThreads();
+                    LogHandler.saveLog("Finished Drive.startThreads thread",false);
+                }
+            }
+
+
+
         }
 
     }
