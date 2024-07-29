@@ -425,23 +425,20 @@ public class Profile {
     }
 
     public static void detachAccount(JsonObject profileMapContent,String userEmail){
-        Thread detachLinkedAccountsProfileJsonThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                JsonArray backupAccounts =  profileMapContent.get("backupAccounts").getAsJsonArray();
-                JsonObject editedProfileContent = editProfileJson(profileMapContent,userEmail);
+        Thread detachLinkedAccountsProfileJsonThread = new Thread(() -> {
+            JsonArray backupAccounts =  profileMapContent.get("backupAccounts").getAsJsonArray();
+            JsonObject editedProfileContent = editProfileJson(profileMapContent,userEmail);
 
-                for (int i = 0;i < backupAccounts.size();i++){
-                    JsonObject backupAccount = backupAccounts.get(i).getAsJsonObject();
-                    String linkedUserEmail = backupAccount.get("backupEmail").getAsString();
-                    String refreshToken = backupAccount.get("refreshToken").getAsString();
-                    if (linkedUserEmail.equals(userEmail)){
-                        continue;
-                    }
-                    LogHandler.saveLog("Starting to detach account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail,false);
-                    backUpProfileMapToLinkedAccounts(editedProfileContent,refreshToken,userEmail);
-                    LogHandler.saveLog("Finished detaching account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail,false);
+            for (int i = 0;i < backupAccounts.size();i++){
+                JsonObject backupAccount = backupAccounts.get(i).getAsJsonObject();
+                String linkedUserEmail = backupAccount.get("backupEmail").getAsString();
+                String refreshToken = backupAccount.get("refreshToken").getAsString();
+                if (linkedUserEmail.equals(userEmail)){
+                    continue;
                 }
+                LogHandler.saveLog("Starting to detach account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail,false);
+                backUpProfileMapToLinkedAccounts(editedProfileContent,refreshToken,userEmail);
+                LogHandler.saveLog("Finished detaching account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail,false);
             }
         });
 

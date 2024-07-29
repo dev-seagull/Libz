@@ -52,8 +52,13 @@ public class LogHandler extends Application {
     private static boolean createNewLogFile(){
         if (!logFile.exists()){
             try{
-                logFile.createNewFile();
-                return logFile.exists();
+                boolean resultOfCreation = logFile.createNewFile();
+                if (resultOfCreation) {
+                    return logFile.exists();
+                }else {
+                    boolean resultOfDeletion = logFile.delete();
+                    return createNewLogFile();
+                }
             }catch (SecurityException e){
                 System.out.println("error in creating log file (security)" + e.getLocalizedMessage());
             }catch (Exception e){
@@ -62,8 +67,13 @@ public class LogHandler extends Application {
         }else{
             try{
                 performActionOnLogFile();
-                logFile.createNewFile();
-                return logFile.exists();
+                boolean resultOfCreation = logFile.createNewFile();
+                if (resultOfCreation) {
+                    return logFile.exists();
+                }else {
+                    boolean resultOfDeletion = logFile.delete();
+                    return createNewLogFile();
+                }
             }catch (SecurityException e){
                 System.out.println("error in creating log file (security)" + e.getLocalizedMessage());
             }catch (Exception e){
@@ -119,6 +129,7 @@ public class LogHandler extends Application {
             List<String> existingLines = readExistingLogLines();
             String logEntry = createLogEntry(text,isError);
             if(logEntry != null){
+                assert existingLines != null;
                 existingLines.add(logEntry);
                 writeLogLines(existingLines);
             }else{

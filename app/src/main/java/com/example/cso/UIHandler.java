@@ -11,6 +11,7 @@ import android.os.Build;
 import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.style.AbsoluteSizeSpan;
 import android.text.style.AlignmentSpan;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -390,7 +391,6 @@ public class UIHandler {
         MainActivity.activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                final boolean[] state = {false};
                 try{
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
 
@@ -401,7 +401,6 @@ public class UIHandler {
 
                     builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            state[0] = true;
                             dialog.dismiss();
                             LogHandler.saveLog("Start adding linked accounts thread", false);
                             Thread addingLinkedAccountsThread = new Thread(new Runnable() {
@@ -420,7 +419,6 @@ public class UIHandler {
 
                     builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            state[0] = false;
                             dialog.dismiss();
                             LogHandler.saveLog("Start detaching account thread", false);
                             Thread detachAccountThread = new Thread(() -> {
@@ -438,10 +436,11 @@ public class UIHandler {
                     AlertDialog alertDialog = builder.create();
                     alertDialog.show();
                 }catch (Exception e){
-                    LogHandler.saveLog("Failed to display link profile dialog: " + e.getLocalizedMessage(), true);
+                    LogHandler.saveLog("Failed to display link profile dialog : " + e.getLocalizedMessage(), true);
                 }
             }
         });
+        System.out.println("End of displayLinkProfileDialog method ");
     }
 
     public static void reInitializeButtons(Activity activity,GoogleCloud googleCloud){
