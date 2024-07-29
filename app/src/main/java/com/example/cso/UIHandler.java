@@ -8,6 +8,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.os.Looper;
 import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -387,60 +388,68 @@ public class UIHandler {
     }
 
     public static void displayLinkProfileDialog(ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
-                                                JsonObject resultJson,String userEmail){
-        MainActivity.activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
-
-                    builder.setTitle("Link Profile");
-
-                    builder.setMessage("We found linked accounts to " + userEmail + ". " +
-                            "Do you want to add linked accounts to current profile ?");
-
-                    builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            dialog.dismiss();
-                            LogHandler.saveLog("Start adding linked accounts thread", false);
-                            Thread addingLinkedAccountsThread = new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        MainActivity.googleCloud.signInLinkedAccounts(signInToBackUpLauncher,child, resultJson, userEmail);
-                                    } catch (Exception e) {
-                                        LogHandler.saveLog("Failed to add linked accounts: " + e.getLocalizedMessage(), true);
-                                    }
-                                }
-                            });
-                            addingLinkedAccountsThread.start();
-
-                        }});
-
-                    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            dialog.dismiss();
-                            LogHandler.saveLog("Start detaching account thread", false);
-                            Thread detachAccountThread = new Thread(() -> {
-                                try {
-                                    Profile.detachAccount(resultJson,userEmail);
-                                } catch (Exception e) {
-                                    LogHandler.saveLog("Failed to detach account: " + e.getLocalizedMessage(), true);
-                                }
-                            });
-                            detachAccountThread.start();
-                        }});
-
-                    builder.setCancelable(false);
-
-                    AlertDialog alertDialog = builder.create();
-                    alertDialog.show();
-                }catch (Exception e){
-                    LogHandler.saveLog("Failed to display link profile dialog : " + e.getLocalizedMessage(), true);
+                                                JsonObject resultJson,String userEmail, GoogleCloud.signInResult signInResult){
+        MainActivity.activity.runOnUiThread(() -> {
+            try{
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
+                builder.setMessage(userEmail + " belongs to another profile.We can add the " +
+                        "corresponding profile which includes linked accounts to " + userEmail + "." +
+                        "If you like to add " + userEmail + " alone, you have to sign this out from the previous profile.");
+                builder.setTitle("Link Profile");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    System.out.println("is display1 in main thread: "  + Looper.getMainLooper().isCurrentThread());
                 }
+
+                builder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            System.out.println("is display2 in main thread: "  + Looper.getMainLooper().isCurrentThread());
+                        }
+                        LogHandler.saveLog("Start adding linked accounts thread", false);
+                        Thread addingLinkedAccountsThread = new Thread(() -> {
+                            try {
+                                MainActivity.googleCloud.signInLinkedAccounts(signInToBackUpLauncher,child, resultJson, userEmail);
+                                LogHandler.saveLog("Starting backupJsonFile thread",false);
+                                boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
+                                LogHandler.saveLog("Finished backupJsonFile thread",false);
+                                if(isBackedUp){
+                                    LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
+                                    UIHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,child,signInResult);
+                                    LogHandler.saveLog("Finished addAbackUpAccountToUI thread",false);
+
+                                    LogHandler.saveLog("Starting insertMediaItemsAfterSignInToBackUp thread",false);
+                                    DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);
+                                    LogHandler.saveLog("Finished insertMediaItemsAfterSignInToBackUp thread",false);
+
+                                    LogHandler.saveLog("Starting Drive.startThreads thread",false);
+                                    GoogleDrive.startThreads();
+                                    LogHandler.saveLog("Finished Drive.startThreads thread",false);
+                                }
+
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    System.out.println("is display4 in main thread: "  + Looper.getMainLooper().isCurrentThread());
+                                }
+                            } catch (Exception e) {
+                                LogHandler.saveLog("Failed to add linked accounts: " + e.getLocalizedMessage(), true);
+                            }
+                        });
+                        addingLinkedAccountsThread.start();
+                        dialog.dismiss();
+                    }});
+
+                builder.setNegativeButton("Don't add", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.dismiss();
+                    }});
+
+                builder.setCancelable(false);
+
+                AlertDialog alertDialog = builder.create();
+                alertDialog.show();
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to display link profile dialog : " + e.getLocalizedMessage(), true);
             }
         });
-        System.out.println("End of displayLinkProfileDialog method ");
     }
 
     public static void reInitializeButtons(Activity activity,GoogleCloud googleCloud){

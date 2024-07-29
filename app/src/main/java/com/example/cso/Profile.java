@@ -1,6 +1,8 @@
 package com.example.cso;
 
 import android.content.Intent;
+import android.os.Build;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -16,7 +18,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.io.ByteArrayOutputStream;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,7 +26,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 public class Profile {
     public static JsonObject createProfileMapContent(){
@@ -100,36 +100,33 @@ public class Profile {
 
     public static JsonObject readProfileMapContent(String userEmail, String accessToken) {
         JsonObject[] resultJson = {null};
-        Thread readProdileMapContentThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    Drive service = GoogleDrive.initializeDrive(accessToken);
-                    List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(service,userEmail, accessToken);
-                    for (com.google.api.services.drive.model.File existingFile : existingFiles) {
-                        for (int i = 0; i < 3; i++) {
-                            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                            service.files().get(existingFile.getId())
-                                    .executeMediaAndDownloadTo(outputStream);
+        Thread readProdileMapContentThread = new Thread(() -> {
+            try{
+                Drive service = GoogleDrive.initializeDrive(accessToken);
+                List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(service,userEmail, accessToken);
+                for (com.google.api.services.drive.model.File existingFile : existingFiles) {
+                    for (int i = 0; i < 3; i++) {
+                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                        service.files().get(existingFile.getId())
+                                .executeMediaAndDownloadTo(outputStream);
 
-                            String jsonString = outputStream.toString();
-                            resultJson[0] = JsonParser.parseString(jsonString).getAsJsonObject();
+                        String jsonString = outputStream.toString();
+                        resultJson[0] = JsonParser.parseString(jsonString).getAsJsonObject();
 
-                            LogHandler.saveLog("resultJson is: " + resultJson[0].toString() + " [Thread: " + Thread.currentThread().getName() + "]", false);
+                        LogHandler.saveLog("resultJson is: " + resultJson[0].toString() + " [Thread: " + Thread.currentThread().getName() + "]", false);
 
-                            outputStream.close();
-                        }
+                        outputStream.close();
                     }
-                }catch (Exception e){
-                    LogHandler.saveLog("Failed to read profile map content : " + e.getLocalizedMessage(), true);
                 }
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to read profile map content : " + e.getLocalizedMessage(), true);
             }
         });
         readProdileMapContentThread.start();
-        try {
+        try{
             readProdileMapContentThread.join();
-        } catch (InterruptedException e) {
-            LogHandler.saveLog("Interrupted while waiting for read profile map content thread to finish: " + e.getLocalizedMessage());
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to join readProdileMapContentThread: " + e.getLocalizedMessage(), true);
         }
         return resultJson[0];
     }
@@ -189,47 +186,57 @@ public class Profile {
         return existingFiles;
     }
 
-    private static boolean isNewJsonProfile(JsonObject resultJson, String userEmail){
-        try{
+    public static boolean isLinkedToAccounts(JsonObject resultJson, String userEmail){
+        final boolean[] isLinkedToAccounts = {false};
+        Thread isLinkedToAccountsThread = new Thread(() -> {
+            try{
+                if(resultJson != null){
+                    List<String[]> accountRows = DBHelper.getAccounts(new String[]{"userEmail", "type"});
+                    List<String> backupAccountsInDevice = new ArrayList<>();
+                    for (String[] accountRow : accountRows) {
+                        if (accountRow[1].equals("backup")){
+                            backupAccountsInDevice.add(accountRow[0]);
+                        }
 
-            List<String[]> accountRows = DBHelper.getAccounts(new String[]{"userEmail", "type"});
-            List<String> backupAccountsInDevice = new ArrayList<>();
-            for (String[] accountRow : accountRows) {
-                if (accountRow[1].equals("backup")){
-                    backupAccountsInDevice.add(accountRow[0]);
-                }
+                    }
+                    backupAccountsInDevice.add(userEmail);
+                    System.out.println("backup accounts in device: " + backupAccountsInDevice);
 
-            }
-            backupAccountsInDevice.add(userEmail);
-            System.out.println("backup accounts in device: " + backupAccountsInDevice);
+                    JsonArray backupAccountsArray = resultJson.getAsJsonArray("backupAccounts");
+                    System.out.println("backup accounts in json: " + backupAccountsArray);
+                    for (JsonElement element : backupAccountsArray) {
+                        JsonObject accountObject = element.getAsJsonObject();
+                        String backupEmail = accountObject.get("backupEmail").getAsString();
+                        if (!backupAccountsInDevice.contains(backupEmail)) {
+                            System.out.println("A new email found:" + backupEmail);
+                            isLinkedToAccounts[0] = true;
+                        }
+                    }
 
-            JsonArray backupAccountsArray = resultJson.getAsJsonArray("backupAccounts");
-            System.out.println("backup accounts in json: " + backupAccountsArray);
-            for (JsonElement element : backupAccountsArray) {
-                JsonObject accountObject = element.getAsJsonObject();
-                String backupEmail = accountObject.get("backupEmail").getAsString();
-                if (!backupAccountsInDevice.contains(backupEmail)) {
-                    System.out.println("A new email found:" + backupEmail);
-                    return true;
-                }
-            }
-
-            if (resultJson.has("deviceInfo")) {
-                JsonArray deviceInfoArray = resultJson.getAsJsonArray("deviceInfo");
-                for (JsonElement element : deviceInfoArray) {
-                    JsonObject deviceInfoObject = element.getAsJsonObject();
-                    String deviceIdentifier = deviceInfoObject.get("deviceId").getAsString();
-                    if (!MainActivity.androidUniqueDeviceIdentifier.equals(deviceIdentifier)) {
-                        System.out.println("A new device found:" + deviceIdentifier);
-                        return true;
+                    if (resultJson.has("deviceInfo")) {
+                        JsonArray deviceInfoArray = resultJson.getAsJsonArray("deviceInfo");
+                        for (JsonElement element : deviceInfoArray) {
+                            JsonObject deviceInfoObject = element.getAsJsonObject();
+                            String deviceIdentifier = deviceInfoObject.get("deviceId").getAsString();
+                            if (!MainActivity.androidUniqueDeviceIdentifier.equals(deviceIdentifier)) {
+                                System.out.println("A new device found:" + deviceIdentifier);
+                                isLinkedToAccounts[0] = true;
+                            }
+                        }
                     }
                 }
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to check if it's a new profile: " + e.getLocalizedMessage(), true);
             }
-
+        });
+        isLinkedToAccountsThread.start();
+        try {
+            isLinkedToAccountsThread.join();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to check if it's a new profile: " + e.getLocalizedMessage(), true);
+            LogHandler.saveLog("Failed to join sign in to isLinkedToAccounts thread : " + e.getLocalizedMessage(), true);
         }
-        return false;
+        LogHandler.saveLog("isLinked is: " + isLinkedToAccounts[0], false);
+        return isLinkedToAccounts[0];
     }
 
     public static boolean deleteProfileJson(String userEmail) {
@@ -528,30 +535,6 @@ public class Profile {
             System.out.println(e.getLocalizedMessage());
         }
         return isBackedUpFuture;
-    }
-
-    public static boolean isLinkedToAccounts(JsonObject resultJson, String userEmail){
-        boolean[] isLinked = {false};
-        Thread isLinkedToAccountsThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    if(resultJson != null){
-                        isLinked[0] = isNewJsonProfile(resultJson, userEmail);
-                        LogHandler.saveLog("isLinked is: " + isLinked[0], false);
-                    }
-                }catch (Exception e){
-                    LogHandler.saveLog("Failed to join and run isLinkedToAccounts Thread : " + e.getLocalizedMessage(), true);
-                }
-            }
-        });
-        isLinkedToAccountsThread.start();
-        try {
-            isLinkedToAccountsThread.join();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to join sign in to isLinkedToAccounts thread : " + e.getLocalizedMessage(), true);
-        }
-        return isLinked[0];
     }
 
     public static boolean hasJsonChanged(){

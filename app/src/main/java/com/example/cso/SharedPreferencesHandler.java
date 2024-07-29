@@ -1,6 +1,8 @@
 package com.example.cso;
 
 import android.content.SharedPreferences;
+import android.os.Build;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -35,13 +37,21 @@ public class SharedPreferencesHandler {
     }
 
     public static void setJsonModifiedTime(SharedPreferences sharedPreferences) {
-        Date now = new Date();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
-        String currentTimestamp = dateFormat.format(now);
+        Thread setJsonModifiedTimeThread = new Thread(()-> {
+            Date now = new Date();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+            String currentTimestamp = dateFormat.format(now);
 
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("jsonModifiedTime", currentTimestamp);
-        editor.apply();
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString("jsonModifiedTime", currentTimestamp);
+            editor.apply();
+        });
+        setJsonModifiedTimeThread.start();
+        try{
+            setJsonModifiedTimeThread.join();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to join setJsonModifiedTimeThread: " + e.getLocalizedMessage(), true);
+        }
     }
 
     public static Date getJsonModifiedTime(SharedPreferences sharedPreferences) {

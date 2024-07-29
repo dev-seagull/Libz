@@ -4,6 +4,8 @@
     import android.content.Intent;
     import android.graphics.Color;
     import android.graphics.drawable.Drawable;
+    import android.os.Build;
+    import android.os.Looper;
     import android.util.DisplayMetrics;
     import android.view.Gravity;
     import android.view.MenuItem;
@@ -245,26 +247,6 @@
             return new signInResult(userEmail, isHandled[0], isInAccounts, tokens, storage, new ArrayList<>());
         }
 
-        public signInResult startSignInToBackUpThread(Intent data){
-            final GoogleCloud.signInResult[] signInResult = new signInResult[1];
-            Thread signInResultThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try{
-                        signInResult[0] = handleSignInToBackupResult(data);
-                    }catch (Exception e){
-                        LogHandler.saveLog("Failed to join and run sign in to backUp thread : " + e.getLocalizedMessage(), true);
-                    }
-                }
-            });
-            signInResultThread.start();
-            try {
-                signInResultThread.join();
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to join sign in to backUp thread : " + e.getLocalizedMessage(), true);
-            }
-            return signInResult[0];
-        }
 
         public signInResult handleSignInLinkedBackupResult(String userEmail, String refreshToken){
             boolean isInAccounts = false;
@@ -302,48 +284,50 @@
         }
 
         public signInResult handleSignInToBackupResult(Intent data){
-            String userEmail = null;
-            boolean isInAccounts = false;
-            GoogleCloud.Tokens tokens = null;
-            Storage storage = null;
-            ArrayList<DriveAccountInfo.MediaItem> mediaItems  = null;
+            final String[] userEmail = {null};
+            final boolean[] isInAccounts = {false};
+            final Tokens[] tokens = {null};
+            final Storage[] storage = {null};
+            Thread handleSignInToBackupResultThread = new Thread(() -> {
+                try{
+                    Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
+                    GoogleSignInAccount account = googleSignInTask.getResult(ApiException.class);
+                    userEmail[0] = account.getEmail();
+
+                    if (userEmail[0] != null && userEmail[0].toLowerCase().endsWith("@gmail.com")) {
+                        userEmail[0] = userEmail[0].replace("@gmail.com", "");
+                    }
+
+                    String[] columnsList = new String[]{"userEmail","type"};
+                    List<String[]> accounts_rows = DBHelper.getAccounts(columnsList);
+                    for (String[] row : accounts_rows) {
+                        if (row.length > 0 && row[0] != null && row[0].equals(userEmail[0])) {
+                            isInAccounts[0] = true;
+                            break;
+                        }
+                    }
+
+                    if(!isInAccounts[0]){
+                        String authCode = account.getServerAuthCode();
+                        tokens[0] = getTokens(authCode);
+                        storage[0] = getStorage(tokens[0]);
+                    }else {
+                        runOnUiThread(() -> {
+                            CharSequence text = "This Account Already Exists !";
+                            Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                }catch (Exception e){
+                    LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
+                }
+            });
+            handleSignInToBackupResultThread.start();
             try{
-                Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
-                GoogleSignInAccount account = googleSignInTask.getResult(ApiException.class);
-                userEmail = account.getEmail();
-
-                if (userEmail != null && userEmail.toLowerCase().endsWith("@gmail.com")) {
-                    userEmail = userEmail.replace("@gmail.com", "");
-                }
-
-                String[] columnsList = new String[]{"userEmail","type"};
-                List<String[]> accounts_rows = DBHelper.getAccounts(columnsList);
-                for (String[] row : accounts_rows) {
-                    if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
-                        isInAccounts = true;
-                        break;
-                    }
-                }
-
-                if(!isInAccounts){
-                    String authCode = account.getServerAuthCode();
-                    tokens = getTokens(authCode);
-                    storage = getStorage(tokens);
-                    mediaItems = GoogleDrive.getMediaItems(userEmail, true, tokens.getAccessToken());
-                    if (userEmail != null && tokens.getRefreshToken() != null && tokens.getAccessToken() != null) {
-                        return new signInResult(userEmail, true, false,
-                                tokens, storage, mediaItems);
-                    }
-                }else {
-                    runOnUiThread(() -> {
-                        CharSequence text = "This Account Already Exists !";
-                        Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
-                    });
-                }
+                handleSignInToBackupResultThread.join();
             }catch (Exception e){
-                LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
+                LogHandler.saveLog("Failed to join   handleSignInToBackupResultThread.start(): " + e.getLocalizedMessage(), true );
             }
-            return new signInResult(userEmail, false, isInAccounts, tokens, storage, mediaItems);
+            return new signInResult(userEmail[0], false, isInAccounts[0], tokens[0], storage[0], null);
         }
 
         public Button createPrimaryLoginButton(LinearLayout linearLayout){
@@ -751,23 +735,29 @@
         }
 
         public static void startSignOutThreads(String buttonText, MenuItem item, Button button){
-            boolean isProfileJsonDeleted = startDeleteProfileJsonThread(buttonText);
-            if(isProfileJsonDeleted){
-                boolean isDatabaseDeleted = startDeleteDatabaseThread(buttonText);
-                boolean isInvalidated = startInvalidateTokenThread(buttonText);
-                if(isInvalidated){
-                    boolean isBackedUp = startProfileJsonBackUpAfterSignOutThread(buttonText);
-                    if(isBackedUp){
-                        UIHandler.startUiThreadForSignOut(item,button,buttonText,isBackedUp);
+            Thread startSignOutThreads = new Thread(() -> {
+                boolean isProfileJsonDeleted = startDeleteProfileJsonThread(buttonText);
+                if(isProfileJsonDeleted){
+                    boolean isDatabaseDeleted = startDeleteDatabaseThread(buttonText);
+                    boolean isInvalidated = startInvalidateTokenThread(buttonText);
+                    if(isInvalidated){
+                        boolean isBackedUp = startProfileJsonBackUpAfterSignOutThread(buttonText);
+                        if(isBackedUp){
+                            UIHandler.startUiThreadForSignOut(item,button,buttonText,isBackedUp);
+                        }
                     }
                 }
-            }
+            });
+            startSignOutThreads.start();
         }
 
         public void signInLinkedAccounts(ActivityResultLauncher<Intent> signInToBackUpLauncher,
                                          View[] child, JsonObject resultJson, String userEmail){
             Thread signInLinkedAccountsThread =  new Thread(() -> {
                 try{
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        System.out.println("is display3 in main thread: "  + Looper.getMainLooper().isCurrentThread());
+                    }
                     JsonArray backupAccounts =  resultJson.get("backupAccounts").getAsJsonArray();
 
                     for (int i = 0;i < backupAccounts.size();i++){
