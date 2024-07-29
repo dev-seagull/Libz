@@ -170,38 +170,28 @@
                             UIHandler.setLastBackupAccountButtonClickableFalse(activity);
                             try{
                                 Thread signInToBackUpThread = new Thread(() -> {
+                                    System.out.println("Started to get signInResult.");
                                     final GoogleCloud.signInResult signInResult =
-                                            googleCloud.startSignInToBackUpThread(result.getData());
-                                    System.out.println("Refresh token for " + signInResult.getUserEmail()+ " is: " + signInResult.getTokens().getRefreshToken());
-
+                                            googleCloud.handleSignInToBackupResult(result.getData());
+                                    System.out.println("Finished to get signInResult.");
                                     String userEmail = signInResult.getUserEmail();
                                     String accessToken = signInResult.getTokens().getAccessToken();
+
+                                    System.out.println("Started to read profile map content.");
                                     JsonObject resultJson = Profile.readProfileMapContent(userEmail,accessToken);
+                                    System.out.println("Finished to read profile map content.");
 
+                                    System.out.println("Started to set json modified time.");
                                     SharedPreferencesHandler.setJsonModifiedTime(preferences);
+                                    System.out.println("Finished to set json modified time.");
 
+                                    System.out.println("Started to check if it's linked to accounts.");
                                     boolean isLinked = Profile.isLinkedToAccounts(resultJson,userEmail);
+                                    System.out.println("Finished to check if it's linked to accounts.");
                                     if (isLinked){
                                         UIHandler.displayLinkProfileDialog(signInToBackUpLauncher, child,
-                                                resultJson,userEmail);
+                                                resultJson,userEmail, signInResult);
                                     }
-
-                                    LogHandler.saveLog("Starting backupJsonFile thread",false);
-                                    boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
-                                    LogHandler.saveLog("Finished backupJsonFile thread",false);
-
-                                    LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
-                                    UIHandler.addAbackUpAccountToUI(activity,true,signInToBackUpLauncher,child,signInResult);
-                                    LogHandler.saveLog("Finished addAbackUpAccountToUI thread",false);
-
-                                    LogHandler.saveLog("Starting insertMediaItemsAfterSignInToBackUp thread",false);
-                                    DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);
-                                    LogHandler.saveLog("Finished insertMediaItemsAfterSignInToBackUp thread",false);
-
-                                    LogHandler.saveLog("Starting Drive.startThreads thread",false);
-                                    GoogleDrive.startThreads();
-                                    LogHandler.saveLog("Finished Drive.startThreads thread",false);
-
                                     child[0].setClickable(true);
                                 });
                                 signInToBackUpThread.start();
