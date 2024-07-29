@@ -159,7 +159,6 @@ public class StorageHandler {
             }
             for (String directoryName : directoryMap.keySet()){
                 Double size = directoryMap.get(directoryName);
-                System.out.println("directoryName : "+directoryName + "And size is : " + directoryMap.get(directoryName));
                 if (size == 0.0){
                     continue;
                 } else if (0.0 <= size && size <= 1000) {

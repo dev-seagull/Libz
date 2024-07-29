@@ -37,7 +37,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public static SQLiteDatabase dbReadable;
     public static SQLiteDatabase dbWritable;
     private static final String ENCRYPTION_KEY = MainActivity.activity.getResources().getString(R.string.ENCRYPTION_KEY);
-    Support support = new Support();
+//    Support support = new Support();
 
 
     public DBHelper(Context context, String databaseName) {
@@ -666,10 +666,9 @@ public class DBHelper extends SQLiteOpenHelper {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-
-                        for(int i=0; i<500;i++){
-                            support.sendQueryChange(finalSqlQuery,values);
-                        }
+//                        for(int i=0; i<500;i++){
+//                            support.sendQueryChange(finalSqlQuery,values);
+//                        }
                     }
                 }).start();
 

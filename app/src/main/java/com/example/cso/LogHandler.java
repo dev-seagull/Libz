@@ -111,10 +111,10 @@ public class LogHandler extends Application {
 
     public static void performActionOnLogFile() {
         if (logFileContainsError()) {
-            boolean isSent = Support.sendEmail("Log file has errors", logFile);
-            if (isSent){
+//            boolean isSent = Support.sendEmail("Log file has errors", logFile);
+//            if (isSent){
                 logFile.delete();
-            }
+//            }
         }else{
             logFile.delete();
         }
