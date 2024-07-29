@@ -141,5 +141,7 @@ public class Upgrade {
         MainActivity.activity.runOnUiThread(() -> {
             Toast.makeText(MainActivity.activity, "You are upgraded to last version (0.0.25)", Toast.LENGTH_SHORT).show();
         });
-        Support.sendEmail("Some one installed last version of apk, Device ID : " + MainActivity.androidUniqueDeviceIdentifier);}
-}
+//        Support.sendEmail("Some one installed last version of apk, Device ID : " + MainActivity.androidUniqueDeviceIdentifier);
+        }
+    }
+
