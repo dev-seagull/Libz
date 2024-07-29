@@ -355,7 +355,7 @@ public class UIHandler {
                             parentView.removeView(button);
                         } catch (Exception e) {
                             LogHandler.saveLog(
-                                    "Failed to handle ui after signout : "
+                                    "Failed to handle ui after sign out : "
                                             + e.getLocalizedMessage(), true
                             );
                         }
@@ -387,52 +387,59 @@ public class UIHandler {
 
     public static void displayLinkProfileDialog(ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
                                                 JsonObject resultJson,String userEmail){
-        MainActivity.activity.runOnUiThread(() -> {
-            final boolean[] state = {false};
-            try{
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
+        MainActivity.activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                final boolean[] state = {false};
+                try{
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
 
-                builder.setTitle("Link Profile");
+                    builder.setTitle("Link Profile");
 
-                builder.setMessage("We found linked accounts to " + userEmail + ". " +
-                                "Do you want to add linked accounts to current profile ?");
+                    builder.setMessage("We found linked accounts to " + userEmail + ". " +
+                            "Do you want to add linked accounts to current profile ?");
 
-                builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                state[0] = true;
-                                dialog.dismiss();
-                                LogHandler.saveLog("Start adding linked accounts thread", false);
-                                Thread addingLinkedAccountsThread = new Thread(() -> {
+                    builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            state[0] = true;
+                            dialog.dismiss();
+                            LogHandler.saveLog("Start adding linked accounts thread", false);
+                            Thread addingLinkedAccountsThread = new Thread(new Runnable() {
+                                @Override
+                                public void run() {
                                     try {
                                         MainActivity.googleCloud.signInLinkedAccounts(signInToBackUpLauncher,child, resultJson, userEmail);
                                     } catch (Exception e) {
                                         LogHandler.saveLog("Failed to add linked accounts: " + e.getLocalizedMessage(), true);
                                     }
-                                });
-                                addingLinkedAccountsThread.start();
-                            }});
+                                }
+                            });
+                            addingLinkedAccountsThread.start();
 
-                builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                state[0] = false;
-                                dialog.dismiss();
-                                LogHandler.saveLog("Start detaching account thread", false);
-                                Thread detachAccountThread = new Thread(() -> {
-                                    try {
-                                        Profile.detachAccount(resultJson,userEmail);
-                                    } catch (Exception e) {
-                                        LogHandler.saveLog("Failed to detach account: " + e.getLocalizedMessage(), true);
-                                    }
-                                });
-                                detachAccountThread.start();
-                            }});
+                        }});
 
-                builder.setCancelable(false);
+                    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            state[0] = false;
+                            dialog.dismiss();
+                            LogHandler.saveLog("Start detaching account thread", false);
+                            Thread detachAccountThread = new Thread(() -> {
+                                try {
+                                    Profile.detachAccount(resultJson,userEmail);
+                                } catch (Exception e) {
+                                    LogHandler.saveLog("Failed to detach account: " + e.getLocalizedMessage(), true);
+                                }
+                            });
+                            detachAccountThread.start();
+                        }});
 
-                AlertDialog alertDialog = builder.create();
-                alertDialog.show();
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to display link profile dialog: " + e.getLocalizedMessage(), true);
+                    builder.setCancelable(false);
+
+                    AlertDialog alertDialog = builder.create();
+                    alertDialog.show();
+                }catch (Exception e){
+                    LogHandler.saveLog("Failed to display link profile dialog: " + e.getLocalizedMessage(), true);
+                }
             }
         });
     }
