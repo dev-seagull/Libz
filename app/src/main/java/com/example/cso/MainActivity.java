@@ -168,38 +168,48 @@
                             View[] child = {backupButtonsLinearLayout.getChildAt(
                                     backupButtonsLinearLayout.getChildCount() - 1)};
                             UIHandler.setLastBackupAccountButtonClickableFalse(activity);
-                            Thread signInToBackUpThread = new Thread(() -> {
-                                try{
-                                    System.out.println("Started to get signInResult.");
+                            try{
+                                Thread signInToBackUpThread = new Thread(() -> {
                                     final GoogleCloud.signInResult signInResult =
-                                            googleCloud.handleSignInToBackupResult(result.getData());
-                                    System.out.println("Finished to get signInResult.");
+                                            googleCloud.startSignInToBackUpThread(result.getData());
+                                    System.out.println("Refresh token for " + signInResult.getUserEmail()+ " is: " + signInResult.getTokens().getRefreshToken());
+
                                     String userEmail = signInResult.getUserEmail();
                                     String accessToken = signInResult.getTokens().getAccessToken();
-
-                                    System.out.println("Started to read profile map content.");
                                     JsonObject resultJson = Profile.readProfileMapContent(userEmail,accessToken);
-                                    System.out.println("Finished to read profile map content.");
 
-                                    System.out.println("Started to set json modified time.");
                                     SharedPreferencesHandler.setJsonModifiedTime(preferences);
-                                    System.out.println("Finished to set json modified time.");
 
-                                    System.out.println("Started to check if it's linked to accounts.");
                                     boolean isLinked = Profile.isLinkedToAccounts(resultJson,userEmail);
-                                    System.out.println("Finished to check if it's linked to accounts.");
                                     if (isLinked){
                                         UIHandler.displayLinkProfileDialog(signInToBackUpLauncher, child,
-                                                resultJson,userEmail, signInResult);
+                                                resultJson,userEmail);
                                     }
+
+                                    LogHandler.saveLog("Starting backupJsonFile thread",false);
+                                    boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
+                                    LogHandler.saveLog("Finished backupJsonFile thread",false);
+
+                                    LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
+                                    UIHandler.addAbackUpAccountToUI(activity,true,signInToBackUpLauncher,child,signInResult);
+                                    LogHandler.saveLog("Finished addAbackUpAccountToUI thread",false);
+
+                                    LogHandler.saveLog("Starting insertMediaItemsAfterSignInToBackUp thread",false);
+                                    DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);
+                                    LogHandler.saveLog("Finished insertMediaItemsAfterSignInToBackUp thread",false);
+
+                                    LogHandler.saveLog("Starting Drive.startThreads thread",false);
+                                    GoogleDrive.startThreads();
+                                    LogHandler.saveLog("Finished Drive.startThreads thread",false);
+
                                     child[0].setClickable(true);
-                                }catch (Exception e){
-                                    LogHandler.saveLog("Failed to sign in to backup : "  + e.getLocalizedMessage());
-                                }finally {
-                                    isLoginProcessOn = false;
-                                }
-                            });
-                            signInToBackUpThread.start();
+                                });
+                                signInToBackUpThread.start();
+                            }catch (Exception e){
+                                LogHandler.saveLog("Failed to sign in to backup : "  + e.getLocalizedMessage());
+                            }finally {
+                                isLoginProcessOn = false;
+                            }
                         }
                         else{
                             UIHandler.handleFailedSignInToBackUp(activity, signInToBackUpLauncher, result);
