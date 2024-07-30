@@ -408,14 +408,45 @@ public class UIHandler {
                         LogHandler.saveLog("Start adding linked accounts thread", false);
                         Thread addingLinkedAccountsThread = new Thread(() -> {
                             try {
-                                LogHandler.saveLog("Started to sign in linked accounts.",false);
                                 ArrayList<GoogleCloud.signInResult> signInLinkedAccountsResult =
-                                        MainActivity.googleCloud.signInLinkedAccounts(signInToBackUpLauncher,child, resultJson, userEmail);
-                                LogHandler.saveLog("Finished to sign in linked accounts.",false);
+                                        MainActivity.googleCloud.signInLinkedAccounts(resultJson, userEmail);
+                                if (signInLinkedAccountsResult == null || signInLinkedAccountsResult.isEmpty()){
+                                    return;
+                                }
+                                signInLinkedAccountsResult.add(signInResult);// this is logined account
 
-                                LogHandler.saveLog("Started to back up json file",false);
-                                boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
-                                LogHandler.saveLog("Finished to back up json file",false);
+                                // ----------------------------------------------------------------
+                                boolean isBackedUp = false;
+                                ArrayList<GoogleCloud.signInResult> backedUpSignInResults = new ArrayList<>();
+
+                                for (GoogleCloud.signInResult signInLinkedAccountResult: signInLinkedAccountsResult) {
+                                    isBackedUp = Profile.backUpJsonFile(signInLinkedAccountResult, signInToBackUpLauncher);
+                                    // this is just backup json , not insert , not UI
+                                    if (!isBackedUp){
+                                        // removeJsonFiles (backedUpSignInResults)
+                                        break;
+                                    }else{
+                                        backedUpSignInResults.add(signInLinkedAccountResult);
+                                    }
+                                }
+                                //----------------------------------------------------------------
+
+                                for (GoogleCloud.signInResult signInLinkedAccountResult: signInLinkedAccountsResult){
+                                    //remove presious json files
+                                }
+
+                                if (isBackedUp){
+
+                                }
+                                boolean isInserted = false;
+                                for (GoogleCloud.signInResult signInLinkedAccountResult: signInLinkedAccountsResult){
+//                                    isInserted = DBHelper.insertIntoDeviceTable()
+                                }
+                                // insert
+
+                                // ui
+
+
 
                                 if(isBackedUp){
                                     LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);

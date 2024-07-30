@@ -253,7 +253,6 @@
             boolean isInAccounts = false;
             GoogleCloud.Tokens tokens = null;
             Storage storage = null;
-            ArrayList<DriveAccountInfo.MediaItem> mediaItems  = null;
             try{
                 String[] columnsList = new String[]{"userEmail","type"};
                 List<String[]> accounts_rows = DBHelper.getAccounts(columnsList);
@@ -267,10 +266,9 @@
                     String accessToken = updateAccessToken(refreshToken).getAccessToken();
                     tokens = new Tokens(accessToken,refreshToken);
                     storage = getStorage(tokens);
-                    mediaItems = GoogleDrive.getMediaItems(userEmail, true, tokens.getAccessToken());
                     if (userEmail != null && tokens.getRefreshToken() != null && tokens.getAccessToken() != null) {
                         return new signInResult(userEmail, true, false,
-                                tokens, storage, mediaItems);
+                                tokens, storage, null);
                     }
                 }else {
                     runOnUiThread(() -> {
@@ -281,7 +279,7 @@
             }catch (Exception e){
                 LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
             }
-            return new signInResult(userEmail, false, isInAccounts, tokens, storage, mediaItems);
+            return new signInResult(userEmail, false, isInAccounts, tokens, storage, null);
         }
 
         public signInResult handleSignInToBackupResult(Intent data){
@@ -712,17 +710,14 @@
         private static boolean startProfileJsonBackUpAfterSignOutThread(String buttonText){
             LogHandler.saveLog("Starting Profile Json BackUp After Sign Out Thread", false);
             final boolean[] isBackedUp = {false};
-            Thread profileJsonBackUpAfterSignOutThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    MainActivity.dbHelper.deleteFromAccountsTable(buttonText, "backup");
-                    MainActivity.dbHelper.deleteAccountFromDriveTable(buttonText);
-                    MainActivity.dbHelper.deleteRedundantAsset();
-                    SharedPreferencesHandler.setJsonModifiedTime(MainActivity.preferences);
-                    isBackedUp[0] = Profile.backUpProfileMap(true,buttonText);
-                    if(!isBackedUp[0]){
-                        LogHandler.saveLog("Profile Json back up is not working when signing out.", true);
-                    }
+            Thread profileJsonBackUpAfterSignOutThread = new Thread(() -> {
+                MainActivity.dbHelper.deleteFromAccountsTable(buttonText, "backup");
+                MainActivity.dbHelper.deleteAccountFromDriveTable(buttonText);
+                MainActivity.dbHelper.deleteRedundantAsset();
+                SharedPreferencesHandler.setJsonModifiedTime(MainActivity.preferences);
+                isBackedUp[0] = Profile.backUpProfileMap(true,buttonText);
+                if(!isBackedUp[0]){
+                    LogHandler.saveLog("Profile Json back up is not working when signing out.", true);
                 }
             });
             profileJsonBackUpAfterSignOutThread.start();
@@ -752,9 +747,9 @@
             startSignOutThreads.start();
         }
 
-        public ArrayList<GoogleCloud.signInResult> signInLinkedAccounts(ActivityResultLauncher<Intent> signInToBackUpLauncher,
-                                         View[] child, JsonObject resultJson, String userEmail){
+        public ArrayList<GoogleCloud.signInResult> signInLinkedAccounts(JsonObject resultJson, String userEmail){
             ArrayList<GoogleCloud.signInResult> signInLinkedAccountsResult = new ArrayList<>();
+            boolean[] isHandled = {true};
             Thread signInLinkedAccountsThread =  new Thread(() -> {
                 try{
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -770,21 +765,11 @@
                         }
                         GoogleCloud.signInResult signInResult =
                                 handleSignInLinkedBackupResult(linkedUserEmail,refreshToken);
+                        if (!signInResult.isHandled){
+                            isHandled[0] = false;
+                            break;
+                        }
                         signInLinkedAccountsResult.add(signInResult);
-
-//                        LogHandler.saveLog("Starting backupJsonFile thread",false);
-//                        boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
-//                        LogHandler.saveLog("Finished backupJsonFile thread",false);
-
-//                        if(isBackedUp){
-//                            LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
-//                            UIHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,child,signInResult);
-//                            LogHandler.saveLog("Finished addAbackUpAccountToUI thread",false);
-
-//                            LogHandler.saveLog("Starting insertMediaItemsAfterSignInToBackUp thread",false);
-//                            DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);
-//                            LogHandler.saveLog("Finished insertMediaItemsAfterSignInToBackUp thread",false);
-//                        }
                     }
                 }catch (Exception e){
                     LogHandler.saveLog("Failed in signInLinkedAccountsThread thread : " + e.getLocalizedMessage() , true);
@@ -795,6 +780,9 @@
                 signInLinkedAccountsThread.join();
             }catch (Exception e){
                 LogHandler.saveLog("Finished to signInLinkedAccountsThread thread: " + e.getLocalizedMessage(), true);
+            }
+            if (!isHandled[0]){
+                return new ArrayList<>();
             }
             return signInLinkedAccountsResult;
         }

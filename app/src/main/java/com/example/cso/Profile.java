@@ -311,40 +311,31 @@ public class Profile {
 
     public static boolean backUpJsonFile(GoogleCloud.signInResult signInResult, ActivityResultLauncher<Intent> signInToBackUpLauncher){
         boolean[] isBackedUp = {false};
-        Thread backUpJsonThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    if (signInResult.getHandleStatus()) {
-                        String userEmail = signInResult.getUserEmail();
-                        GoogleCloud.Tokens tokens = signInResult.getTokens();
-                        String refreshToken = tokens.getRefreshToken();
-                        String accessToken = tokens.getAccessToken();
-                        Double totalStorage = signInResult.getStorage().getTotalStorage();
-                        Double usedStorage = signInResult.getStorage().getUsedStorage();
-                        Double usedInDriveStorage = signInResult.getStorage().getUsedInDriveStorage();
-                        Double usedInGmailAndPhotosStorage = signInResult.getStorage().getUsedInGmailAndPhotosStorage();
+        Thread backUpJsonThread = new Thread(() -> {
+            try{
+                if (signInResult.getHandleStatus()) {
+                    String userEmail = signInResult.getUserEmail();
+                    GoogleCloud.Tokens tokens = signInResult.getTokens();
+                    String refreshToken = tokens.getRefreshToken();
+                    String accessToken = tokens.getAccessToken();
 
-                        MainActivity.dbHelper.insertIntoAccounts(userEmail, "backup", refreshToken,accessToken,
-                                totalStorage, usedStorage, usedInDriveStorage, usedInGmailAndPhotosStorage);
 
-                        isBackedUp[0] = Profile.backUpProfileMap(false,"");
-                    }else{
-                        LogHandler.saveLog("login with back up launcher failed with response code : " + signInResult.getHandleStatus());
-                        MainActivity.activity.runOnUiThread(() -> {
-                            LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
-                            View child2 = backupButtonsLinearLayout.getChildAt(
-                                    backupButtonsLinearLayout.getChildCount() - 1);
-                            if(child2 instanceof Button){
-                                Button bt = (Button) child2;
-                                bt.setText("ADD A BACK UP ACCOUNT");
-                            }
-                            UIHandler.updateButtonsListeners(signInToBackUpLauncher);
-                        });
-                    }
-                }catch (Exception e){
-                    LogHandler.saveLog("Failed to backup json file: " + e.getLocalizedMessage(), true);
+                    isBackedUp[0] = Profile.backUpProfileMap(false,"");
+                }else{
+                    LogHandler.saveLog("login with back up launcher failed with response code : " + signInResult.getHandleStatus());
+                    MainActivity.activity.runOnUiThread(() -> {
+                        LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
+                        View child2 = backupButtonsLinearLayout.getChildAt(
+                                backupButtonsLinearLayout.getChildCount() - 1);
+                        if(child2 instanceof Button){
+                            Button bt = (Button) child2;
+                            bt.setText("ADD A BACK UP ACCOUNT");
+                        }
+                        UIHandler.updateButtonsListeners(signInToBackUpLauncher);
+                    });
                 }
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to backup json file: " + e.getLocalizedMessage(), true);
             }
         });
         backUpJsonThread.start();
