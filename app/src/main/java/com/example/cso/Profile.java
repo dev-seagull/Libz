@@ -101,7 +101,7 @@ public class Profile {
         Thread readProdileMapContentThread = new Thread(() -> {
             try{
                 Drive service = GoogleDrive.initializeDrive(accessToken);
-                List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(service,userEmail, accessToken);
+                List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail, accessToken);
                 for (com.google.api.services.drive.model.File existingFile : existingFiles) {
                     for (int i = 0; i < 3; i++) {
                         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -136,9 +136,8 @@ public class Profile {
             public void run() {
                 try{
                     System.out.println("access token in method readProfileMapName: " + accessToken);
-                    Drive service = GoogleDrive.initializeDrive(accessToken);
                     System.out.println("user email in method readProfileMapName: " + userEmail);
-                    List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(service,userEmail, accessToken);
+                    List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail, accessToken);
                     System.out.println("size of files in profile folder: " + existingFiles.size());
                     for (com.google.api.services.drive.model.File existingFile : existingFiles) {
                         resultJsonName[0] = existingFile.getName();
@@ -162,9 +161,11 @@ public class Profile {
         return resultJsonName[0];
     }
 
-    private static List<com.google.api.services.drive.model.File> getFilesInProfileFolder(Drive service, String userEmail, String accessToken){
+    private static List<com.google.api.services.drive.model.File> getFilesInProfileFolder(String userEmail, String accessToken){
         List<com.google.api.services.drive.model.File> existingFiles = null;
         try {
+            Drive service = GoogleDrive.initializeDrive(accessToken);
+
             String folderName = "stash_user_profile";
             String stashUserProfileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail, folderName, true, accessToken);
             System.out.println("stash user profile folder id: " + stashUserProfileFolderId);
@@ -247,7 +248,7 @@ public class Profile {
                     String folderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(signInResult.getUserEmail()
                             ,folder_name, true, signInResult.getTokens().getAccessToken());
                     Profile.deleteOlderProfileFile(service,folderId);
-                    isDeleted[0] = checkDeletionStatusAfterProfileLogin(service, folderId);
+                    isDeleted[0] = checkDeletionStatusAfterProfileLogin(signInResult.getUserEmail(), signInResult.getTokens().getAccessToken());
                 }
             }catch (Exception e){
                 LogHandler.saveLog("Failed in deleteOldProfileJsonFromAccount thread: " + e.getLocalizedMessage(), true);
@@ -364,14 +365,9 @@ public class Profile {
         return false;
     }
 
-    private static boolean checkDeletionStatusAfterProfileLogin(Drive service, String folderId){
+    private static boolean checkDeletionStatusAfterProfileLogin(String userEmail,String accessToken){
         try{
-            FileList fileList = service.files().list()
-                    .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
-                    .setSpaces("drive")
-                    .setFields("files(id)")
-                    .execute();
-            List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
+            List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail,accessToken);
             if (existingFiles.size() == 1) {
                 return true;
             }
@@ -503,55 +499,7 @@ public class Profile {
         }
     }
 
-//    public static void detachAccount(JsonObject profileMapContent,String userEmail){
-//        Thread detachLinkedAccountsProfileJsonThread = new Thread(() -> {
-//            JsonArray backupAccounts =  profileMapContent.get("backupAccounts").getAsJsonArray();
-//            JsonObject editedProfileContent = addDeviceInfoToJson(profileMapContent,userEmail);
-//
-//            for (int i = 0;i < backupAccounts.size();i++){
-//                JsonObject backupAccount = backupAccounts.get(i).getAsJsonObject();
-//                String linkedUserEmail = backupAccount.get("backupEmail").getAsString();
-//                String refreshToken = backupAccount.get("refreshToken").getAsString();
-//                if (linkedUserEmail.equals(userEmail)){
-//                    continue;
-//                }
-//                LogHandler.saveLog("Starting to detach account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail,false);
-//                backUpProfileMapToLinkedAccounts(editedProfileContent,refreshToken,userEmail);
-//                LogHandler.saveLog("Finished detaching account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail,false);
-//            }
-//        });
-//
-//        detachLinkedAccountsProfileJsonThread.start();
-//        try {
-//            detachLinkedAccountsProfileJsonThread.join();
-//        } catch (Exception e) {
-//            LogHandler.saveLog("Failed to join detachLinkedAccountsProfileJsonThread: " + e.getLocalizedMessage());
-//        }
-//    }
-
-//    public static JsonObject editProfileJson(JsonObject profileJson, String emailToDelete) {
-//        try {
-//            JsonArray backupAccounts = profileJson.get("backupAccounts").getAsJsonArray();
-//            profileJson.remove("backupAccounts");
-//            JsonArray updatedBackupAccounts = new JsonArray();
-//
-//            for (int i = 0; i < backupAccounts.size(); i++) {
-//                JsonObject accountObject = backupAccounts.get(i).getAsJsonObject();
-//                if (!accountObject.get("backupEmail").getAsString().equals(emailToDelete)) {
-//                    updatedBackupAccounts.add(accountObject);
-//                }
-//            }
-//
-//            profileJson.add("backupAccounts", updatedBackupAccounts);
-//            return profileJson;
-//
-//        } catch (Exception e) {
-//            LogHandler.saveLog("Failed to edit profile json : " + e.getLocalizedMessage());
-//            return null;
-//        }
-//    }
-
-        public static JsonObject addDeviceInfoToJson(JsonObject profileJson) {
+     public static JsonObject addDeviceInfoToJson(JsonObject profileJson) {
         try {
             JsonArray deviceInfo = profileJson.get("deviceInfo").getAsJsonArray();
             profileJson.remove("deviceInfo");
