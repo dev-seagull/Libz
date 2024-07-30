@@ -170,24 +170,24 @@
                             UIHandler.setLastBackupAccountButtonClickableFalse(activity);
                             try{
                                 Thread signInToBackUpThread = new Thread(() -> {
-                                    System.out.println("Started to get signInResult.");
+                                    LogHandler.saveLog("Started to get signInResult.",false);
                                     final GoogleCloud.signInResult signInResult =
                                             googleCloud.handleSignInToBackupResult(result.getData());
-                                    System.out.println("Finished to get signInResult.");
+                                    LogHandler.saveLog("Finished to get signInResult.",false);
                                     String userEmail = signInResult.getUserEmail();
                                     String accessToken = signInResult.getTokens().getAccessToken();
 
-                                    System.out.println("Started to read profile map content.");
+                                    LogHandler.saveLog("Started to read profile map content.",false);
                                     JsonObject resultJson = Profile.readProfileMapContent(userEmail,accessToken);
-                                    System.out.println("Finished to read profile map content.");
+                                    LogHandler.saveLog("Finished to read profile map content.",false);
 
-                                    System.out.println("Started to set json modified time.");
+                                    LogHandler.saveLog("Started to set json modified time.",false);
                                     SharedPreferencesHandler.setJsonModifiedTime(preferences);
-                                    System.out.println("Finished to set json modified time.");
+                                    LogHandler.saveLog("Finished to set json modified time.",false);
 
-                                    System.out.println("Started to check if it's linked to accounts.");
+                                    LogHandler.saveLog("Started to check if it's linked to accounts.",false);
                                     boolean isLinked = Profile.isLinkedToAccounts(resultJson,userEmail);
-                                    System.out.println("Finished to check if it's linked to accounts.");
+                                    LogHandler.saveLog("Finished to check if it's linked to accounts.",false);
                                     if (isLinked){
                                         UIHandler.displayLinkProfileDialog(signInToBackUpLauncher, child,
                                                 resultJson,userEmail, signInResult);

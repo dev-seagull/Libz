@@ -31,6 +31,7 @@
     import com.google.gson.JsonArray;
     import com.google.gson.JsonObject;
 
+    import org.checkerframework.checker.units.qual.A;
     import org.json.JSONObject;
 
     import java.io.BufferedReader;
@@ -751,15 +752,15 @@
             startSignOutThreads.start();
         }
 
-        public void signInLinkedAccounts(ActivityResultLauncher<Intent> signInToBackUpLauncher,
+        public ArrayList<GoogleCloud.signInResult> signInLinkedAccounts(ActivityResultLauncher<Intent> signInToBackUpLauncher,
                                          View[] child, JsonObject resultJson, String userEmail){
+            ArrayList<GoogleCloud.signInResult> signInLinkedAccountsResult = new ArrayList<>();
             Thread signInLinkedAccountsThread =  new Thread(() -> {
                 try{
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         System.out.println("is display3 in main thread: "  + Looper.getMainLooper().isCurrentThread());
                     }
                     JsonArray backupAccounts =  resultJson.get("backupAccounts").getAsJsonArray();
-
                     for (int i = 0;i < backupAccounts.size();i++){
                         JsonObject backupAccount = backupAccounts.get(i).getAsJsonObject();
                         String linkedUserEmail = backupAccount.get("backupEmail").getAsString();
@@ -767,26 +768,23 @@
                         if (linkedUserEmail.equals(userEmail)){
                             continue;
                         }
-                        final GoogleCloud.signInResult signInResult =
+                        GoogleCloud.signInResult signInResult =
                                 handleSignInLinkedBackupResult(linkedUserEmail,refreshToken);
+                        signInLinkedAccountsResult.add(signInResult);
 
-                        LogHandler.saveLog("Starting backupJsonFile thread",false);
-                        boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
-                        LogHandler.saveLog("Finished backupJsonFile thread",false);
+//                        LogHandler.saveLog("Starting backupJsonFile thread",false);
+//                        boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
+//                        LogHandler.saveLog("Finished backupJsonFile thread",false);
 
-                        if(isBackedUp){
-                            LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
-                            UIHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,child,signInResult);
-                            LogHandler.saveLog("Finished addAbackUpAccountToUI thread",false);
+//                        if(isBackedUp){
+//                            LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
+//                            UIHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,child,signInResult);
+//                            LogHandler.saveLog("Finished addAbackUpAccountToUI thread",false);
 
-                            LogHandler.saveLog("Starting insertMediaItemsAfterSignInToBackUp thread",false);
-                            DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);
-                            LogHandler.saveLog("Finished insertMediaItemsAfterSignInToBackUp thread",false);
-
-                            LogHandler.saveLog("Starting Drive.startThreads thread",false);
-                            GoogleDrive.startThreads();
-                            LogHandler.saveLog("Finished Drive.startThreads thread",false);
-                        }
+//                            LogHandler.saveLog("Starting insertMediaItemsAfterSignInToBackUp thread",false);
+//                            DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);
+//                            LogHandler.saveLog("Finished insertMediaItemsAfterSignInToBackUp thread",false);
+//                        }
                     }
                 }catch (Exception e){
                     LogHandler.saveLog("Failed in signInLinkedAccountsThread thread : " + e.getLocalizedMessage() , true);
@@ -798,6 +796,7 @@
             }catch (Exception e){
                 LogHandler.saveLog("Finished to signInLinkedAccountsThread thread: " + e.getLocalizedMessage(), true);
             }
+            return signInLinkedAccountsResult;
         }
       }
 

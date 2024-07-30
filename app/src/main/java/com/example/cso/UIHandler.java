@@ -12,7 +12,6 @@ import android.os.Looper;
 import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
-import android.text.style.AbsoluteSizeSpan;
 import android.text.style.AlignmentSpan;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -37,6 +36,7 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.gson.JsonObject;
 import com.jaredrummler.android.device.DeviceName;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -408,22 +408,38 @@ public class UIHandler {
                         LogHandler.saveLog("Start adding linked accounts thread", false);
                         Thread addingLinkedAccountsThread = new Thread(() -> {
                             try {
-                                MainActivity.googleCloud.signInLinkedAccounts(signInToBackUpLauncher,child, resultJson, userEmail);
-                                LogHandler.saveLog("Starting backupJsonFile thread",false);
+                                LogHandler.saveLog("Started to sign in linked accounts.",false);
+                                ArrayList<GoogleCloud.signInResult> signInLinkedAccountsResult =
+                                        MainActivity.googleCloud.signInLinkedAccounts(signInToBackUpLauncher,child, resultJson, userEmail);
+                                LogHandler.saveLog("Finished to sign in linked accounts.",false);
+
+                                LogHandler.saveLog("Started to back up json file",false);
                                 boolean isBackedUp = Profile.backUpJsonFile(signInResult, signInToBackUpLauncher);
-                                LogHandler.saveLog("Finished backupJsonFile thread",false);
+                                LogHandler.saveLog("Finished to back up json file",false);
+
                                 if(isBackedUp){
                                     LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
                                     UIHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,child,signInResult);
                                     LogHandler.saveLog("Finished addAbackUpAccountToUI thread",false);
 
-                                    LogHandler.saveLog("Starting insertMediaItemsAfterSignInToBackUp thread",false);
+                                    LogHandler.saveLog("Started insertMediaItemsAfterSignInToBackUp thread",false);
                                     DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);
                                     LogHandler.saveLog("Finished insertMediaItemsAfterSignInToBackUp thread",false);
 
-                                    LogHandler.saveLog("Starting Drive.startThreads thread",false);
+                                    for(GoogleCloud.signInResult signInLinkedAccountResult: signInLinkedAccountsResult) {
+                                        LogHandler.saveLog("Started to addAbackUpAccountToUI thread for linked account",false);
+                                        UIHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,child,signInLinkedAccountResult);
+                                        LogHandler.saveLog("Finished addAbackUpAccountToUI thread for linked account",false);
+
+                                        LogHandler.saveLog("Started insertMediaItemsAfterSignInToBackUp thread for linked account",false);
+                                        DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);
+                                        LogHandler.saveLog("Finished insertMediaItemsAfterSignInToBackUp thread for linked account",false);
+                                    }
+
+
+                                    LogHandler.saveLog("Starting Drive threads",false);
                                     GoogleDrive.startThreads();
-                                    LogHandler.saveLog("Finished Drive.startThreads thread",false);
+                                    LogHandler.saveLog("Finished Drive threads",false);
                                 }
 
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
