@@ -418,10 +418,8 @@ public class UIHandler {
                                 // ----------------------------------------------------------------
                                 boolean isBackedUp = false;
                                 ArrayList<GoogleCloud.signInResult> backedUpSignInResults = new ArrayList<>();
-
                                 for (GoogleCloud.signInResult signInLinkedAccountResult: signInLinkedAccountsResult) {
-                                    isBackedUp = Profile.backUpJsonFile(signInLinkedAccountResult, signInToBackUpLauncher);
-                                    // this is just backup json , not insert , not UI
+                                    isBackedUp = Profile.backUpJsonFile(resultJson,signInLinkedAccountResult, signInToBackUpLauncher);
                                     if (!isBackedUp){
                                         // removeJsonFiles (backedUpSignInResults)
                                         break;
@@ -431,20 +429,33 @@ public class UIHandler {
                                 }
                                 //----------------------------------------------------------------
 
-                                for (GoogleCloud.signInResult signInLinkedAccountResult: signInLinkedAccountsResult){
-                                    //remove presious json files
-                                }
+                                boolean isDeleted = false;
+                                if(isBackedUp){
+                                    isDeleted = Profile.deleteOldProfileJsonFromAccounts(backedUpSignInResults);
 
-                                if (isBackedUp){
-
-                                }
-                                boolean isInserted = false;
-                                for (GoogleCloud.signInResult signInLinkedAccountResult: signInLinkedAccountsResult){
+                                    boolean isInserted = false;
+                                    for (GoogleCloud.signInResult signInLinkedAccountResult: signInLinkedAccountsResult){
 //                                    isInserted = DBHelper.insertIntoDeviceTable()
-                                }
-                                // insert
+                                    }
+                                    // insert
 
-                                // ui
+                                    // ui
+//                                LogHandler.saveLog("login with back up launcher failed with response code : " + signInResult.getHandleStatus());
+//                                MainActivity.activity.runOnUiThread(() -> {
+//                                    LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
+//                                    View child2 = backupButtonsLinearLayout.getChildAt(
+//                                            backupButtonsLinearLayout.getChildCount() - 1);
+//                                    if(child2 instanceof Button){
+//                                        Button bt = (Button) child2;
+//                                        bt.setText("ADD A BACK UP ACCOUNT");
+//                                    }
+//                                    UIHandler.updateButtonsListeners(signInToBackUpLauncher);
+//                                });
+                                }
+
+
+
+
 
 
 

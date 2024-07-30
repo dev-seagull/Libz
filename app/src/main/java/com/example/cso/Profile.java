@@ -1,8 +1,6 @@
 package com.example.cso;
 
 import android.content.Intent;
-import android.os.Build;
-import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -239,6 +237,31 @@ public class Profile {
         return isLinkedToAccounts[0];
     }
 
+    public static boolean deleteOldProfileJsonFromAccounts(ArrayList<GoogleCloud.signInResult> signInResults){
+        boolean[] isDeleted = {false};
+        Thread deleteOldProfileJsonFromAccountThread = new Thread(() -> {
+            try{
+                for(GoogleCloud.signInResult signInResult: signInResults){
+                    Drive service = GoogleDrive.initializeDrive(signInResult.getTokens().getAccessToken());
+                    String folder_name = "stash_user_profile";
+                    String folderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(signInResult.getUserEmail()
+                            ,folder_name, true, signInResult.getTokens().getAccessToken());
+                    Profile.deleteOlderProfileFile(service,folderId);
+                    isDeleted[0] = checkDeletionStatusAfterProfileLogin(service, folderId);
+                }
+            }catch (Exception e){
+                LogHandler.saveLog("Failed in deleteOldProfileJsonFromAccount thread: " + e.getLocalizedMessage(), true);
+            }
+        });
+        deleteOldProfileJsonFromAccountThread.start();
+        try{
+            deleteOldProfileJsonFromAccountThread.join();
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to join deleteOldProfileJsonFromAccount: " + e.getLocalizedMessage(), true);
+        }
+        return isDeleted[0];
+    }
+
     public static boolean deleteProfileJson(String userEmail) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         final boolean[] isDeleted = {false};
@@ -276,6 +299,38 @@ public class Profile {
         return isDeletedFuture;
     }
 
+    private static void deleteOlderProfileFile(Drive service, String folderId){
+        Thread deleteOlderProfileFileThread = new Thread(() -> {
+            try {
+                FileList fileList = service.files().list()
+                        .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
+                        .setSpaces("drive")
+                        .setFields("files(id, name)")
+                        .execute();
+
+                Date date = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
+                String currentDate = formatter.format(date);
+                String fileName = "profileMap_" + currentDate + ".json";
+                List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
+                for(com.google.api.services.drive.model.File profileFile: existingFiles){
+                    System.out.println("Older name:" + profileFile.getName() + " new name: " + fileName);
+                    if(!profileFile.getName().equals(fileName)){
+                        service.files().delete(profileFile.getId()).execute();
+                    }
+                }
+            }catch (Exception e) {
+                LogHandler.saveLog("Failed to delete profile files: " + e.getLocalizedMessage(), true);
+            }
+        });
+        deleteOlderProfileFileThread.start();
+        try{
+
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to join deleteOlderProfileFileThread: " + e.getLocalizedMessage(), true);
+        }
+    }
+
     private static void deleteProfileFiles(Drive service, String folderId){
         try {
             FileList fileList = service.files().list()
@@ -309,18 +364,39 @@ public class Profile {
         return false;
     }
 
-    public static boolean backUpJsonFile(GoogleCloud.signInResult signInResult, ActivityResultLauncher<Intent> signInToBackUpLauncher){
+    private static boolean checkDeletionStatusAfterProfileLogin(Drive service, String folderId){
+        try{
+            FileList fileList = service.files().list()
+                    .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
+                    .setSpaces("drive")
+                    .setFields("files(id)")
+                    .execute();
+            List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
+            if (existingFiles.size() == 1) {
+                return true;
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to check deletion status of profile files: " + e.getLocalizedMessage(), true);
+        }
+        return false;
+    }
+
+    public static boolean backUpJsonFile(JsonObject resultJson, GoogleCloud.signInResult signInResult, ActivityResultLauncher<Intent> signInToBackUpLauncher){
         boolean[] isBackedUp = {false};
         Thread backUpJsonThread = new Thread(() -> {
             try{
                 if (signInResult.getHandleStatus()) {
-                    String userEmail = signInResult.getUserEmail();
-                    GoogleCloud.Tokens tokens = signInResult.getTokens();
-                    String refreshToken = tokens.getRefreshToken();
-                    String accessToken = tokens.getAccessToken();
-
-
-                    isBackedUp[0] = Profile.backUpProfileMap(false,"");
+                    Drive service = GoogleDrive.initializeDrive(signInResult.getTokens().getAccessToken());
+                    String folder_name = "stash_user_profile";
+                    String profileFolderId = GoogleDrive.
+                            createOrGetSubDirectoryInStashSyncedAssetsFolder(signInResult.getUserEmail(),folder_name
+                                    , true, signInResult.getTokens().getAccessToken());
+                    String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,"login", resultJson);
+                    if (uploadedFileId == null | uploadedFileId.isEmpty()) {
+                        LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
+                    }else{
+                        isBackedUp[0] = true;
+                    }
                 }else{
                     LogHandler.saveLog("login with back up launcher failed with response code : " + signInResult.getHandleStatus());
                     MainActivity.activity.runOnUiThread(() -> {
@@ -371,7 +447,7 @@ public class Profile {
                         deleteProfileFiles(service, profileFolderId);
                         boolean isDeleted = checkDeletionStatus(service,profileFolderId);
                         if(isDeleted){
-                            String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId);
+                            String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,"signout",null);
                             if (uploadedFileId == null | uploadedFileId.isEmpty()) {
                                 LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
                             }else{
@@ -399,7 +475,7 @@ public class Profile {
         return isBackedUpFuture;
     }
 
-    private static String setAndCreateProfileMapContent(Drive service,String profileFolderId){
+    private static String setAndCreateProfileMapContent(Drive service,String profileFolderId,String loginStatus, JsonObject resultJson){
         String uploadFileId = "";
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date date = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
@@ -409,7 +485,12 @@ public class Profile {
             com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
             fileMetadata.setName(fileName);
             fileMetadata.setParents(java.util.Collections.singletonList(profileFolderId));
-            String content = Profile.createProfileMapContent().toString();
+            String content = null;
+            if(loginStatus.equals("signout")){
+                content = Profile.createProfileMapContent().toString();
+            }else if(loginStatus.equals("login")){
+                content = addDeviceInfoToJson(resultJson).toString();
+            }
             ByteArrayContent mediaContent = ByteArrayContent.fromString("application/json", content);
             com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
                     .setFields("id")
@@ -422,46 +503,65 @@ public class Profile {
         }
     }
 
-    public static void detachAccount(JsonObject profileMapContent,String userEmail){
-        Thread detachLinkedAccountsProfileJsonThread = new Thread(() -> {
-            JsonArray backupAccounts =  profileMapContent.get("backupAccounts").getAsJsonArray();
-            JsonObject editedProfileContent = editProfileJson(profileMapContent,userEmail);
+//    public static void detachAccount(JsonObject profileMapContent,String userEmail){
+//        Thread detachLinkedAccountsProfileJsonThread = new Thread(() -> {
+//            JsonArray backupAccounts =  profileMapContent.get("backupAccounts").getAsJsonArray();
+//            JsonObject editedProfileContent = addDeviceInfoToJson(profileMapContent,userEmail);
+//
+//            for (int i = 0;i < backupAccounts.size();i++){
+//                JsonObject backupAccount = backupAccounts.get(i).getAsJsonObject();
+//                String linkedUserEmail = backupAccount.get("backupEmail").getAsString();
+//                String refreshToken = backupAccount.get("refreshToken").getAsString();
+//                if (linkedUserEmail.equals(userEmail)){
+//                    continue;
+//                }
+//                LogHandler.saveLog("Starting to detach account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail,false);
+//                backUpProfileMapToLinkedAccounts(editedProfileContent,refreshToken,userEmail);
+//                LogHandler.saveLog("Finished detaching account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail,false);
+//            }
+//        });
+//
+//        detachLinkedAccountsProfileJsonThread.start();
+//        try {
+//            detachLinkedAccountsProfileJsonThread.join();
+//        } catch (Exception e) {
+//            LogHandler.saveLog("Failed to join detachLinkedAccountsProfileJsonThread: " + e.getLocalizedMessage());
+//        }
+//    }
 
-            for (int i = 0;i < backupAccounts.size();i++){
-                JsonObject backupAccount = backupAccounts.get(i).getAsJsonObject();
-                String linkedUserEmail = backupAccount.get("backupEmail").getAsString();
-                String refreshToken = backupAccount.get("refreshToken").getAsString();
-                if (linkedUserEmail.equals(userEmail)){
-                    continue;
-                }
-                LogHandler.saveLog("Starting to detach account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail,false);
-                backUpProfileMapToLinkedAccounts(editedProfileContent,refreshToken,userEmail);
-                LogHandler.saveLog("Finished detaching account with email (backUpProfileMapToLinkedAccounts) : " + linkedUserEmail,false);
-            }
-        });
+//    public static JsonObject editProfileJson(JsonObject profileJson, String emailToDelete) {
+//        try {
+//            JsonArray backupAccounts = profileJson.get("backupAccounts").getAsJsonArray();
+//            profileJson.remove("backupAccounts");
+//            JsonArray updatedBackupAccounts = new JsonArray();
+//
+//            for (int i = 0; i < backupAccounts.size(); i++) {
+//                JsonObject accountObject = backupAccounts.get(i).getAsJsonObject();
+//                if (!accountObject.get("backupEmail").getAsString().equals(emailToDelete)) {
+//                    updatedBackupAccounts.add(accountObject);
+//                }
+//            }
+//
+//            profileJson.add("backupAccounts", updatedBackupAccounts);
+//            return profileJson;
+//
+//        } catch (Exception e) {
+//            LogHandler.saveLog("Failed to edit profile json : " + e.getLocalizedMessage());
+//            return null;
+//        }
+//    }
 
-        detachLinkedAccountsProfileJsonThread.start();
+        public static JsonObject addDeviceInfoToJson(JsonObject profileJson) {
         try {
-            detachLinkedAccountsProfileJsonThread.join();
-        } catch (Exception e) {
-            LogHandler.saveLog("Failed to join detachLinkedAccountsProfileJsonThread: " + e.getLocalizedMessage());
-        }
-    }
+            JsonArray deviceInfo = profileJson.get("deviceInfo").getAsJsonArray();
+            profileJson.remove("deviceInfo");
 
-    public static JsonObject editProfileJson(JsonObject profileJson, String emailToDelete) {
-        try {
-            JsonArray backupAccounts = profileJson.get("backupAccounts").getAsJsonArray();
-            profileJson.remove("backupAccounts");
-            JsonArray updatedBackupAccounts = new JsonArray();
+            JsonObject newDeviceInfo = new JsonObject();
+            newDeviceInfo.addProperty("deviceName", MainActivity.androidDeviceName);
+            newDeviceInfo.addProperty("deviceId", MainActivity.androidUniqueDeviceIdentifier);
+            deviceInfo.add(newDeviceInfo);
 
-            for (int i = 0; i < backupAccounts.size(); i++) {
-                JsonObject accountObject = backupAccounts.get(i).getAsJsonObject();
-                if (!accountObject.get("backupEmail").getAsString().equals(emailToDelete)) {
-                    updatedBackupAccounts.add(accountObject);
-                }
-            }
-
-            profileJson.add("backupAccounts", updatedBackupAccounts);
+            profileJson.add("deviceInfo", deviceInfo);
             return profileJson;
 
         } catch (Exception e) {
