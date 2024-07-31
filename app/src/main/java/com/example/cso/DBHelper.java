@@ -1207,7 +1207,7 @@ public class DBHelper extends SQLiteOpenHelper {
                     }
                 }
 
-                
+
                 if(backUpAccountCounts == 0){
                     isBackedUp[0] = true;
                     return isBackedUp[0];
