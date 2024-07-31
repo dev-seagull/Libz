@@ -1577,6 +1577,4 @@ public class DBHelper extends SQLiteOpenHelper {
         // delete button
         System.out.println("------------------------------------- email " + userEmail + "deleted from this profile");
     }
-
-
 }

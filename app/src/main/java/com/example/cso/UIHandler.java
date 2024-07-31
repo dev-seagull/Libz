@@ -113,31 +113,28 @@ public class UIHandler {
     public static void addAbackUpAccountToUI(Activity activity, boolean isBackedUp,
                                              ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
                                              GoogleCloud.signInResult signInResult){
-        Thread uiThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    if (isBackedUp) {
-                        activity.runOnUiThread(() -> {
-                            LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-                            Button newBackupLoginButton = MainActivity.googleCloud.createBackUpLoginButton(backupButtonsLinearLayout);
-                            newBackupLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
-                            child[0] = backupButtonsLinearLayout.getChildAt(
-                                    backupButtonsLinearLayout.getChildCount() - 2);
-                            LogHandler.saveLog(signInResult.getUserEmail()
-                                    + " has logged in to the backup account", false);
+        Thread uiThread = new Thread(() -> {
+            try{
+                if (isBackedUp) {
+                    activity.runOnUiThread(() -> {
+                        LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+                        Button newBackupLoginButton = MainActivity.googleCloud.createBackUpLoginButton(backupButtonsLinearLayout);
+                        newBackupLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
+                        child[0] = backupButtonsLinearLayout.getChildAt(
+                                backupButtonsLinearLayout.getChildCount() - 2);
+                        LogHandler.saveLog(signInResult.getUserEmail()
+                                + " has logged in to the backup account", false);
 
-                            if (child[0] instanceof Button) {
-                                Button bt = (Button) child[0];
-                                bt.setText(signInResult.getUserEmail());
-                                bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
-                            }
-                            updateButtonsListeners(signInToBackUpLauncher);
-                        });
-                    }
-                }catch (Exception e){
-                    LogHandler.saveLog("Failed to add a backup account to ui: " + e.getLocalizedMessage(), true);
+                        if (child[0] instanceof Button) {
+                            Button bt = (Button) child[0];
+                            bt.setText(signInResult.getUserEmail());
+                            bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
+                        }
+                        updateButtonsListeners(signInToBackUpLauncher);
+                    });
                 }
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to add a backup account to ui: " + e.getLocalizedMessage(), true);
             }
         });
         uiThread.start();
@@ -395,7 +392,7 @@ public class UIHandler {
                 builder.setMessage(userEmail + " belongs to another profile.We can add the " +
                         "corresponding profile which includes linked accounts to " + userEmail + "." +
                         "If you like to add " + userEmail + " alone, you have to sign this out from the previous profile.");
-                builder.setTitle("Link Profile");
+                builder.setTitle("Add Profile");
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     System.out.println("is display1 in main thread: "  + Looper.getMainLooper().isCurrentThread());
                 }
@@ -405,94 +402,8 @@ public class UIHandler {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             System.out.println("is display2 in main thread: "  + Looper.getMainLooper().isCurrentThread());
                         }
-                        LogHandler.saveLog("Start adding linked accounts thread", false);
-                        Thread addingLinkedAccountsThread = new Thread(() -> {
-                            try {
-                                ArrayList<GoogleCloud.signInResult> signInLinkedAccountsResult =
-                                        MainActivity.googleCloud.signInLinkedAccounts(resultJson, userEmail);
-                                if (signInLinkedAccountsResult == null || signInLinkedAccountsResult.isEmpty()){
-                                    return;
-                                }
-                                signInLinkedAccountsResult.add(signInResult);// this is logined account
-
-                                // ----------------------------------------------------------------
-                                boolean isBackedUp = false;
-                                ArrayList<GoogleCloud.signInResult> backedUpSignInResults = new ArrayList<>();
-                                for (GoogleCloud.signInResult signInLinkedAccountResult: signInLinkedAccountsResult) {
-                                    isBackedUp = Profile.backUpJsonFile(resultJson,signInLinkedAccountResult, signInToBackUpLauncher);
-                                    if (!isBackedUp){
-                                        // removeJsonFiles (backedUpSignInResults)
-                                        break;
-                                    }else{
-                                        backedUpSignInResults.add(signInLinkedAccountResult);
-                                    }
-                                }
-                                //----------------------------------------------------------------
-
-                                boolean isDeleted = false;
-                                if(isBackedUp){
-                                    isDeleted = Profile.deleteOldProfileJsonFromAccounts(backedUpSignInResults);
-
-                                    boolean isInserted = false;
-                                    for (GoogleCloud.signInResult signInLinkedAccountResult: signInLinkedAccountsResult){
-//                                    isInserted = DBHelper.insertIntoDeviceTable()
-                                    }
-                                    // insert
-
-                                    // ui
-//                                LogHandler.saveLog("login with back up launcher failed with response code : " + signInResult.getHandleStatus());
-//                                MainActivity.activity.runOnUiThread(() -> {
-//                                    LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
-//                                    View child2 = backupButtonsLinearLayout.getChildAt(
-//                                            backupButtonsLinearLayout.getChildCount() - 1);
-//                                    if(child2 instanceof Button){
-//                                        Button bt = (Button) child2;
-//                                        bt.setText("ADD A BACK UP ACCOUNT");
-//                                    }
-//                                    UIHandler.updateButtonsListeners(signInToBackUpLauncher);
-//                                });
-                                }
-
-
-
-
-
-
-
-                                if(isBackedUp){
-                                    LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
-                                    UIHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,child,signInResult);
-                                    LogHandler.saveLog("Finished addAbackUpAccountToUI thread",false);
-
-                                    LogHandler.saveLog("Started insertMediaItemsAfterSignInToBackUp thread",false);
-                                    DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);
-                                    LogHandler.saveLog("Finished insertMediaItemsAfterSignInToBackUp thread",false);
-
-                                    for(GoogleCloud.signInResult signInLinkedAccountResult: signInLinkedAccountsResult) {
-                                        LogHandler.saveLog("Started to addAbackUpAccountToUI thread for linked account",false);
-                                        UIHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,child,signInLinkedAccountResult);
-                                        LogHandler.saveLog("Finished addAbackUpAccountToUI thread for linked account",false);
-
-                                        LogHandler.saveLog("Started insertMediaItemsAfterSignInToBackUp thread for linked account",false);
-                                        DBHelper.insertMediaItemsAfterSignInToBackUp(signInResult);
-                                        LogHandler.saveLog("Finished insertMediaItemsAfterSignInToBackUp thread for linked account",false);
-                                    }
-
-
-                                    LogHandler.saveLog("Starting Drive threads",false);
-                                    GoogleDrive.startThreads();
-                                    LogHandler.saveLog("Finished Drive threads",false);
-                                }
-
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                    System.out.println("is display4 in main thread: "  + Looper.getMainLooper().isCurrentThread());
-                                }
-                            } catch (Exception e) {
-                                LogHandler.saveLog("Failed to add linked accounts: " + e.getLocalizedMessage(), true);
-                            }
-                        });
-                        addingLinkedAccountsThread.start();
                         dialog.dismiss();
+                        Profile.startSignInToProfileThread(signInToBackUpLauncher,child,resultJson,userEmail,signInResult);
                     }});
 
                 builder.setNegativeButton("Don't add", new DialogInterface.OnClickListener() {

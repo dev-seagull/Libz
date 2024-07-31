@@ -12,47 +12,36 @@ import java.util.List;
 import java.util.Locale;
 
 public class StorageHandler {
-
     public double getTotalStorage() {
         return totalStorage;
     }
-
     public void setTotalStorage(double totalStorage) {
         this.totalStorage = totalStorage;
     }
-
     public long getBlockSize() {
         return blockSize;
     }
-
     public void setBlockSize(long blockSize) {
         this.blockSize = blockSize;
     }
-
     public double getOptimizedFreeSpace() {
         return optimizedFreeSpace;
     }
-
     public void setOptimizedFreeSpace(double optimizedFreeSpace) {
         this.optimizedFreeSpace = optimizedFreeSpace;
     }
-
     public double getOptimizedPercent() {
         return optimizedPercent;
     }
-
     public void setOptimizedPercent(double optimizedPercent) {
         this.optimizedPercent = optimizedPercent;
     }
-
     public double getFreeSpace() {
         return freeSpace;
     }
-
     public void setFreeSpace(double freeSpace) {
         this.freeSpace = freeSpace;
     }
-
     private double totalStorage;
     private long blockSize;
     private double optimizedFreeSpace = 0;

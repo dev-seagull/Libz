@@ -39,7 +39,6 @@
         public static DBHelper dbHelper;
         public static StorageHandler storageHandler;
         public static Timer timer;
-        public static Thread backUpJsonThread;
         public static Intent serviceIntent;
         SwitchMaterial wifiOnlySwitchMaterial;
 
