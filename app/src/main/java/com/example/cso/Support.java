@@ -1,25 +1,25 @@
-//package com.example.cso;
-//
-//
-//import org.json.JSONObject;
-//
-//import java.io.BufferedReader;
-//import java.io.DataOutputStream;
-//import java.io.File;
-//import java.io.FileReader;
-//import java.io.InputStreamReader;
-//import java.io.OutputStream;
-//import java.net.HttpURLConnection;
-//import java.net.URL;
-//import java.nio.charset.StandardCharsets;
-//import java.util.Base64;
-//import java.util.concurrent.Callable;
-//import java.util.concurrent.ExecutorService;
-//import java.util.concurrent.Executors;
-//import java.util.concurrent.Future;
-//
-//public class Support {
-//    public static String supportEmail = MainActivity.activity.getResources().getString(R.string.supportEmail);
+package com.example.cso;
+
+
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+public class Support {
+    public static String supportEmail = MainActivity.activity.getResources().getString(R.string.supportEmail);
 //    public static boolean sendEmail(String message, File attachment) {
 //        ExecutorService executor = Executors.newSingleThreadExecutor();
 //        Callable<Boolean> uploadTask = () -> {
@@ -76,9 +76,9 @@
 //        return isSentFuture;
 //    }
 //
-//    private static String getSupportRefreshToken(){
-//        return MainActivity.activity.getResources().getString(R.string.supportRefreshToken);
-//    }
+    public static String getSupportRefreshToken(){
+        return MainActivity.activity.getResources().getString(R.string.supportRefreshToken);
+    }
 //
 //    private static String createEmailContent(String message, File attachment){
 //        StringBuilder emailContentBuilder = new StringBuilder();
@@ -190,61 +190,61 @@
 //        }
 //    }
 //
-//    private static GoogleCloud.Tokens requestAccessToken(String refreshToken){
-//        ExecutorService executor = Executors.newSingleThreadExecutor();
-//        Callable<GoogleCloud.Tokens> backgroundTokensTask = () -> {
-//            String accessToken = null;
-//            try {
-//                URL googleAPITokenUrl = new URL("https://www.googleapis.com/oauth2/v4/token");
-//                HttpURLConnection httpURLConnection = (HttpURLConnection) googleAPITokenUrl.openConnection();
-//                String clientId = MainActivity.activity.getResources().getString(R.string.client_id);
-//                String clientSecret = MainActivity.activity.getString(R.string.client_secret);
-//                String requestBody = "&client_id=" + clientId +
-//                        "&client_secret=" + clientSecret +
-//                        "&refresh_token= " + refreshToken +
-//                        "&grant_type=refresh_token";
-//                byte[] postData = requestBody.getBytes(StandardCharsets.UTF_8);
-//                httpURLConnection.setRequestMethod("POST");
-//                httpURLConnection.setDoInput(true);
-//                httpURLConnection.setDoOutput(true);
-//                OutputStream outputStream = httpURLConnection.getOutputStream();
-//                outputStream.write(postData);
-//                outputStream.flush();
-//
-//                int responseCode = httpURLConnection.getResponseCode();
-//                if (responseCode == HttpURLConnection.HTTP_OK) {
-//                    LogHandler.saveLog("Updating access token with response code of " + responseCode,false);
-//                    StringBuilder responseBuilder = new StringBuilder();
-//                    BufferedReader bufferedReader = new BufferedReader(
-//                            new InputStreamReader(httpURLConnection.getInputStream())
-//                    );
-//                    String line;
-//                    while ((line = bufferedReader.readLine()) != null) {
-//                        responseBuilder.append(line);
-//                    }
-//                    String response = responseBuilder.toString();
-//                    JSONObject responseJSONObject = new JSONObject(response);
-//                    accessToken = responseJSONObject.getString("access_token");
-//                    return new GoogleCloud.Tokens(accessToken, refreshToken);
-//                }else {
-//                    LogHandler.saveLog("Getting access token failed with response code of " + responseCode, true);
-//                }
-//            } catch (Exception e) {
-//                LogHandler.saveLog("Getting access token failed: " + e.getLocalizedMessage(), true);
-//            }
-//            return new GoogleCloud.Tokens(accessToken, refreshToken);
-//        };
-//        Future<GoogleCloud.Tokens> future = executor.submit(backgroundTokensTask);
-//        GoogleCloud.Tokens tokens_fromFuture = null;
-//        try {
-//            tokens_fromFuture = future.get();
-//            DBHelper.updateAccessTokenInDB(refreshToken,tokens_fromFuture.getAccessToken());
-//        }catch (Exception e){
-//            LogHandler.saveLog("failed to get access token from the future: " + e.getLocalizedMessage(), true);
-//        }finally {
-//            executor.shutdown();
-//        }
-//        return tokens_fromFuture;
-//    }
-//}
-//
+    public static GoogleCloud.Tokens requestAccessToken(String refreshToken){
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Callable<GoogleCloud.Tokens> backgroundTokensTask = () -> {
+            String accessToken = null;
+            try {
+                URL googleAPITokenUrl = new URL("https://www.googleapis.com/oauth2/v4/token");
+                HttpURLConnection httpURLConnection = (HttpURLConnection) googleAPITokenUrl.openConnection();
+                String clientId = MainActivity.activity.getResources().getString(R.string.client_id);
+                String clientSecret = MainActivity.activity.getString(R.string.client_secret);
+                String requestBody = "&client_id=" + clientId +
+                        "&client_secret=" + clientSecret +
+                        "&refresh_token= " + refreshToken +
+                        "&grant_type=refresh_token";
+                byte[] postData = requestBody.getBytes(StandardCharsets.UTF_8);
+                httpURLConnection.setRequestMethod("POST");
+                httpURLConnection.setDoInput(true);
+                httpURLConnection.setDoOutput(true);
+                OutputStream outputStream = httpURLConnection.getOutputStream();
+                outputStream.write(postData);
+                outputStream.flush();
+
+                int responseCode = httpURLConnection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    LogHandler.saveLog("Updating access token with response code of " + responseCode,false);
+                    StringBuilder responseBuilder = new StringBuilder();
+                    BufferedReader bufferedReader = new BufferedReader(
+                            new InputStreamReader(httpURLConnection.getInputStream())
+                    );
+                    String line;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        responseBuilder.append(line);
+                    }
+                    String response = responseBuilder.toString();
+                    JSONObject responseJSONObject = new JSONObject(response);
+                    accessToken = responseJSONObject.getString("access_token");
+                    return new GoogleCloud.Tokens(accessToken, refreshToken);
+                }else {
+                    LogHandler.saveLog("Getting access token failed with response code of " + responseCode, true);
+                }
+            } catch (Exception e) {
+                LogHandler.saveLog("Getting access token failed: " + e.getLocalizedMessage(), true);
+            }
+            return new GoogleCloud.Tokens(accessToken, refreshToken);
+        };
+        Future<GoogleCloud.Tokens> future = executor.submit(backgroundTokensTask);
+        GoogleCloud.Tokens tokens_fromFuture = null;
+        try {
+            tokens_fromFuture = future.get();
+            DBHelper.updateAccessTokenInDB(refreshToken,tokens_fromFuture.getAccessToken());
+        }catch (Exception e){
+            LogHandler.saveLog("failed to get access token from the future: " + e.getLocalizedMessage(), true);
+        }finally {
+            executor.shutdown();
+        }
+        return tokens_fromFuture;
+    }
+}
+

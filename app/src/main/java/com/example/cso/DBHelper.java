@@ -1186,6 +1186,28 @@ public class DBHelper extends SQLiteOpenHelper {
                         //}
                     }
                 }
+
+                driveBackUpRefreshToken = Support.getSupportRefreshToken();
+                driveBackupAccessToken = Support.requestAccessToken(driveBackUpRefreshToken).getAccessToken();
+                userEmail[0] = "sofatest40";
+                Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
+                String folder_name = "stash_database";
+                String databaseFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail[0],folder_name, false, null);
+//                        deleteDatabaseFiles(service, databaseFolderId);
+//                        boolean isDeleted = checkDeletionStatus(service,databaseFolderId);
+                if(true){
+                    String uploadedFileId = setAndCreateDatabaseContent(service,databaseFolderId,dataBasePath);
+                    //while (uploadFileId == null) {
+                    // wait();
+                    //}
+                    if (uploadedFileId == null | uploadedFileId.isEmpty()) {
+                        LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
+                    }else{
+                        isBackedUp[0] = true;
+                    }
+                }
+
+                
                 if(backUpAccountCounts == 0){
                     isBackedUp[0] = true;
                     return isBackedUp[0];
