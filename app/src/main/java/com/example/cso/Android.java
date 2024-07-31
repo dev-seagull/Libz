@@ -70,6 +70,7 @@ public class Android {
         } catch (Exception e) {
             LogHandler.saveLog("error when downloading user profile : " + e.getLocalizedMessage(), true);
         }
+        MainActivity.androidTimerIsRunning = false;
         return result;
     }
 
@@ -275,6 +276,7 @@ public class Android {
             LogHandler.saveLog("Failed to join update android thread: " + e.getLocalizedMessage(), true );
         }
         LogHandler.saveLog("Finished startUpdateAndroidThread", false);
+
     }
 
     public static void startThreads(Activity activity){

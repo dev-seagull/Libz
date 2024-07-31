@@ -236,6 +236,16 @@ public class UIHandler {
         int android_synced_assets_count = MainActivity.dbHelper.countAndroidSyncedAssetsOnThisDevice();
         int unsynced_android_assets =  total_android_assets - android_synced_assets_count;
         int synced_assets = total_Assets_count -(MainActivity.dbHelper.countAndroidAssets() - MainActivity.dbHelper.countAndroidUnsyncedAssets());
+
+        System.out.println("total_Assets_count : " + total_Assets_count +
+                "\ntotal_android_assets : " + total_android_assets +
+                "\nandroid_synced_assets_count : " +  android_synced_assets_count +
+                "\nunsynced_android_assets : " + unsynced_android_assets +
+                "\nsynced_assets : " + synced_assets +
+                "\nMainActivity.dbHelper.countAndroidAssets() : " + MainActivity.dbHelper.countAndroidAssets() +
+                "\nMainActivity.dbHelper.countAndroidUnsyncedAssets() : " + MainActivity.dbHelper.countAndroidUnsyncedAssets()
+                );
+        MainActivity.dbHelper.getAndroidSyncedAssetsOnThisDevice();
         uiHelper.androidStatisticsTextView.setText("Sync Status : " + synced_assets +
                 " Out Of " + total_Assets_count + "\n" + "Unsynced assets of this device : " + unsynced_android_assets);
     }

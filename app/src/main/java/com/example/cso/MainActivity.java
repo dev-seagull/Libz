@@ -38,9 +38,11 @@
         public static boolean isLoginProcessOn = false;
         public static DBHelper dbHelper;
         public static StorageHandler storageHandler;
-        public static Timer timer;
+        public static Timer androidTimer;
+        public static Timer UITimer;
         public static Intent serviceIntent;
         SwitchMaterial wifiOnlySwitchMaterial;
+        public static boolean androidTimerIsRunning = false;
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -85,33 +87,46 @@
 
             uiHelper.deviceStorageTextView.setText("Wait until we get an update of your assets ...");
             Glide.with(this).asGif().load(R.drawable.gifwaiting).into(UIHelper.waitingGif);
-            new Thread(() -> { Android.startThreads(activity); }).start();
 
-            timer = new Timer();
-            timer.scheduleAtFixedRate(new TimerTask() {
+            androidTimer = new Timer();
+
+            androidTimer.schedule(new TimerTask() {
                 public void run() {
-                    LogHandler.saveLog("Started the timer",false);
-                    Thread androidUpdate = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if(!TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on")){
-                                Android.startThreads(activity);
-                            }
+                    if (androidTimerIsRunning){
+                        return;
+                    }
+                    androidTimerIsRunning = true;
+                    LogHandler.saveLog("Started the android timer",false);
+                    Thread androidUpdate = new Thread(() -> {
+                        if(!TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on")){
+                            Android.startThreads(activity);
                         }
                     });
                     androidUpdate.start();
+                    LogHandler.saveLog("Finished the android timer",false);
+
+                }
+            }, 0, 5000);
+
+
+            UITimer = new Timer();
+
+            UITimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
                     try{
                         UIHandler.startUpdateUIThread(activity);
                     }catch (Exception e){
                         LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
                     }
-                    LogHandler.saveLog("Finished the timer",false);
                 }
-            }, 0, 3000);
+            }, 0, 1000);
+
 
 
             LogHandler.saveLog("--------------------------end of onCreate----------------------------", false);
         }
+
 
         @Override
         protected void onStart(){
@@ -276,8 +291,8 @@
         public void onDestroy() {
             super.onDestroy();
             System.out.println("Here stopping the timer on ui in onDestroy");
-            timer.cancel();
-            timer.purge();
+            androidTimer.cancel();
+            androidTimer.purge();
         }
 
     }

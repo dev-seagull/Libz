@@ -248,6 +248,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public long insertAssetData(String fileHash) {
+
         long lastInsertedId = -1;
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ASSET WHERE fileHash = ?)";
         Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{fileHash});
@@ -891,6 +892,21 @@ public class DBHelper extends SQLiteOpenHelper {
             cursor.close();
         }
         return count;
+    }
+
+    public int getAndroidSyncedAssetsOnThisDevice(){
+        String sqlQuery = "SELECT DISTINCT androidTable.assetId FROM ANDROID androidTable\n" +
+                "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId WHERE androidTable.device = ?;";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidUniqueDeviceIdentifier});
+        String count = "";
+        if(cursor != null && cursor.moveToFirst()){
+            count = cursor.getString(0);
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
+        System.out.println("count you want to see is : " + count);
+        return 0;
     }
 
     public int countAndroidUnsyncedAssets(){
