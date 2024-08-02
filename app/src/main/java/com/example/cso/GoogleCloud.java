@@ -287,6 +287,7 @@
             final boolean[] isInAccounts = {false};
             final Tokens[] tokens = {null};
             final Storage[] storage = {null};
+            final boolean[] isHandled = {false};
             Thread handleSignInToBackupResultThread = new Thread(() -> {
                 try{
                     Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
@@ -310,6 +311,7 @@
                         String authCode = account.getServerAuthCode();
                         tokens[0] = getTokens(authCode);
                         storage[0] = getStorage(tokens[0]);
+                        isHandled[0] = true;
                     }else {
                         runOnUiThread(() -> {
                             CharSequence text = "This Account Already Exists !";
@@ -326,7 +328,7 @@
             }catch (Exception e){
                 LogHandler.saveLog("Failed to join   handleSignInToBackupResultThread.start(): " + e.getLocalizedMessage(), true );
             }
-            return new signInResult(userEmail[0], false, isInAccounts[0], tokens[0], storage[0], null);
+            return new signInResult(userEmail[0], isHandled[0], isInAccounts[0], tokens[0], storage[0], null);
         }
 
         public Button createPrimaryLoginButton(LinearLayout linearLayout){

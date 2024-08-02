@@ -3,6 +3,8 @@ package com.example.cso;
 import android.content.SharedPreferences;
 import android.widget.Toast;
 
+import kotlin.text._OneToManyTitlecaseMappingsKt;
+
 public class Upgrade {
 
     public static void versionHandler(SharedPreferences preferences){
@@ -50,8 +52,21 @@ public class Upgrade {
                 case 24:
                     upgrade_24_to_25();
                     break;
+                case 25 :
+                case 26 :
+                case 27 :
+                case 28 :
+                case 29 :
+                case 30 :
+                case 31 :
+                case 32 :
+                case 33 :
+                    upgrade_33_to_34();
+                    break;
                 default:
+                    upgrade_33_to_34();
                     lastVersion();
+                    break;
             }
         } else if (savedVersionCode > currentVersionCode) {
             Toast.makeText(MainActivity.activity, "Please install last version of App", Toast.LENGTH_SHORT).show();
@@ -74,7 +89,7 @@ public class Upgrade {
 
     public static void lastVersion() {
         MainActivity.activity.runOnUiThread(() -> {
-            Toast.makeText(MainActivity.activity, "You are Using last version (0.0.25)", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.activity, "You are Using last version : " + BuildConfig.VERSION_CODE, Toast.LENGTH_SHORT).show();
         });
 //        MainActivity.dbHelper.deleteFromAccountsTable("stashdevteam","support");
 //        DBHelper.deleteTableContent("ACCOUNTS");
@@ -142,6 +157,20 @@ public class Upgrade {
             Toast.makeText(MainActivity.activity, "You are upgraded to last version (0.0.25)", Toast.LENGTH_SHORT).show();
         });
 //        Support.sendEmail("Some one installed last version of apk, Device ID : " + MainActivity.androidUniqueDeviceIdentifier);
-        }
     }
+
+    public static void upgrade_33_to_34(){
+        DBHelper.dropTable("DEVICE");
+        DBHelper.dbWritable.beginTransaction();
+        String DEVICE = "CREATE TABLE IF NOT EXISTS DEVICE("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "deviceName TEXT," +
+                "deviceId TEXT UNIQUE)";
+        DBHelper.dbWritable.execSQL(DEVICE);
+        DBHelper.dbWritable.setTransactionSuccessful();
+        DBHelper.dbWritable.endTransaction();
+    }
+}
+
+
 

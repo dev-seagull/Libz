@@ -55,13 +55,12 @@ public class StorageHandler {
         this.totalStorage = getDeviceTotalStorage();
         this.optimizedFreeSpace = this.totalStorage * optimizedPercent;
         this.freeSpace = getDeviceFreeStorage();
-        MainActivity.dbHelper.insertIntoDeviceTable(MainActivity.androidUniqueDeviceIdentifier,
-                String.format(Locale.US,"%.1f", this.totalStorage), String.format(Locale.US,"%.1f", this.freeSpace));
+        DeviceHandler.insertIntoDeviceTable(MainActivity.androidDeviceName,
+                MainActivity.androidUniqueDeviceIdentifier);
     }
 
     public void freeStorageUpdater(){
         this.freeSpace = getDeviceFreeStorage();
-        MainActivity.dbHelper.updateDeviceTable(MainActivity.androidUniqueDeviceIdentifier,String.valueOf(this.freeSpace));
     }
 
 

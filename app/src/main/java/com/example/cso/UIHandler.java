@@ -395,26 +395,29 @@ public class UIHandler {
     }
 
     public static void displayLinkProfileDialog(ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
-                                                JsonObject resultJson,String userEmail, GoogleCloud.signInResult signInResult){
+                                                JsonObject resultJson,GoogleCloud.signInResult signInResult){
         MainActivity.activity.runOnUiThread(() -> {
             try{
+
+                LogHandler.saveLog("@@@" + "signin result is : " +signInResult.getUserEmail() +" is handled : "+ signInResult.getHandleStatus(),false);
+                String userEmail = signInResult.getUserEmail();
+
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
-                builder.setMessage(userEmail + " belongs to another profile.We can add the " +
-                        "corresponding profile which includes linked accounts to " + userEmail + "." +
+                builder.setMessage(userEmail + " belongs to another profile.\nWe can add the " +
+                        "corresponding profile which includes linked accounts to " + userEmail + ".\n" +
                         "If you like to add " + userEmail + " alone, you have to sign this out from the previous profile.");
                 builder.setTitle("Add Profile");
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     System.out.println("is display1 in main thread: "  + Looper.getMainLooper().isCurrentThread());
                 }
 
-                builder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            System.out.println("is display2 in main thread: "  + Looper.getMainLooper().isCurrentThread());
-                        }
-                        dialog.dismiss();
-                        Profile.startSignInToProfileThread(signInToBackUpLauncher,child,resultJson,userEmail,signInResult);
-                    }});
+                builder.setPositiveButton("Add", (dialog, id) -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        System.out.println("is display2 in main thread: "  + Looper.getMainLooper().isCurrentThread());
+                    }
+                    dialog.dismiss();
+                    Profile.startSignInToProfileThread(signInToBackUpLauncher,child,resultJson,signInResult);
+                });
 
                 builder.setNegativeButton("Don't add", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
