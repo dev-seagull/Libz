@@ -70,7 +70,7 @@
             androidUniqueDeviceIdentifier = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
             androidDeviceName = DeviceName.getDeviceName();
             UIHelper uiHelper = new UIHelper();
-            storageHandler = new StorageHandler();
+
 
             LogHandler.saveLog("---------------Start of app--------------", false);
 
@@ -78,10 +78,12 @@
             UIHandler.initializeButtons(this,googleCloud);
             UIHandler.handleSwitchMaterials();
 
-//            Upgrade.versionHandler(preferences);
-//            if(dbHelper.DATABASE_VERSION < 11) {
-//                LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
-//            }
+            Upgrade.versionHandler(preferences);
+            if(dbHelper.DATABASE_VERSION < 11) {
+                LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
+            }
+            Upgrade.upgrade_33_to_34();
+            storageHandler = new StorageHandler();
             System.out.println("I'm here and alive 3 ");
             serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
 
@@ -195,17 +197,27 @@
                                     JsonObject resultJson = Profile.readProfileMapContent(userEmail,accessToken);
                                     LogHandler.saveLog("Finished to read profile map content.",false);
 
+                                    LogHandler.saveLog("@@@" + "read profile : " + resultJson.toString(),false);
+
                                     LogHandler.saveLog("Started to set json modified time.",false);
                                     SharedPreferencesHandler.setJsonModifiedTime(preferences);
                                     LogHandler.saveLog("Finished to set json modified time.",false);
 
+                                    LogHandler.saveLog("@@@" + "json last modified : " + SharedPreferencesHandler.getJsonModifiedTime(preferences),false);
+
                                     LogHandler.saveLog("Started to check if it's linked to accounts.",false);
                                     boolean isLinked = Profile.isLinkedToAccounts(resultJson,userEmail);
+
+                                    LogHandler.saveLog("@@@" + "is linked to other accounts : " + isLinked,false);
                                     LogHandler.saveLog("Finished to check if it's linked to accounts.",false);
                                     if (isLinked){
                                         UIHandler.displayLinkProfileDialog(signInToBackUpLauncher, child,
-                                                resultJson,userEmail, signInResult);
+                                                resultJson, signInResult);
+                                    }else{
+                                        Profile.linkToAccounts(signInResult,child);
                                     }
+
+
                                     child[0].setClickable(true);
                                 });
                                 signInToBackUpThread.start();
