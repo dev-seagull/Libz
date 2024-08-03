@@ -1,7 +1,6 @@
 package com.example.cso;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -71,6 +70,8 @@ public class TimerService extends Service {
                     return;
                 }
                 isTimerRunning = true;
+
+                Deactivation.deactivate(MainActivity.androidUniqueDeviceIdentifier);
 
                 androidThreads = new Thread(new Runnable( ) {
                     @Override
