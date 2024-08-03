@@ -20,6 +20,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import org.checkerframework.checker.guieffect.qual.UI;
+import org.checkerframework.checker.units.qual.A;
 
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
@@ -212,10 +213,8 @@ public class Profile {
                         if (accountRow[1].equals("backup")){
                             backupAccountsInDevice.add(accountRow[0]);
                         }
-
                     }
                     backupAccountsInDevice.add(userEmail);
-                    System.out.println("backup accounts in device: " + backupAccountsInDevice);
 
                     JsonArray backupAccountsArray = resultJson.getAsJsonArray("backupAccounts");
                     System.out.println("backup accounts in json: " + backupAccountsArray);
@@ -223,7 +222,7 @@ public class Profile {
                         JsonObject accountObject = element.getAsJsonObject();
                         String backupEmail = accountObject.get("backupEmail").getAsString();
                         if (!backupAccountsInDevice.contains(backupEmail)) {
-                            System.out.println("A new email found:" + backupEmail);
+                            LogHandler.saveLog("A new email found:" + backupEmail,false);
                             isLinkedToAccounts[0] = true;
                         }
                     }
@@ -233,7 +232,12 @@ public class Profile {
                         for (JsonElement element : deviceInfoArray) {
                             JsonObject deviceInfoObject = element.getAsJsonObject();
                             String deviceIdentifier = deviceInfoObject.get("deviceId").getAsString();
-                            if (!MainActivity.androidUniqueDeviceIdentifier.equals(deviceIdentifier)) {
+                            ArrayList<DeviceHandler> currentDevices = new ArrayList<>();
+                            ArrayList<String> currentDeviceIdList = new ArrayList<>();
+                            for(DeviceHandler device: currentDevices){
+                                currentDeviceIdList.add(device.getDeviceId());
+                            }
+                            if (!currentDeviceIdList.contains(deviceIdentifier)) {
                                 System.out.println("A new device found:" + deviceIdentifier);
                                 isLinkedToAccounts[0] = true;
                             }
