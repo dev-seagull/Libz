@@ -13,6 +13,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
@@ -71,7 +72,15 @@ public class TimerService extends Service {
                 }
                 isTimerRunning = true;
 
-                Deactivation.deactivate(MainActivity.androidUniqueDeviceIdentifier);
+                if (Deactivation.isDeactivationFileExists()){
+                    MainActivity.activity.runOnUiThread(() -> Toast.makeText(getApplicationContext(),
+                            "you're deActivated, Call support", Toast.LENGTH_SHORT).show());
+                    MainActivity.activity.finish();
+                    isTimerRunning = false;
+                    stopForeground(true);
+                    stopSelf();
+                    return;
+                }
 
                 androidThreads = new Thread(new Runnable( ) {
                     @Override

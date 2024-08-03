@@ -1,46 +1,47 @@
 package com.example.cso;
 
 import com.google.api.client.http.ByteArrayContent;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.model.FileList;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 public class Deactivation {
-    private JsonObject readDeActivation()
-    {
-        return new JsonObject();
 
-    }
-
-    public static void deactivate(String deviceId){
-        boolean[] isDeactivated = {false};
-        Thread DeactivationThread = new Thread(() -> {
-            try{
+    public static boolean isDeactivationFileExists() {
+        String fileName = "deActive_"+MainActivity.androidUniqueDeviceIdentifier + ".json";
+        boolean[] isFileExists = {false};
+        Thread downloadThread = new Thread(() -> {
+            try {
                 String accessToken = MainActivity.googleCloud.updateAccessToken(Support.getSupportRefreshToken()).getAccessToken();
                 Drive service = GoogleDrive.initializeDrive(accessToken);
-                String uploadFileId = "";
-                String fileName = MainActivity.androidUniqueDeviceIdentifier + ".json";
-                com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                fileMetadata.setName(fileName);
-                ByteArrayContent mediaContent = ByteArrayContent.fromString("application/json", null);
-                com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
-                    .setFields("id")
-                    .execute();
-                uploadFileId = uploadedFile.getId();
-                LogHandler.saveLog("@@@" + "profile map upload file id is : "+ uploadFileId,false);
-                if (uploadFileId == null | uploadFileId.isEmpty()) {
-                    LogHandler.saveLog("Failed to upload deactivation json for + " + MainActivity.androidUniqueDeviceIdentifier, true);
-                }else{
-                    isDeactivated[0] = true;
+
+                String query = "name = '" + fileName + "'";
+                FileList result = service.files().list()
+                        .setQ(query)
+                        .setSpaces("drive")
+                        .setFields("files(id, name)")
+                        .execute();
+
+                if (!result.getFiles().isEmpty()) {
+                    LogHandler.saveLog("File not found: " + fileName, true);
+                    isFileExists[0] = true;
                 }
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to backup json file: " + e.getLocalizedMessage(), true);
+            }catch (Exception e) {
+                LogHandler.saveLog("Failed to check file existing : " + e.getLocalizedMessage(), true);
             }
         });
-        DeactivationThread.start();
+        downloadThread.start();
         try {
-            DeactivationThread.join();
-        } catch (Exception e) {
-            LogHandler.saveLog("failed to join deactivation thread: " + e.getLocalizedMessage(), true);
+            downloadThread.join();
+        } catch (InterruptedException e) {
+            LogHandler.saveLog("Failed to join download thread: " + e.getLocalizedMessage(), true);
         }
+        return isFileExists[0];
     }
+
 }

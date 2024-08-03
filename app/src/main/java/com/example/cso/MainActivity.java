@@ -10,6 +10,7 @@
     import android.provider.Settings;
     import android.view.View;
     import android.widget.LinearLayout;
+    import android.widget.Toast;
 
     import androidx.activity.result.ActivityResultLauncher;
     import androidx.activity.result.contract.ActivityResultContracts;
@@ -143,6 +144,11 @@
             }).start();
 
             new Thread(() -> {
+                if (Deactivation.isDeactivationFileExists()){
+                    MainActivity.activity.runOnUiThread(() -> Toast.makeText(getApplicationContext(),
+                            "you're deActivated, Call support", Toast.LENGTH_SHORT).show());
+                    MainActivity.activity.finish();
+                }
                 if (Profile.hasJsonChanged()){
                     System.out.println("profile json changed");
                     dbHelper.updateDatabaseBasedOnJson();

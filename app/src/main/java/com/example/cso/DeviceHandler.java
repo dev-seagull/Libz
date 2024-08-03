@@ -64,10 +64,11 @@ public class DeviceHandler {
     }
 
     public static boolean deviceNameExists(String deviceId){
-        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM DEVICE WHERE deviceId = ?)";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{deviceId});
         boolean exists = false;
+        Cursor cursor =null;
         try{
+            String sqlQuery = "SELECT EXISTS(SELECT 1 FROM DEVICE WHERE deviceId = ?)";
+            cursor = dbReadable.rawQuery(sqlQuery,new String[]{deviceId});
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
                 if(result == 1){
@@ -85,10 +86,11 @@ public class DeviceHandler {
     }
 
     public static ArrayList<DeviceHandler> getDevicesFromDB(){
-        String sqlQuery = "SELECT deviceName, deviceId FROM DEVICE)";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{});
+        Cursor cursor = null;
         ArrayList<DeviceHandler> resultList = new ArrayList<>();
         try{
+            String sqlQuery = "SELECT deviceName, deviceId FROM DEVICE)";
+            cursor = dbReadable.rawQuery(sqlQuery,new String[]{});
             if (cursor.moveToFirst()) {
                 do {
                     int deviceNameColumnIndex = cursor.getColumnIndex("deviceName");

@@ -50,9 +50,7 @@ public class Upgrade {
                    case 23:
                        upgrade_23_to_24();
                        break;
-                   case 24:
-                       upgrade_24_to_25();
-                       break;
+                   case 24 :
                    case 25 :
                    case 26 :
                    case 27 :
@@ -65,7 +63,6 @@ public class Upgrade {
                        upgrade_33_to_34();
                        break;
                    default:
-                       upgrade_33_to_34();
                        lastVersion();
                        break;
                }

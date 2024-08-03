@@ -65,8 +65,7 @@ public class DBHelper extends SQLiteOpenHelper {
         String DEVICE = "CREATE TABLE IF NOT EXISTS DEVICE("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "deviceName TEXT," +
-                "totalStorage TEXT," +
-                "freeStorage TEXT)";
+                "deviceId TEXT UNIQUE)";
         sqLiteDatabase.execSQL(DEVICE);
 
         String ASSET = "CREATE TABLE IF NOT EXISTS ASSET("
