@@ -36,7 +36,6 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.gson.JsonObject;
 import com.jaredrummler.android.device.DeviceName;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

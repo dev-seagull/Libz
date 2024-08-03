@@ -30,12 +30,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class Profile {
-    public static JsonObject createProfileMapContent(){
+    public static JsonObject createProfileMapContentBasedOnDB(){
         JsonObject resultJson = new JsonObject();
         try{
             JsonArray backupAccountsJson = createBackUpAccountsJson();
             JsonArray primaryAccountsJson = createPrimaryAccountsJson();
-            JsonArray deviceInfoJson = createDeviceInfoJson();
+            JsonArray deviceInfoJson = createDeviceInfoJsonBasedDB();
 
             resultJson.add("backupAccounts", backupAccountsJson);
             resultJson.add("primaryAccounts", primaryAccountsJson);
@@ -47,9 +47,19 @@ public class Profile {
         }
     }
 
-    private static JsonArray createDeviceInfoJson(){
+    private static JsonArray createDeviceInfoJsonBasedDB(){
         JsonArray deviceInfoJson = new JsonArray();
         try{
+            ArrayList<DeviceHandler> deviceList = DeviceHandler.getDevicesFromDB();
+            if(deviceList != null && !deviceList.isEmpty()){
+                for (DeviceHandler device: deviceList){
+                    JsonObject deviceInfo = new JsonObject();
+                    deviceInfo.addProperty("deviceName", device.getDeviceName());
+                    deviceInfo.addProperty("deviceId", device.getDeviceId());
+                    deviceInfoJson.add(deviceInfo);
+                }
+            }
+
             JsonObject deviceInfo = new JsonObject();
             deviceInfo.addProperty("deviceName", MainActivity.androidDeviceName);
             deviceInfo.addProperty("deviceId", MainActivity.androidUniqueDeviceIdentifier);
@@ -477,11 +487,11 @@ public class Profile {
             fileMetadata.setParents(java.util.Collections.singletonList(profileFolderId));
             JsonObject content = null;
             if(loginStatus.equals("signout")){
-                content = Profile.createProfileMapContent();
+                content = Profile.createProfileMapContentBasedOnDB();
             }else if(loginStatus.equals("profile")){
                 content = addDeviceInfoToJson(resultJson);
             }else if(loginStatus.equals("login")){
-                content = Profile.createProfileMapContent();
+                content = Profile.createProfileMapContentBasedOnDB();
                 content = Profile.addAccountToJson(content,resultJson);
             }
             String contentString = content.toString();

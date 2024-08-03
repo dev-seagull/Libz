@@ -84,4 +84,30 @@ public class DeviceHandler {
         return exists;
     }
 
+    public static ArrayList<DeviceHandler> getDevicesFromDB(){
+        String sqlQuery = "SELECT deviceName, deviceId FROM DEVICE)";
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{});
+        ArrayList<DeviceHandler> resultList = new ArrayList<>();
+        try{
+            if (cursor.moveToFirst()) {
+                do {
+                    int deviceNameColumnIndex = cursor.getColumnIndex("deviceName");
+                    int deviceIdColumnIndex = cursor.getColumnIndex("deviceId");
+                    if (deviceNameColumnIndex >= 0 && deviceIdColumnIndex >= 0) {
+                        String deviceName = cursor.getString(deviceNameColumnIndex);
+                        String deviceId = cursor.getString(deviceIdColumnIndex);
+                        resultList.add(new DeviceHandler(deviceName,deviceId));
+                    }
+                } while (cursor.moveToNext());
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to get devices from DB : " + e.getLocalizedMessage());
+        }finally {
+            if(cursor != null){
+                cursor.close();
+            }
+        }
+        return resultList;
+    }
+
 }

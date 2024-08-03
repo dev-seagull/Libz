@@ -49,7 +49,7 @@
             activity = this;
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
-            System.out.println("I'm here and alive 1 ");
+            
             PermissionManager permissionManager = new PermissionManager();
             boolean isStorageAccessGranted = permissionManager.requestStorageAccess(activity);
             boolean areReadAndWritePermissionsAccessGranted = permissionManager.requestManageReadAndWritePermissions(activity);
