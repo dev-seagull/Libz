@@ -76,20 +76,26 @@
 <!--                        android:layout_marginBottom="5dp"-->
 <!--                        android:alpha="1"-->
 <!--                        android:background="#050505" />-->
-                    <Button
-                        android:id="@+id/androidDeviceButton"
+
+                    <LinearLayout
+                        android:id="@+id/deviceButtons"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/gradient_gray"
-                        android:clickable="false"
-                        android:drawableLeft="@drawable/android_device_icon"
-                        android:foregroundGravity="center"
-                        android:gravity="center"
-                        android:paddingRight="84dp"
-                        android:textColor="@color/white"
-                        android:textSize="16dp"
-                        app:backgroundTint="@null" />
-<!--                        android:layout_marginTop="20dp"-->
+                        android:orientation="vertical">
+                        <Button
+                            android:id="@+id/androidDeviceButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/gradient_gray"
+                            android:clickable="false"
+                            android:drawableLeft="@drawable/android_device_icon"
+                            android:foregroundGravity="center"
+                            android:gravity="center"
+                            android:paddingRight="84dp"
+                            android:textColor="@color/white"
+                            android:textSize="16dp"
+                            app:backgroundTint="@null" />
+                    </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"

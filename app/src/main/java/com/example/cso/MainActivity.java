@@ -49,7 +49,7 @@
             activity = this;
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
-            
+
             PermissionManager permissionManager = new PermissionManager();
             boolean isStorageAccessGranted = permissionManager.requestStorageAccess(activity);
             boolean areReadAndWritePermissionsAccessGranted = permissionManager.requestManageReadAndWritePermissions(activity);
@@ -61,16 +61,15 @@
             boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
             if(isFirstTime){
                 System.out.println("it is first time!");
-                DBHelper.startOldDatabaseDeletionThread(getApplicationContext());
+//                DBHelper.startOldDatabaseDeletionThread(getApplicationContext());
                 SharedPreferencesHandler.setFirstTime(preferences);
             }
-            System.out.println("I'm here and alive 2 ");
+
             dbHelper = new DBHelper(this,DBHelper.NEW_DATABASE_NAME);
             googleCloud = new GoogleCloud(this);
             androidUniqueDeviceIdentifier = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
             androidDeviceName = DeviceName.getDeviceName();
             UIHelper uiHelper = new UIHelper();
-
 
             LogHandler.saveLog("---------------Start of app--------------", false);
 
@@ -82,16 +81,14 @@
             if(dbHelper.DATABASE_VERSION < 11) {
                 LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
             }
-            Upgrade.upgrade_33_to_34();
+//            Upgrade.upgrade_33_to_34();
             storageHandler = new StorageHandler();
-            System.out.println("I'm here and alive 3 ");
             serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
 
             uiHelper.deviceStorageTextView.setText("Wait until we get an update of your assets ...");
             Glide.with(this).asGif().load(R.drawable.gifwaiting).into(UIHelper.waitingGif);
 
             androidTimer = new Timer();
-
             androidTimer.schedule(new TimerTask() {
                 public void run() {
                     if (androidTimerIsRunning){
@@ -106,13 +103,11 @@
                     });
                     androidUpdate.start();
                     LogHandler.saveLog("Finished the android timer",false);
-
                 }
             }, 0, 5000);
 
 
             UITimer = new Timer();
-
             UITimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
@@ -123,8 +118,6 @@
                     }
                 }
             }, 0, 1000);
-
-
 
             LogHandler.saveLog("--------------------------end of onCreate----------------------------", false);
         }

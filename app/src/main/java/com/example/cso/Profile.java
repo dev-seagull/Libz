@@ -19,6 +19,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import org.checkerframework.checker.guieffect.qual.UI;
+
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -640,6 +642,7 @@ public class Profile {
                         LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
                         UIHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,
                                 child,signInLinkedAccountResult);
+
                         LogHandler.saveLog("Finished addAbackUpAccountToUI thread for linked account",false);
                     }
 
