@@ -81,6 +81,7 @@
                         android:id="@+id/deviceButtons"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:gravity="center"
                         android:orientation="vertical">
                         <Button
                             android:id="@+id/androidDeviceButton"
@@ -89,9 +90,6 @@
                             android:background="@drawable/gradient_gray"
                             android:clickable="false"
                             android:drawableLeft="@drawable/android_device_icon"
-                            android:foregroundGravity="center"
-                            android:gravity="center"
-                            android:paddingRight="84dp"
                             android:textColor="@color/white"
                             android:textSize="16dp"
                             app:backgroundTint="@null" />
@@ -102,51 +100,26 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:gravity="center">
-
-                        <LinearLayout
+<!--                            <TextView-->
+<!--                                android:id="@+id/deviceStorage"-->
+<!--                                android:layout_width="wrap_content"-->
+<!--                                android:layout_height="wrap_content"-->
+<!--                                android:layout_marginLeft="30dp"-->
+<!--                                android:layout_marginTop="5dp"-->
+<!--                                android:layout_marginRight="3dp"-->
+<!--                                android:fontFamily="sans-serif-condensed"-->
+<!--                                android:gravity="center"-->
+<!--                                android:shadowColor="@color/black"-->
+<!--                                android:shadowDx="2"-->
+<!--                                android:shadowDy="2"-->
+<!--                                android:shadowRadius="5"-->
+<!--                                android:text=""-->
+<!--                                android:textColor="@color/white"-->
+<!--                                android:textSize="20sp" />-->
+                        <com.github.mikephil.charting.charts.PieChart
+                            android:id="@+id/pieChart"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:padding="8dp">
-                            <TextView
-                                android:id="@+id/deviceStorage"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="4"
-                                android:layout_marginLeft="3dp"
-                                android:layout_marginTop="30dp"
-                                android:layout_marginRight="3dp"
-                                android:fontFamily="sans-serif-condensed"
-                                android:gravity="center"
-                                android:shadowColor="@color/black"
-                                android:shadowDx="2"
-                                android:shadowDy="2"
-                                android:shadowRadius="5"
-                                android:text=""
-                                android:textColor="@color/white"
-                                android:textSize="20sp" />
-                            <ImageView
-                                android:layout_width="0dp"
-                                android:id="@+id/waitingGif"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:layout_marginTop="30dp"
-                                android:layout_marginLeft="3dp"
-                                android:layout_marginRight="3dp"
-                                android:adjustViewBounds="true"/>
-                            <ImageButton
-                                android:id="@+id/directoriesButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:background="@drawable/down_vector_icon"
-                                android:layout_marginBottom="20dp"
-                                android:backgroundTint="@color/gray"
-                                android:layout_gravity="bottom"
-                                android:visibility="gone"
-                                />
-                        </LinearLayout>
-
+                            android:layout_height="wrap_content" />
 
 
                         <TextView
@@ -154,7 +127,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginLeft="3dp"
-                            android:layout_marginTop="10dp"
+                            android:layout_marginTop="5dp"
                             android:layout_marginRight="3dp"
                             android:fontFamily="sans-serif-condensed"
                             android:gravity="center"
@@ -172,7 +145,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginLeft="3dp"
-                            android:layout_marginTop="20dp"
+                            android:layout_marginTop="5dp"
                             android:layout_marginRight="3dp"
                             android:layout_marginBottom="20dp"
                             android:fontFamily="sans-serif-condensed"

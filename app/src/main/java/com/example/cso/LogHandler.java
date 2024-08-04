@@ -122,18 +122,22 @@ public class LogHandler extends Application {
 
     public static void saveLog(String text, boolean isError) {
         new Thread(() -> {
-            if (!logFile.exists()) {
-                System.out.println("Log file does not exist.");
-                return;
-            }
-            List<String> existingLines = readExistingLogLines();
-            String logEntry = createLogEntry(text,isError);
-            if(logEntry != null){
-                assert existingLines != null;
-                existingLines.add(logEntry);
-                writeLogLines(existingLines);
-            }else{
-                System.out.println("Log entry is null.");
+            try{
+                if (!logFile.exists()) {
+                    System.out.println("Log file does not exist.");
+                    return;
+                }
+                List<String> existingLines = readExistingLogLines();
+                String logEntry = createLogEntry(text,isError);
+                if(logEntry != null){
+                    assert existingLines != null;
+                    existingLines.add(logEntry);
+                    writeLogLines(existingLines);
+                }else{
+                    System.out.println("Log entry is null.");
+                }
+            }catch (Exception e){
+                System.out.println("Error: " + e.getLocalizedMessage());
             }
         }).start();
     }

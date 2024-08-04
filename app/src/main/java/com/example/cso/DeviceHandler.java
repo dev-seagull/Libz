@@ -44,23 +44,20 @@ public class DeviceHandler {
         return devices;
     }
 
-    public static boolean insertIntoDeviceTable(String deviceName , String deviceId){
+    public static void insertIntoDeviceTable(String deviceName , String deviceId){
         if (deviceNameExists(deviceId)){
-            return true;
+            return;
         }
-        dbWritable.beginTransaction();
         try {
+            dbWritable.beginTransaction();
             String sqlQuery = "INSERT INTO DEVICE (deviceName, deviceId) VALUES (?,?)";
             dbWritable.execSQL(sqlQuery, new Object[]{deviceName, deviceId});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
             LogHandler.saveLog("Failed to insert into device table: " + e.getLocalizedMessage(), true);
-            dbWritable.endTransaction();
-            return false;
         } finally {
             dbWritable.endTransaction();
         }
-        return true;
     }
 
     public static boolean deviceNameExists(String deviceId){

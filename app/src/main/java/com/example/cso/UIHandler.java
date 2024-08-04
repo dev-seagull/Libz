@@ -31,6 +31,16 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.gson.JsonObject;
@@ -249,7 +259,7 @@ public class UIHandler {
                 buttonWidth,
                 200
         );
-        layoutParams.setMargins(0,20,0,16);
+//        layoutParams.setMargins(0,20,0,16);
         androidDeviceButton.setLayoutParams(layoutParams);
     }
 
@@ -267,9 +277,10 @@ public class UIHandler {
 
     private static void handleStatistics(UIHelper uiHelper){
         StorageHandler storageHandler = new StorageHandler();
-        uiHelper.deviceStorage.setText("Storage : " + storageHandler.getFreeSpace() +
-                " Out Of " + storageHandler.getTotalStorage()+ " GB\n"+
-                "Media : "  + MainActivity.dbHelper.getPhotosAndVideosStorage() + "\n");
+//        uiHelper.deviceStorage.setText("Storage : " + storageHandler.getFreeSpace() +
+//                " Out Of " + storageHandler.getTotalStorage()+ " GB\n"+
+//                "Media : "  + MainActivity.dbHelper.getPhotosAndVideosStorage() + "\n");
+        setupPieChart();
         uiHelper.androidStatisticsTextView.setVisibility(View.VISIBLE);
         int total_Assets_count = MainActivity.dbHelper.countAssets();
         int total_android_assets = MainActivity.dbHelper.countAndroidAssetsOnThisDevice();
@@ -290,21 +301,72 @@ public class UIHandler {
                 " Out Of " + total_Assets_count + "\n" + "Unsynced assets of this device : " + unsynced_android_assets);
     }
 
-    private static void handleDisplayDirectoriesUsagesButton(UIHelper uiHelper, Activity activity){
-        UIHelper.waitingGif.setVisibility(View.GONE);
-        uiHelper.displayDirectoriesUsagesButton.setVisibility(View.VISIBLE);
-        uiHelper.displayDirectoriesUsagesButton.setOnClickListener(view -> {
-            if (UIHandler.directoryUsages.getVisibility() == View.VISIBLE) {
-                Drawable newBackground = activity.getResources().getDrawable(R.drawable.down_vector_icon);
-                uiHelper.displayDirectoriesUsagesButton.setBackground(newBackground);
-                UIHandler.directoryUsages.setVisibility(View.GONE);
-            } else {
-                updateDirectoriesUsages();
-                Drawable newBackground = activity.getResources().getDrawable(R.drawable.up_vector_icon);
-                uiHelper.displayDirectoriesUsagesButton.setBackground(newBackground);
-                UIHandler.directoryUsages.setVisibility(View.VISIBLE);
+    private static void setupPieChart() {
+        StorageHandler storageHandler = new StorageHandler();
+        PieChart pieChart = MainActivity.activity.findViewById(R.id.pieChart);
+
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int windowWidth = displayMetrics.widthPixels;
+        int windowHeight = displayMetrics.heightPixels;
+        int chartWidth = windowWidth;
+        int chartHeight = (int) (windowHeight * 0.25);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                chartWidth,
+                chartHeight
+        );
+        pieChart.setLayoutParams(layoutParams);
+
+        double freeSpace = storageHandler.getFreeSpace();
+        double totalStorage = storageHandler.getTotalStorage();
+        double mediaStorage = Double.parseDouble(MainActivity.dbHelper.getPhotosAndVideosStorage());
+
+        double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
+        ArrayList<PieEntry> entries = new ArrayList<>();
+        entries.add(new PieEntry((float) freeSpace, "Free Space(GB)"));
+        entries.add(new PieEntry((float) mediaStorage, "Media(GB)"));
+        entries.add(new PieEntry((float) usedSpaceExcludingMedia, "Others(GB)"));
+
+        PieDataSet dataSet = new PieDataSet(entries, "Click on Media chart for details");
+        dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
+        dataSet.setValueTextSize(12f);
+
+        PieData data = new PieData(dataSet);
+        pieChart.setData(data);
+        pieChart.getDescription().setEnabled(false);
+
+        Legend legend = pieChart.getLegend();
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.CENTER);
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.RIGHT);
+        legend.setOrientation(Legend.LegendOrientation.VERTICAL);
+
+        pieChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
+            @Override
+            public void onValueSelected(Entry e, Highlight h) {
+                int index = (int) h.getX();
+                PieData pieData = pieChart.getData();
+                PieDataSet pieDataSet = (PieDataSet) pieData.getDataSet();
+                String label = pieDataSet.getEntryForIndex(index).getLabel();
+                if (label.equals("Media(GB)")) {
+                    directoryUsages.setVisibility(View.VISIBLE);
+                    HashMap<String,String> dirHashMap = StorageHandler.directoryUIDisplay();
+                    directoryUsages.setText("");
+                    for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
+                        directoryUsages.append(entry.getKey() + ": " + entry.getValue() + " GB\n");
+                    }
+                }else{
+                    directoryUsages.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onNothingSelected() {
+                directoryUsages.setVisibility(View.GONE);
             }
         });
+
+        pieChart.setDrawEntryLabels(false);
+        pieChart.invalidate();
     }
 
     private static void handleSyncTextViewStatus(){
@@ -323,7 +385,6 @@ public class UIHandler {
                 activity.runOnUiThread(() -> {
                     handeSyncSwitchMaterialButton(uiHelper, activity);
                     handleStatistics(uiHelper);
-                    handleDisplayDirectoriesUsagesButton(uiHelper, activity);
                     handleSyncTextViewStatus();
                 });
             }catch (Exception e){

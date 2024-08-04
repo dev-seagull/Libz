@@ -12,7 +12,6 @@ public class Upgrade {
            int savedVersionCode = preferences.getInt("currentVersionCode", -1); // Default to -1 if not found
            int currentVersionCode = BuildConfig.VERSION_CODE;
            if (savedVersionCode == -1){
-               DBHelper.deleteTableContent("PROFILE");
                DBHelper.deleteTableContent("ACCOUNTS");
            }
            else if (savedVersionCode <= currentVersionCode) {

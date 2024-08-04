@@ -60,11 +60,11 @@
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
-            if(isFirstTime){
+//            if(isFirstTime){
                 System.out.println("it is first time!");
 //                DBHelper.startOldDatabaseDeletionThread(getApplicationContext());
-                SharedPreferencesHandler.setFirstTime(preferences);
-            }
+//                SharedPreferencesHandler.setFirstTime(preferences);
+//            }
 
             dbHelper = new DBHelper(this,DBHelper.NEW_DATABASE_NAME);
             googleCloud = new GoogleCloud(this);
@@ -78,6 +78,7 @@
             UIHandler.initializeButtons(this,googleCloud);
             UIHandler.handleSwitchMaterials();
 
+
             Upgrade.versionHandler(preferences);
             if(dbHelper.DATABASE_VERSION < 11) {
                 LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
@@ -85,9 +86,6 @@
 //            Upgrade.upgrade_33_to_34();
             storageHandler = new StorageHandler();
             serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
-
-            uiHelper.deviceStorageTextView.setText("Wait until we get an update of your assets ...");
-            Glide.with(this).asGif().load(R.drawable.gifwaiting).into(UIHelper.waitingGif);
 
             androidTimer = new Timer();
             androidTimer.schedule(new TimerTask() {
@@ -196,7 +194,9 @@
                                     JsonObject resultJson = Profile.readProfileMapContent(userEmail,accessToken);
                                     LogHandler.saveLog("Finished to read profile map content.",false);
 
-                                    LogHandler.saveLog("@@@" + "read profile : " + resultJson.toString(),false);
+                                    if(resultJson != null){
+                                        LogHandler.saveLog("@@@" + "read profile : " + resultJson.toString(),false);
+                                    }
 
                                     LogHandler.saveLog("Started to set json modified time.",false);
                                     SharedPreferencesHandler.setJsonModifiedTime(preferences);
@@ -206,7 +206,6 @@
 
                                     LogHandler.saveLog("Started to check if it's linked to accounts.",false);
                                     boolean isLinked = Profile.isLinkedToAccounts(resultJson,userEmail);
-
                                     LogHandler.saveLog("@@@" + "is linked to other accounts : " + isLinked,false);
                                     LogHandler.saveLog("Finished to check if it's linked to accounts.",false);
                                     if (isLinked){
@@ -215,7 +214,6 @@
                                     }else{
                                         Profile.linkToAccounts(signInResult,child);
                                     }
-
 
                                     child[0].setClickable(true);
                                 });
