@@ -31,13 +31,20 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
+import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
@@ -276,12 +283,7 @@ public class UIHandler {
     }
 
     private static void handleStatistics(UIHelper uiHelper){
-        StorageHandler storageHandler = new StorageHandler();
-//        uiHelper.deviceStorage.setText("Storage : " + storageHandler.getFreeSpace() +
-//                " Out Of " + storageHandler.getTotalStorage()+ " GB\n"+
-//                "Media : "  + MainActivity.dbHelper.getPhotosAndVideosStorage() + "\n");
         setupPieChart();
-        uiHelper.androidStatisticsTextView.setVisibility(View.VISIBLE);
         int total_Assets_count = MainActivity.dbHelper.countAssets();
         int total_android_assets = MainActivity.dbHelper.countAndroidAssetsOnThisDevice();
         int android_synced_assets_count = MainActivity.dbHelper.countAndroidSyncedAssetsOnThisDevice();
@@ -297,9 +299,77 @@ public class UIHandler {
                 "\nMainActivity.dbHelper.countAndroidUnsyncedAssets() : " + MainActivity.dbHelper.countAndroidUnsyncedAssets()
                 );
         MainActivity.dbHelper.getAndroidSyncedAssetsOnThisDevice();
-        uiHelper.androidStatisticsTextView.setText("Sync Status : " + synced_assets +
-                " Out Of " + total_Assets_count + "\n" + "Unsynced assets of this device : " + unsynced_android_assets);
-    }
+
+        BarChart barChart = MainActivity.activity.findViewById(R.id.barChart);
+        barChart.setVisibility(View.VISIBLE);
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        int windowWidth = displayMetrics.widthPixels;
+        int windowHeight = displayMetrics.heightPixels;
+        int chartWidth = windowWidth;
+        int chartHeight = (int) (windowHeight * 0.25);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        layoutParams.setMargins(10,200,10,200);
+        barChart.setLayoutParams(layoutParams);
+
+        ArrayList<BarEntry> syncedEntries = new ArrayList<>();
+        syncedEntries.add(new BarEntry(0f, new float[]{android_synced_assets_count}));
+
+        ArrayList<BarEntry> unsyncedEntries = new ArrayList<>();
+        unsyncedEntries.add(new BarEntry(1f, new float[]{unsynced_android_assets}));
+
+        // Create BarDataSets for each category
+        BarDataSet syncedDataSet = new BarDataSet(syncedEntries, "Synced");
+        syncedDataSet.setColor(ColorTemplate.MATERIAL_COLORS[0]); // Customize color
+
+        BarDataSet unsyncedDataSet = new BarDataSet(unsyncedEntries, "Unsynced");
+        unsyncedDataSet.setColor(ColorTemplate.MATERIAL_COLORS[1]);
+
+        BarData barData = new BarData(syncedDataSet, unsyncedDataSet);
+//        dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
+//        dataSet.setStackLabels(new String[]{"Synced", "Unsynced"});
+        barData.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return String.format("%d", (int) value);
+            }
+        });
+
+        barChart.setData(barData);
+
+        barChart.setDrawBarShadow(false);
+        barChart.setDrawValueAboveBar(true); // Display values on bars
+        barChart.setMaxVisibleValueCount(2);
+        barChart.setPinchZoom(false);
+        barChart.setHorizontalScrollBarEnabled(false);
+        barChart.setVerticalScrollBarEnabled(false);
+        barChart.setFitBars(true);
+        barChart.getDescription().setEnabled(false);
+
+        XAxis xAxis = barChart.getXAxis();
+        xAxis.setDrawGridLines(false);
+        xAxis.setDrawAxisLine(false);
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+
+        YAxis leftAxis = barChart.getAxisLeft();
+        leftAxis.setDrawGridLines(false);
+        leftAxis.setDrawAxisLine(false);
+        leftAxis.setGranularity(1f);
+        xAxis.setDrawLabels(false);
+        leftAxis.setDrawLabels(false);
+
+        YAxis rightAxis = barChart.getAxisRight();
+        rightAxis.setDrawGridLines(false);
+        rightAxis.setDrawAxisLine(false);
+        rightAxis.setGranularity(1f);
+        rightAxis.setDrawLabels(false);
+
+
+//        barChart.setBackgroundColor(getResources().getColor(android.R.color.white)); // Set background color
+
+        barChart.invalidate();    }
 
     private static void setupPieChart() {
         StorageHandler storageHandler = new StorageHandler();

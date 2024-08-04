@@ -23,7 +23,5 @@ public class UIHelper {
     public static int buttonTextColor = Color.WHITE;
     public static Drawable driveImage = MainActivity.activity.getApplicationContext().getResources()
             .getDrawable(R.drawable.googledriveimage);
-    public TextView androidStatisticsTextView = MainActivity.activity.findViewById(R.id.androidStatistics);
-//    public TextView deviceStorage = MainActivity.activity.findViewById(R.id.deviceStorage);
 
 }

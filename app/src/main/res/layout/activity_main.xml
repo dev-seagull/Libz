@@ -100,22 +100,6 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:gravity="center">
-<!--                            <TextView-->
-<!--                                android:id="@+id/deviceStorage"-->
-<!--                                android:layout_width="wrap_content"-->
-<!--                                android:layout_height="wrap_content"-->
-<!--                                android:layout_marginLeft="30dp"-->
-<!--                                android:layout_marginTop="5dp"-->
-<!--                                android:layout_marginRight="3dp"-->
-<!--                                android:fontFamily="sans-serif-condensed"-->
-<!--                                android:gravity="center"-->
-<!--                                android:shadowColor="@color/black"-->
-<!--                                android:shadowDx="2"-->
-<!--                                android:shadowDy="2"-->
-<!--                                android:shadowRadius="5"-->
-<!--                                android:text=""-->
-<!--                                android:textColor="@color/white"-->
-<!--                                android:textSize="20sp" />-->
                         <com.github.mikephil.charting.charts.PieChart
                             android:id="@+id/pieChart"
                             android:layout_width="match_parent"
@@ -140,24 +124,10 @@
                             android:visibility="gone"
                             ></TextView>
 
-                        <TextView
-                            android:id="@+id/androidStatistics"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginLeft="3dp"
-                            android:layout_marginTop="5dp"
-                            android:layout_marginRight="3dp"
-                            android:layout_marginBottom="20dp"
-                            android:fontFamily="sans-serif-condensed"
-                            android:gravity="center"
-                            android:shadowColor="@color/black"
-                            android:shadowDx="2"
-                            android:shadowDy="2"
-                            android:shadowRadius="5"
-                            android:text=""
-                            android:textColor="@color/white"
-                            android:textSize="20sp"
-                            android:visibility="gone" />
+                        <com.github.mikephil.charting.charts.BarChart
+                            android:id="@+id/barChart"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
 
                         <View
                             android:layout_width="match_parent"
