@@ -32,7 +32,7 @@
         public static ActivityResultLauncher<Intent> signInToBackUpLauncher;
 //        GooglePhotos googlePhotos;
         public static String androidUniqueDeviceIdentifier;
-        public static String androidDeviceName;
+        final public static String androidDeviceName = DeviceName.getDeviceName();
         static SharedPreferences preferences;
         public static boolean isLoginProcessOn = false;
         public static DBHelper dbHelper;
@@ -67,8 +67,6 @@
             dbHelper = new DBHelper(this,DBHelper.NEW_DATABASE_NAME);
             googleCloud = new GoogleCloud(this);
             androidUniqueDeviceIdentifier = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
-            androidDeviceName = DeviceName.getDeviceName();
-            UIHelper uiHelper = new UIHelper();
 
             LogHandler.saveLog("---------------Start of app--------------", false);
 
