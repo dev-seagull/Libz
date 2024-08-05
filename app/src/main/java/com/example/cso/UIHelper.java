@@ -4,8 +4,10 @@ import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextSwitcher;
 import android.widget.TextView;
 
@@ -23,9 +25,12 @@ public class UIHelper {
     final ImageButton syncButton = activity.findViewById(R.id.syncButton);
     final TextView syncButtonText = activity.findViewById(R.id.syncButtonText);
     final ImageButton wifiButton = activity.findViewById(R.id.wifiButton);
-    public TextView syncMessageTextView = activity.findViewById(R.id.syncMessageTextView);
-    public static ColorStateList backupAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#42A5F5"));
-    public SwitchMaterial syncSwitchMaterialButton = MainActivity.activity.findViewById(R.id.syncSwitchMaterial);
+    final LinearLayout backupAccountsButtonsLayout= activity.findViewById(R.id.backUpAccountsButtons);
+    final TextView syncMessageTextView = activity.findViewById(R.id.syncMessageTextView);
+    final LinearLayout deviceButtons = activity.findViewById(R.id.deviceButtons);
+    final ColorStateList backupAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#4285F4"));
+    final Button androidDeviceButton = activity.findViewById(R.id.androidDeviceButton);
+    final SwitchMaterial syncSwitchMaterialButton = activity.findViewById(R.id.syncSwitchMaterial);
     public static ColorStateList primaryAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#0D47A1"));
     public static ImageView waitingSyncGif = MainActivity.activity.findViewById(R.id.waitingSyncGif);
     public static ColorStateList offSwitchMaterialThumb  = ColorStateList.valueOf(Color.parseColor("#808080"));

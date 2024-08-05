@@ -59,7 +59,7 @@ import java.util.Map;
 public class UIHandler {
     public static TextView directoryUsages = MainActivity.activity.findViewById(R.id.directoryUsages);
     public static UIHelper uiHelper = new UIHelper();
-    private boolean isSyncOn = true;
+    private boolean isSyncOn = false;
     private boolean isWifiOnlyOn = false;
     public static void handleSwitchMaterials(){
         handleSyncSwitchMaterials();
@@ -128,7 +128,7 @@ public class UIHandler {
         }
     }
 
-    public static void addAbackUpAccountToUI(Activity activity, boolean isBackedUp,
+    public void addAbackUpAccountToUI(Activity activity, boolean isBackedUp,
                                              ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
                                              GoogleCloud.signInResult signInResult){
         Thread uiThread = new Thread(() -> {
@@ -137,7 +137,7 @@ public class UIHandler {
                     activity.runOnUiThread(() -> {
                         LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
                         Button newBackupLoginButton = MainActivity.googleCloud.createBackUpLoginButton(backupButtonsLinearLayout);
-                        newBackupLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
+                        newBackupLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
                         child[0] = backupButtonsLinearLayout.getChildAt(
                                 backupButtonsLinearLayout.getChildCount() - 2);
                         LogHandler.saveLog(signInResult.getUserEmail()
@@ -148,7 +148,7 @@ public class UIHandler {
                             bt.setText(signInResult.getUserEmail());
                             bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
                         }
-                        UIHandler.initializeDeviceButton(MainActivity.activity,true);
+                        initializeDeviceButton(true);
                         updateButtonsListeners(signInToBackUpLauncher);
                     });
                 }
@@ -221,14 +221,14 @@ public class UIHandler {
     }
 
     public static void initializeDrawerLayout(Activity activity){
-        setupDrawerToggle(activity);
+        setupDrawerToggle();
         setMenuItems();
-        setupInfoButton(activity);
+        setupInfoButton();
     }
 
-    private static void setupDrawerToggle(Activity activity){
+    private static void setupDrawerToggle(){
         ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
-                activity, uiHelper.drawerLayout, R.string.navigation_drawer_open,
+                uiHelper.activity, uiHelper.drawerLayout, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close
         );
         uiHelper.drawerLayout.addDrawerListener(actionBarDrawerToggle);
@@ -248,7 +248,7 @@ public class UIHandler {
         menuItem.setTitle(centeredText);
     }
 
-    private static void setupInfoButton(Activity activity) {
+    private static void setupInfoButton() {
         uiHelper.infoButton.setOnClickListener(view -> {
             if (uiHelper.drawerLayout.isDrawerOpen(GravityCompat.END)) {
                 uiHelper.drawerLayout.closeDrawer(GravityCompat.END);
@@ -258,32 +258,40 @@ public class UIHandler {
         });
     }
 
-    public static void initializeButtons(Activity activity,GoogleCloud googleCloud){
+    public void initializeButtons(GoogleCloud googleCloud){
+        initializeSyncButton();
+        initializeWifiOnlyButton();
+        initializeAccountButtons(googleCloud);
+        initializeDeviceButton(false);
+        initializeSddAnAccountButton(googleCloud);
+    }
+
+    private void initializeSddAnAccountButton(GoogleCloud googleCloud){
+//          LinearLayout primaryAccountsButtonsLayout= findViewById(R.id.primaryAccountsButtons);
+//           Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
+//           newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+        Button newBackupLoginButton = googleCloud.createBackUpLoginButton(uiHelper.backupAccountsButtonsLayout);
+        newBackupLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
+    }
+
+    private void initializeAccountButtons(GoogleCloud googleCloud) {
         String[] columnsList = {"userEmail", "type", "refreshToken"};
-        List<String[]> account_rows = DBHelper.getAccounts(columnsList);
-        for (String[] account_row : account_rows) {
-            String userEmail = account_row[0];
-            String type = account_row[1];
-            if (type.equals("primary")){
-//                    LinearLayout primaryLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
-//                    Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
-//                    newGoogleLoginButton.setText(userEmail);
-            }else if (type.equals("backup")){
-                LinearLayout backupLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+        List<String[]> accountRows = DBHelper.getAccounts(columnsList);
+        for (String[] accountRow : accountRows) {
+            String userEmail = accountRow[0];
+            String type = accountRow[1];
+            if (type.equals("primary")) {
+                // LinearLayout primaryLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
+                // Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
+                // newGoogleLoginButton.setText(userEmail);
+            } else if (type.equals("backup")) {
+                LinearLayout backupLinearLayout = uiHelper.activity.findViewById(R.id.backUpAccountsButtons);
                 Button newGoogleLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
                 newGoogleLoginButton.setText(userEmail);
             }
         }
-
-        initializeDeviceButton(activity, false);
-
-//          LinearLayout primaryAccountsButtonsLayout= findViewById(R.id.primaryAccountsButtons);
-        LinearLayout backupAccountsButtonsLayout= activity.findViewById(R.id.backUpAccountsButtons);
-//           Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
-//           newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-        Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupAccountsButtonsLayout);
-        newBackupLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
     }
+
 
     private static boolean buttonExistsInUI(LinearLayout deviceButtons, String deviceId){
         int deviceButtonsCount = deviceButtons.getChildCount();
@@ -298,44 +306,57 @@ public class UIHandler {
         return false;
     }
 
-    public static void initializeDeviceButton(Activity activity, boolean syncButton){
-        MainActivity.activity.runOnUiThread(()->{
-            if(!syncButton){
-                Button androidDeviceButton = activity.findViewById(R.id.androidDeviceButton);
-                androidDeviceButton.setText(MainActivity.androidDeviceName);
-                androidDeviceButton.setContentDescription(MainActivity.androidUniqueDeviceIdentifier);
-                addEffectsToDeviceButton(androidDeviceButton,activity);
+    public void initializeDeviceButton(boolean linkedDeviceButton){
+        uiHelper.activity.runOnUiThread(()->{
+            if(!linkedDeviceButton){
+                setupAndroidDeviceButton();
             }else{
-                LinearLayout deviceButtons = activity.findViewById(R.id.deviceButtons);
-                ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromDB();
-                for(DeviceHandler device: devices){
-                    if(!device.getDeviceId().equals(MainActivity.androidUniqueDeviceIdentifier) &&
-                        !buttonExistsInUI(deviceButtons,device.getDeviceId())){
-                        Button newDeviceButton = new Button(activity);
-                        newDeviceButton.setText(device.getDeviceName());
-                        newDeviceButton.setContentDescription(device.getDeviceId());
-                        addEffectsToDeviceButton(newDeviceButton,activity);
-                        deviceButtons.addView(newDeviceButton);
-                    }
-                }
+                setupLinkedDeviceButtons();
             }
         });
     }
 
-    private static void addEffectsToDeviceButton(Button androidDeviceButton, Activity activity){
+    private void setupAndroidDeviceButton(){
+        uiHelper.androidDeviceButton.setText(MainActivity.androidDeviceName);
+        uiHelper.androidDeviceButton.setContentDescription(MainActivity.androidUniqueDeviceIdentifier);
+        addEffectsToDeviceButton(uiHelper.androidDeviceButton);
+    }
+
+    private void setupLinkedDeviceButtons(){
+        ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromDB();
+        for (DeviceHandler device : devices) {
+            if (!isCurrentDevice(device) && !buttonExistsInUI(uiHelper.deviceButtons, device.getDeviceId())) {
+                Button newDeviceButton = createNewDeviceButton(uiHelper.activity, device);
+                uiHelper.deviceButtons.addView(newDeviceButton);
+            }
+        }
+    }
+
+    private static boolean isCurrentDevice(DeviceHandler device) {
+        return device.getDeviceId().equals(MainActivity.androidUniqueDeviceIdentifier);
+    }
+
+    private static Button createNewDeviceButton(Activity activity, DeviceHandler device) {
+        Button newDeviceButton = new Button(activity);
+        newDeviceButton.setText(device.getDeviceName());
+        newDeviceButton.setContentDescription(device.getDeviceId());
+        addEffectsToDeviceButton(newDeviceButton);
+        return newDeviceButton;
+    }
+
+    private static void addEffectsToDeviceButton(Button androidDeviceButton){
         AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
         fadeIn.setDuration(2000);
         androidDeviceButton.startAnimation(fadeIn);
         androidDeviceButton.setPadding(40,0,150,0);
         DisplayMetrics displayMetrics = new DisplayMetrics();
-        activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        uiHelper.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         int windowWidth = displayMetrics.widthPixels;
         int buttonWidth = (int) (windowWidth * 0.6);
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                 buttonWidth,
                 200
         );
-//        layoutParams.setMargins(0,20,0,16);
         androidDeviceButton.setLayoutParams(layoutParams);
     }
 
@@ -660,7 +681,8 @@ public class UIHandler {
                         System.out.println("is display2 in main thread: "  + Looper.getMainLooper().isCurrentThread());
                     }
                     dialog.dismiss();
-                    Profile.startSignInToProfileThread(signInToBackUpLauncher,child,resultJson,signInResult);
+                    Profile profile = new Profile();
+                    profile.startSignInToProfileThread(signInToBackUpLauncher,child,resultJson,signInResult);
                 });
 
                 builder.setNegativeButton("Don't add", new DialogInterface.OnClickListener() {
@@ -678,7 +700,7 @@ public class UIHandler {
         });
     }
 
-    public static void reInitializeButtons(Activity activity,GoogleCloud googleCloud){
+    public void reInitializeButtons(Activity activity,GoogleCloud googleCloud){
 //            LinearLayout primaryLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
 //            for (int i = 0; i < primaryLinearLayout.getChildCount(); i++) {
 //                View child = primaryLinearLayout.getChildAt(i);
@@ -697,12 +719,12 @@ public class UIHandler {
             }
         }
 
-        UIHandler.initializeButtons(activity,googleCloud);
+        initializeButtons(googleCloud);
 
 //            Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
 //            newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
         Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
-        newBackupLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
+        newBackupLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
     }
 
 }

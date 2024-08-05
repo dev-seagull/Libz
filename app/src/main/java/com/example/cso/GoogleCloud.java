@@ -31,7 +31,6 @@
     import com.google.gson.JsonArray;
     import com.google.gson.JsonObject;
 
-    import org.checkerframework.checker.units.qual.A;
     import org.json.JSONObject;
 
     import java.io.BufferedReader;
@@ -44,7 +43,6 @@
     import java.util.ArrayList;
     import java.util.HashMap;
     import java.util.List;
-    import java.util.Locale;
     import java.util.Map;
     import java.util.concurrent.Callable;
     import java.util.concurrent.ExecutorService;
@@ -54,6 +52,7 @@
     public class GoogleCloud extends AppCompatActivity {
         private final Activity activity;
         private GoogleSignInClient googleSignInClient;
+        UIHelper uiHelper = new UIHelper();
 
         public GoogleCloud(FragmentActivity activity){
             this.activity = activity;
@@ -375,7 +374,7 @@
             newLoginButton.setGravity(Gravity.CENTER);
             newLoginButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             newLoginButton.setVisibility(View.VISIBLE);
-            newLoginButton.setBackgroundTintList(UIHelper.backupAccountButtonColor);
+            newLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
             newLoginButton.setPadding(40,0,150,0);
             newLoginButton.setTextSize(15);
             newLoginButton.setTextColor(UIHelper.buttonTextColor);

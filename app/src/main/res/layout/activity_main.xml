@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/gradient_color_bg"
+    android:background="#E8F0FE"
         android:orientation="vertical">
 
     <include layout="@layout/header"/>
@@ -179,7 +179,7 @@
                                 android:id="@+id/syncButton"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:background="@drawable/circular_button_on"
+                                android:background="@drawable/circular_button_off"
                                 android:layout_centerInParent="true" />
 
                             <TextView
@@ -204,7 +204,7 @@
                                 android:id="@+id/wifiButton"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:background="@drawable/circular_button_on"
+                                android:background="@drawable/circular_button_off"
                                 android:layout_centerInParent="true" />
 
                             <TextView

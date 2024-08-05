@@ -73,12 +73,10 @@
             LogHandler.saveLog("---------------Start of app--------------", false);
 
             UIHandler uiHandler = new UIHandler();
-            uiHandler.initializeSyncButton();
-            uiHandler.initializeWifiOnlyButton();
             UIHandler.initializeDrawerLayout(activity);
-            UIHandler.initializeButtons(this,googleCloud);
-            UIHandler.handleSwitchMaterials();
+            uiHandler.initializeButtons(googleCloud);
 
+            UIHandler.handleSwitchMaterials();
 
             Upgrade.versionHandler(preferences);
             if(dbHelper.DATABASE_VERSION < 11) {
@@ -213,7 +211,8 @@
                                         UIHandler.displayLinkProfileDialog(signInToBackUpLauncher, child,
                                                 resultJson, signInResult);
                                     }else{
-                                        Profile.linkToAccounts(signInResult,child);
+                                        Profile profile = new Profile();
+                                        profile.linkToAccounts(signInResult,child);
                                     }
 
                                     child[0].setClickable(true);
@@ -232,7 +231,6 @@
 
             UIHandler.updateButtonsListeners(signInToBackUpLauncher);
 
-            uiHelper.syncSwitchMaterialButton = findViewById(R.id.syncSwitchMaterial);
             uiHelper.syncSwitchMaterialButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {

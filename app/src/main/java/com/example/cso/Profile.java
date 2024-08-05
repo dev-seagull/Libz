@@ -19,9 +19,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import org.checkerframework.checker.guieffect.qual.UI;
-import org.checkerframework.checker.units.qual.A;
-
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -33,6 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class Profile {
+    UIHandler uiHandler = new UIHandler();
     public static JsonObject createProfileMapContentBasedOnDB(){
         JsonObject resultJson = new JsonObject();
         try{
@@ -587,7 +585,7 @@ public class Profile {
         }
     }
 
-    public static void startSignInToProfileThread(ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
+    public void startSignInToProfileThread(ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
                                                   JsonObject resultJson,GoogleCloud.signInResult signInResult){
         LogHandler.saveLog("Start adding linked accounts thread", false);
         Thread addingLinkedAccountsThread = new Thread(() -> {
@@ -644,7 +642,7 @@ public class Profile {
                         LogHandler.saveLog("Finished to insertIntoAccounts for linked accounts",false);
 
                         LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
-                        UIHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,
+                        uiHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,
                                 child,signInLinkedAccountResult);
 
                         LogHandler.saveLog("Finished addAbackUpAccountToUI thread for linked account",false);
@@ -677,7 +675,7 @@ public class Profile {
         addingLinkedAccountsThread.start();
     }
 
-    public static void linkToAccounts(GoogleCloud.signInResult signInResult,View[] child){
+    public void linkToAccounts(GoogleCloud.signInResult signInResult,View[] child){
         Thread linkToAccountsThread = new Thread(() -> {
             ArrayList<String[]> existingAccounts = (ArrayList<String[]>) DBHelper.getAccounts(new String[]{"userEmail", "type", "refreshToken"});
             existingAccounts.add(new String[]{signInResult.getUserEmail(), "backup", signInResult.getTokens().getRefreshToken()});
@@ -718,7 +716,7 @@ public class Profile {
                         signInResult.getStorage().getUsedInDriveStorage(),
                         signInResult.getStorage().getUsedInGmailAndPhotosStorage());
 
-                UIHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,
+                uiHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,
                         child,signInResult);
 
                 LogHandler.saveLog("Starting Drive threads",false);
