@@ -6,7 +6,6 @@
     import android.content.SharedPreferences;
     import android.os.Build;
     import android.os.Bundle;
-    import android.os.Looper;
     import android.provider.Settings;
     import android.view.View;
     import android.widget.LinearLayout;
@@ -16,7 +15,6 @@
     import androidx.activity.result.contract.ActivityResultContracts;
     import androidx.appcompat.app.AppCompatActivity;
 
-    import com.bumptech.glide.Glide;
     import com.google.android.material.switchmaterial.SwitchMaterial;
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
@@ -61,7 +59,7 @@
             preferences = getPreferences(Context.MODE_PRIVATE);
             boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
 //            if(isFirstTime){
-                System.out.println("it is first time!");
+//                System.out.println("it is first time!");
 //                DBHelper.startOldDatabaseDeletionThread(getApplicationContext());
 //                SharedPreferencesHandler.setFirstTime(preferences);
 //            }
@@ -74,6 +72,9 @@
 
             LogHandler.saveLog("---------------Start of app--------------", false);
 
+            UIHandler uiHandler = new UIHandler();
+            uiHandler.initializeSyncButton();
+            uiHandler.initializeWifiOnlyButton();
             UIHandler.initializeDrawerLayout(activity);
             UIHandler.initializeButtons(this,googleCloud);
             UIHandler.handleSwitchMaterials();

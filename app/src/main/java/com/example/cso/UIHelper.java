@@ -1,5 +1,6 @@
 package com.example.cso;
 
+import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -8,10 +9,21 @@ import android.widget.ImageView;
 import android.widget.TextSwitcher;
 import android.widget.TextView;
 
+import androidx.appcompat.widget.AppCompatButton;
+import androidx.drawerlayout.widget.DrawerLayout;
+
+import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 public class UIHelper {
-    public TextView syncMessageTextView = MainActivity.activity.findViewById(R.id.syncMessageTextView);
+    Activity activity = MainActivity.activity;
+    final NavigationView navigationView = activity.findViewById(R.id.navigationView);
+    final AppCompatButton infoButton = activity.findViewById(R.id.infoButton);
+    final DrawerLayout drawerLayout = activity.findViewById(R.id.drawer_layout);
+    final ImageButton syncButton = activity.findViewById(R.id.syncButton);
+    final TextView syncButtonText = activity.findViewById(R.id.syncButtonText);
+    final ImageButton wifiButton = activity.findViewById(R.id.wifiButton);
+    public TextView syncMessageTextView = activity.findViewById(R.id.syncMessageTextView);
     public static ColorStateList backupAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#42A5F5"));
     public SwitchMaterial syncSwitchMaterialButton = MainActivity.activity.findViewById(R.id.syncSwitchMaterial);
     public static ColorStateList primaryAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#0D47A1"));

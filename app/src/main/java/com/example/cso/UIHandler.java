@@ -6,7 +6,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Looper;
 import android.text.Layout;
@@ -19,21 +18,22 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.ActionBarDrawerToggle;
-import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.view.GravityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -48,7 +48,6 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
-import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.gson.JsonObject;
 
@@ -59,6 +58,9 @@ import java.util.Map;
 
 public class UIHandler {
     public static TextView directoryUsages = MainActivity.activity.findViewById(R.id.directoryUsages);
+    public static UIHelper uiHelper = new UIHelper();
+    private boolean isSyncOn = true;
+    private boolean isWifiOnlyOn = false;
     public static void handleSwitchMaterials(){
         handleSyncSwitchMaterials();
         handleWifiOnlySwitchMaterial();
@@ -162,29 +164,96 @@ public class UIHandler {
         }
     }
 
+    public void initializeWifiOnlyButton(){
+        uiHelper.wifiButton.setOnClickListener(view -> {
+            if(isSyncOn){
+                toggleWifiOnlyOnState();
+                updateButtonBackground(uiHelper.wifiButton, isWifiOnlyOn);
+            }else{
+                try{
+                    Toast.makeText(uiHelper.activity.getApplicationContext(),
+                            "First turn the sync button on!" , Toast.LENGTH_SHORT).show();
+                }catch (Exception e){
+                    System.out.println("Failed to make toast make in initializeWifiOnlyButton: " + e.getLocalizedMessage());
+                }
+            }
+        });
+    }
+
+    public void initializeSyncButton(){
+        RotateAnimation continuousRotate = createContinuousRotateAnimation();
+        updateSyncButtonState(continuousRotate);
+        uiHelper.syncButton.setOnClickListener(view -> {
+            toggleSyncState();
+            updateSyncButtonState(continuousRotate);
+            updateButtonBackground(uiHelper.syncButton, isSyncOn);
+        });
+    }
+
+    private RotateAnimation createContinuousRotateAnimation() {
+        RotateAnimation continuousRotate = new RotateAnimation(0, 360,
+                Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        continuousRotate.setDuration(4000);
+        continuousRotate.setStartOffset(1000);
+        continuousRotate.setRepeatCount(Animation.INFINITE);
+        return continuousRotate;
+    }
+
+    private void updateSyncButtonState(RotateAnimation animation) {
+        if (isSyncOn) {
+            uiHelper.syncButtonText.startAnimation(animation);
+        } else {
+            uiHelper.syncButtonText.clearAnimation();
+        }
+    }
+
+    private void toggleSyncState() {
+        isSyncOn = !isSyncOn;
+    }
+
+    private void toggleWifiOnlyOnState() {
+        isWifiOnlyOn = !isWifiOnlyOn;
+    }
+
+    private void updateButtonBackground(ImageButton button, Boolean state) {
+        int backgroundResource = state ? R.drawable.circular_button_on : R.drawable.circular_button_off;
+        button.setBackgroundResource(backgroundResource);
+    }
+
     public static void initializeDrawerLayout(Activity activity){
-        DrawerLayout drawerLayout = activity.findViewById(R.id.drawer_layout);
-        NavigationView navigationView = activity.findViewById(R.id.navigationView);
+        setupDrawerToggle(activity);
+        setMenuItems();
+        setupInfoButton(activity);
+    }
+
+    private static void setupDrawerToggle(Activity activity){
         ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
-                activity, drawerLayout, R.string.navigation_drawer_open,
-                R.string.navigation_drawer_close);
-        drawerLayout.addDrawerListener(actionBarDrawerToggle);
+                activity, uiHelper.drawerLayout, R.string.navigation_drawer_open,
+                R.string.navigation_drawer_close
+        );
+        uiHelper.drawerLayout.addDrawerListener(actionBarDrawerToggle);
         actionBarDrawerToggle.syncState();
-        MenuItem menuItem1 = navigationView.getMenu().findItem(R.id.navMenuItem1);
-        String appVersion = BuildConfig.VERSION_NAME;
-        SpannableString centeredText = new SpannableString("Version: " + appVersion);
-        centeredText.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER), 0, appVersion.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
-        menuItem1.setTitle(centeredText);
-        MenuItem menuItem2 = navigationView.getMenu().findItem(R.id.navMenuItem2);
-        SpannableString centeredText2 = new SpannableString("Device id: " + MainActivity.androidUniqueDeviceIdentifier);
-        centeredText2.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER), 0, appVersion.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
-        menuItem2.setTitle(centeredText2);
-        AppCompatButton infoButton = activity.findViewById(R.id.infoButton);
-        infoButton.setOnClickListener(view -> {
-            if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
-                drawerLayout.closeDrawer(GravityCompat.END);
+    }
+
+    private static void setMenuItems() {
+        setMenuItemTitle(R.id.navMenuItem1, "Version: " + BuildConfig.VERSION_NAME);
+        setMenuItemTitle(R.id.navMenuItem2, "Device id: " + MainActivity.androidUniqueDeviceIdentifier);
+    }
+
+    private static void setMenuItemTitle(int menuItemId, String text) {
+        MenuItem menuItem = uiHelper.navigationView.getMenu().findItem(menuItemId);
+        SpannableString centeredText = new SpannableString(text);
+        centeredText.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER),
+                0, text.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+        menuItem.setTitle(centeredText);
+    }
+
+    private static void setupInfoButton(Activity activity) {
+        uiHelper.infoButton.setOnClickListener(view -> {
+            if (uiHelper.drawerLayout.isDrawerOpen(GravityCompat.END)) {
+                uiHelper.drawerLayout.closeDrawer(GravityCompat.END);
             } else {
-                drawerLayout.openDrawer(GravityCompat.END);
+                uiHelper.drawerLayout.openDrawer(GravityCompat.END);
             }
         });
     }

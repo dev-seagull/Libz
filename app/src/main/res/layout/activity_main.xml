@@ -129,6 +129,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content" />
 
+
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="5dp"
@@ -137,6 +138,88 @@
                             android:alpha="1"
                             android:background="#050505" />
                     </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/syncButtonsLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="100dp"
+                        android:orientation="horizontal">
+
+                        <FrameLayout
+                            android:id="@+id/circularSyncDetailsButtonContainer"
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
+                            android:layout_centerInParent="true"
+                            android:layout_marginLeft="10dp"
+                            android:layout_marginRight="10dp">
+                            <ImageButton
+                                android:id="@+id/syncDetailsButton"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/circular_button_on"
+                                android:layout_centerInParent="true" />
+
+                            <TextView
+                                android:id="@+id/syncDetailsButtonText"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:text="Sync Details"
+                                android:textColor="@android:color/white"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+                        </FrameLayout>
+
+                        <FrameLayout
+                            android:id="@+id/circularButtonContainer"
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
+                            android:layout_centerInParent="true">
+                            <ImageButton
+                                android:id="@+id/syncButton"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/circular_button_on"
+                                android:layout_centerInParent="true" />
+
+                            <TextView
+                                android:id="@+id/syncButtonText"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:text="Sync"
+                                android:textColor="@android:color/white"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+                        </FrameLayout>
+
+                        <FrameLayout
+                            android:id="@+id/circularWifiButtonContainer"
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
+                            android:layout_centerInParent="true"
+                            android:layout_marginLeft="10dp"
+                            android:layout_marginRight="10dp">
+                            <ImageButton
+                                android:id="@+id/wifiButton"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/circular_button_on"
+                                android:layout_centerInParent="true" />
+
+                            <TextView
+                                android:id="@+id/wifiButtonText"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:text="Wifi only"
+                                android:textColor="@android:color/white"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+                        </FrameLayout>
+
+                    </LinearLayout>
+
 
                         <LinearLayout
                             android:id="@+id/backUpAccountsButtons"
