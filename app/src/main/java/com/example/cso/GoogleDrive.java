@@ -8,7 +8,9 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
+import com.google.api.services.drive.model.Permission;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -22,6 +24,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class GoogleDrive {
+
+    public static int CURRENT_DRIVE_ACCOUNT_INDEX = 0;
 
     public GoogleDrive() {}
     public static String createOrGetStashSyncedAssetsFolderInDrive(String userEmail, boolean isLogin, String accessToken){
@@ -134,12 +138,12 @@ public class GoogleDrive {
     private static String createStashSyncedAssetFolder(Drive service){
         String syncAssetsFolderId = "";
         try{
-            com.google.api.services.drive.model.File folder_metadata =
-                    new com.google.api.services.drive.model.File();
+            File folder_metadata =
+                    new File();
             String folderName = "stash_synced_assets";
             folder_metadata.setName(folderName);
             folder_metadata.setMimeType("application/vnd.google-apps.folder");
-            com.google.api.services.drive.model.File folder = service.files().create(folder_metadata).setFields("id").execute();
+            File folder = service.files().create(folder_metadata).setFields("id").execute();
             syncAssetsFolderId = folder.getId();
         }catch (Exception e){
             LogHandler.saveLog("Failed to create stash synced asset folder : " + e.getLocalizedMessage(), true);
@@ -209,7 +213,7 @@ public class GoogleDrive {
                             .setQ("'" +assetsSubFolderId + "' in parents and trashed=false")
                             .setPageToken(nextPageToken)
                             .execute();
-                    List<com.google.api.services.drive.model.File> files = result.getFiles();
+                    List<File> files = result.getFiles();
                     if (files != null && !result.getFiles().isEmpty()) {
                         for (File file : files) {
                             if (Media.isVideo(GoogleCloud.getMimeType(file.getName())) |
@@ -330,8 +334,8 @@ public class GoogleDrive {
         return service;
     }
 
-    public static List<com.google.api.services.drive.model.File> getDriveFolderFiles(Drive service, String folderId){
-        List<com.google.api.services.drive.model.File> files = null;
+    public static List<File> getDriveFolderFiles(Drive service, String folderId){
+        List<File> files = null;
         try{
             String query = "'" + folderId + "' in parents and trashed=false";
             FileList resultJson = service.files().list()
@@ -464,7 +468,7 @@ public class GoogleDrive {
         LogHandler.saveLog("Finished startDeleteDuplicatedInDriveThread", false);
     }
 
-    private static void startUpdateDriveStorageThread() {
+    public static void startUpdateDriveStorageThread() {
         LogHandler.saveLog("Starting startUpdateDriveStorageThread", false);
         Thread updateDriveStorage = new Thread(new Runnable() {
             @Override
@@ -548,6 +552,160 @@ public class GoogleDrive {
         }catch (Exception e){
             LogHandler.saveLog("Failed to refactor folders: " + e.getLocalizedMessage());
         }
+    }
+
+    public static void moveFilesBetweenAccounts(String sourceUserEmail){
+        boolean[] moveSuccessful = {false};
+        Thread moveFilesBetweenAccountsThread = new Thread(() -> {
+
+            System.out.println("Starting to move files between accounts");
+            List<String[]> accounts_rows = DBHelper.getAccounts(new String[]{"refreshToken","userEmail"});
+            Drive sourceDriveService = null;
+            for (String[] account_row: accounts_rows){
+                if (account_row[1].equals(sourceUserEmail)){
+                    String refreshToken = account_row[0];
+                    String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
+                    sourceDriveService = initializeDrive(accessToken);
+                    break;
+                }
+            }
+
+            if (sourceDriveService == null) {
+                LogHandler.saveLog("Source drive service could not be initialized for user: " + sourceUserEmail, true);
+                moveSuccessful[0] = false;
+                return ;
+            }
+
+            String[] driveColumns = {"fileHash", "id","assetId", "fileId", "fileName", "userEmail"};
+            List<String[]> drive_rows = MainActivity.dbHelper.getDriveTable(driveColumns, sourceUserEmail);
+            CURRENT_DRIVE_ACCOUNT_INDEX = 0;
+            ArrayList<Object> driveServicesList = getFreeDrive(sourceUserEmail,accounts_rows);
+            Drive destinationDriveService = (Drive) driveServicesList.get(0);
+            String destinationUserEmail = (String) driveServicesList.get(1);
+
+            for (int i = 0; i < drive_rows.size(); i++){
+                String[] drive_row = drive_rows.get(i);
+                String fileId = drive_row[3];
+                System.out.println("moving file: " + drive_row[4]);
+                boolean isMoveSuccessful = moveFileBetweenAccounts(sourceDriveService, destinationDriveService,destinationUserEmail, fileId);
+                System.out.println("is successful: " + isMoveSuccessful);
+                if (!isMoveSuccessful){
+                    CURRENT_DRIVE_ACCOUNT_INDEX+=1;
+                    if (CURRENT_DRIVE_ACCOUNT_INDEX == accounts_rows.size()){
+                        CURRENT_DRIVE_ACCOUNT_INDEX = 0 ;
+                    }
+                    driveServicesList = getFreeDrive(sourceUserEmail,accounts_rows);
+                    destinationDriveService = (Drive) driveServicesList.get(0);
+                    destinationUserEmail = (String) driveServicesList.get(1);
+                    i--;
+                }
+            }
+            moveSuccessful[0] = true;
+        });
+
+        moveFilesBetweenAccountsThread.start();
+    }
+
+
+    public static ArrayList<Object> getFreeDrive(String sourceUserEmail,List<String[]> accounts_rows){
+//        Drive[] driveServices = {null};
+        ArrayList<Object> driveServicesList = new ArrayList<>();
+        Thread getFreeDriveThread = new Thread(() -> {
+            Drive destinationDriveService = null;
+            for (String[] account_row: accounts_rows){
+                if (account_row[1].equals(sourceUserEmail)){
+                    continue;
+                }
+                if (CURRENT_DRIVE_ACCOUNT_INDEX >0){
+                    CURRENT_DRIVE_ACCOUNT_INDEX-=1;
+                    continue;
+                }
+                if (CURRENT_DRIVE_ACCOUNT_INDEX == 0){
+                    String refreshToken = account_row[0];
+                    String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
+                    destinationDriveService = initializeDrive(accessToken);
+                    driveServicesList.add(destinationDriveService);
+                    driveServicesList.add(account_row[1]);
+                    System.out.println("changing destination account to : " + account_row[1]);
+//                    driveServices[0] = destinationDriveService;
+                }
+            }
+        });
+        getFreeDriveThread.start();
+        try {
+            getFreeDriveThread.join();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to join get free drive thread: " + e.getLocalizedMessage(), true);
+        }
+
+        return driveServicesList;
+    }
+
+
+    public static boolean moveFileBetweenAccounts(Drive sourceAccount, Drive destinationAccount, String destinationUserEmail, String fileId) {
+        boolean[] isMoveSuccessful = {false};
+        Thread moveFileBetweenAccountsThread = new Thread(() -> {
+            try {
+                File fileMetadata = sourceAccount.files().get(fileId).execute();
+
+//                Permission sourceUserPremission = new Permission().setType("user").setRole("reader");
+                Permission destinationUserPermission = new Permission().setType("user").setRole("writer")//maybe owner is better
+                        .setEmailAddress(destinationUserEmail + "@gmail.com");
+
+//                destinationAccount.teamdrives().create();
+                sourceAccount.permissions().create(fileMetadata.getId(), destinationUserPermission).execute();
+
+                File copiedFile = new File();
+                copiedFile.setName(fileMetadata.getName());
+                copiedFile.setMimeType(fileMetadata.getMimeType());
+
+                File newFile = destinationAccount.files().copy(fileId, copiedFile).execute();
+                System.out.println("File copied successfully to the destination account with ID: " + newFile.getId());
+                if (newFile!= null) {
+        //            make transaction please
+                    sourceAccount.files().delete(fileId).execute();
+                    System.out.println("Original file deleted from the source account.");
+                }
+
+                isMoveSuccessful[0] = true;
+            } catch (Exception e) {
+                LogHandler.saveLog("Failed to move file between accounts: " + e.getLocalizedMessage(), true);
+            }
+
+        });
+        moveFileBetweenAccountsThread.start();
+        try {
+            moveFileBetweenAccountsThread.join();
+        }catch (Exception e){
+            LogHandler.saveLog("failed to join moveFileBetweenAccountsThread : " + e.getLocalizedMessage());
+        }
+        return isMoveSuccessful[0];
+    }
+
+
+
+    public static int getAssetsSizeOfDriveAccount(String userEmail){
+        int totalSize = 0;
+        try{
+            List<String[]> accounts_rows = DBHelper.getAccounts(new String[]{"refreshToken","userEmail"});
+            Drive service = null;
+            for (String[] account_row: accounts_rows){
+                if (account_row[1].equals(userEmail)){
+                    String accessToken = MainActivity.googleCloud.updateAccessToken(account_row[0]).getAccessToken();
+                    service = initializeDrive(accessToken);
+                }
+            }
+            String[] driveColumns = {"fileHash", "id","assetId", "fileId", "fileName", "userEmail"};
+            List<String[]> drive_rows = MainActivity.dbHelper.getDriveTable(driveColumns, userEmail);
+            for (String[] drive_row: drive_rows){
+                String fileId = drive_row[3];
+                int fileSize = service.files().get(fileId).size();
+                totalSize += fileSize;
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to get assets size of drive account: " + e.getLocalizedMessage(), true);
+        }
+        return totalSize;
     }
 }
 

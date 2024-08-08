@@ -593,18 +593,17 @@ public class UIHandler {
                                 button.setClickable(false);
                                 MainActivity.googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
                                 button.setClickable(true);
-                            } else if (buttonText.equals("wait")){
+                            } else if (buttonText.equals("Wait")){
                                 button.setText("add a back up account");
-                            }
-                            else {
+                            } else {
                                 PopupMenu popupMenu = setPopUpMenuOnButton(activity, button);
                                 popupMenu.setOnMenuItemClickListener(item -> {
-                                    if (item.getItemId() == R.id.sign_out) {
+                                    if (item.getItemId() == R.id.unlink) {
                                         try {
-                                            button.setText("Wait...");
+                                            button.setText("Wait");
                                         }catch (Exception e){}
 
-                                        GoogleCloud.startSignOutThreads(buttonText, item, button);
+                                        GoogleCloud.startUnlinkThreads(buttonText, item, button);
                                     }
                                     return true;
                                 });
@@ -725,6 +724,61 @@ public class UIHandler {
 //            newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
         Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
         newBackupLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
+    }
+
+    public static boolean showMoveDriveFilesDialog(String userEmail){
+        boolean[] wantToUnlink = {false};
+        try {
+            List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","totalStorage","usedStorage"});
+            int totalFreeSpace = 0;
+            for (String[] account : accounts) {
+                if (!account[0].equals(userEmail)){
+                    int totalStorage = Integer.parseInt(account[1]);
+                    int usedStorage = Integer.parseInt(account[2]);
+                    totalFreeSpace += totalStorage - usedStorage;
+                }
+            }
+            int assetsSize = GoogleDrive.getAssetsSizeOfDriveAccount(userEmail);
+            String[] text = {""};
+            if (totalFreeSpace < assetsSize){ // bad situation
+                text[0] = "We will move " + totalFreeSpace /1025 + " GB out of " + assetsSize/1024 + " GB of your assets in "+ userEmail +" to other accounts." +
+                        "\nWarning : there is not enough space to move all of it. We wont be responsible for "+ (assetsSize - totalFreeSpace)/1024 + " GB of your assets that remain in "+userEmail+"." ;
+            }else{
+                text[0] = "We will move all your assets in "+ userEmail +" to other accounts." ;
+            }
+
+            MainActivity.activity.runOnUiThread(() -> {
+                try {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
+                    builder.setMessage(text[0]);
+                    builder.setTitle("Unlink Drive Account");
+
+
+
+                    builder.setPositiveButton("Unlink", (dialog, id) -> {
+                        dialog.dismiss();
+                        System.out.println("wantToUnlink : " + "true");
+                        GoogleDrive.moveFilesBetweenAccounts(userEmail);
+                        System.out.println("finish moving files");
+
+                    });
+
+                    builder.setNegativeButton("Cancel", (dialog, id) -> dialog.dismiss());
+
+                    builder.setCancelable(false);
+
+                    AlertDialog alertDialog = builder.create();
+                    alertDialog.show();
+                } catch (Exception e) {
+                    LogHandler.saveLog("Failed to show move drive files dialog : " + e.getLocalizedMessage(), true);
+                }
+            });
+
+        }catch(Exception e){
+            LogHandler.saveLog("Failed to calculate asset size and drives free space : " + e.getLocalizedMessage(), true);
+            return false;
+        }
+        return wantToUnlink[0];
     }
 
 }

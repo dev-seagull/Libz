@@ -283,25 +283,24 @@
             LogHandler.saveLog("--------------------------end of onStart----------------------------",false);
         }
 
-        @Override
-        public void onResume(){
-            super.onResume();
-        }
-
-        @Override
-        public void onPause(){
-            super.onPause();
-        }
-
-        @Override
-        public void onDestroy() {
-            super.onDestroy();
-            System.out.println("Here stopping the timer on ui in onDestroy");
-            androidTimer.cancel();
-            androidTimer.purge();
-        }
-
+    @Override
+    public void onResume(){
+        super.onResume();
     }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        System.out.println("Here stopping the timer on ui in onDestroy");
+        androidTimer.cancel();
+        androidTimer.purge();
+    }
+}
 
 
 

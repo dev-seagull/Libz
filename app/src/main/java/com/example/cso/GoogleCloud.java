@@ -28,6 +28,7 @@
     import com.google.android.gms.common.api.Scope;
     import com.google.android.gms.tasks.Task;
     import com.google.api.services.drive.Drive;
+    import com.google.api.services.drive.model.File;
     import com.google.gson.JsonArray;
     import com.google.gson.JsonObject;
 
@@ -610,7 +611,7 @@
                 this.totalStorage = totalStorage * 1000;
                 this.usedStorage = usedStorage * 1000;
                 this.usedInDriveStorage = usedInDriveStorage * 1000;
-                this.UsedInGmailAndPhotosStorage = usedStorage - usedInDriveStorage;
+                this.UsedInGmailAndPhotosStorage = (usedStorage - usedInDriveStorage) * 1000;
             }
             public Double getUsedInDriveStorage() {
                 return usedInDriveStorage;
@@ -731,19 +732,22 @@
             return isBackedUp[0];
         }
 
-        public static void startSignOutThreads(String buttonText, MenuItem item, Button button){
+        public static void startUnlinkThreads(String buttonText, MenuItem item, Button button){
             Thread startSignOutThreads = new Thread(() -> {
-                boolean isProfileJsonDeleted = startDeleteProfileJsonThread(buttonText);
-                if(isProfileJsonDeleted){
-                    boolean isDatabaseDeleted = startDeleteDatabaseThread(buttonText);
-                    boolean isInvalidated = startInvalidateTokenThread(buttonText);
-                    if(isInvalidated){
-                        boolean isBackedUp = startProfileJsonBackUpAfterSignOutThread(buttonText);
-                        if(isBackedUp){
-                            UIHandler.startUiThreadForSignOut(item,button,buttonText,isBackedUp);
-                        }
-                    }
-                }
+                GoogleDrive.startUpdateDriveStorageThread();
+                boolean wantToUnlink = UIHandler.showMoveDriveFilesDialog(buttonText);
+
+//                boolean isProfileJsonDeleted = startDeleteProfileJsonThread(buttonText);
+//                if(isProfileJsonDeleted){
+//                    boolean isDatabaseDeleted = startDeleteDatabaseThread(buttonText);
+//                    boolean isInvalidated = startInvalidateTokenThread(buttonText);
+//                    if(isInvalidated){
+//                        boolean isBackedUp = startProfileJsonBackUpAfterSignOutThread(buttonText);
+//                        if(isBackedUp){
+//                            UIHandler.startUiThreadForSignOut(item,button,buttonText,isBackedUp);
+//                        }
+//                    }
+//                }
             });
             startSignOutThreads.start();
         }
@@ -787,6 +791,7 @@
             }
             return signInLinkedAccountsResult;
         }
+
       }
 
 

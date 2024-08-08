@@ -3,8 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     >
     <item
-        android:id="@+id/sign_out"
-        android:title="sign_out"
+        android:id="@+id/unlink"
+        android:title="Unlink"
         />
 
 </menu>
