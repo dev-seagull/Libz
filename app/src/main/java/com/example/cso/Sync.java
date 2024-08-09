@@ -100,7 +100,7 @@ public class Sync {
             String filePath = androidRow[2];
             Long assetId = Long.valueOf(androidRow[8]);
 
-            boolean isWifiOnlySwitchOn = SharedPreferencesHandler.getWifiOnlySwitchState(MainActivity.preferences);
+            boolean isWifiOnlySwitchOn = SharedPreferencesHandler.getWifiOnlySwitchState();
             if (!Thread.currentThread().isInterrupted() && uiHelper.syncSwitchMaterialButton.isChecked() &&  (isWifiOnlySwitchOn && InternetManager.getInternetStatus(context).equals("wifi")) || (!isWifiOnlySwitchOn) ){
                 MainActivity.activity.runOnUiThread(new Runnable() {
                     @Override

@@ -59,7 +59,6 @@ import java.util.Map;
 public class UIHandler {
     public static TextView directoryUsages = MainActivity.activity.findViewById(R.id.directoryUsages);
     public static UIHelper uiHelper = new UIHelper();
-    private boolean isSyncOn = false;
     private boolean isWifiOnlyOn = false;
     public static void handleSwitchMaterials(){
         handleSyncSwitchMaterials();
@@ -88,7 +87,7 @@ public class UIHandler {
         SwitchMaterial syncSwitchMaterialButton = MainActivity.activity.findViewById(R.id.syncSwitchMaterial);
         SwitchMaterial wifiOnlySwitchMaterialButton = MainActivity.activity.findViewById(R.id.wifiOnlySwitchMaterial);
         MainActivity.activity.runOnUiThread(() -> {
-            if (SharedPreferencesHandler.getWifiOnlySwitchState(MainActivity.preferences)){
+            if (SharedPreferencesHandler.getWifiOnlySwitchState()){
                     wifiOnlySwitchMaterialButton.setChecked(true);
                     wifiOnlySwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
                     wifiOnlySwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
@@ -165,7 +164,9 @@ public class UIHandler {
     }
 
     public void initializeWifiOnlyButton(){
+
         uiHelper.wifiButton.setOnClickListener(view -> {
+            boolean isSyncOn = SharedPreferencesHandler.getSyncSwitchState();
             if(isSyncOn){
                 toggleWifiOnlyOnState();
                 updateButtonBackground(uiHelper.wifiButton, isWifiOnlyOn);
@@ -182,11 +183,28 @@ public class UIHandler {
 
     public void initializeSyncButton(){
         RotateAnimation continuousRotate = createContinuousRotateAnimation();
-        updateSyncButtonState(continuousRotate);
         uiHelper.syncButton.setOnClickListener(view -> {
             toggleSyncState();
-            updateSyncButtonState(continuousRotate);
-            updateButtonBackground(uiHelper.syncButton, isSyncOn);
+            boolean syncState = SharedPreferencesHandler.getSyncSwitchState();
+            if(syncState){
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    if (!TimerService.isMyServiceRunning(uiHelper.activity.getApplicationContext(),TimerService.class).equals("on")){
+                        uiHelper.activity.getApplicationContext().startService(MainActivity.serviceIntent);
+                        updateButtonBackground(uiHelper.wifiButton, isWifiOnlyOn);
+                        SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true,MainActivity.preferences);
+                    }
+                }
+            }else{
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    if (TimerService.isMyServiceRunning(uiHelper.activity.getApplicationContext(),TimerService.class).equals("on")){
+                        uiHelper.activity.getApplicationContext().stopService(MainActivity.serviceIntent);
+                    }
+                }
+            }
+
+            updateSyncButtonRotationState(continuousRotate, syncState);
+
+            updateButtonBackground(uiHelper.syncButton, syncState);
         });
     }
 
@@ -199,7 +217,7 @@ public class UIHandler {
         return continuousRotate;
     }
 
-    private void updateSyncButtonState(RotateAnimation animation) {
+    private void updateSyncButtonRotationState(RotateAnimation animation, boolean isSyncOn) {
         if (isSyncOn) {
             uiHelper.syncButtonText.startAnimation(animation);
         } else {
@@ -208,7 +226,8 @@ public class UIHandler {
     }
 
     private void toggleSyncState() {
-        isSyncOn = !isSyncOn;
+        boolean state = SharedPreferencesHandler.getSyncSwitchState();
+        SharedPreferencesHandler.setSwitchState("syncSwitchState",!state,MainActivity.preferences);
     }
 
     private void toggleWifiOnlyOnState() {

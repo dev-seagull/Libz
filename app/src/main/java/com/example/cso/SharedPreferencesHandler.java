@@ -16,8 +16,12 @@ import java.util.Locale;
 
 public class SharedPreferencesHandler {
 
-    public static boolean getWifiOnlySwitchState(SharedPreferences sharedPreferences){
-        return sharedPreferences.getBoolean("wifiOnlySwitchState", false);
+    public static boolean getWifiOnlySwitchState(){
+        return MainActivity.preferences.getBoolean("wifiOnlySwitchState", false);
+    }
+
+    public static boolean getSyncSwitchState(){
+        return MainActivity.preferences.getBoolean("syncSwitchState", false);
     }
 
     public static void setFirstTime(SharedPreferences sharedPreferences){
