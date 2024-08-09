@@ -19,6 +19,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import org.checkerframework.checker.units.qual.A;
+
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -784,5 +786,96 @@ public class Profile {
         existingProfile.add("backupAccounts", existingAccounts);
         return existingProfile;
     }
-    
+
+    public void validateProfile(){
+        validateDevices();
+        validateAccounts();
+    }
+
+    public void validateDevices(){
+        try{
+            ArrayList<DeviceHandler> currentDevices = MainActivity.dbHelper.getDevicesFromDB();
+//        readProfileMapContent()
+            JsonObject jsonObject = new JsonObject();
+            ArrayList<DeviceHandler> jsonDevices = getDevicesFromProfileJson(jsonObject);
+            for(DeviceHandler device: currentDevices){
+                if(!jsonDevices.contains(device)){
+                    //unlink
+                }
+            }
+            for(DeviceHandler device: jsonDevices){
+                if(!currentDevices.contains(device)){
+                    //link
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to validate devices: " + e.getLocalizedMessage(), true);
+        }
+    }
+
+    public void validateAccounts(){
+        ArrayList<String> currentAccounts = new ArrayList<>();
+        try{
+            List<String []> accounts = DBHelper.getAccounts(new String[]{"userEmail","type"});
+            for(String[] account: accounts){
+                String type = account[1];
+                if(type.equals("backup")){
+                    String userEmail = account[0];
+                    currentAccounts.add(userEmail);
+                }
+            }
+//        readProfileMapContent()
+            JsonObject jsonObject = new JsonObject();
+            ArrayList<String> jsonAccounts = getBackUpAccountsFromProfileJson(jsonObject);
+            for(String currentAccount: currentAccounts){
+                if(!jsonAccounts.contains(currentAccount)){
+                    //unlink
+                }
+            }
+            for(String jsonAccount: jsonAccounts){
+                if(!currentAccounts.contains(jsonAccount)){
+                    //link
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to validate accounts: " + e.getLocalizedMessage(), true);
+        }
+    }
+
+    public ArrayList<DeviceHandler> getDevicesFromProfileJson(JsonObject profileJson){
+        ArrayList<DeviceHandler> devices = new ArrayList<>();
+        try{
+            if (profileJson.has("deviceInfo")) {
+                JsonArray deviceInfoArray = profileJson.getAsJsonArray("deviceInfo");
+                for (JsonElement element : deviceInfoArray) {
+                    JsonObject deviceInfoObject = element.getAsJsonObject();
+                    String deviceIdentifier = deviceInfoObject.get("deviceId").getAsString();
+                    String deviceName = deviceInfoObject.get("deviceName").getAsString();
+                    devices.add(new DeviceHandler(deviceName,deviceIdentifier));
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to getDevicesFromProfileJson: " + e.getLocalizedMessage(), true);
+        }finally {
+            return devices;
+        }
+    }
+
+    public ArrayList<String> getBackUpAccountsFromProfileJson(JsonObject profileJson){
+        ArrayList<String> backUpAccounts = new ArrayList<>();
+        try{
+            JsonArray backupAccountsArray = profileJson.getAsJsonArray("backupAccounts");
+            for (JsonElement element : backupAccountsArray) {
+                JsonObject accountObject = element.getAsJsonObject();
+                String backupEmail = accountObject.get("backupEmail").getAsString();
+                backUpAccounts.add(backupEmail);
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to getBackUpAccountsFromProfileJson: " + e.getLocalizedMessage(), true);
+        }finally {
+            return backUpAccounts;
+        }
+    }
+
 }
+

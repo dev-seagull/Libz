@@ -17,6 +17,8 @@ import com.google.gson.JsonObject;
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
 
+import org.checkerframework.checker.units.qual.A;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -1538,5 +1540,30 @@ public class DBHelper extends SQLiteOpenHelper {
         deleteRedundantAsset();
         // delete button
         System.out.println("------------------------------------- email " + userEmail + "deleted from this profile");
+    }
+
+    public ArrayList<DeviceHandler> getDevicesFromDB(){
+        Cursor cursor = null;
+        ArrayList<DeviceHandler> devices = new ArrayList<>();
+        try{
+            String sqlQuery = "SELECT * FROM DEVICE";
+            cursor = dbReadable.rawQuery(sqlQuery,new String[]{});
+            if(cursor != null && cursor.moveToFirst()){
+                int deviceIdColumnIndex = cursor.getColumnIndex("deviceId");
+                int  deviceNameColumnIndex = cursor.getColumnIndex("deviceName");
+                if(deviceNameColumnIndex >= 0 && deviceIdColumnIndex >= 0){
+                    String deviceId =  cursor.getString(deviceIdColumnIndex);
+                    String deviceName = cursor.getString(deviceNameColumnIndex);
+                    devices.add(new DeviceHandler(deviceName,deviceId));
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to select from ASSET in insertAssetData method: " + e.getLocalizedMessage());
+        }finally {
+            if(cursor != null){
+                cursor.close();
+            }
+            return devices;
+        }
     }
 }
