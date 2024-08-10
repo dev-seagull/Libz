@@ -19,8 +19,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import org.checkerframework.checker.units.qual.A;
-
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -480,7 +478,7 @@ public class Profile {
         return isBackedUpFuture;
     }
 
-    private static String setAndCreateProfileMapContent(Drive service,String profileFolderId,String loginStatus, JsonObject resultJson){
+    private static String setAndCreateProfileMapContent(Drive service,String profileFolderId,String loginStatus, Object attachedFile){
         String uploadFileId = "";
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date date = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
@@ -492,13 +490,17 @@ public class Profile {
             fileMetadata.setName(fileName);
             fileMetadata.setParents(java.util.Collections.singletonList(profileFolderId));
             JsonObject content = null;
-            if(loginStatus.equals("signout")){
-                content = Profile.createProfileMapContentBasedOnDB();
+            if(loginStatus.equals("unlink")){
+                content = createProfileMapContentBasedOnDB();
+                String unlinkedEmail = (String) attachedFile;
+                content = Profile.removeAccountFromJson(content,unlinkedEmail);
             }else if(loginStatus.equals("profile")){
+                JsonObject resultJson = (JsonObject) attachedFile ;
                 content = addDeviceInfoToJson(resultJson);
             }else if(loginStatus.equals("login")){
-                content = Profile.createProfileMapContentBasedOnDB();
-                content = Profile.addAccountToJson(content,resultJson);
+                content = createProfileMapContentBasedOnDB();
+                JsonObject resultJson = (JsonObject) attachedFile ;
+                content = addAccountToJson(content,resultJson);
             }
             String contentString = content.toString();
             ByteArrayContent mediaContent = ByteArrayContent.fromString("application/json", contentString);
@@ -683,22 +685,22 @@ public class Profile {
             existingAccounts.add(new String[]{signInResult.getUserEmail(), "backup", signInResult.getTokens().getRefreshToken()});
 
             boolean isBackedUp = false;
-            ArrayList<String[]> backedUpSignInResults = new ArrayList<>();
+            ArrayList<String[]> backedUpAccounts = new ArrayList<>();
             JsonObject newAccountJson = new JsonObject();
             newAccountJson.addProperty("backupEmail", signInResult.getUserEmail());
             newAccountJson.addProperty("refreshToken", signInResult.getTokens().getRefreshToken());
             for (String[] existingAccount : existingAccounts) {
                 if (existingAccount[1].equals("backup")) {
-                    isBackedUp = Profile.backupJsonFileToExistingAccounts(newAccountJson,existingAccount[0], existingAccount[2]);
+                    isBackedUp = Profile.backupJsonFileToExistingAccounts(newAccountJson,existingAccount[0], existingAccount[2],"login");
                     if (!isBackedUp){
-                        for(String[] backedUpExistingAccount: backedUpSignInResults){
+                        for(String[] backedUpExistingAccount: backedUpAccounts){
                             String userEmail = backedUpExistingAccount[0];
                             String accessToken = MainActivity.googleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
                             Profile.deleteProfileFile(userEmail, accessToken, false);
                         }
                         break;
                     }else{
-                        backedUpSignInResults.add(existingAccount);
+                        backedUpAccounts.add(existingAccount);
                     }
                 }
             }
@@ -751,7 +753,7 @@ public class Profile {
         }
     }
 
-    public static boolean backupJsonFileToExistingAccounts(JsonObject newAccountJson, String userEmail, String refreshToken) {
+    public static boolean backupJsonFileToExistingAccounts(Object attachedFile, String userEmail, String refreshToken,String loginStatus) {
         boolean[] isBackedUp = {false};
         Thread backUpJsonThread = new Thread(() -> {
             try{
@@ -759,7 +761,7 @@ public class Profile {
                 Drive service = GoogleDrive.initializeDrive(accessToken);
                 String folder_name = "stash_user_profile";
                 String profileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,folder_name, true, accessToken);
-                String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,"login", newAccountJson);
+                String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,loginStatus, attachedFile);
                 if (uploadedFileId == null | uploadedFileId.isEmpty()) {
                     LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
                 }else{
@@ -786,6 +788,20 @@ public class Profile {
         existingProfile.add("backupAccounts", existingAccounts);
         return existingProfile;
     }
+
+    public static JsonObject removeAccountFromJson(JsonObject existingProfile, String unlinkedEmail){
+        JsonArray existingAccounts = existingProfile.getAsJsonArray("backupAccounts");
+        JsonArray remainingAccounts = new JsonArray();
+        for (JsonElement accountJson :existingAccounts){
+            if (!accountJson.getAsJsonObject().get("backupEmail").getAsString().equals(unlinkedEmail)){
+                remainingAccounts.add(accountJson);
+            }
+        }
+        existingProfile.remove("backupAccounts");
+        existingProfile.add("backupAccounts", remainingAccounts);
+        return existingProfile;
+    }
+
 
     public void validateProfile(){
         validateDevices();
@@ -875,6 +891,36 @@ public class Profile {
         }finally {
             return backUpAccounts;
         }
+    }
+
+    public static boolean backupJsonToRemainingAccounts(String unlinkedUserEmail){
+        ArrayList<String[]> existingAccounts = (ArrayList<String[]>) DBHelper.getAccounts(new String[]{"userEmail", "type", "refreshToken"});
+        ArrayList<String[]> backedUpAccounts = new ArrayList<>();
+        boolean isBackedUp = false;
+        for(String[] account: existingAccounts){
+            if (account[1].equals("backup") && !account[0].equals(unlinkedUserEmail)){
+                isBackedUp = backupJsonFileToExistingAccounts(unlinkedUserEmail, account[0], account[2],"unlink");
+                if (!isBackedUp){
+                    for(String[] backedUpExistingAccount: backedUpAccounts){
+                        String userEmail = backedUpExistingAccount[0];
+                        String accessToken = MainActivity.googleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
+                        Profile.deleteProfileFile(userEmail, accessToken, false);
+                    }
+                    break;
+                }else{
+                    backedUpAccounts.add(account);
+                }
+            }
+        }
+
+        if(isBackedUp) {
+            for (String[] backedUpExistingAccount : existingAccounts) {
+                String userEmail = backedUpExistingAccount[0];
+                String accessToken = MainActivity.googleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
+                Profile.deleteProfileFile(userEmail, accessToken, true);
+            }
+        }
+        return isBackedUp;
     }
 
 }

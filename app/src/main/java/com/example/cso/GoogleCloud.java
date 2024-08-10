@@ -100,6 +100,7 @@
                     break;
                 }
             }
+
             try {
                 if (!isAccessTokenValid(accessTokens[0])) {
                     GoogleCloud.Tokens tokens = updateAccessToken(refreshToken);
@@ -112,6 +113,7 @@
             }catch (Exception e) {
                 LogHandler.saveLog("Failed to update the access token: " + e.getLocalizedMessage(), true);
             }
+
             Callable<Boolean> callableTask = () -> {
                 try {
                     String revokeUrl = "https://accounts.google.com/o/oauth2/revoke";
@@ -151,6 +153,7 @@
             }
             return isSignedOut;
         }
+
 
         public static boolean isAccessTokenValid(String accessToken) throws IOException {
             ExecutorService executor = Executors.newSingleThreadExecutor();

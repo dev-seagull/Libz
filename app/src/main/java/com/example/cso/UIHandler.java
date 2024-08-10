@@ -801,7 +801,9 @@ public class UIHandler {
                     totalFreeSpace += totalStorage - usedStorage;
                 }
             }
+
             int assetsSize = GoogleDrive.getAssetsSizeOfDriveAccount(userEmail);
+
             String[] text = {""};
             boolean[] completeMove = {false};
             if (totalFreeSpace < assetsSize){ // bad situation
@@ -819,14 +821,11 @@ public class UIHandler {
                     builder.setMessage(text[0]);
                     builder.setTitle("Unlink Drive Account");
 
-
-
                     builder.setPositiveButton("Unlink", (dialog, id) -> {
                         dialog.dismiss();
                         System.out.println("wantToUnlink : " + "true");
                         GoogleDrive.moveFilesBetweenAccounts(userEmail,completeMove[0],(assetsSize - finalTotalFreeSpace));
                         System.out.println("finish moving files");
-
                     });
 
                     builder.setNegativeButton("Cancel", (dialog, id) -> dialog.dismiss());
