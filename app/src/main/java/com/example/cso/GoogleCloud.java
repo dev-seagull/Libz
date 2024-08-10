@@ -85,7 +85,7 @@
             }
         }
 
-        public boolean signOut(String userEmail) {
+        public boolean revokeToken(String userEmail) {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             String type = "";
             String refreshToken = "";
@@ -99,6 +99,7 @@
                     break;
                 }
             }
+
             try {
                 if (!isAccessTokenValid(accessTokens[0])) {
                     GoogleCloud.Tokens tokens = updateAccessToken(refreshToken);
@@ -111,6 +112,7 @@
             }catch (Exception e) {
                 LogHandler.saveLog("Failed to update the access token: " + e.getLocalizedMessage(), true);
             }
+
             Callable<Boolean> callableTask = () -> {
                 try {
                     String revokeUrl = "https://accounts.google.com/o/oauth2/revoke";
@@ -150,6 +152,7 @@
             }
             return isSignedOut;
         }
+
 
         public static boolean isAccessTokenValid(String accessToken) throws IOException {
             ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -627,13 +630,13 @@
             }
         }
 
-        private static boolean startInvalidateTokenThread(String buttonText){
+        public static boolean startInvalidateTokenThread(String buttonText){
             LogHandler.saveLog("Starting invalidate token Thread", false);
             final boolean[] isInvalidated = {false};
             Thread invalidateTokenThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    isInvalidated[0] = MainActivity.googleCloud.signOut(buttonText);
+                    isInvalidated[0] = MainActivity.googleCloud.revokeToken(buttonText);
                     if(!isInvalidated[0]){
                         LogHandler.saveLog("token is not invalidated." , true);
                     }

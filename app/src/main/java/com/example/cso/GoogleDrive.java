@@ -1,5 +1,13 @@
 package com.example.cso;
 
+import static com.example.cso.MainActivity.signInToBackUpLauncher;
+
+import android.app.ProgressDialog;
+import android.hardware.camera2.params.DynamicRangeProfiles;
+import android.view.View;
+import android.widget.Button;
+import android.widget.LinearLayout;
+
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponse;
@@ -555,8 +563,8 @@ public class GoogleDrive {
         }
     }
 
-    public static void moveFilesBetweenAccounts(String sourceUserEmail){
-        boolean[] moveSuccessful = {false};
+    public static void moveFilesBetweenAccounts(String sourceUserEmail,boolean completeMove,int movableSize){
+        boolean[] moveAllSuccessful = {false};
         Thread moveFilesBetweenAccountsThread = new Thread(() -> {
 
             System.out.println("Starting to move files between accounts");
@@ -573,7 +581,7 @@ public class GoogleDrive {
 
             if (sourceDriveService == null) {
                 LogHandler.saveLog("Source drive service could not be initialized for user: " + sourceUserEmail, true);
-                moveSuccessful[0] = false;
+                moveAllSuccessful[0] = false;
                 return ;
             }
 
@@ -584,6 +592,7 @@ public class GoogleDrive {
             Drive destinationDriveService = (Drive) driveServicesList.get(0);
             String destinationUserEmail = (String) driveServicesList.get(1);
 
+            int count_of_retry = 0;
             for (int i = 0; i < drive_rows.size(); i++){
                 String[] drive_row = drive_rows.get(i);
                 String fileId = drive_row[3];
@@ -599,12 +608,40 @@ public class GoogleDrive {
                     destinationDriveService = (Drive) driveServicesList.get(0);
                     destinationUserEmail = (String) driveServicesList.get(1);
                     i--;
+                    count_of_retry++;
+                    if (count_of_retry >= accounts_rows.size()){
+                        if (!completeMove){
+                            moveAllSuccessful[0] = true;
+                            break;
+                        }
+                        moveAllSuccessful[0] = false;
+                    }
+                }else{
+                    //get size of file and check movable size
+                    moveAllSuccessful[0] = true;
+                    count_of_retry =0;
                 }
             }
-            moveSuccessful[0] = true;
+            boolean isBackedUpAndDeleted = false;
+            if (moveAllSuccessful[0]){
+                isBackedUpAndDeleted = Profile.backupJsonToRemainingAccounts(sourceUserEmail);
+            }
+
+            if(isBackedUpAndDeleted){
+                String folderId = createStashSyncedAssetFolder(sourceDriveService);
+                recursivelyDeleteFolder(sourceDriveService,folderId,completeMove);
+                boolean isRevoked = false;
+                isRevoked = GoogleCloud.startInvalidateTokenThread(sourceUserEmail);
+                if (isRevoked){
+                    MainActivity.dbHelper.deleteAccountAndRelatedAssets(sourceUserEmail);
+                    GoogleDrive.startThreads();
+                }
+            }
+
         });
 
         moveFilesBetweenAccountsThread.start();
+
     }
 
 
@@ -709,6 +746,37 @@ public class GoogleDrive {
             LogHandler.saveLog("Failed to get assets size of drive account: " + e.getLocalizedMessage(), true);
         }
         return totalSize;
+    }
+
+
+    public static void recursivelyDeleteFolder(Drive service,String folderId, boolean completeMove) {
+        try {
+            String query = "'" + folderId + "' in parents and trashed = false";
+            Drive.Files.List request = service.files().list().setQ(query);
+            boolean deleteThisFolder = true;
+            do {
+                FileList fileList = request.execute();
+
+                for (File file : fileList.getFiles()) {
+                    if (file.getMimeType().equals("application/vnd.google-apps.folder")) {
+                        if (file.getName().equals("assets") && !completeMove){
+                            deleteThisFolder = false;
+                            continue;
+                        }
+                        recursivelyDeleteFolder(service, file.getId(),completeMove);
+                    } else {
+                        service.files().delete(file.getId()).execute();
+                    }
+                }
+                request.setPageToken(fileList.getNextPageToken());
+            } while (request.getPageToken() != null && !request.getPageToken().isEmpty());
+
+            if (deleteThisFolder){
+                service.files().delete(folderId).execute();
+            }
+        } catch (Exception e) {
+            LogHandler.saveLog("failed to delete files and folders from drive : " + e.getLocalizedMessage()) ;
+        }
     }
 }
 
