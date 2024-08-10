@@ -12,12 +12,14 @@
     <TextView
         android:id="@+id/headerTextView"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_gravity="start"
         android:gravity="center"
         android:paddingStart="5dp"
         android:text="STASH"
-        android:textColor="@color/white"
+        android:fontFamily="sans-serif-medium"
+        android:textSize="22sp"
+        android:textColor="#FFFFFF"
         tools:ignore="HardcodedText" />
 
     <androidx.appcompat.widget.AppCompatButton
@@ -27,8 +29,10 @@
         android:layout_gravity="end"
         android:background="@drawable/round_button"
         android:text="i"
+        android:fontFamily="sans-serif"
+        android:textSize="20sp"
         android:textAllCaps="false"
-        android:textColor="@color/black"
+        android:textColor="#4285F4"
         tools:ignore="HardcodedText">
     </androidx.appcompat.widget.AppCompatButton>
 

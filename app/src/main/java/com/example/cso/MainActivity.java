@@ -14,6 +14,7 @@
     import androidx.activity.result.ActivityResultLauncher;
     import androidx.activity.result.contract.ActivityResultContracts;
     import androidx.appcompat.app.AppCompatActivity;
+    import androidx.appcompat.app.AppCompatDelegate;
 
     import com.google.android.material.switchmaterial.SwitchMaterial;
     import com.google.gson.JsonObject;
@@ -239,7 +240,7 @@
                                 wifiOnlySwitchMaterial.setThumbTintList(UIHelper.onSwitchMaterialThumb);
                                 wifiOnlySwitchMaterial.setTrackTintList(UIHelper.onSwitchMaterialTrack);
                                 wifiOnlySwitchMaterial.setAlpha(1.0f);
-                                SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true,preferences);
+                                SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true, MainActivity.preferences);
                             }
                         }
                     }else{
@@ -270,7 +271,7 @@
                             wifiOnlySwitchMaterial.setTrackTintList(UIHelper.onSwitchMaterialTrack);
                             wifiOnlySwitchMaterial.setAlpha(1.0f);
                         });
-                        SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true,preferences);
+                        SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true, preferences);
                     }else{
                         runOnUiThread( () -> {
                             wifiOnlySwitchMaterial.setThumbTintList(UIHelper.offSwitchMaterialThumb);

@@ -2,6 +2,7 @@
 
     import android.app.Activity;
     import android.content.Intent;
+    import android.content.res.ColorStateList;
     import android.graphics.Color;
     import android.graphics.drawable.Drawable;
     import android.os.Build;
@@ -377,8 +378,10 @@
             newLoginButton.setVisibility(View.VISIBLE);
             newLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
             newLoginButton.setPadding(40,0,150,0);
-            newLoginButton.setTextSize(15);
-            newLoginButton.setTextColor(UIHelper.buttonTextColor);
+            newLoginButton.setTextSize(10);
+            newLoginButton.setTextColor(uiHelper.buttonTextColor);
+            newLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
+            newLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#52B156")));
             newLoginButton.setId(View.generateViewId());
 
             DisplayMetrics displayMetrics = new DisplayMetrics();

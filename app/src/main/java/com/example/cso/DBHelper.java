@@ -816,9 +816,9 @@ public class DBHelper extends SQLiteOpenHelper {
         return resultList;
     }
 
-    public int countAndroidAssetsOnThisDevice(){
+    public int countAndroidAssetsOnThisDevice(String deviceId){
         String sqlQuery = "SELECT COUNT(DISTINCT assetId) AS pathCount FROM ANDROID where device = ?";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidUniqueDeviceIdentifier});
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{deviceId});
         int pathCount = 0;
         if(cursor != null){
             cursor.moveToFirst();
@@ -878,10 +878,10 @@ public class DBHelper extends SQLiteOpenHelper {
         return assetsCount;
     }
 
-    public int countAndroidSyncedAssetsOnThisDevice(){
+    public int countAndroidSyncedAssetsOnThisDevice(String deviceId){
         String sqlQuery = "SELECT COUNT(DISTINCT androidTable.assetId) AS rowCount FROM ANDROID androidTable\n" +
                 "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId WHERE androidTable.device = ?;";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidUniqueDeviceIdentifier});
+        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{deviceId});
         int count = 0;
         if(cursor != null && cursor.moveToFirst()){
             count = cursor.getInt(0);

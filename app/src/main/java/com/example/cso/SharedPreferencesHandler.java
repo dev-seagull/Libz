@@ -24,6 +24,10 @@ public class SharedPreferencesHandler {
         return MainActivity.preferences.getBoolean("syncSwitchState", false);
     }
 
+    public static boolean getCurrentDeviceClickedState(){
+        return MainActivity.preferences.getBoolean("currentDeviceClicked", false);
+    }
+
     public static void setFirstTime(SharedPreferences sharedPreferences){
         android.content.SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean("firstTime", false);

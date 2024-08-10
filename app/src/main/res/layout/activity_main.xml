@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#E8F0FE"
+    android:background="#D0F0FF"
         android:orientation="vertical">
 
     <include layout="@layout/header"/>
@@ -44,54 +44,26 @@
                     <ImageView
                         android:layout_width="wrap_content"
                         android:layout_height="100dp"
-                        android:layout_marginTop="-10dp"
+                        android:layout_marginTop="5sp"
                         android:src="@drawable/seagulllogo" />
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="5dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginBottom="10dp"
-                        android:alpha="1"
-                        android:background="#050505" />
-
-
-<!--                    <LinearLayout-->
-<!--                        android:id="@+id/primaryAccountsButtons"-->
-<!--                        android:layout_width="match_parent"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:gravity="center"-->
-<!--                        android:orientation="vertical"></LinearLayout>-->
-
-
-<!--                    <TextView-->
-<!--                        android:id="@+id/googlePhotosMediaItemsCount"-->
-<!--                        android:layout_width="match_parent"-->
-<!--                        android:layout_height="wrap_content"></TextView>-->
-
-<!--                    <View-->
-<!--                        android:layout_width="match_parent"-->
-<!--                        android:layout_height="5dp"-->
-<!--                        android:layout_marginTop="5dp"-->
-<!--                        android:layout_marginBottom="5dp"-->
-<!--                        android:alpha="1"-->
-<!--                        android:background="#050505" />-->
 
                     <LinearLayout
                         android:id="@+id/deviceButtons"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
+                        android:paddingTop="16dp"
                         android:orientation="vertical">
                         <Button
                             android:id="@+id/androidDeviceButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:background="@drawable/gradient_gray"
-                            android:clickable="false"
                             android:drawableLeft="@drawable/android_device_icon"
-                            android:textColor="@color/white"
-                            android:textSize="16dp"
+                            android:textColor="#FFFFFF"
+                            android:textSize="16sp"
+                            android:padding="12dp"
                             app:backgroundTint="@null" />
                     </LinearLayout>
 
@@ -100,19 +72,24 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:gravity="center">
+
                         <com.github.mikephil.charting.charts.PieChart
                             android:id="@+id/pieChart"
+                            android:layout_marginTop="5sp"
+
+                            android:visibility="gone"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content" />
+
 
 
                         <TextView
                             android:id="@+id/directoryUsages"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginLeft="3dp"
-                            android:layout_marginTop="5dp"
-                            android:layout_marginRight="3dp"
+                            android:layout_marginLeft="3sp"
+                            android:layout_marginTop="25sp"
+                            android:layout_marginRight="3sp"
                             android:fontFamily="sans-serif-condensed"
                             android:gravity="center"
                             android:shadowColor="@color/black"
@@ -120,102 +97,99 @@
                             android:shadowDy="2"
                             android:shadowRadius="5"
                             android:textColor="@color/white"
-                            android:textSize="16sp"
+                            android:textSize="12sp"
                             android:visibility="gone"
                             ></TextView>
 
                         <com.github.mikephil.charting.charts.BarChart
                             android:id="@+id/barChart"
                             android:layout_width="match_parent"
+                            android:visibility="gone"
                             android:layout_height="wrap_content" />
 
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="5dp"
-                            android:layout_marginTop="5dp"
-                            android:layout_marginBottom="5dp"
-                            android:alpha="1"
-                            android:background="#050505" />
                     </LinearLayout>
 
                     <LinearLayout
                         android:id="@+id/syncButtonsLayout"
                         android:layout_width="match_parent"
                         android:layout_height="100dp"
-                        android:orientation="horizontal">
+                        android:layout_marginTop="50sp"
+                        android:orientation="horizontal"
+                        android:gravity="center">
 
                         <FrameLayout
                             android:id="@+id/circularSyncDetailsButtonContainer"
                             android:layout_width="100dp"
                             android:layout_height="100dp"
-                            android:layout_centerInParent="true"
-                            android:layout_marginLeft="10dp"
-                            android:layout_marginRight="10dp">
+                            android:layout_margin="8dp">
+
                             <ImageButton
                                 android:id="@+id/syncDetailsButton"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:background="@drawable/circular_button_on"
-                                android:layout_centerInParent="true" />
+                                android:layout_centerInParent="true"
+                                android:padding="16dp"/>
 
                             <TextView
                                 android:id="@+id/syncDetailsButtonText"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
                                 android:text="Sync Details"
-                                android:textColor="@android:color/white"
-                                android:textSize="20sp"
-                                android:textStyle="bold" />
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:padding="4dp"/>
                         </FrameLayout>
 
                         <FrameLayout
                             android:id="@+id/circularButtonContainer"
                             android:layout_width="100dp"
                             android:layout_height="100dp"
-                            android:layout_centerInParent="true">
+                            android:layout_margin="8dp">
                             <ImageButton
                                 android:id="@+id/syncButton"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:background="@drawable/circular_button_off"
-                                android:layout_centerInParent="true" />
+                                android:layout_centerInParent="true"
+                                android:padding="16dp"/>
 
                             <TextView
                                 android:id="@+id/syncButtonText"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
                                 android:text="Sync"
-                                android:textColor="@android:color/white"
-                                android:textSize="20sp"
-                                android:textStyle="bold" />
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:padding="4dp"/>
                         </FrameLayout>
 
                         <FrameLayout
                             android:id="@+id/circularWifiButtonContainer"
                             android:layout_width="100dp"
                             android:layout_height="100dp"
-                            android:layout_centerInParent="true"
-                            android:layout_marginLeft="10dp"
-                            android:layout_marginRight="10dp">
+                            android:layout_margin="8dp">
                             <ImageButton
                                 android:id="@+id/wifiButton"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:background="@drawable/circular_button_off"
-                                android:layout_centerInParent="true" />
+                                android:padding="16dp"></ImageButton>
 
                             <TextView
                                 android:id="@+id/wifiButtonText"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
                                 android:text="Wifi only"
-                                android:textColor="@android:color/white"
-                                android:textSize="20sp"
-                                android:textStyle="bold" />
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:padding="4dp"/>
                         </FrameLayout>
 
                     </LinearLayout>
@@ -226,6 +200,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:gravity="center"
+                            android:layout_marginTop="50sp"
                             android:orientation="vertical"></LinearLayout>
 
                         <LinearLayout
@@ -278,6 +253,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="false"
+                    android:visibility="gone"
                     android:fontFamily="sans-serif-condensed"
                     android:scaleX="1.5"
                     android:scaleY="1.5"
@@ -313,67 +289,8 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:thumbTint="#BF2C2C"
+                    android:visibility="gone"
                     app:trackTint="#850808" />
-
-
-<!--                                <LinearLayout-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:layout_weight="1"-->
-<!--                    android:gravity="center"-->
-<!--                    android:orientation="vertical">-->
-
-<!--                    <Button-->
-<!--                        android:id="@+id/syncToBackUpAccountButton"-->
-<!--                        android:layout_width="160dp"-->
-<!--                        android:layout_height="match_parent"-->
-<!--                        android:layout_weight="1"-->
-<!--                        android:layout_marginTop="5dp"-->
-<!--                        android:background="@drawable/custom_button"-->
-<!--                        app:backgroundTint="@null"-->
-<!--                        android:elevation="10dp"-->
-<!--                        android:layout_gravity="end"-->
-<!--                        android:text="Start Sync"-->
-<!--                        android:shadowColor="@color/black"-->
-<!--                        android:shadowDx="2"-->
-<!--                        android:shadowDy="2"-->
-<!--                        android:shadowRadius="5"-->
-<!--                        android:fontFamily="sans-serif-condensed"-->
-<!--                        android:textColor="@color/white"-->
-<!--                        android:layout_marginBottom="10dp"-->
-<!--                        android:textSize="20sp" />-->
-
-<!--                </LinearLayout>-->
-
-<!--                <LinearLayout-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:layout_weight="1"-->
-<!--                    android:paddingLeft="10dp"-->
-<!--                    android:gravity="center"-->
-<!--                    android:orientation="vertical">-->
-
-<!--                    <Button-->
-<!--                        android:id="@+id/restoreButton"-->
-<!--                        android:layout_width="160dp"-->
-<!--                        android:layout_height="match_parent"-->
-<!--                        android:layout_weight="1"-->
-<!--                        android:layout_marginTop="5dp"-->
-<!--                        android:background="@drawable/custom_button2"-->
-<!--                        app:backgroundTint="@null"-->
-<!--                        android:text="STOP SYNC"-->
-<!--                        android:shadowColor="@color/black"-->
-<!--                        android:shadowDx="2"-->
-<!--                        android:shadowDy="2"-->
-<!--                        android:shadowRadius="5"-->
-<!--                        android:fontFamily="sans-serif-condensed"-->
-<!--                        android:textColor="@color/white"-->
-<!--                        android:elevation="10dp"-->
-<!--                        android:layout_gravity="left"-->
-<!--                        android:layout_marginBottom="10dp"-->
-<!--                        android:textSize="20sp"/>-->
-
-<!--                </LinearLayout>-->
 
 
             </LinearLayout>
