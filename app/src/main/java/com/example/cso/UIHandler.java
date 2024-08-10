@@ -803,13 +803,16 @@ public class UIHandler {
             }
             int assetsSize = GoogleDrive.getAssetsSizeOfDriveAccount(userEmail);
             String[] text = {""};
+            boolean[] completeMove = {false};
             if (totalFreeSpace < assetsSize){ // bad situation
                 text[0] = "We will move " + totalFreeSpace /1025 + " GB out of " + assetsSize/1024 + " GB of your assets in "+ userEmail +" to other accounts." +
                         "\nWarning : there is not enough space to move all of it. We wont be responsible for "+ (assetsSize - totalFreeSpace)/1024 + " GB of your assets that remain in "+userEmail+"." ;
             }else{
                 text[0] = "We will move all your assets in "+ userEmail +" to other accounts." ;
+                completeMove[0] = true;
             }
 
+            int finalTotalFreeSpace = totalFreeSpace;
             MainActivity.activity.runOnUiThread(() -> {
                 try {
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
@@ -821,7 +824,7 @@ public class UIHandler {
                     builder.setPositiveButton("Unlink", (dialog, id) -> {
                         dialog.dismiss();
                         System.out.println("wantToUnlink : " + "true");
-                        GoogleDrive.moveFilesBetweenAccounts(userEmail);
+                        GoogleDrive.moveFilesBetweenAccounts(userEmail,completeMove[0],(assetsSize - finalTotalFreeSpace));
                         System.out.println("finish moving files");
 
                     });

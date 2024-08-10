@@ -554,8 +554,8 @@ public class GoogleDrive {
         }
     }
 
-    public static void moveFilesBetweenAccounts(String sourceUserEmail){
-        boolean[] moveSuccessful = {false};
+    public static void moveFilesBetweenAccounts(String sourceUserEmail,boolean completeMove,int movableSize){
+        boolean[] moveAllSuccessful = {false};
         Thread moveFilesBetweenAccountsThread = new Thread(() -> {
 
             System.out.println("Starting to move files between accounts");
@@ -572,7 +572,7 @@ public class GoogleDrive {
 
             if (sourceDriveService == null) {
                 LogHandler.saveLog("Source drive service could not be initialized for user: " + sourceUserEmail, true);
-                moveSuccessful[0] = false;
+                moveAllSuccessful[0] = false;
                 return ;
             }
 
@@ -600,7 +600,6 @@ public class GoogleDrive {
                     i--;
                 }
             }
-            moveSuccessful[0] = true;
         });
 
         moveFilesBetweenAccountsThread.start();

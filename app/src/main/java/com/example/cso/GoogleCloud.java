@@ -86,7 +86,7 @@
             }
         }
 
-        public boolean signOut(String userEmail) {
+        public boolean revokeToken(String userEmail) {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             String type = "";
             String refreshToken = "";
@@ -630,13 +630,13 @@
             }
         }
 
-        private static boolean startInvalidateTokenThread(String buttonText){
+        public static boolean startInvalidateTokenThread(String buttonText){
             LogHandler.saveLog("Starting invalidate token Thread", false);
             final boolean[] isInvalidated = {false};
             Thread invalidateTokenThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    isInvalidated[0] = MainActivity.googleCloud.signOut(buttonText);
+                    isInvalidated[0] = MainActivity.googleCloud.revokeToken(buttonText);
                     if(!isInvalidated[0]){
                         LogHandler.saveLog("token is not invalidated." , true);
                     }

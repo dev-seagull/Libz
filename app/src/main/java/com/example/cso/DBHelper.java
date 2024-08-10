@@ -1534,7 +1534,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-    private void deleteAccountAndRelatedAssets(String userEmail){
+    public void deleteAccountAndRelatedAssets(String userEmail){
         deleteFromAccountsTable(userEmail,"backup");
         deleteAccountFromDriveTable(userEmail);
         deleteRedundantAsset();
