@@ -2,6 +2,7 @@ package com.example.cso;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -587,7 +588,7 @@ public class GoogleDrive {
                 String[] drive_row = drive_rows.get(i);
                 String fileId = drive_row[3];
                 System.out.println("moving file: " + drive_row[4]);
-                boolean isMoveSuccessful = moveFileBetweenAccounts(sourceDriveService, destinationDriveService,destinationUserEmail, fileId);
+                boolean isMoveSuccessful = moveFileBetweenAccounts(sourceDriveService, destinationDriveService,sourceUserEmail,destinationUserEmail, fileId);
                 System.out.println("is successful: " + isMoveSuccessful);
                 if (!isMoveSuccessful){
                     CURRENT_DRIVE_ACCOUNT_INDEX+=1;
@@ -642,17 +643,15 @@ public class GoogleDrive {
     }
 
 
-    public static boolean moveFileBetweenAccounts(Drive sourceAccount, Drive destinationAccount, String destinationUserEmail, String fileId) {
+    public static boolean moveFileBetweenAccounts(Drive sourceAccount, Drive destinationAccount, String sourceUserEmail, String destinationUserEmail, String fileId) {
         boolean[] isMoveSuccessful = {false};
         Thread moveFileBetweenAccountsThread = new Thread(() -> {
             try {
                 File fileMetadata = sourceAccount.files().get(fileId).execute();
 
-//                Permission sourceUserPremission = new Permission().setType("user").setRole("reader");
                 Permission destinationUserPermission = new Permission().setType("user").setRole("writer")//maybe owner is better
                         .setEmailAddress(destinationUserEmail + "@gmail.com");
 
-//                destinationAccount.teamdrives().create();
                 sourceAccount.permissions().create(fileMetadata.getId(), destinationUserPermission).execute();
 
                 File copiedFile = new File();
@@ -661,11 +660,15 @@ public class GoogleDrive {
 
                 File newFile = destinationAccount.files().copy(fileId, copiedFile).execute();
                 System.out.println("File copied successfully to the destination account with ID: " + newFile.getId());
-                if (newFile!= null) {
-        //            make transaction please
-                    sourceAccount.files().delete(fileId).execute();
-                    System.out.println("Original file deleted from the source account.");
+                String[] asset = DBHelper.getAssetByDriveFileId(fileId);
+                if (asset == null || newFile.getId() == null || newFile.getId().isEmpty()){
+                    LogHandler.saveLog("Failed to get asset for fileId: " + fileId, true);
+                    return;
                 }
+                MainActivity.dbHelper.insertTransactionsData(sourceUserEmail, fileMetadata.getName(), destinationUserEmail
+                        ,asset[0], "Transfer", asset[1]);
+                sourceAccount.files().delete(fileId).execute();
+                System.out.println("Original file deleted from the source account.");
 
                 isMoveSuccessful[0] = true;
             } catch (Exception e) {

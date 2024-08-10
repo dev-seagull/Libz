@@ -1566,4 +1566,26 @@ public class DBHelper extends SQLiteOpenHelper {
             return devices;
         }
     }
+
+    public static String[] getAssetByDriveFileId(String driveFileId){
+        String sqlQuery = "SELECT * FROM DRIVE WHERE fileId =?";
+        Cursor cursor = null;
+        try {
+            cursor = dbReadable.rawQuery(sqlQuery, new String[]{driveFileId});
+            if (cursor != null && cursor.moveToFirst()) {
+                int assetIdColumnIndex = cursor.getColumnIndex("assetId");
+                int fileHashColumnIndex = cursor.getColumnIndex("fileHash");
+                if (assetIdColumnIndex >= 0 && fileHashColumnIndex >= 0) {
+                    int assetId = cursor.getInt(assetIdColumnIndex);
+                    String fileHash = cursor.getString(fileHashColumnIndex);
+                    return new String[]{String.valueOf(assetId), fileHash};
+                }
+                return null;
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to select from ASSET in getAssetByDriveFileId method: " + e.getLocalizedMessage());
+        }
+        return null;
+    }
+
 }
