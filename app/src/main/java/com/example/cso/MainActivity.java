@@ -68,6 +68,8 @@
             dbHelper = new DBHelper(this,DBHelper.NEW_DATABASE_NAME);
             googleCloud = new GoogleCloud(this);
             androidUniqueDeviceIdentifier = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
+            storageHandler = new StorageHandler();
+            serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
 
             LogHandler.saveLog("---------------Start of app--------------", false);
 
@@ -75,15 +77,12 @@
             UIHandler.initializeDrawerLayout(activity);
             uiHandler.initializeButtons(googleCloud);
 
-            UIHandler.handleSwitchMaterials();
-
             Upgrade.versionHandler(preferences);
             if(dbHelper.DATABASE_VERSION < 11) {
                 LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
             }
 //            Upgrade.upgrade_33_to_34();
-            storageHandler = new StorageHandler();
-            serviceIntent = new Intent(this.getApplicationContext(), TimerService.class);
+
 
             androidTimer = new Timer();
             androidTimer.schedule(new TimerTask() {
@@ -257,7 +256,6 @@
                             }
                         });
                     }
-                    UIHandler.handleSwitchMaterials();
                 }
             });
 

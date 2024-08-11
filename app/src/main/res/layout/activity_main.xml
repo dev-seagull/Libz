@@ -136,13 +136,14 @@
                             android:layout_width="100dp"
                             android:layout_height="100dp"
                             android:layout_margin="8dp">
-                            <ImageButton
+
+                            <com.example.cso.LiquidFillButton
                                 android:id="@+id/syncButton"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
+                                android:layout_width="100dp"
+                                android:layout_height="100dp"
                                 android:background="@drawable/circular_button_off"
-                                android:layout_centerInParent="true"
-                                android:padding="16dp"/>
+                                android:layout_gravity="center"
+                                android:padding="16dp" />
 
                             <TextView
                                 android:id="@+id/syncButtonText"
@@ -155,6 +156,7 @@
                                 android:textStyle="bold"
                                 android:padding="4dp"/>
                         </FrameLayout>
+
 
                         <FrameLayout
                             android:id="@+id/circularWifiButtonContainer"

@@ -23,7 +23,6 @@ public class UIHelper {
     final NavigationView navigationView = activity.findViewById(R.id.navigationView);
     final AppCompatButton infoButton = activity.findViewById(R.id.infoButton);
     final DrawerLayout drawerLayout = activity.findViewById(R.id.drawer_layout);
-    final ImageButton syncButton = activity.findViewById(R.id.syncButton);
     final TextView syncButtonText = activity.findViewById(R.id.syncButtonText);
     final ImageButton wifiButton = activity.findViewById(R.id.wifiButton);
     final LinearLayout backupAccountsButtonsLayout= activity.findViewById(R.id.backUpAccountsButtons);
