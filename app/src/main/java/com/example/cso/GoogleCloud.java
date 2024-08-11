@@ -742,6 +742,16 @@
                 GoogleDrive.startUpdateDriveStorageThread();
                 boolean wantToUnlink = UIHandler.showMoveDriveFilesDialog(buttonText);
 
+
+                //note :  handle button text if click on wait button
+
+
+
+
+
+
+
+
 //                boolean isProfileJsonDeleted = startDeleteProfileJsonThread(buttonText);
 //                if(isProfileJsonDeleted){
 //                    boolean isDatabaseDeleted = startDeleteDatabaseThread(buttonText);

@@ -563,9 +563,9 @@ public class GoogleDrive {
         }
     }
 
-    public static void moveFilesBetweenAccounts(String sourceUserEmail,boolean completeMove,int movableSize){
-        boolean[] moveAllSuccessful = {false};
-        Thread moveFilesBetweenAccountsThread = new Thread(() -> {
+    public static void moveFromSourceToDestinationAccounts(String sourceUserEmail,boolean ableToMoveAllAssets,int movableSize){
+        boolean[] hasMovedAllAssets = {false};
+        Thread moveFromSourceToDestinationAccountsThread = new Thread(() -> {
 
             System.out.println("Starting to move files between accounts");
             List<String[]> accounts_rows = DBHelper.getAccounts(new String[]{"refreshToken","userEmail"});
@@ -581,74 +581,84 @@ public class GoogleDrive {
 
             if (sourceDriveService == null) {
                 LogHandler.saveLog("Source drive service could not be initialized for user: " + sourceUserEmail, true);
-                moveAllSuccessful[0] = false;
+                hasMovedAllAssets[0] = false;
                 return ;
             }
 
+            System.out.println("source drive service created");
             String[] driveColumns = {"fileHash", "id","assetId", "fileId", "fileName", "userEmail"};
             List<String[]> drive_rows = MainActivity.dbHelper.getDriveTable(driveColumns, sourceUserEmail);
             CURRENT_DRIVE_ACCOUNT_INDEX = 0;
-            ArrayList<Object> driveServicesList = getFreeDrive(sourceUserEmail,accounts_rows);
-            Drive destinationDriveService = (Drive) driveServicesList.get(0);
-            String destinationUserEmail = (String) driveServicesList.get(1);
+            ArrayList<Object> driveDestinationObject = getDestinationDrive(sourceUserEmail,accounts_rows);
+            Drive destinationDriveService = (Drive) driveDestinationObject.get(0);
+            String destinationUserEmail = (String) driveDestinationObject.get(1);
 
             int count_of_retry = 0;
+
+            System.out.println("starting to loop drive files");
+
             for (int i = 0; i < drive_rows.size(); i++){
                 String[] drive_row = drive_rows.get(i);
                 String fileId = drive_row[3];
                 System.out.println("moving file: " + drive_row[4]);
-                boolean isMoveSuccessful = moveFileBetweenAccounts(sourceDriveService, destinationDriveService,sourceUserEmail,destinationUserEmail, fileId);
-                System.out.println("is successful: " + isMoveSuccessful);
-                if (!isMoveSuccessful){
+                String moveResult = moveFileBetweenAccounts(sourceDriveService, destinationDriveService,sourceUserEmail,destinationUserEmail, fileId);
+                System.out.println("move result: " + moveResult);
+                if (moveResult.equals("failed")){
                     CURRENT_DRIVE_ACCOUNT_INDEX+=1;
                     if (CURRENT_DRIVE_ACCOUNT_INDEX == accounts_rows.size()){
                         CURRENT_DRIVE_ACCOUNT_INDEX = 0 ;
                     }
-                    driveServicesList = getFreeDrive(sourceUserEmail,accounts_rows);
-                    destinationDriveService = (Drive) driveServicesList.get(0);
-                    destinationUserEmail = (String) driveServicesList.get(1);
+                    driveDestinationObject = getDestinationDrive(sourceUserEmail,accounts_rows);
+                    destinationDriveService = (Drive) driveDestinationObject.get(0);
+                    destinationUserEmail = (String) driveDestinationObject.get(1);
                     i--;
                     count_of_retry++;
                     if (count_of_retry >= accounts_rows.size()){
-                        if (!completeMove){
-                            moveAllSuccessful[0] = true;
+                        if (!ableToMoveAllAssets){
+                            hasMovedAllAssets[0] = true;
                             break;
                         }
-                        moveAllSuccessful[0] = false;
+                        hasMovedAllAssets[0] = false;
                     }
                 }else{
                     //get size of file and check movable size
-                    moveAllSuccessful[0] = true;
+                    hasMovedAllAssets[0] = true;
                     count_of_retry =0;
                 }
             }
+
+
             boolean isBackedUpAndDeleted = false;
-            if (moveAllSuccessful[0]){
+            if (hasMovedAllAssets[0]){
+                System.out.println("starting to back up json to remaining accounts");
                 isBackedUpAndDeleted = Profile.backupJsonToRemainingAccounts(sourceUserEmail);
+                System.out.println("result of backup to remainging accounrs : " + isBackedUpAndDeleted);
             }
 
             if(isBackedUpAndDeleted){
                 String folderId = createStashSyncedAssetFolder(sourceDriveService);
-                recursivelyDeleteFolder(sourceDriveService,folderId,completeMove);
+                System.out.println("starting to recursively delete files ");
+                recursivelyDeleteFolder(sourceDriveService,folderId,ableToMoveAllAssets);
                 boolean isRevoked = false;
+                System.out.println("starting to revoke ");
                 isRevoked = GoogleCloud.startInvalidateTokenThread(sourceUserEmail);
                 if (isRevoked){
+                    System.out.println("starting to delete account and related asset");
                     MainActivity.dbHelper.deleteAccountAndRelatedAssets(sourceUserEmail);
                     GoogleDrive.startThreads();
                 }
             }
-
         });
 
-        moveFilesBetweenAccountsThread.start();
+        moveFromSourceToDestinationAccountsThread.start();
 
     }
 
 
-    public static ArrayList<Object> getFreeDrive(String sourceUserEmail,List<String[]> accounts_rows){
+    public static ArrayList<Object> getDestinationDrive(String sourceUserEmail,List<String[]> accounts_rows){
 //        Drive[] driveServices = {null};
-        ArrayList<Object> driveServicesList = new ArrayList<>();
-        Thread getFreeDriveThread = new Thread(() -> {
+        ArrayList<Object> driveDestinationObject = new ArrayList<>();
+        Thread getDestinationDriveThread = new Thread(() -> {
             Drive destinationDriveService = null;
             for (String[] account_row: accounts_rows){
                 if (account_row[1].equals(sourceUserEmail)){
@@ -662,29 +672,31 @@ public class GoogleDrive {
                     String refreshToken = account_row[0];
                     String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
                     destinationDriveService = initializeDrive(accessToken);
-                    driveServicesList.add(destinationDriveService);
-                    driveServicesList.add(account_row[1]);
+                    driveDestinationObject.add(destinationDriveService);
+                    driveDestinationObject.add(account_row[1]);
                     System.out.println("changing destination account to : " + account_row[1]);
 //                    driveServices[0] = destinationDriveService;
                 }
             }
         });
-        getFreeDriveThread.start();
+        getDestinationDriveThread.start();
         try {
-            getFreeDriveThread.join();
+            getDestinationDriveThread.join();
         } catch (Exception e) {
             LogHandler.saveLog("Failed to join get free drive thread: " + e.getLocalizedMessage(), true);
         }
 
-        return driveServicesList;
+        return driveDestinationObject;
     }
 
 
-    public static boolean moveFileBetweenAccounts(Drive sourceAccount, Drive destinationAccount, String sourceUserEmail, String destinationUserEmail, String fileId) {
-        boolean[] isMoveSuccessful = {false};
+    public static String moveFileBetweenAccounts(Drive sourceAccount, Drive destinationAccount, String sourceUserEmail, String destinationUserEmail, String fileId) {
+        String[] moveResult = {"failed"};
         Thread moveFileBetweenAccountsThread = new Thread(() -> {
+            File fileMetadata = null;
+            String[] asset = new String[0];
             try {
-                File fileMetadata = sourceAccount.files().get(fileId).execute();
+                fileMetadata = sourceAccount.files().get(fileId).execute();
 
                 Permission destinationUserPermission = new Permission().setType("user").setRole("writer")//maybe owner is better
                         .setEmailAddress(destinationUserEmail + "@gmail.com");
@@ -697,19 +709,23 @@ public class GoogleDrive {
 
                 File newFile = destinationAccount.files().copy(fileId, copiedFile).execute();
                 System.out.println("File copied successfully to the destination account with ID: " + newFile.getId());
-                String[] asset = DBHelper.getAssetByDriveFileId(fileId);
-                if (asset == null || newFile.getId() == null || newFile.getId().isEmpty()){
+                asset = DBHelper.getAssetByDriveFileId(fileId);
+                if (asset == null || newFile.getId() == null || newFile.getId().isEmpty()) {
                     LogHandler.saveLog("Failed to get asset for fileId: " + fileId, true);
                     return;
                 }
+            }catch (Exception e) {
+                LogHandler.saveLog("Failed to move file between accounts: " + e.getLocalizedMessage() + " and " + e.getMessage(), true);
+            }try {
                 MainActivity.dbHelper.insertTransactionsData(sourceUserEmail, fileMetadata.getName(), destinationUserEmail
                         ,asset[0], "Transfer", asset[1]);
+
                 sourceAccount.files().delete(fileId).execute();
                 System.out.println("Original file deleted from the source account.");
 
-                isMoveSuccessful[0] = true;
+                moveResult[0] = "success";
             } catch (Exception e) {
-                LogHandler.saveLog("Failed to move file between accounts: " + e.getLocalizedMessage(), true);
+                LogHandler.saveLog("Failed to delete file from source account: " + e.getLocalizedMessage(), true);
             }
 
         });
@@ -719,7 +735,7 @@ public class GoogleDrive {
         }catch (Exception e){
             LogHandler.saveLog("failed to join moveFileBetweenAccountsThread : " + e.getLocalizedMessage());
         }
-        return isMoveSuccessful[0];
+        return moveResult[0];
     }
 
 
