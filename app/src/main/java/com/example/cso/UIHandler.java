@@ -61,53 +61,8 @@ import java.util.Map;
 public class UIHandler {
     public static TextView directoryUsages = MainActivity.activity.findViewById(R.id.directoryUsages);
     public static UIHelper uiHelper = new UIHelper();
+    LiquidFillButton syncButton = uiHelper.activity.findViewById(R.id.syncButton);
     private boolean isWifiOnlyOn = false;
-    public static void handleSwitchMaterials(){
-        handleSyncSwitchMaterials();
-        handleWifiOnlySwitchMaterial();
-    }
-
-    public static void handleSyncSwitchMaterials(){
-        SwitchMaterial syncSwitchMaterialButton = MainActivity.activity.findViewById(R.id.syncSwitchMaterial);
-        if (!TimerService.isMyServiceRunning(MainActivity.activity.getApplicationContext(),TimerService.class).equals("on")){
-            MainActivity.activity.runOnUiThread(() -> {
-                syncSwitchMaterialButton.setChecked(false);
-                syncSwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
-                syncSwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
-            });
-        }else{
-            MainActivity.activity.runOnUiThread(() -> {
-                syncSwitchMaterialButton.setChecked(true);
-                syncSwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
-                syncSwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
-            });
-
-        }
-    }
-
-    public static void handleWifiOnlySwitchMaterial(){
-        SwitchMaterial syncSwitchMaterialButton = MainActivity.activity.findViewById(R.id.syncSwitchMaterial);
-        SwitchMaterial wifiOnlySwitchMaterialButton = MainActivity.activity.findViewById(R.id.wifiOnlySwitchMaterial);
-        MainActivity.activity.runOnUiThread(() -> {
-            if (SharedPreferencesHandler.getWifiOnlySwitchState()){
-                    wifiOnlySwitchMaterialButton.setChecked(true);
-                    wifiOnlySwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
-                    wifiOnlySwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
-            }else{
-                    wifiOnlySwitchMaterialButton.setChecked(false);
-                    wifiOnlySwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
-                    wifiOnlySwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
-            }
-            if (syncSwitchMaterialButton.isChecked()){
-                    wifiOnlySwitchMaterialButton.setAlpha(1.0f);
-                    wifiOnlySwitchMaterialButton.setEnabled(true);
-
-            }else{
-                    wifiOnlySwitchMaterialButton.setAlpha(0.5f);
-                    wifiOnlySwitchMaterialButton.setEnabled(false);
-            }
-        });
-    }
 
     public static void setLastBackupAccountButtonClickableFalse(Activity activity) {
         try {
@@ -185,12 +140,25 @@ public class UIHandler {
 
     public void initializeSyncButton(){
         RotateAnimation continuousRotate = createContinuousRotateAnimation();
-        uiHelper.syncButton.setOnClickListener(view -> {
+        final boolean[] syncState = {SharedPreferencesHandler.getSyncSwitchState()};
+        System.out.println("sync state is:" + syncState[0]);
+        if(syncState[0] && TimerService.isMyServiceRunning(uiHelper.activity.getApplicationContext(),TimerService.class).equals("on")){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                syncButton.startFillAnimation();
+                updateButtonBackground(uiHelper.wifiButton, isWifiOnlyOn);
+//                SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true, MainActivity.preferences);
+            }
+        }else{
+            SharedPreferencesHandler.setSwitchState("syncSwitchState",false,MainActivity.preferences);
+        }
+
+        syncButton.setOnClickListener(view -> {
             toggleSyncState();
-            boolean syncState = SharedPreferencesHandler.getSyncSwitchState();
-            if(syncState){
+            syncState[0] = SharedPreferencesHandler.getSyncSwitchState();
+            if(syncState[0]){
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     if (!TimerService.isMyServiceRunning(uiHelper.activity.getApplicationContext(),TimerService.class).equals("on")){
+                        syncButton.startFillAnimation();
                         uiHelper.activity.getApplicationContext().startService(MainActivity.serviceIntent);
                         updateButtonBackground(uiHelper.wifiButton, isWifiOnlyOn);
                         SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true, MainActivity.preferences);
@@ -199,14 +167,15 @@ public class UIHandler {
             }else{
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     if (TimerService.isMyServiceRunning(uiHelper.activity.getApplicationContext(),TimerService.class).equals("on")){
+                        syncButton.endFillAnimation();
                         uiHelper.activity.getApplicationContext().stopService(MainActivity.serviceIntent);
                     }
                 }
             }
 
-            updateSyncButtonRotationState(continuousRotate, syncState);
+            updateSyncButtonRotationState(continuousRotate, syncState[0]);
 
-            updateButtonBackground(uiHelper.syncButton, syncState);
+//            updateButtonBackground(uiHelper.syncButton, syncState);
         });
     }
 
@@ -342,6 +311,7 @@ public class UIHandler {
     }
 
     private void setupAndroidDeviceButton(){
+        System.out.println("here device name: " + MainActivity.androidDeviceName);
         uiHelper.androidDeviceButton.setText(MainActivity.androidDeviceName);
         uiHelper.androidDeviceButton.setContentDescription(MainActivity.androidUniqueDeviceIdentifier);
         addEffectsToDeviceButton(uiHelper.androidDeviceButton);
