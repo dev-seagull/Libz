@@ -390,9 +390,8 @@
             DisplayMetrics displayMetrics = new DisplayMetrics();
             activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
             int windowWidth = displayMetrics.widthPixels;
-            int buttonWidth = (int) (windowWidth * 0.6);
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                    buttonWidth,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
                     200
             );
             layoutParams.setMargins(0,20,0,16);

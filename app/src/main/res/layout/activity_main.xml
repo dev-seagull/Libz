@@ -41,13 +41,6 @@
                     android:padding="16dp"
                     tools:context=".MainActivity">
 
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="100dp"
-                        android:layout_marginTop="5sp"
-                        android:src="@drawable/seagulllogo" />
-
-
                     <LinearLayout
                         android:id="@+id/deviceButtons"
                         android:layout_width="match_parent"
@@ -90,13 +83,8 @@
                             android:layout_marginLeft="3sp"
                             android:layout_marginTop="25sp"
                             android:layout_marginRight="3sp"
-                            android:fontFamily="sans-serif-condensed"
-                            android:gravity="center"
-                            android:shadowColor="@color/black"
-                            android:shadowDx="2"
-                            android:shadowDy="2"
-                            android:shadowRadius="5"
-                            android:textColor="@color/white"
+                            android:fontFamily="monospace"
+                            android:gravity="left"
                             android:textSize="12sp"
                             android:visibility="gone"
                             ></TextView>

@@ -36,7 +36,6 @@ android {
     }
     namespace 'com.example.cso'
 
-
 }
 
 

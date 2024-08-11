@@ -390,9 +390,8 @@ public class UIHandler {
         DisplayMetrics displayMetrics = new DisplayMetrics();
         uiHelper.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         int windowWidth = displayMetrics.widthPixels;
-        int buttonWidth = (int) (windowWidth * 0.6);
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                buttonWidth,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
                 200
         );
         androidDeviceButton.setLayoutParams(layoutParams);
@@ -598,9 +597,10 @@ public class UIHandler {
         StringBuilder usageText = new StringBuilder();
 
         for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
-            usageText.append(entry.getKey()).append(": ").append(entry.getValue()).append(" GB\n");
+            usageText.append(String.format("%-10s: %s GB\n", entry.getKey(), entry.getValue()));
         }
         directoryUsages.setText(usageText.toString());
+        directoryUsages.setTextColor(Color.parseColor("#212121"));
     }
 
     public static void startUpdateUIThread(Activity activity){
