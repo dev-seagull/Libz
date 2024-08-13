@@ -61,6 +61,12 @@ public class Upgrade {
                    case 33 :
                        upgrade_33_to_34();
                        break;
+                   case 34 :
+                       upgrade_34_to_35();
+                       break;
+                   case 35 :
+                       upgrade_35_to_36();
+                       break;
                    default:
                        lastVersion();
                        break;
@@ -91,6 +97,7 @@ public class Upgrade {
         MainActivity.activity.runOnUiThread(() -> {
             Toast.makeText(MainActivity.activity, "You are Using last version : " + BuildConfig.VERSION_CODE, Toast.LENGTH_SHORT).show();
         });
+        upgrade_35_to_36();
 //        MainActivity.dbHelper.deleteFromAccountsTable("stashdevteam","support");
 //        DBHelper.deleteTableContent("ACCOUNTS");
     }
@@ -169,6 +176,21 @@ public class Upgrade {
         DBHelper.dbWritable.execSQL(DEVICE);
         DBHelper.dbWritable.setTransactionSuccessful();
         DBHelper.dbWritable.endTransaction();
+        upgrade_34_to_35();
+    }
+
+    public static void upgrade_34_to_35(){
+        upgrade_35_to_36();
+    }
+
+    public static void upgrade_35_to_36(){
+        System.out.println("adding columns to accounts");
+        DBHelper.addColumn("parentFolderId","TEXT","ACCOUNTS");
+        DBHelper.addColumn("assetsFolderId","TEXT","ACCOUNTS");
+        DBHelper.addColumn("profileFolderId","TEXT","ACCOUNTS");
+        DBHelper.addColumn("databaseFolderId","TEXT","ACCOUNTS");
+
+        new Thread(GoogleDrive::cleanDriveFolders).start();
     }
 }
 

@@ -1,11 +1,13 @@
 package com.example.cso;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteException;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.Drive;
@@ -61,7 +63,12 @@ public class DBHelper extends SQLiteOpenHelper {
                 "totalStorage REAL," +
                 "usedStorage REAL," +
                 "usedInDriveStorage REAL,"+
-                "UsedInGmailAndPhotosStorage REAL);";
+                "UsedInGmailAndPhotosStorage REAL,"+
+                "parentFolderId TEXT, " +
+                "assetsFolderId TEXT, " +
+                "profileFolderId TEXT, " +
+                "databaseFolderId TEXT" +
+                ");";
         sqLiteDatabase.execSQL(ACCOUNTS);
 
         String DEVICE = "CREATE TABLE IF NOT EXISTS DEVICE("
@@ -1185,7 +1192,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackUpRefreshToken).getAccessToken();
                         userEmail[0] = drive_backUp_account[0];
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                        String folder_name = "stash_database";
+                        String folder_name = "libz_database";
                         String databaseFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail[0],folder_name, false, null);
 //                        deleteDatabaseFiles(service, databaseFolderId);
 //                        boolean isDeleted = checkDeletionStatus(service,databaseFolderId);
@@ -1208,7 +1215,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 driveBackupAccessToken = Support.requestAccessToken(driveBackUpRefreshToken).getAccessToken();
                 userEmail[0] = "sofatest40";
                 Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                String folder_name = "stash_database";
+                String folder_name = "libz_database";
                 String databaseFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail[0],folder_name, false, null);
 //                        deleteDatabaseFiles(service, databaseFolderId);
 //                        boolean isDeleted = checkDeletionStatus(service,databaseFolderId);
@@ -1587,4 +1594,39 @@ public class DBHelper extends SQLiteOpenHelper {
         return null;
     }
 
+
+    public static void addColumn(String columnName, String columnType, String tableName) {
+        try {
+            // check if the column already exists
+            String columnExistsQuery = "PRAGMA table_info(" + tableName + ");";
+            Cursor cursor = dbReadable.rawQuery(columnExistsQuery, null);
+
+            boolean columnExists = false;
+            if (cursor!= null && cursor.moveToFirst()) {
+                do {
+                    @SuppressLint("Range") String dbColumnName = cursor.getString(cursor.getColumnIndex("name"));
+                    if (dbColumnName.equalsIgnoreCase(columnName)) {
+                        columnExists = true;
+                        break;
+                    }
+                } while (cursor.moveToNext());
+            }
+            cursor.close();
+
+            if (!columnExists) {
+                try {
+                    dbWritable.beginTransaction();
+                    String alterTableQuery = "ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + columnType + ";";
+                    dbWritable.execSQL(alterTableQuery);
+                    dbWritable.setTransactionSuccessful();
+                    dbWritable.endTransaction();
+                }catch (Exception e) {
+                    LogHandler.saveLog("Failed to add column: " + columnName + " to table: " + tableName + " due to: " + e.getLocalizedMessage(), true);
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to check column existence: " + columnName + " to table: " + tableName,true);
+        }
+    }
 }

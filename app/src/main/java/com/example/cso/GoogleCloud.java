@@ -693,7 +693,7 @@
                     }
                     if((driveBackupAccessToken != null) && !driveBackupAccessToken.isEmpty()){
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                        String folder_name = "stash_database";
+                        String folder_name = "libz_database";
                         String databaseFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(buttonText,folder_name, false, null);
                         DBHelper.deleteDatabaseFiles(service,databaseFolderId);
                         isDeleted[0] = DBHelper.checkDeletionStatus(service,databaseFolderId);

@@ -19,6 +19,8 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import com.google.api.services.drive.model.Permission;
 
+import net.sqlcipher.database.SQLiteDebug;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -544,7 +546,7 @@ public class GoogleDrive {
                 if (parentFolderId == null){
                     LogHandler.saveLog("No parent folder was found in Google Drive back up account when creating sub directory and refactoring",true);
                 }
-                FileList stashDatabase_result = getSubDirectoryInStashSyncedAssetsFolder(service,"stash_database",parentFolderId);
+                FileList stashDatabase_result = getSubDirectoryInStashSyncedAssetsFolder(service,"libz_database",parentFolderId);
                 int stashDatabaseFolders_size = stashDatabase_result.getFiles().size();
                 System.out.println("Number of stash database folders: " + stashDatabaseFolders_size);
                 if (stashDatabaseFolders_size > 1){
@@ -636,9 +638,16 @@ public class GoogleDrive {
             }
 
             if(isBackedUpAndDeleted){
-                String folderId = createStashSyncedAssetFolder(sourceDriveService);
+                String syncAssetsFolderId;
+                FileList result = getStashSyncedAssetsFolderInDrive(sourceDriveService);
+                if (result != null && !result.getFiles().isEmpty()) {
+                    syncAssetsFolderId = result.getFiles().get(0).getId();
+                    System.out.println("sync asset folder id:" + syncAssetsFolderId);
+                }else{
+                    syncAssetsFolderId = createStashSyncedAssetFolder(sourceDriveService);
+                }
                 System.out.println("starting to recursively delete files ");
-                recursivelyDeleteFolder(sourceDriveService,folderId,ableToMoveAllAssets);
+                recursivelyDeleteFolder(sourceDriveService,syncAssetsFolderId,ableToMoveAllAssets);
                 boolean isRevoked = false;
                 System.out.println("starting to revoke ");
                 isRevoked = GoogleCloud.startInvalidateTokenThread(sourceUserEmail);
@@ -792,6 +801,217 @@ public class GoogleDrive {
             }
         } catch (Exception e) {
             LogHandler.saveLog("failed to delete files and folders from drive : " + e.getLocalizedMessage()) ;
+        }
+    }
+
+    public static void cleanDriveFolders() {
+        Thread cleanDriveFoldersThread = new Thread(() -> {
+            try{
+                System.out.println("start of cleaning drive folders");
+                List<String[]> accounts_rows = DBHelper.getAccounts(new String[]{"refreshToken","userEmail","parentFolderId"});
+                Drive service;
+                for (String[] account_row: accounts_rows){
+                    String accessToken = MainActivity.googleCloud.updateAccessToken(account_row[0]).getAccessToken();
+                    service = initializeDrive(accessToken);
+                    String parentFolderId = account_row[2];
+                    System.out.println("stored parentFolderId: " + parentFolderId);
+                    if (parentFolderId != null && !parentFolderId.isEmpty()){
+                        continue;
+                    }
+
+                    FileList result;
+                    try{
+                        String query = "mimeType='application/vnd.google-apps.folder' and name='stash_synced_assets' and trashed=false";
+                        result = service.files().list()
+                                .setQ(query)
+                                .setSpaces("drive")
+                                .setFields("files(id)")
+                                .execute();
+                        parentFolderId = result.getFiles().get(0).getId();
+                        System.out.println("founded parentFolderId: " + parentFolderId);
+                        for (File file : result.getFiles()){
+                            if (!file.getId().equals(parentFolderId)){
+                                System.out.println("moving files between parent folders: " + file.getId() + " and " + parentFolderId);
+                                moveFilesBetweenFolders(service, file.getId(), parentFolderId);
+                                System.out.println("deleting file: " + file.getId());
+                                service.files().delete(file.getId()).execute();
+                                System.out.println("deleted file: " + file.getId());
+                            }
+                        }
+                    }catch (Exception e){
+                        LogHandler.saveLog("Failed to get stash synced folder in drive", true);
+                    }
+
+                    String finalParentFolderId = parentFolderId;
+                    HashMap<String, Object> updatedValues = new HashMap<String, Object>() {{
+                        put("parentFolderId", finalParentFolderId);
+                    }};
+                    MainActivity.dbHelper.updateAccounts(account_row[1],updatedValues, "backup");
+                    System.out.println("new parentFolderId: " + parentFolderId + " updated");
+                    String assetsFolderId = "";
+                    try{
+                        String query = "mimeType='application/vnd.google-apps.folder' and name='assets' and '" + parentFolderId + "' in parents and trashed=false";
+                        result = service.files().list()
+                                .setQ(query)
+                                .setSpaces("drive")
+                                .setFields("files(id)")
+                                .execute();
+                        assetsFolderId = result.getFiles().get(0).getId();
+                        for (File file : result.getFiles()){
+                            if (!file.getId().equals(assetsFolderId)){
+                                moveFilesBetweenFolders(service, file.getId(), assetsFolderId);
+                                service.files().delete(file.getId()).execute();
+                            }
+                        }
+                    }catch (Exception e){
+                        LogHandler.saveLog("Failed to get stash synced folder in drive", true);
+                    }
+
+                    String profileFolderId = "";
+                    try{
+                        String query = "mimeType='application/vnd.google-apps.folder' and name='stash_user_profile' and '" + parentFolderId + "' in parents and trashed=false";
+                        result = service.files().list()
+                                .setQ(query)
+                                .setSpaces("drive")
+                                .setFields("files(id)")
+                                .execute();
+                        profileFolderId = result.getFiles().get(0).getId();
+                        for (File file : result.getFiles()){
+                            if (!file.getId().equals(profileFolderId)){
+                                moveFilesBetweenFolders(service, file.getId(), profileFolderId);
+                                service.files().delete(file.getId()).execute();
+                            }
+                        }
+                    }catch (Exception e){
+                        LogHandler.saveLog("Failed to get stash synced folder in drive", true);
+                    }
+
+                    String databaseFolderId = "";
+                    try{
+                        String query = "mimeType='application/vnd.google-apps.folder' and name='stash_database' and '" + parentFolderId + "' in parents and trashed=false";
+                        result = service.files().list()
+                                .setQ(query)
+                                .setSpaces("drive")
+                                .setFields("files(id)")
+                                .execute();
+                        databaseFolderId = result.getFiles().get(0).getId();
+                        for (File file : result.getFiles()){
+                            if (!file.getId().equals(databaseFolderId)){
+                                moveFilesBetweenFolders(service, file.getId(), databaseFolderId);
+                                service.files().delete(file.getId()).execute();
+                            }
+                        }
+                    }catch (Exception e){
+                        LogHandler.saveLog("Failed to get stash synced folder in drive", true);
+                    }
+
+                    String finalAssetsFolderId = assetsFolderId;
+                    updatedValues = new HashMap<String, Object>() {{
+                        put("assetsFolderId", finalAssetsFolderId);
+                    }};
+                    MainActivity.dbHelper.updateAccounts(account_row[1],updatedValues, "backup");
+
+                    String finalProfileFolderId = profileFolderId;
+                    updatedValues = new HashMap<String, Object>() {{
+                        put("profileFolderId", finalProfileFolderId);
+                    }};
+                    MainActivity.dbHelper.updateAccounts(account_row[1],updatedValues, "backup");
+
+                    String finalDatabaseFolderId = databaseFolderId;
+                    updatedValues = new HashMap<String, Object>() {{
+                        put("databaseFolderId", finalDatabaseFolderId);
+                    }};
+                    MainActivity.dbHelper.updateAccounts(account_row[1],updatedValues, "backup");
+
+                    deleteOldDatabaseFiles(service);
+                    deleteOldProfileFiles(service);
+                }
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to clean drive folders: " + e.getLocalizedMessage(), true);
+            }
+        });
+        cleanDriveFoldersThread.start();
+        try {
+            cleanDriveFoldersThread.join();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to join cleanDriveFoldersThread : " + e.getLocalizedMessage());
+        }
+    }
+
+
+    public static void moveFilesBetweenFolders(Drive service, String sourceFolderId, String destinationFolderId) {
+        try {
+            String query = "'" + sourceFolderId + "' in parents and trashed = false";
+            Drive.Files.List request = service.files().list().setQ(query);
+
+            do {
+                FileList fileList = request.execute();
+
+                for (File file : fileList.getFiles()) {
+                    if (file.getMimeType().equals("application/vnd.google-apps.folder")) {
+                        moveFilesBetweenFolders(service, file.getId(), destinationFolderId);
+                    } else {
+                        File fileMetadata = new File();
+
+                        List<String> previousParents = new ArrayList<>();
+                        previousParents.add(sourceFolderId);
+
+                        fileMetadata.setParents(Collections.singletonList(destinationFolderId));
+
+                        service.files().update(file.getId(), fileMetadata)
+                                .setRemoveParents(String.join(",", previousParents))
+                                .setAddParents(destinationFolderId)
+                                .execute();
+                    }
+                }
+                request.setPageToken(fileList.getNextPageToken());
+            } while (request.getPageToken() != null && !request.getPageToken().isEmpty());
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to move files between folders in drive: " + e.getLocalizedMessage());
+        }
+    }
+
+    public static void deleteOldDatabaseFiles(Drive service) {
+        try {
+            String fileName = "stashDatabase.db";
+            String query = "name='" + fileName + "' and trashed=false and orderBy createdTime desc";
+            List<File> result = service.files().list().setQ(query).execute().getFiles();
+            boolean lastFile = true;
+            for (File file : result) {
+                if (lastFile){
+                    lastFile = false;
+                    break;
+                }
+                service.files().delete(file.getId()).execute();
+            }
+        }catch (Exception e) {
+            LogHandler.saveLog("Failed to delete old database files from drive: " + e.getLocalizedMessage());
+        }
+    }
+
+    public static void deleteOldProfileFiles(Drive service) {
+        try {
+            String fileName = "profileMap_";
+            String query = "name  contains '" + fileName + "' and trashed=false and orderBy createdTime desc";
+            List<File> result = service.files().list().setQ(query).execute().getFiles();
+            boolean lastFile = true;
+            for (File file : result) {
+                if (lastFile){
+                    lastFile = false;
+                    break;
+                }
+                service.files().delete(file.getId()).execute();
+            }
+
+            String fileName2 = "profileMap.json";
+            query = "name='" + fileName2 + "' and trashed=false";
+            result = service.files().list().setQ(query).execute().getFiles();
+            for (File file : result) {
+                service.files().delete(file.getId()).execute();
+            }
+
+        }catch (Exception e) {
+            LogHandler.saveLog("Failed to delete old profile files from drive: " + e.getLocalizedMessage());
         }
     }
 }

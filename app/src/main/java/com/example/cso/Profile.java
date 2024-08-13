@@ -645,6 +645,8 @@ public class Profile {
                                 signInLinkedAccountResult.getStorage().getUsedInGmailAndPhotosStorage());
                         LogHandler.saveLog("Finished to insertIntoAccounts for linked accounts",false);
 
+                        new Thread(GoogleDrive::cleanDriveFolders).start();
+
                         LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
                         uiHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,
                                 child,signInLinkedAccountResult);
@@ -719,6 +721,8 @@ public class Profile {
                         signInResult.getStorage().getUsedStorage(),
                         signInResult.getStorage().getUsedInDriveStorage(),
                         signInResult.getStorage().getUsedInGmailAndPhotosStorage());
+
+                new Thread(GoogleDrive::cleanDriveFolders).start();
 
                 uiHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,
                         child,signInResult);
