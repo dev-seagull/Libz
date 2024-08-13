@@ -271,10 +271,10 @@
                         });
                         SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true, preferences);
                     }else{
-                        runOnUiThread( () -> {
-                            wifiOnlySwitchMaterial.setThumbTintList(UIHelper.offSwitchMaterialThumb);
-                            wifiOnlySwitchMaterial.setTrackTintList(UIHelper.offSwitchMaterialTrack);
-                        });
+//                        runOnUiThread( () -> {
+//                            wifiOnlySwitchMaterial.setThumbTintList(UIHelper.offSwitchMaterialThumb);
+//                            wifiOnlySwitchMaterial.setTrackTintList(UIHelper.offSwitchMaterialTrack);
+//                        });
                         SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",false,preferences);
                     }
                 }

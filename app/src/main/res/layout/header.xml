@@ -16,7 +16,7 @@
         android:layout_gravity="start"
         android:gravity="center"
         android:paddingStart="5dp"
-        android:text="LIBZ"
+        android:text="Libz"
         android:fontFamily="sans-serif-medium"
         android:textSize="22sp"
         android:textColor="#FFFFFF"

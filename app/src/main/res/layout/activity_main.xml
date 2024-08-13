@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#D0F0FF"
+    android:background="#2C2A4A"
         android:orientation="vertical">
 
     <include layout="@layout/header"/>
@@ -32,6 +32,7 @@
                 android:layout_height="match_parent"
                 android:layout_above="@+id/actionButtonsLayout">
 
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -52,49 +53,64 @@
                             android:id="@+id/androidDeviceButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/gradient_gray"
+                            android:background="@drawable/gradient_color_bg"
                             android:drawableLeft="@drawable/android_device_icon"
                             android:textColor="#FFFFFF"
                             android:textSize="16sp"
                             android:padding="12dp"
                             app:backgroundTint="@null" />
                     </LinearLayout>
-
+                    
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:gravity="center">
 
-                        <com.github.mikephil.charting.charts.PieChart
-                            android:id="@+id/pieChart"
-                            android:layout_marginTop="5sp"
+                        <ImageView
+                            android:id="@+id/pieChartArrowDown"
+                            android:layout_width="25dp"
+                            android:background="@drawable/arrowdown"
+                            android:layout_height="70dp"
+                            android:visibility="gone"></ImageView>
 
-                            android:visibility="gone"
+                        <LinearLayout
+                            android:id="@+id/chartInnerLayout"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-
-
-
-                        <TextView
-                            android:id="@+id/directoryUsages"
-                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginLeft="3sp"
-                            android:layout_marginTop="25sp"
-                            android:layout_marginRight="3sp"
-                            android:fontFamily="monospace"
-                            android:gravity="left"
-                            android:textSize="12sp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:elevation="4dp"
                             android:visibility="gone"
-                            ></TextView>
+                            android:background="@drawable/border_background">
 
-                        <com.github.mikephil.charting.charts.BarChart
-                            android:id="@+id/barChart"
-                            android:layout_width="match_parent"
-                            android:visibility="gone"
-                            android:layout_height="wrap_content" />
+                            <com.github.mikephil.charting.charts.PieChart
+                                android:id="@+id/pieChart"
+                                android:visibility="gone"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content" />
 
+                            <TextView
+                                android:id="@+id/directoryUsages"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="3sp"
+                                android:layout_marginTop="25sp"
+                                android:layout_marginRight="3sp"
+                                android:fontFamily="sans-serif"
+                                android:gravity="center"
+                                android:textSize="12sp"
+                                android:visibility="gone"
+                                ></TextView>
+
+                            <com.github.mikephil.charting.charts.BarChart
+                                android:id="@+id/barChart"
+                                android:layout_width="match_parent"
+                                android:visibility="gone"
+                                android:layout_height="wrap_content" />
+
+                        </LinearLayout>
                     </LinearLayout>
 
                     <LinearLayout

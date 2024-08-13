@@ -379,19 +379,18 @@
             newLoginButton.setGravity(Gravity.CENTER);
             newLoginButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             newLoginButton.setVisibility(View.VISIBLE);
-            newLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
             newLoginButton.setPadding(40,0,150,0);
             newLoginButton.setTextSize(10);
             newLoginButton.setTextColor(uiHelper.buttonTextColor);
-            newLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
-            newLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#52B156")));
+//            newLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
+            newLoginButton.setBackgroundResource(R.drawable.gradient_purple);
             newLoginButton.setId(View.generateViewId());
 
             DisplayMetrics displayMetrics = new DisplayMetrics();
             activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
             int windowWidth = displayMetrics.widthPixels;
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
                     200
             );
             layoutParams.setMargins(0,20,0,16);

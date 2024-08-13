@@ -93,7 +93,8 @@ public class UIHandler {
                     activity.runOnUiThread(() -> {
                         LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
                         Button newBackupLoginButton = MainActivity.googleCloud.createBackUpLoginButton(backupButtonsLinearLayout);
-                        newBackupLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
+//                        newBackupLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
+                        newBackupLoginButton.setBackgroundResource(R.drawable.gradient_purple);
                         child[0] = backupButtonsLinearLayout.getChildAt(
                                 backupButtonsLinearLayout.getChildCount() - 2);
                         LogHandler.saveLog(signInResult.getUserEmail()
@@ -265,7 +266,8 @@ public class UIHandler {
 //           Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
 //           newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
         Button newBackupLoginButton = googleCloud.createBackUpLoginButton(uiHelper.backupAccountsButtonsLayout);
-        newBackupLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
+//        newBackupLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
+        newBackupLoginButton.setBackgroundResource(R.drawable.gradient_purple);
     }
 
     private void initializeAccountButtons(GoogleCloud googleCloud) {
@@ -311,7 +313,6 @@ public class UIHandler {
     }
 
     private void setupAndroidDeviceButton(){
-        System.out.println("here device name: " + MainActivity.androidDeviceName);
         uiHelper.androidDeviceButton.setText(MainActivity.androidDeviceName);
         uiHelper.androidDeviceButton.setContentDescription(MainActivity.androidUniqueDeviceIdentifier);
         addEffectsToDeviceButton(uiHelper.androidDeviceButton);
@@ -320,10 +321,11 @@ public class UIHandler {
                     boolean currentDeviceClicked = SharedPreferencesHandler.getCurrentDeviceClickedState();
                     SharedPreferencesHandler.setSwitchState("currentDeviceClicked",!currentDeviceClicked,MainActivity.preferences);
                     if(!currentDeviceClicked){
-                        uiHelper.pieChart.setVisibility(View.VISIBLE);
                         setupPieChart();
                     }else{
                         uiHelper.pieChart.setVisibility(View.GONE);
+                        uiHelper.chartInnerLayout.setVisibility(View.GONE);
+                        uiHelper.pieChartArrowDown.setVisibility(View.GONE);
                         uiHelper.directoryUsages.setVisibility(View.GONE);
                     }
                 }
@@ -361,7 +363,7 @@ public class UIHandler {
         uiHelper.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         int windowWidth = displayMetrics.widthPixels;
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
                 200
         );
         androidDeviceButton.setLayoutParams(layoutParams);
@@ -369,13 +371,13 @@ public class UIHandler {
 
     private static void handeSyncSwitchMaterialButton(UIHelper uiHelper, Activity activity){
         if (!TimerService.isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
-            uiHelper.syncSwitchMaterialButton.setChecked(false);
-            uiHelper.syncSwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
-            uiHelper.syncSwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
+//            uiHelper.syncSwitchMaterialButton.setChecked(false);
+//            uiHelper.syncSwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
+//            uiHelper.syncSwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
         }else{
-            uiHelper.syncSwitchMaterialButton.setChecked(true);
-            uiHelper.syncSwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
-            uiHelper.syncSwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
+//            uiHelper.syncSwitchMaterialButton.setChecked(true);
+//            uiHelper.syncSwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
+//            uiHelper.syncSwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
         }
     }
 
@@ -468,6 +470,9 @@ public class UIHandler {
         barChart.invalidate();    }
 
     private static void setupPieChart() {
+        uiHelper.pieChart.setVisibility(View.VISIBLE);
+        uiHelper.chartInnerLayout.setVisibility(View.VISIBLE);
+        uiHelper.pieChartArrowDown.setVisibility(View.VISIBLE);
         setupPieChartDimensions();
         configurePieChartData();
         configurePieChartLegend();
@@ -760,7 +765,8 @@ public class UIHandler {
 //            Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
 //            newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
         Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
-        newBackupLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
+//        newBackupLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
+        newBackupLoginButton.setBackgroundResource(R.drawable.gradient_purple);
     }
 
     public static boolean showMoveDriveFilesDialog(String userEmail){
