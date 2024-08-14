@@ -103,7 +103,7 @@ public class UIHandler {
                         if (child[0] instanceof Button) {
                             Button bt = (Button) child[0];
                             bt.setText(signInResult.getUserEmail());
-                            bt.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#0D47A1")));
+                            bt.setBackgroundResource(R.drawable.gradient_purple);
                         }
                         initializeDeviceButton(true);
                         updateButtonsListeners(signInToBackUpLauncher);

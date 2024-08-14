@@ -1287,7 +1287,7 @@ public class DBHelper extends SQLiteOpenHelper {
         String uploadFileId = "";
         try{
             com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-            fileMetadata.setName("stashDatabase.db");
+            fileMetadata.setName("libzDatabase.db");
             fileMetadata.setParents(java.util.Collections.singletonList(databaseFolderId));
             File androidFile = new File(dataBasePath);
             if (!androidFile.exists()) {

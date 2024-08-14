@@ -66,10 +66,17 @@
 
             try {
                     GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestScopes(new Scope("https://www.googleapis.com/auth/drive"),
+                    .requestScopes(
+                            //auth in drive :
+                            new Scope("https://www.googleapis.com/auth/drive"),
+                            // read files from photos library :
                             new Scope("https://www.googleapis.com/auth/photoslibrary.readonly"),
+                            // read and write files in drive :
                             new Scope("https://www.googleapis.com/auth/drive.file"),
-                            new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly")
+                            // write files in photos library :
+                            new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly"),
+                            //delete any files from drive :
+                            new Scope("https://www.googleapis.com/auth/drive.appdata")
                             )
                     .requestServerAuthCode(activity.getResources().getString(R.string.web_client_id), forceCodeForRefreshToken)
                     .requestEmail()
@@ -375,7 +382,7 @@
             newLoginButton.setCompoundDrawablesWithIntrinsicBounds
                     (loginButtonLeftDrawable, null, null, null);
             newLoginButton.setText("Add a back up account");
-            newLoginButton.setBackgroundResource(R.drawable.round_button);
+            newLoginButton.setBackgroundResource(R.drawable.gradient_purple);
             newLoginButton.setGravity(Gravity.CENTER);
             newLoginButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             newLoginButton.setVisibility(View.VISIBLE);
