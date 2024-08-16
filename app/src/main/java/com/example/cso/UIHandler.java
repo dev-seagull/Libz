@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.ColorStateList;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Looper;
@@ -45,18 +45,18 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.formatter.PercentFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
-import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class UIHandler {
     public static TextView directoryUsages = MainActivity.activity.findViewById(R.id.directoryUsages);
@@ -82,6 +82,55 @@ public class UIHandler {
         for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
             directoryUsages.append(entry.getKey() + ": " + entry.getValue() + " GB\n");
         }
+    }
+
+    public void initializeUI(Activity activity, SharedPreferences preferences){
+
+        LogHandler.saveLog("---------------Start of app--------------", false);
+
+        UIHandler uiHandler = new UIHandler();
+        UIHandler.initializeDrawerLayout(activity);
+        uiHandler.initializeButtons(MainActivity.googleCloud);
+
+        Upgrade.versionHandler(preferences);
+        if(MainActivity.dbHelper.DATABASE_VERSION < 11) {
+            LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
+        }
+//            Upgrade.upgrade_33_to_34();
+
+
+        MainActivity.androidTimer = new Timer();
+        MainActivity.androidTimer.schedule(new TimerTask() {
+            public void run() {
+                if (MainActivity.androidTimerIsRunning){
+                    return;
+                }
+                MainActivity.androidTimerIsRunning = true;
+                LogHandler.saveLog("Started the android timer",false);
+                Thread androidUpdate = new Thread(() -> {
+                    if(!TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on")){
+                        Android.startThreads(activity);
+                    }
+                });
+                androidUpdate.start();
+                LogHandler.saveLog("Finished the android timer",false);
+            }
+        }, 0, 5000);
+
+
+        MainActivity.UITimer = new Timer();
+        MainActivity.UITimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try{
+                    UIHandler.startUpdateUIThread(activity);
+                }catch (Exception e){
+                    LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
+                }
+            }
+        }, 0, 1000);
+
+        LogHandler.saveLog("--------------------------end of onCreate----------------------------", false);
     }
 
     public void addAbackUpAccountToUI(Activity activity, boolean isBackedUp,
@@ -254,9 +303,9 @@ public class UIHandler {
     }
 
     public void initializeButtons(GoogleCloud googleCloud){
-        initializeDeviceButton(false);
-        initializeSyncButton();
-        initializeWifiOnlyButton();
+//        initializeDeviceButton(false);
+//        initializeSyncButton();
+//        initializeWifiOnlyButton();
         initializeAccountButtons(googleCloud);
         initializeSddAnAccountButton(googleCloud);
     }
