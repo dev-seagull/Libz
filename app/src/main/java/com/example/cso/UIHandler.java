@@ -123,6 +123,9 @@ public class UIHandler {
             @Override
             public void run() {
                 try{
+                    if(uiHelper.pieChart.getVisibility() == View.VISIBLE){
+                        setupPieChart();
+                    }
                     UIHandler.startUpdateUIThread(activity);
                 }catch (Exception e){
                     LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
