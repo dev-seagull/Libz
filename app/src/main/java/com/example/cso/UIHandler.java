@@ -124,7 +124,11 @@ public class UIHandler {
             public void run() {
                 try{
                     if(uiHelper.pieChart.getVisibility() == View.VISIBLE){
-                        setupPieChart();
+                        configurePieChartData();
+                        uiHelper.pieChart.invalidate();
+                        if(uiHelper.directoryUsages.getVisibility() == View.VISIBLE){
+                            displayDirectoryUsage();
+                        }
                     }
                     UIHandler.startUpdateUIThread(activity);
                 }catch (Exception e){

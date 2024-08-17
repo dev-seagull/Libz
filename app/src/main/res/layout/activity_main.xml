@@ -72,7 +72,10 @@
                             android:layout_width="25dp"
                             android:background="@drawable/arrowdown"
                             android:layout_height="70dp"
-                            android:visibility="gone"></ImageView>
+                            android:visibility="gone"
+                            android:layout_marginTop="0dp"
+                            android:paddingBottom="0dp"
+                            android:layout_marginBottom="0dp"></ImageView>
 
                         <LinearLayout
                             android:id="@+id/chartInnerLayout"
@@ -89,7 +92,9 @@
                                 android:id="@+id/pieChart"
                                 android:visibility="gone"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content" />
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="0dp"
+                                android:layout_marginBottom="0dp"/>
 
                             <TextView
                                 android:id="@+id/directoryUsages"
