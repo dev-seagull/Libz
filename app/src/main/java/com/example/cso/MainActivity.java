@@ -55,13 +55,9 @@
             androidUniqueDeviceIdentifier = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
             serviceIntent = new Intent(activity.getApplicationContext(), TimerService.class);
 
-            UIHandler.initializeDrawerLayout(activity);
-            UIHandler uiHandler = new UIHandler();
-            uiHandler.initializeDeviceButton(false);
-            uiHandler.initializeSyncButton();
-            uiHandler.initializeWifiOnlyButton();
+            initAppUI();
 
-            boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
+//            boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
 //            if(isFirstTime){
 //                System.out.println("it is first time!");
 //                DBHelper.startOldDatabaseDeletionThread(getApplicationContext());
@@ -276,6 +272,15 @@
             androidTimer.purge();
         }
     }
+
+    private void initAppUI(){
+        UIHandler uiHandler = new UIHandler();
+        uiHandler.initializeDrawerLayout(activity);
+        uiHandler.initializeDeviceButton(false);
+        uiHandler.initializeSyncButton();
+        uiHandler.initializeWifiOnlyButton();
+    }
+
 }
 
 

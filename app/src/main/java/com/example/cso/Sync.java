@@ -238,6 +238,18 @@ public class Sync {
             LogHandler.saveLog("Finished to join sync thread: " + e.getLocalizedMessage(), true);
         }
     }
+
+    public static void stopSync(){
+        UIHelper uiHelper = new UIHelper();
+        uiHelper.activity.getApplicationContext().stopService(MainActivity.serviceIntent);
+    }
+
+    public static void startSync(){
+        UIHelper uiHelper = new UIHelper();
+        uiHelper.activity.getApplicationContext().startService(MainActivity.serviceIntent);
+    }
+
+
 }
 
 //--------------------------lets go for next comment code (google photos is here)--------------------------------

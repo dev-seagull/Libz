@@ -89,7 +89,6 @@ public class UIHandler {
         LogHandler.saveLog("---------------Start of app--------------", false);
 
         UIHandler uiHandler = new UIHandler();
-        UIHandler.initializeDrawerLayout(activity);
         uiHandler.initializeButtons(MainActivity.googleCloud);
 
         Upgrade.versionHandler(preferences);
@@ -171,7 +170,6 @@ public class UIHandler {
     }
 
     public void initializeWifiOnlyButton(){
-
         uiHelper.wifiButton.setOnClickListener(view -> {
             boolean isSyncOn = SharedPreferencesHandler.getSyncSwitchState();
             if(isSyncOn){
@@ -189,44 +187,56 @@ public class UIHandler {
     }
 
     public void initializeSyncButton(){
-        RotateAnimation continuousRotate = createContinuousRotateAnimation();
         final boolean[] syncState = {SharedPreferencesHandler.getSyncSwitchState()};
-        System.out.println("sync state is:" + syncState[0]);
-        if(syncState[0] && TimerService.isMyServiceRunning(uiHelper.activity.getApplicationContext(),TimerService.class).equals("on")){
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                syncButton.startFillAnimation();
-                updateButtonBackground(uiHelper.wifiButton, isWifiOnlyOn);
-//                SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true, MainActivity.preferences);
-            }
+        boolean isServiceRunning = TimerService.isMyServiceRunning(uiHelper.activity.getApplicationContext(), TimerService.class).equals("on");
+        if(syncState[0] && isServiceRunning){
+            startSyncButtonAnimation();
         }else{
             SharedPreferencesHandler.setSwitchState("syncSwitchState",false,MainActivity.preferences);
         }
+        RotateAnimation continuousRotate = createContinuousRotateAnimation();
+        updateSyncButtonRotationState(continuousRotate, syncState[0]);
+        updateButtonBackground(syncButton, syncState[0]);
 
         syncButton.setOnClickListener(view -> {
-            toggleSyncState();
-            syncState[0] = SharedPreferencesHandler.getSyncSwitchState();
-            if(syncState[0]){
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    if (!TimerService.isMyServiceRunning(uiHelper.activity.getApplicationContext(),TimerService.class).equals("on")){
-                        syncButton.startFillAnimation();
-                        uiHelper.activity.getApplicationContext().startService(MainActivity.serviceIntent);
-                        updateButtonBackground(uiHelper.wifiButton, isWifiOnlyOn);
-                        SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true, MainActivity.preferences);
-                    }
-                }
-            }else{
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    if (TimerService.isMyServiceRunning(uiHelper.activity.getApplicationContext(),TimerService.class).equals("on")){
-                        syncButton.endFillAnimation();
-                        uiHelper.activity.getApplicationContext().stopService(MainActivity.serviceIntent);
-                    }
-                }
-            }
-
-            updateSyncButtonRotationState(continuousRotate, syncState[0]);
-
-//            updateButtonBackground(uiHelper.syncButton, syncState);
+            handleSyncButtonClick();
         });
+    }
+
+    private void startSyncButtonAnimation(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            syncButton.startFillAnimation();
+        }
+    }
+
+    private void handleSyncButtonClick(){
+        boolean currentSyncState = toggleSyncState();
+        boolean isServiceRunning = TimerService.isMyServiceRunning(uiHelper.activity.getApplicationContext(), TimerService.class).equals("on");
+        if(currentSyncState){
+            startSyncIfNotRunning(isServiceRunning);
+        }else{
+            stopSyncIfRunning(isServiceRunning);
+        }
+        RotateAnimation continuousRotate = createContinuousRotateAnimation();
+        updateSyncButtonRotationState(continuousRotate, currentSyncState);
+    }
+
+    private void startSyncIfNotRunning(boolean isServiceRunning){
+        try{
+            if(!isServiceRunning){
+                Sync.startSync();
+            }
+            startSyncButtonAnimation();
+        }catch (Exception e){}
+    }
+
+    private void stopSyncIfRunning(boolean isServiceRunning){
+        try{
+            if(isServiceRunning){
+                Sync.stopSync();
+            }
+            syncButton.endFillAnimation();
+        }catch (Exception e){}
     }
 
     private RotateAnimation createContinuousRotateAnimation() {
@@ -246,21 +256,27 @@ public class UIHandler {
         }
     }
 
-    private void toggleSyncState() {
-        boolean state = SharedPreferencesHandler.getSyncSwitchState();
-        SharedPreferencesHandler.setSwitchState("syncSwitchState",!state,MainActivity.preferences);
+    private boolean toggleSyncState() {
+        try{
+            boolean state = SharedPreferencesHandler.getSyncSwitchState();
+            SharedPreferencesHandler.setSwitchState("syncSwitchState",!state,MainActivity.preferences);
+            return !state;
+        }catch (Exception e){}
+        return false;
     }
 
     private void toggleWifiOnlyOnState() {
         isWifiOnlyOn = !isWifiOnlyOn;
     }
 
-    private void updateButtonBackground(ImageButton button, Boolean state) {
-        int backgroundResource = state ? R.drawable.circular_button_on : R.drawable.circular_button_off;
-        button.setBackgroundResource(backgroundResource);
+    private void updateButtonBackground(View button, Boolean state) {
+        try{
+            int backgroundResource = state ? R.drawable.circular_button_on : R.drawable.circular_button_off;
+            button.setBackgroundResource(backgroundResource);
+        }catch (Exception e){}
     }
 
-    public static void initializeDrawerLayout(Activity activity){
+    public void initializeDrawerLayout(Activity activity){
         setupDrawerToggle();
         setMenuItems();
         setupInfoButton();
@@ -372,13 +388,17 @@ public class UIHandler {
                     if(!currentDeviceClicked){
                         setupPieChart();
                     }else{
-                        uiHelper.pieChart.setVisibility(View.GONE);
-                        uiHelper.chartInnerLayout.setVisibility(View.GONE);
-                        uiHelper.pieChartArrowDown.setVisibility(View.GONE);
-                        uiHelper.directoryUsages.setVisibility(View.GONE);
+                        hidePieChart();
                     }
                 }
         );
+    }
+
+    private void hidePieChart(){
+        uiHelper.pieChart.setVisibility(View.GONE);
+        uiHelper.chartInnerLayout.setVisibility(View.GONE);
+        uiHelper.pieChartArrowDown.setVisibility(View.GONE);
+        uiHelper.directoryUsages.setVisibility(View.GONE);
     }
 
     private void setupLinkedDeviceButtons(){
@@ -410,7 +430,6 @@ public class UIHandler {
         androidDeviceButton.setPadding(40,0,150,0);
         DisplayMetrics displayMetrics = new DisplayMetrics();
         uiHelper.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        int windowWidth = displayMetrics.widthPixels;
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 200
