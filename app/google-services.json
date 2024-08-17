@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "149666586980",
+    "project_id": "libz-22f38",
+    "storage_bucket": "libz-22f38.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:149666586980:android:401f9c5047239081595a71",
+        "android_client_info": {
+          "package_name": "com.example.cso"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4YB4wH6gC8SCzVvc414cE0y9uE1Y52PM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

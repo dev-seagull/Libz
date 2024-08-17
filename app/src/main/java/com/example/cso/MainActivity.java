@@ -7,6 +7,7 @@
     import android.os.Build;
     import android.os.Bundle;
     import android.provider.Settings;
+    import android.util.Log;
     import android.view.View;
     import android.widget.LinearLayout;
     import android.widget.Toast;
@@ -16,6 +17,9 @@
     import androidx.appcompat.app.AppCompatActivity;
     import androidx.fragment.app.FragmentActivity;
 
+    import com.google.firebase.FirebaseApp;
+    import com.google.firebase.analytics.FirebaseAnalytics;
+    import com.google.firebase.crashlytics.FirebaseCrashlytics;
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
 
@@ -41,14 +45,17 @@
         public static Intent serviceIntent;
         public static boolean androidTimerIsRunning = false;
         private PermissionManager permissionManager = new PermissionManager();
+        public static FirebaseAnalytics mFirebaseAnalytics;
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
-
+            Log.d("state","start of onCreate");
             activity = this;
             preferences = getPreferences(Context.MODE_PRIVATE);
+
+            mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
             dbHelper = new DBHelper(activity,DBHelper.NEW_DATABASE_NAME);
             googleCloud = new GoogleCloud((FragmentActivity) activity);
@@ -89,7 +96,7 @@
                 UIHandler uiHandler = new UIHandler();
                 uiHandler.initializeUI(activity,preferences);
 
-                LogHandler.saveLog("--------------------------start of onStart----------------------------",false);
+                Log.d("state","start of onStart");
                 LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
                         Build.VERSION_CODES.M, false);
                 LogHandler.saveLog("The action on log file was performed", false);
@@ -275,10 +282,12 @@
 
     private void initAppUI(){
         UIHandler uiHandler = new UIHandler();
-        uiHandler.initializeDrawerLayout(activity);
+        uiHandler.initializeDrawerLayout();
         uiHandler.initializeDeviceButton(false);
         uiHandler.initializeSyncButton();
         uiHandler.initializeWifiOnlyButton();
+
+        uiHandler.initializeButtons(MainActivity.googleCloud);
     }
 
 }

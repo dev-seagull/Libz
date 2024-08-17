@@ -12,6 +12,11 @@ import java.util.List;
 import java.util.Locale;
 
 public class StorageHandler {
+    private double totalStorage;
+    private long blockSize;
+    private double optimizedFreeSpace = 0;
+    private double optimizedPercent = 0.15;
+    private double freeSpace;
     public double getTotalStorage() {
         return totalStorage;
     }
@@ -42,12 +47,6 @@ public class StorageHandler {
     public void setFreeSpace(double freeSpace) {
         this.freeSpace = freeSpace;
     }
-    private double totalStorage;
-    private long blockSize;
-    private double optimizedFreeSpace = 0;
-    private double optimizedPercent = 0.15;
-    private double freeSpace;
-    private BackUp backUp = new BackUp();
 
 
     public StorageHandler(){

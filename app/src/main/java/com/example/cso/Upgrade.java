@@ -1,6 +1,9 @@
 package com.example.cso;
 
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.widget.Toast;
 
 import kotlin.text._OneToManyTitlecaseMappingsKt;
@@ -9,8 +12,11 @@ public class Upgrade {
 
     public static void versionHandler(SharedPreferences preferences){
         try {
-           int savedVersionCode = preferences.getInt("currentVersionCode", -1); // Default to -1 if not found
-           int currentVersionCode = BuildConfig.VERSION_CODE;
+           int savedVersionCode = preferences.getInt("currentVersionCode", -1);
+            PackageInfo pInfo = MainActivity.activity.getApplicationContext()
+                    .getPackageManager().getPackageInfo(MainActivity.activity.getApplicationContext()
+                            .getPackageName(), 0);
+            int currentVersionCode = pInfo.versionCode;
            if (savedVersionCode == -1){
                DBHelper.deleteTableContent("ACCOUNTS");
            }
@@ -76,8 +82,10 @@ public class Upgrade {
            }
            SharedPreferences.Editor editor = preferences.edit();
            editor.putInt("currentVersionCode", currentVersionCode);
-           editor.apply();
-       }catch (Exception e){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+                editor.apply();
+            }
+        }catch (Exception e){
            LogHandler.saveLog("Failed to upgrade: "+ e.getLocalizedMessage());
        }
     }
@@ -95,7 +103,12 @@ public class Upgrade {
 
     public static void lastVersion() {
         MainActivity.activity.runOnUiThread(() -> {
-            Toast.makeText(MainActivity.activity, "You are Using last version : " + BuildConfig.VERSION_CODE, Toast.LENGTH_SHORT).show();
+            try {
+                PackageInfo pInfo = MainActivity.activity.getApplicationContext()
+                        .getPackageManager().getPackageInfo(MainActivity.activity.getApplicationContext()
+                                .getPackageName(), 0);
+                Toast.makeText(MainActivity.activity, "You are Using last version : " + pInfo.versionCode, Toast.LENGTH_SHORT).show();
+            } catch (Exception e) { }
         });
         upgrade_35_to_36();
 //        MainActivity.dbHelper.deleteFromAccountsTable("stashdevteam","support");

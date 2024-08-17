@@ -5,8 +5,10 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Looper;
 import android.text.Layout;
 import android.text.Spannable;
@@ -34,6 +36,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.core.view.GravityCompat;
 
+import com.github.mikephil.charting.BuildConfig;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
@@ -49,6 +52,8 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
@@ -87,9 +92,6 @@ public class UIHandler {
     public void initializeUI(Activity activity, SharedPreferences preferences){
 
         LogHandler.saveLog("---------------Start of app--------------", false);
-
-        UIHandler uiHandler = new UIHandler();
-        uiHandler.initializeButtons(MainActivity.googleCloud);
 
         Upgrade.versionHandler(preferences);
         if(MainActivity.dbHelper.DATABASE_VERSION < 11) {
@@ -171,6 +173,9 @@ public class UIHandler {
 
     public void initializeWifiOnlyButton(){
         uiHelper.wifiButton.setOnClickListener(view -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("button_name", "A");
+            MainActivity.mFirebaseAnalytics.logEvent("buttonclick", bundle);
             boolean isSyncOn = SharedPreferencesHandler.getSyncSwitchState();
             if(isSyncOn){
                 toggleWifiOnlyOnState();
@@ -276,7 +281,7 @@ public class UIHandler {
         }catch (Exception e){}
     }
 
-    public void initializeDrawerLayout(Activity activity){
+    public void initializeDrawerLayout(){
         setupDrawerToggle();
         setMenuItems();
         setupInfoButton();
@@ -292,7 +297,12 @@ public class UIHandler {
     }
 
     private static void setMenuItems() {
-        setMenuItemTitle(R.id.navMenuItem1, "Version: " + BuildConfig.VERSION_NAME);
+        try{
+            PackageInfo pInfo = MainActivity.activity.getApplicationContext()
+                    .getPackageManager().getPackageInfo(MainActivity.activity.getApplicationContext()
+                            .getPackageName(), 0);
+            setMenuItemTitle(R.id.navMenuItem1, "Version: " + pInfo.versionName);
+        }catch (Exception e) { }
         setMenuItemTitle(R.id.navMenuItem2, "Device id: " + MainActivity.androidUniqueDeviceIdentifier);
     }
 

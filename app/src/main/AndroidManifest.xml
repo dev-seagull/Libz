@@ -20,7 +20,7 @@
 
     <application android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
-        android:name=".LogHandler"
+        android:name=".FirebaseApplication"
         android:largeHeap="true"
         android:theme="@style/Theme.CSO"
         android:hardwareAccelerated="true"
@@ -64,7 +64,6 @@
         <receiver android:name=".MyBroadcastReceiver" />
 
     </application>
-
 
 
 </manifest>
