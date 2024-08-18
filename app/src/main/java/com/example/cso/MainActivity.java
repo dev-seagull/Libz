@@ -237,7 +237,7 @@
                     Toast.makeText(getApplicationContext(),"Read and Write Permissions Denied", Toast.LENGTH_LONG).show();
                 }
             }
-//            wifiOnlySwitchMaterial = findViewById(R.id.wifiOnlySwitchMaterial);
+
 //            wifiOnlySwitchMaterial.setOnClickListener(new View.OnClickListener() {
 //                @Override
 //                public void onClick(View view) {

@@ -6,7 +6,7 @@
     android:layout_alignParentTop="true"
     android:layout_width="match_parent"
     android:layout_height="?attr/actionBarSize"
-    android:background="?attr/colorPrimary"
+    android:background="#6A5ACD"
     tools:targetApi="n">
 
     <TextView
@@ -30,9 +30,9 @@
         android:background="@drawable/round_button"
         android:text="i"
         android:fontFamily="sans-serif"
-        android:textSize="20sp"
+        android:textSize="30sp"
         android:textAllCaps="false"
-        android:textColor="#4285F4"
+        android:textColor="#FFFFFF"
         tools:ignore="HardcodedText">
     </androidx.appcompat.widget.AppCompatButton>
 

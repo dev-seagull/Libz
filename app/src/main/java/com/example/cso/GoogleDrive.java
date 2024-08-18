@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -69,7 +70,7 @@ public class GoogleDrive {
 
                 syncAssetsFolderId = createStashSyncedAssetFolder(service);
             }catch (Exception e){
-                LogHandler.saveLog("Error in creating stash synced assets folder in drive : "+ userEmail + e.getLocalizedMessage(),true);
+                LogHandler.saveLog("Error in creating stash synced assets folder in drive 1 : "+ userEmail + e.getLocalizedMessage(),true);
             }
             return syncAssetsFolderId;
         };
@@ -77,7 +78,7 @@ public class GoogleDrive {
         try{
             syncAssetsFolderIdStr = future.get();
         }catch (Exception e){
-            LogHandler.saveLog("Error in creating stash synced assets folder in drive : "+ userEmail + e.getLocalizedMessage(),true);
+            LogHandler.saveLog("Error in creating stash synced assets folder in drive 2 : "+ userEmail + e.getLocalizedMessage(),true);
         }
         return syncAssetsFolderIdStr;
     }
@@ -116,7 +117,7 @@ public class GoogleDrive {
 
                 folderId = createSubDirectoryInStashSyncedAssetsFolder(service,folderName,parentFolderId);
             }catch (Exception e){
-                LogHandler.saveLog("Error in creating stash synced assets folder in drive : "+ userEmail + e.getLocalizedMessage(),true);
+                LogHandler.saveLog("Error in creating stash synced assets folder in drive 3 : "+ userEmail + e.getLocalizedMessage(),true);
             }
             return folderId;
         };
@@ -124,7 +125,7 @@ public class GoogleDrive {
         try{
             folderIdStr = future.get();
         }catch (Exception e){
-            LogHandler.saveLog("Error in creating stash synced assets folder in drive : "+ userEmail + e.getLocalizedMessage(),true);
+            LogHandler.saveLog("Error in creating stash synced assets folder in drive 4 : "+ userEmail + e.getLocalizedMessage(),true);
         }
         return folderIdStr;
     }
@@ -716,6 +717,9 @@ public class GoogleDrive {
                 copiedFile.setName(fileMetadata.getName());
                 copiedFile.setMimeType(fileMetadata.getMimeType());
 
+                String parentFolderId = DBHelper.getAssetsFolderId(destinationUserEmail);
+                copiedFile.setParents(Collections.singletonList(parentFolderId));
+
                 File newFile = destinationAccount.files().copy(fileId, copiedFile).execute();
                 System.out.println("File copied successfully to the destination account with ID: " + newFile.getId());
                 asset = DBHelper.getAssetByDriveFileId(fileId);
@@ -772,7 +776,6 @@ public class GoogleDrive {
         }
         return totalSize;
     }
-
 
     public static void recursivelyDeleteFolder(Drive service,String folderId, boolean completeMove) {
         try {
@@ -861,14 +864,16 @@ public class GoogleDrive {
                             .execute();
                     System.out.println("----- found stash synced assets folders size : " + result.getFiles().size());
                     if (!result.getFiles().isEmpty()){
-                        parentFolderId[0] = result.getFiles().get(0).getId();
+                        if (hasDeletePermission(result.getFiles().get(0),service,userEmail)) {
+                            parentFolderId[0] = result.getFiles().get(0).getId();
+                        }
                         System.out.println("----- founded parentFolderId: " + parentFolderId[0]);
                         for (File file : result.getFiles()){
                             if (!file.getId().equals(parentFolderId[0])){
-                                System.out.println("----- moving files between parent folders: " + file.getId() + " and " + parentFolderId[0]);
-                                moveFilesBetweenFolders(service, file.getId(), parentFolderId[0]);
-                                System.out.println("----- deleting file: " + file.getId());
                                 if (hasDeletePermission(file,service,userEmail)){
+                                    System.out.println("----- moving files between parent folders: " + file.getId() + " and " + parentFolderId[0]);
+                                    moveFilesBetweenFolders(service, file.getId(), parentFolderId[0]);
+                                    System.out.println("----- deleting file: " + file.getId());
                                     service.files().delete(file.getId()).execute();
                                     System.out.println("----- deleted file: " + file.getId());
                                 }
@@ -1026,10 +1031,9 @@ public class GoogleDrive {
                     } else {
                         File fileMetadata = new File();
 
-                        fileMetadata.setParents(Collections.singletonList(destinationFolderId));
-
                         service.files().update(file.getId(), fileMetadata)
                                 .setRemoveParents(String.join(",", file.getParents()))
+                                .setAddParents(destinationFolderId)
                                 .execute();
                     }
                 }

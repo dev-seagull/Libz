@@ -92,28 +92,28 @@ public class PermissionManager {
     private void showPrePermissionDialog(Activity activity,PermissionResultCallback callback) {
         activity.runOnUiThread(() -> {
             new AlertDialog.Builder(activity)
-                    .setTitle("Storage Access Required")
-                    .setMessage("To fully operate, this app needs access to all files on your device. This includes the following permissions:\n\n" +
-                            "1. Read External Storage: To read files from your device's storage.\n" +
-                            "2. Write External Storage: To write files to your device's storage.\n\n" +
-                            "Please allow 'All files access' on the next screen by selecting our app.")
-                    .setCancelable(false)
-                    .setPositiveButton("OK", (dialog, which) -> {
-                        requestStorageAccessPermission(activity);
-                        new Thread(() -> {
-                            boolean granted = waitForStorageAccess();
-                            if (granted) {
-                                activity.runOnUiThread(callback::onPermissionGranted);
-                            } else {
-                                activity.runOnUiThread(callback::onPermissionDenied);
-                            }
-                        }).start();
-                    })
-                    .setNegativeButton("Cancel", (dialog, which) -> {
-                        dialog.dismiss();
-                        callback.onPermissionDenied();
-                    })
-                    .show();
+                .setTitle("Storage Access Required")
+                .setMessage("To fully operate, this app needs access to all files on your device. This includes the following permissions:\n\n" +
+                        "1. Read External Storage: To read files from your device's storage.\n" +
+                        "2. Write External Storage: To write files to your device's storage.\n\n" +
+                        "Please allow 'All files access' on the next screen by selecting our app.")
+                .setCancelable(false)
+                .setPositiveButton("OK", (dialog, which) -> {
+                    requestStorageAccessPermission(activity);
+                    new Thread(() -> {
+                        boolean granted = waitForStorageAccess();
+                        if (granted) {
+                            activity.runOnUiThread(callback::onPermissionGranted);
+                        } else {
+                            activity.runOnUiThread(callback::onPermissionDenied);
+                        }
+                    }).start();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.dismiss();
+                    callback.onPermissionDenied();
+                })
+                .show();
         });
     }
 

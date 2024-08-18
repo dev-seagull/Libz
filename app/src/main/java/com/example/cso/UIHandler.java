@@ -1,11 +1,13 @@
 package com.example.cso;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -62,6 +64,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import io.opencensus.trace.Tracestate;
+
 public class UIHandler {
     public static TextView directoryUsages = MainActivity.activity.findViewById(R.id.directoryUsages);
     public static UIHelper uiHelper = new UIHelper();
@@ -115,7 +119,7 @@ public class UIHandler {
                 androidUpdate.start();
                 LogHandler.saveLog("Finished the android timer",false);
             }
-        }, 0, 5000);
+        }, 2000, 5000);
 
 
         MainActivity.UITimer = new Timer();
@@ -177,11 +181,14 @@ public class UIHandler {
         }
     }
 
+
     public void initializeWifiOnlyButton(){
+        int textColor = isWifiOnlyOn ? uiHelper.buttonTextColor : uiHelper.buttonTransparentTextColor;
+        uiHelper.wifiButtonText.setTextColor(textColor);
         uiHelper.wifiButton.setOnClickListener(view -> {
             Bundle bundle = new Bundle();
             bundle.putString("button_name", "A");
-            MainActivity.mFirebaseAnalytics.logEvent("buttonclick", bundle);
+            MainActivity.mFirebaseAnalytics.logEvent("buttonClick", bundle);
             boolean isSyncOn = SharedPreferencesHandler.getSyncSwitchState();
             if(isSyncOn){
                 toggleWifiOnlyOnState();
@@ -205,8 +212,8 @@ public class UIHandler {
         }else{
             SharedPreferencesHandler.setSwitchState("syncSwitchState",false,MainActivity.preferences);
         }
-        RotateAnimation continuousRotate = createContinuousRotateAnimation();
-        updateSyncButtonRotationState(continuousRotate, syncState[0]);
+//        RotateAnimation continuousRotate = createContinuousRotateAnimation();
+//        updateSyncButtonRotationState(continuousRotate, syncState[0]);
         updateButtonBackground(syncButton, syncState[0]);
 
         syncButton.setOnClickListener(view -> {
@@ -228,14 +235,16 @@ public class UIHandler {
         }else{
             stopSyncIfRunning(isServiceRunning);
         }
-        RotateAnimation continuousRotate = createContinuousRotateAnimation();
-        updateSyncButtonRotationState(continuousRotate, currentSyncState);
+        updateButtonBackground(syncButton,currentSyncState);
+//        RotateAnimation continuousRotate = createContinuousRotateAnimation();
+//        updateSyncButtonRotationState(continuousRotate, currentSyncState);
     }
 
     private void startSyncIfNotRunning(boolean isServiceRunning){
         try{
             if(!isServiceRunning){
                 Sync.startSync();
+
             }
             startSyncButtonAnimation();
         }catch (Exception e){}
@@ -280,9 +289,25 @@ public class UIHandler {
         isWifiOnlyOn = !isWifiOnlyOn;
     }
 
+
     private void updateButtonBackground(View button, Boolean state) {
         try{
-            int backgroundResource = state ? R.drawable.circular_button_on : R.drawable.circular_button_off;
+            TextView textView;
+            if (button.getId() == R.id.syncButton){
+                textView = uiHelper.syncButtonText;
+            }else{
+                textView = uiHelper.wifiButtonText;
+            }
+            int backgroundResource;
+            int textColor;
+            if (state){
+                backgroundResource = R.drawable.circular_button_on;
+                textColor = uiHelper.buttonTextColor;
+            }else{
+                backgroundResource = R.drawable.circular_button_off;
+                textColor = uiHelper.buttonTransparentTextColor;
+            }
+            textView.setTextColor(textColor);
             button.setBackgroundResource(backgroundResource);
         }catch (Exception e){}
     }
@@ -602,18 +627,19 @@ public class UIHandler {
         PieData data = new PieData(dataSet);
         uiHelper.pieChart.setData(data);
         uiHelper.pieChart.getDescription().setEnabled(false);
-        uiHelper.pieChart.setDrawEntryLabels(false);
+        uiHelper.pieChart.setDrawEntryLabels(true);
         uiHelper.pieChart.setDrawHoleEnabled(true);
         uiHelper.pieChart.setDrawHoleEnabled(false);
     }
 
     private static void configurePieChartLegend() {
         Legend legend = uiHelper.pieChart.getLegend();
+        legend.setEnabled(false);
         legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
         legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
         legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
-        legend.setTextColor(Color.parseColor("#0D47A1"));
-        legend.setTextSize(8f);
+        legend.setTextColor(uiHelper.buttonTextColor);
+        legend.setTextSize(10f);
     }
 
     private static void handleSyncTextViewStatus(){
@@ -683,7 +709,7 @@ public class UIHandler {
     public static void handleFailedSignInToBackUp(Activity activity, ActivityResultLauncher<Intent> signInToBackUpLauncher,
                                                   ActivityResult result){
         activity.runOnUiThread(() -> {
-            LogHandler.saveLog("login with back up launcher failed with response code :" + result.getResultCode());
+            LogHandler.saveLog("login with back up launcher failed with get Handle Status 3:" + result.getResultCode());
             LinearLayout backupAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
             View childview = backupAccountsButtonsLinearLayout.getChildAt(
                     backupAccountsButtonsLinearLayout.getChildCount() - 1);
@@ -871,7 +897,7 @@ public class UIHandler {
             String[] text = {""};
             boolean[] ableToMoveAllAssets = {false};
             if (totalFreeSpace < assetsSize){
-                text[0] = "We will move approximately" + totalFreeSpace /1025 + " GB out of " + assetsSize/1024 + " GB of your assets in "+ userEmail +" to other accounts." +
+                text[0] = "We will move approximately" + totalFreeSpace /1024 + " GB out of " + assetsSize/1024 + " GB of your assets in "+ userEmail +" to other accounts." +
                         "\nWarning : there is not enough space to move all of it. We wont be responsible for "+ (assetsSize - totalFreeSpace)/1024 + " GB of your assets that remain in "+userEmail+"." ;
             }else{
                 text[0] = "We will move all your assets in "+ userEmail +" to other accounts." ;

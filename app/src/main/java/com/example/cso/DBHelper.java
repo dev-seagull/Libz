@@ -7,7 +7,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteException;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.Drive;
@@ -18,8 +17,6 @@ import com.google.gson.JsonObject;
 
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
-
-import org.checkerframework.checker.units.qual.A;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -1628,5 +1625,22 @@ public class DBHelper extends SQLiteOpenHelper {
         } catch (Exception e) {
             LogHandler.saveLog("Failed to check column existence: " + columnName + " to table: " + tableName,true);
         }
+    }
+
+    public static String getAssetsFolderId(String userEmail){
+        String sqlQuery = "SELECT assetsFolderId FROM ACCOUNTS WHERE userEmail =?";
+        Cursor cursor = null;
+        try {
+            cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
+            if (cursor!= null && cursor.moveToFirst()) {
+                int folderIdColumnIndex = cursor.getColumnIndex("assetsFolderId");
+                if (folderIdColumnIndex >= 0) {
+                    return cursor.getString(folderIdColumnIndex);
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to select from ACCOUNTS in getAssetsFolderId method: " + e.getLocalizedMessage());
+        }
+        return null;
     }
 }

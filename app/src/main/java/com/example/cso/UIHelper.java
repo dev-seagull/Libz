@@ -25,7 +25,8 @@ public class UIHelper {
     final DrawerLayout drawerLayout = activity.findViewById(R.id.drawer_layout);
     final ImageView pieChartArrowDown = activity.findViewById(R.id.pieChartArrowDown);
     final LinearLayout chartInnerLayout = activity.findViewById(R.id.chartInnerLayout);
-    final TextView syncButtonText = activity.findViewById(R.id.syncButtonText);
+    final public TextView syncButtonText = activity.findViewById(R.id.syncButtonText);
+    final TextView wifiButtonText = activity.findViewById(R.id.wifiButtonText);
     final ImageButton wifiButton = activity.findViewById(R.id.wifiButton);
     final LinearLayout backupAccountsButtonsLayout= activity.findViewById(R.id.backUpAccountsButtons);
     final TextView syncMessageTextView = activity.findViewById(R.id.syncMessageTextView);
@@ -40,6 +41,7 @@ public class UIHelper {
     public static ColorStateList onSwitchMaterialThumb  = ColorStateList.valueOf(Color.GREEN);
     public static ColorStateList onSwitchMaterialTrack  = ColorStateList.valueOf(Color.GREEN);
     final public int buttonTextColor = Color.WHITE;
+    final public int buttonTransparentTextColor = Color.argb(128, 255, 255, 255);
     public static Drawable driveImage = MainActivity.activity.getApplicationContext().getResources()
             .getDrawable(R.drawable.googledriveimage);
 

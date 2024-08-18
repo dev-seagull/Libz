@@ -86,7 +86,7 @@ public class DeviceHandler {
         Cursor cursor = null;
         ArrayList<DeviceHandler> resultList = new ArrayList<>();
         try{
-            String sqlQuery = "SELECT deviceName, deviceId FROM DEVICE)";
+            String sqlQuery = "SELECT deviceName, deviceId FROM DEVICE;";
             cursor = dbReadable.rawQuery(sqlQuery,new String[]{});
             if (cursor.moveToFirst()) {
                 do {

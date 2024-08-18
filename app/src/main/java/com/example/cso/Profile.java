@@ -401,7 +401,7 @@ public class Profile {
                         isBackedUp[0] = true;
                     }
                 }else{
-                    LogHandler.saveLog("login with back up launcher failed with response code : " + signInResult.getHandleStatus());
+                    LogHandler.saveLog("login with back up launcher failed with get Handle Status 1 : " + signInResult.getHandleStatus());
                     MainActivity.activity.runOnUiThread(() -> {
                         LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
                         View child2 = backupButtonsLinearLayout.getChildAt(
@@ -658,7 +658,7 @@ public class Profile {
                     GoogleDrive.startThreads();
                     LogHandler.saveLog("Finished Drive threads",false);
                 }else{
-                    LogHandler.saveLog("login with back up launcher failed with response code : " + signInResult.getHandleStatus());
+                    LogHandler.saveLog("login with back up launcher failed with get Handle Status 2 : " + signInResult.getHandleStatus());
                     MainActivity.activity.runOnUiThread(() -> {
                         LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
                         View child2 = backupButtonsLinearLayout.getChildAt(
