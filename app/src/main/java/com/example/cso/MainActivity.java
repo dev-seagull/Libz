@@ -46,18 +46,27 @@
         public static boolean androidTimerIsRunning = false;
         private PermissionManager permissionManager = new PermissionManager();
         public static FirebaseAnalytics mFirebaseAnalytics;
+        public static String dataBaseName = "StashDatabase";
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
+            Log.e("deviceName on2 create:", String.valueOf((dbHelper == null)));
             setContentView(R.layout.activity_main);
             Log.d("state","start of onCreate");
             activity = this;
-            preferences = getPreferences(Context.MODE_PRIVATE);
 
-            mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+            if (preferences == null){
+                preferences = getPreferences(Context.MODE_PRIVATE);
+            }
 
-            dbHelper = new DBHelper(activity,DBHelper.NEW_DATABASE_NAME);
+
+            if (mFirebaseAnalytics == null){
+                mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+            }
+
+            dbHelper = DBHelper.getInstance(this);
+
             googleCloud = new GoogleCloud((FragmentActivity) activity);
             androidUniqueDeviceIdentifier = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
             serviceIntent = new Intent(activity.getApplicationContext(), TimerService.class);
@@ -82,11 +91,15 @@
             }catch (Exception e){ }
         }
 
+    protected void onCreateTasks(){
+
+    }
+
 
         @Override
         protected void onStart(){
             super.onStart();
-
+            Log.e("deviceName on2 start:", String.valueOf((dbHelper == null)));
             if(isStoragePermissionGranted && isReadAndWritePermissionGranted){
                 boolean hasCreated = LogHandler.createLogFile();
                 System.out.println("Log file is created :"  + hasCreated);
@@ -123,6 +136,13 @@
                         dbHelper.updateDatabaseBasedOnJson();
                     }
                 }).start();
+
+
+
+
+
+
+
 
                 String refreshToken = "";
                 String[] accessTokens = new String[1];
@@ -263,6 +283,7 @@
     @Override
     public void onResume(){
         super.onResume();
+        Log.e("deviceName on2 resume:", String.valueOf((dbHelper == null)));
     }
 
     @Override

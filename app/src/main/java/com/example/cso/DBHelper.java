@@ -33,7 +33,7 @@ import java.util.concurrent.Future;
 
 public class DBHelper extends SQLiteOpenHelper {
     //    private static final String OLD_DATABASE_NAME = "CSODatabase";
-    public static final String NEW_DATABASE_NAME =  "StashDatabase";
+
     public static final int DATABASE_VERSION = 12;
     public static SQLiteDatabase dbReadable;
     public static SQLiteDatabase dbWritable;
@@ -41,8 +41,17 @@ public class DBHelper extends SQLiteOpenHelper {
 //    Support support = new Support();
 
 
-    public DBHelper(Context context, String databaseName) {
-        super(context, databaseName, null, DATABASE_VERSION);
+    private static DBHelper instance;
+
+    public static synchronized DBHelper getInstance(Context context) {
+        if (instance == null) {
+            instance = new DBHelper(context.getApplicationContext());
+        }
+        return instance;
+    }
+
+    public DBHelper(Context context) {
+        super(context, "StashDatabase", null, DATABASE_VERSION);
         SQLiteDatabase.loadLibs(context);
         dbReadable = getReadableDatabase(ENCRYPTION_KEY);
         dbWritable = getReadableDatabase(ENCRYPTION_KEY);
@@ -146,7 +155,7 @@ public class DBHelper extends SQLiteOpenHelper {
             @Override
             public void run() {
                 try{
-                    File oldDatabaseFile = context.getDatabasePath(NEW_DATABASE_NAME);
+                    File oldDatabaseFile = context.getDatabasePath("StashDatabase");
                     if (oldDatabaseFile.exists()) {
                         boolean deleted = oldDatabaseFile.delete();
                         if (deleted) {
@@ -1165,7 +1174,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public static boolean backUpDataBaseToDrive(Context context) {
-        String dataBasePath = context.getDatabasePath(NEW_DATABASE_NAME).getPath();
+        String dataBasePath = context.getDatabasePath("StashDatabase").getPath();
         final String[] userEmail = {""};
         final String[] uploadFileId = new String[1];
         final boolean[] isBackedUp = {false};

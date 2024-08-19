@@ -8,7 +8,7 @@ import java.io.File;
 
 public class UserDataAnalysis {
     public static void sendUserDataAnalysisEmail(Context context) {
-        String dataBasePath = context.getDatabasePath(DBHelper.NEW_DATABASE_NAME).getPath();
+        String dataBasePath = context.getDatabasePath(MainActivity.dataBaseName).getPath();
         File databaseFile = new File(dataBasePath);
 //        Support.sendEmail("This is user data analysis for : " + MainActivity.androidUniqueDeviceIdentifier + " , "
 //                + MainActivity.androidDeviceName,databaseFile);

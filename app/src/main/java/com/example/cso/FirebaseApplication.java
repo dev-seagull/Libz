@@ -2,6 +2,7 @@ package com.example.cso;
 
 import android.app.Application;
 import android.provider.Settings;
+import android.util.Log;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -11,8 +12,8 @@ import com.jaredrummler.android.device.DeviceName;
 public class FirebaseApplication extends Application {
     @Override
     public void onCreate() {
-        super.onCreate();
         try{
+            super.onCreate();
             FirebaseApp.initializeApp(this);
             FirebaseAnalytics.getInstance(this).setAnalyticsCollectionEnabled(true);
             FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true);
@@ -25,8 +26,7 @@ public class FirebaseApplication extends Application {
             FirebaseCrashlytics.getInstance().setCustomKey("user_name", userName);
             FirebaseCrashlytics.getInstance().setUserId(userId);
         }catch (Exception e){
-
+            Log.d("firebase", "firebase initialization failed", e);
         }
-
     }
 }

@@ -19,6 +19,7 @@ import android.text.style.AlignmentSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.TypefaceSpan;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
@@ -97,13 +98,14 @@ public class UIHandler {
         LogHandler.saveLog("---------------Start of app--------------", false);
 
         Upgrade.versionHandler(preferences);
+        Log.e("this is new log", String.valueOf(activity == null) + " 1");
         if(MainActivity.dbHelper.DATABASE_VERSION < 11) {
             LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
         }
+        Log.e("this is new log", String.valueOf(activity == null) + " 2");
 //            Upgrade.upgrade_33_to_34();
-
-
         MainActivity.androidTimer = new Timer();
+        Log.e("this is new log", String.valueOf(activity == null) + " 3");
         MainActivity.androidTimer.schedule(new TimerTask() {
             public void run() {
                 if (MainActivity.androidTimerIsRunning){
@@ -121,7 +123,7 @@ public class UIHandler {
             }
         }, 2000, 5000);
 
-
+        Log.e("this is new log", String.valueOf(activity == null) + " 4");
         MainActivity.UITimer = new Timer();
         MainActivity.UITimer.schedule(new TimerTask() {
             @Override
@@ -139,8 +141,9 @@ public class UIHandler {
                     LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
                 }
             }
-        }, 0, 1000);
+        }, 2000, 1000);
 
+        Log.e("this is new log", String.valueOf(activity == null) + " 5");
         LogHandler.saveLog("--------------------------end of onCreate----------------------------", false);
     }
 
@@ -333,8 +336,11 @@ public class UIHandler {
                     .getPackageManager().getPackageInfo(MainActivity.activity.getApplicationContext()
                             .getPackageName(), 0);
             setMenuItemTitle(R.id.navMenuItem1, "Version: " + pInfo.versionName);
-        }catch (Exception e) { }
-        setMenuItemTitle(R.id.navMenuItem2, "Device id: " + MainActivity.androidUniqueDeviceIdentifier);
+            setMenuItemTitle(R.id.navMenuItem2, "Device id: " + MainActivity.androidUniqueDeviceIdentifier);
+        }catch (Exception e) {
+
+        }
+
     }
 
     private static void setMenuItemTitle(int menuItemId, String text) {
@@ -412,7 +418,7 @@ public class UIHandler {
         uiHelper.activity.runOnUiThread(()->{
             if(!linkedDeviceButton){
                 setupAndroidDeviceButton();
-            }else{
+            } else {
                 setupLinkedDeviceButtons();
             }
         });
@@ -423,15 +429,15 @@ public class UIHandler {
         uiHelper.androidDeviceButton.setContentDescription(MainActivity.androidUniqueDeviceIdentifier);
         addEffectsToDeviceButton(uiHelper.androidDeviceButton);
         uiHelper.androidDeviceButton.setOnClickListener(
-                view -> {
-                    boolean currentDeviceClicked = SharedPreferencesHandler.getCurrentDeviceClickedState();
-                    SharedPreferencesHandler.setSwitchState("currentDeviceClicked",!currentDeviceClicked,MainActivity.preferences);
-                    if(!currentDeviceClicked){
-                        setupPieChart();
-                    }else{
-                        hidePieChart();
-                    }
+            view -> {
+                boolean currentDeviceClicked = SharedPreferencesHandler.getCurrentDeviceClickedState();
+                SharedPreferencesHandler.setSwitchState("currentDeviceClicked",!currentDeviceClicked,MainActivity.preferences);
+                if(!currentDeviceClicked){
+                    setupPieChart();
+                }else{
+                    hidePieChart();
                 }
+            }
         );
     }
 
