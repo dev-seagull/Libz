@@ -196,7 +196,7 @@ public class GoogleDrive {
 
     public static ArrayList<DriveAccountInfo.MediaItem> getMediaItems(String userEmail, boolean isLogin, String accessToken) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        final ArrayList<DriveAccountInfo.MediaItem> mediaItems = new ArrayList<>();
+        ArrayList<DriveAccountInfo.MediaItem> mediaItems = new ArrayList<>();
         Callable<ArrayList<DriveAccountInfo.MediaItem>> backgroundTask = () -> {
             try {
                 String backupAccessToken = "";
@@ -849,7 +849,7 @@ public class GoogleDrive {
     }
 
     public static String cleanStashSyncFolder(String inputParentFolderId,Drive service,String userEmail){
-        final String[] parentFolderId = {inputParentFolderId};
+        String[] parentFolderId = {inputParentFolderId};
         Thread cleanStashSyncFolderThread = new Thread(() -> {
             if (parentFolderId[0] == null || parentFolderId[0].isEmpty()){
                 FileList result;

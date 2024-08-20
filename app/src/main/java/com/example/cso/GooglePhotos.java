@@ -321,7 +321,7 @@ public class GooglePhotos {
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         ArrayList<String> finalUploadFileIds = new ArrayList<>();
-        final FileContent[] mediaContent = {null};
+        FileContent[] mediaContent = {null};
         Callable<ArrayList<String>> backgroundTaskUpload = () -> {
             System.out.println("here3 in photos to drive");
             if(destinationFiles != null) {
@@ -338,7 +338,7 @@ public class GooglePhotos {
                     } catch (GeneralSecurityException | IOException e) {
                         LogHandler.saveLog("Failed to initialize http transport to upload to drive: " + e.getLocalizedMessage());
                     }
-                    final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+                    JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
                     HttpRequestInitializer requestInitializer = request -> {
                         request.getHeaders().setAuthorization("Bearer " + accessToken);
                         request.getHeaders().setContentType("application/json");

@@ -10,7 +10,7 @@ import java.security.NoSuchAlgorithmException;
 public class Hash {
 
     public static String calculateHash(File file) throws IOException {
-        final int BUFFER_SIZE = 8192;
+        int BUFFER_SIZE = 8192;
         StringBuilder hexString = new StringBuilder();
         MessageDigest digest = null;
         try {

@@ -33,7 +33,7 @@ public class BackUp {
                                         String fileHash, String mimeType, String assetId,
                                         String driveBackupAccessToken, String driveEmailAccount, String syncAssetsFolderId){
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        final boolean[] isUploadValid = {false};
+        boolean[] isUploadValid = {false};
         Callable<Boolean> uploadTask = () -> {
             try {
                 isUploadValid[0] = false;

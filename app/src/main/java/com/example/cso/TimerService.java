@@ -28,9 +28,9 @@ public class TimerService extends Service {
     private Thread syncThreads;
     public boolean isTimerRunning = false;
     public static TimerTask timerTask;
-    private static final int NOTIFICATION_ID = 12345;
-    private static final String CHANNEL_ID = "TimerServiceChannel";
-    private static final String CHANNEL_NAME = "Syncing Channel";
+    private static int NOTIFICATION_ID = 12345;
+    private static String CHANNEL_ID = "TimerServiceChannel";
+    private static String CHANNEL_NAME = "Syncing Channel";
     Notification notification;
 
     @Override

@@ -34,10 +34,10 @@ import java.util.concurrent.Future;
 public class DBHelper extends SQLiteOpenHelper {
     //    private static final String OLD_DATABASE_NAME = "CSODatabase";
 
-    public static final int DATABASE_VERSION = 12;
+    public static int DATABASE_VERSION = 12;
     public static SQLiteDatabase dbReadable;
     public static SQLiteDatabase dbWritable;
-    private static final String ENCRYPTION_KEY = MainActivity.activity.getResources().getString(R.string.ENCRYPTION_KEY);
+    private static String ENCRYPTION_KEY = MainActivity.activity.getResources().getString(R.string.ENCRYPTION_KEY);
 //    Support support = new Support();
 
 
@@ -1175,9 +1175,9 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public static boolean backUpDataBaseToDrive(Context context) {
         String dataBasePath = context.getDatabasePath("StashDatabase").getPath();
-        final String[] userEmail = {""};
-        final String[] uploadFileId = new String[1];
-        final boolean[] isBackedUp = {false};
+        String[] userEmail = {""};
+        String[] uploadFileId = new String[1];
+        boolean[] isBackedUp = {false};
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<Boolean> uploadTask = () -> {

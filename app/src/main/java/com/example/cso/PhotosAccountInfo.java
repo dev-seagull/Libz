@@ -4,7 +4,7 @@ package com.example.cso;
 import java.util.ArrayList;
 
 public class PhotosAccountInfo {
-    private final String userEmail;
+    private String userEmail;
     private GoogleCloud.Tokens tokens;
     private GoogleCloud.Storage storage;
     private ArrayList<GooglePhotos.MediaItem> mediaItems;

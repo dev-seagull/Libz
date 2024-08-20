@@ -1,16 +1,13 @@
 package com.example.cso;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Looper;
 import android.text.Layout;
 import android.text.Spannable;
@@ -28,11 +25,9 @@ import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
@@ -54,8 +49,6 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
-import com.google.firebase.analytics.FirebaseAnalytics;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
@@ -65,13 +58,15 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import io.opencensus.trace.Tracestate;
-
 public class UIHandler {
     public static TextView directoryUsages = MainActivity.activity.findViewById(R.id.directoryUsages);
     public static UIHelper uiHelper = new UIHelper();
-    LiquidFillButton syncButton = uiHelper.activity.findViewById(R.id.syncButton);
+    LiquidFillButton syncButton = MainActivity.activity.findViewById(R.id.syncButton);
     private boolean isWifiOnlyOn = false;
+
+    public UIHandler(){
+        uiHelper = new UIHelper();
+    }
 
     public static void setLastBackupAccountButtonClickableFalse(Activity activity) {
         try {
@@ -186,37 +181,37 @@ public class UIHandler {
 
 
     public void initializeWifiOnlyButton(){
-        int textColor = isWifiOnlyOn ? uiHelper.buttonTextColor : uiHelper.buttonTransparentTextColor;
-        uiHelper.wifiButtonText.setTextColor(textColor);
+        boolean[] wifiOnlyState = {SharedPreferencesHandler.getWifiOnlySwitchState()};
+        if(wifiOnlyState[0]){
+            uiHelper.wifiButtonText.setTextColor(uiHelper.buttonTextColor);
+        }else{
+            uiHelper.wifiButtonText.setTextColor(uiHelper.buttonTransparentTextColor);
+        }
+        updateButtonBackground(uiHelper.wifiButton, wifiOnlyState[0]);
+
         uiHelper.wifiButton.setOnClickListener(view -> {
-            Bundle bundle = new Bundle();
-            bundle.putString("button_name", "A");
-            MainActivity.mFirebaseAnalytics.logEvent("buttonClick", bundle);
-            boolean isSyncOn = SharedPreferencesHandler.getSyncSwitchState();
-            if(isSyncOn){
-                toggleWifiOnlyOnState();
-                updateButtonBackground(uiHelper.wifiButton, isWifiOnlyOn);
-            }else{
-                try{
-                    Toast.makeText(uiHelper.activity.getApplicationContext(),
-                            "First turn the sync button on!" , Toast.LENGTH_SHORT).show();
-                }catch (Exception e){
-                    System.out.println("Failed to make toast make in initializeWifiOnlyButton: " + e.getLocalizedMessage());
-                }
-            }
+                handleWifiOnlyButtonClick();
         });
     }
 
+    private void handleWifiOnlyButtonClick(){
+        boolean currentWifiOnlyState = toggleWifiOnlyOnState();
+        if(currentWifiOnlyState){
+            uiHelper.wifiButtonText.setTextColor(uiHelper.buttonTextColor);
+        }else{
+            uiHelper.wifiButtonText.setTextColor(uiHelper.buttonTransparentTextColor);
+        }
+        updateButtonBackground(uiHelper.wifiButton,currentWifiOnlyState);
+    }
+
     public void initializeSyncButton(){
-        final boolean[] syncState = {SharedPreferencesHandler.getSyncSwitchState()};
-        boolean isServiceRunning = TimerService.isMyServiceRunning(uiHelper.activity.getApplicationContext(), TimerService.class).equals("on");
+        boolean[] syncState = {SharedPreferencesHandler.getSyncSwitchState()};
+        boolean isServiceRunning = TimerService.isMyServiceRunning(MainActivity.activity.getApplicationContext(), TimerService.class).equals("on");
         if(syncState[0] && isServiceRunning){
             startSyncButtonAnimation();
         }else{
             SharedPreferencesHandler.setSwitchState("syncSwitchState",false,MainActivity.preferences);
         }
-//        RotateAnimation continuousRotate = createContinuousRotateAnimation();
-//        updateSyncButtonRotationState(continuousRotate, syncState[0]);
         updateButtonBackground(syncButton, syncState[0]);
 
         syncButton.setOnClickListener(view -> {
@@ -232,15 +227,13 @@ public class UIHandler {
 
     private void handleSyncButtonClick(){
         boolean currentSyncState = toggleSyncState();
-        boolean isServiceRunning = TimerService.isMyServiceRunning(uiHelper.activity.getApplicationContext(), TimerService.class).equals("on");
+        boolean isServiceRunning = TimerService.isMyServiceRunning(MainActivity.activity.getApplicationContext(), TimerService.class).equals("on");
         if(currentSyncState){
             startSyncIfNotRunning(isServiceRunning);
         }else{
             stopSyncIfRunning(isServiceRunning);
         }
         updateButtonBackground(syncButton,currentSyncState);
-//        RotateAnimation continuousRotate = createContinuousRotateAnimation();
-//        updateSyncButtonRotationState(continuousRotate, currentSyncState);
     }
 
     private void startSyncIfNotRunning(boolean isServiceRunning){
@@ -288,8 +281,10 @@ public class UIHandler {
         return false;
     }
 
-    private void toggleWifiOnlyOnState() {
-        isWifiOnlyOn = !isWifiOnlyOn;
+    private boolean toggleWifiOnlyOnState() {
+        boolean previousState = SharedPreferencesHandler.getWifiOnlySwitchState();
+        SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",!previousState,MainActivity.preferences);
+        return !previousState;
     }
 
 
@@ -316,6 +311,7 @@ public class UIHandler {
     }
 
     public void initializeDrawerLayout(){
+        System.out.println(MainActivity.activity);
         setupDrawerToggle();
         setMenuItems();
         setupInfoButton();
@@ -323,7 +319,7 @@ public class UIHandler {
 
     private static void setupDrawerToggle(){
         ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
-                uiHelper.activity, uiHelper.drawerLayout, R.string.navigation_drawer_open,
+                MainActivity.activity, uiHelper.drawerLayout, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close
         );
         uiHelper.drawerLayout.addDrawerListener(actionBarDrawerToggle);
@@ -338,7 +334,6 @@ public class UIHandler {
             setMenuItemTitle(R.id.navMenuItem1, "Version: " + pInfo.versionName);
             setMenuItemTitle(R.id.navMenuItem2, "Device id: " + MainActivity.androidUniqueDeviceIdentifier);
         }catch (Exception e) {
-
         }
 
     }
@@ -366,19 +361,12 @@ public class UIHandler {
     }
 
     public void initializeButtons(GoogleCloud googleCloud){
-//        initializeDeviceButton(false);
-//        initializeSyncButton();
-//        initializeWifiOnlyButton();
         initializeAccountButtons(googleCloud);
-        initializeSddAnAccountButton(googleCloud);
+        initializeAddAnAccountButton(googleCloud);
     }
 
-    private void initializeSddAnAccountButton(GoogleCloud googleCloud){
-//          LinearLayout primaryAccountsButtonsLayout= findViewById(R.id.primaryAccountsButtons);
-//           Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryAccountsButtonsLayout);
-//           newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+    private void initializeAddAnAccountButton(GoogleCloud googleCloud){
         Button newBackupLoginButton = googleCloud.createBackUpLoginButton(uiHelper.backupAccountsButtonsLayout);
-//        newBackupLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
         newBackupLoginButton.setBackgroundResource(R.drawable.gradient_purple);
     }
 
@@ -389,11 +377,8 @@ public class UIHandler {
             String userEmail = accountRow[0];
             String type = accountRow[1];
             if (type.equals("primary")) {
-                // LinearLayout primaryLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
-                // Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
-                // newGoogleLoginButton.setText(userEmail);
             } else if (type.equals("backup")) {
-                LinearLayout backupLinearLayout = uiHelper.activity.findViewById(R.id.backUpAccountsButtons);
+                LinearLayout backupLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
                 Button newGoogleLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
                 newGoogleLoginButton.setText(userEmail);
             }
@@ -415,7 +400,7 @@ public class UIHandler {
     }
 
     public void initializeDeviceButton(boolean linkedDeviceButton){
-        uiHelper.activity.runOnUiThread(()->{
+        MainActivity.activity.runOnUiThread(()->{
             if(!linkedDeviceButton){
                 setupAndroidDeviceButton();
             } else {
@@ -430,9 +415,8 @@ public class UIHandler {
         addEffectsToDeviceButton(uiHelper.androidDeviceButton);
         uiHelper.androidDeviceButton.setOnClickListener(
             view -> {
-                boolean currentDeviceClicked = SharedPreferencesHandler.getCurrentDeviceClickedState();
-                SharedPreferencesHandler.setSwitchState("currentDeviceClicked",!currentDeviceClicked,MainActivity.preferences);
-                if(!currentDeviceClicked){
+                boolean deviceButtonClickState = toggleDeviceButtonClickState();
+                if(!deviceButtonClickState){
                     setupPieChart();
                 }else{
                     hidePieChart();
@@ -440,6 +424,13 @@ public class UIHandler {
             }
         );
     }
+
+    private boolean toggleDeviceButtonClickState(){
+        boolean previousState = SharedPreferencesHandler.getCurrentDeviceClickedState();
+        SharedPreferencesHandler.setSwitchState("currentDeviceClicked",!previousState,MainActivity.preferences);
+        return !previousState;
+    }
+
 
     private void hidePieChart(){
         uiHelper.pieChart.setVisibility(View.GONE);
@@ -452,7 +443,7 @@ public class UIHandler {
         ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromDB();
         for (DeviceHandler device : devices) {
             if (!isCurrentDevice(device) && !buttonExistsInUI(uiHelper.deviceButtons, device.getDeviceId())) {
-                Button newDeviceButton = createNewDeviceButton(uiHelper.activity, device);
+                Button newDeviceButton = createNewDeviceButton(MainActivity.activity, device);
                 uiHelper.deviceButtons.addView(newDeviceButton);
             }
         }
@@ -476,7 +467,7 @@ public class UIHandler {
         androidDeviceButton.startAnimation(fadeIn);
         androidDeviceButton.setPadding(40,0,150,0);
         DisplayMetrics displayMetrics = new DisplayMetrics();
-        uiHelper.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 200
@@ -641,19 +632,6 @@ public class UIHandler {
     private static void configurePieChartLegend() {
         Legend legend = uiHelper.pieChart.getLegend();
         legend.setEnabled(false);
-        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
-        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
-        legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
-        legend.setTextColor(uiHelper.buttonTextColor);
-        legend.setTextSize(10f);
-    }
-
-    private static void handleSyncTextViewStatus(){
-        UIHelper uiHelper = new UIHelper();
-        if(!uiHelper.syncSwitchMaterialButton.isChecked()){
-            uiHelper.syncMessageTextView.setVisibility(View.GONE);
-            UIHelper.waitingSyncGif.setVisibility(View.GONE);
-        }
     }
 
     private static void configurePieChartInteractions() {
@@ -702,7 +680,6 @@ public class UIHandler {
                 activity.runOnUiThread(() -> {
                     handeSyncSwitchMaterialButton(uiHelper, activity);
                     handleStatistics(MainActivity.androidUniqueDeviceIdentifier);
-                    handleSyncTextViewStatus();
                 });
             }catch (Exception e){
                 LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);

@@ -1,6 +1,7 @@
     package com.example.cso;
 
     import android.app.Activity;
+    import android.app.AlertDialog;
     import android.content.Context;
     import android.content.Intent;
     import android.content.SharedPreferences;
@@ -16,6 +17,7 @@
     import androidx.activity.result.contract.ActivityResultContracts;
     import androidx.appcompat.app.AppCompatActivity;
     import androidx.fragment.app.FragmentActivity;
+    import androidx.fragment.app.FragmentManager;
 
     import com.google.firebase.FirebaseApp;
     import com.google.firebase.analytics.FirebaseAnalytics;
@@ -35,7 +37,7 @@
         public static GoogleCloud googleCloud;
         public static ActivityResultLauncher<Intent> signInToBackUpLauncher;
         public static String androidUniqueDeviceIdentifier;
-        public static final String androidDeviceName = DeviceName.getDeviceName();
+        public static String androidDeviceName;
         public static SharedPreferences preferences;
         public static boolean isLoginProcessOn = false;
         public static DBHelper dbHelper;
@@ -44,32 +46,25 @@
         public static Timer UITimer;
         public static Intent serviceIntent;
         public static boolean androidTimerIsRunning = false;
-        private PermissionManager permissionManager = new PermissionManager();
+        private PermissionManager permissionManager = new PermissionManager();;
         public static FirebaseAnalytics mFirebaseAnalytics;
         public static String dataBaseName = "StashDatabase";
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            Log.e("deviceName on2 create:", String.valueOf((dbHelper == null)));
             setContentView(R.layout.activity_main);
-            Log.d("state","start of onCreate");
+
             activity = this;
+            Log.d("state","start of onCreate");
 
-            if (preferences == null){
-                preferences = getPreferences(Context.MODE_PRIVATE);
-            }
-
-
-            if (mFirebaseAnalytics == null){
-                mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
-            }
-
+            preferences = getPreferences(Context.MODE_PRIVATE);
+            mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
             dbHelper = DBHelper.getInstance(this);
-
-            googleCloud = new GoogleCloud((FragmentActivity) activity);
+            googleCloud = new GoogleCloud(this);
             androidUniqueDeviceIdentifier = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
-            serviceIntent = new Intent(activity.getApplicationContext(), TimerService.class);
+            serviceIntent = new Intent(this , TimerService.class);
+            androidDeviceName = DeviceName.getDeviceName();
 
             initAppUI();
 
@@ -80,6 +75,16 @@
 //                SharedPreferencesHandler.setFirstTime(preferences);
 //            }
 
+            Log.d("state","end of onCreate");
+        }
+
+
+
+        @Override
+        protected void onStart(){
+            super.onStart();
+            Log.d("state","start of onStart");
+
             System.out.println(isStoragePermissionGranted);
             System.out.println(isReadAndWritePermissionGranted);
             Thread permissionThread = new Thread(() -> {
@@ -88,218 +93,207 @@
             permissionThread.start();
             try{
                 permissionThread.join();
-            }catch (Exception e){ }
-        }
-
-    protected void onCreateTasks(){
-
-    }
-
-
-        @Override
-        protected void onStart(){
-            super.onStart();
-            Log.e("deviceName on2 start:", String.valueOf((dbHelper == null)));
-            if(isStoragePermissionGranted && isReadAndWritePermissionGranted){
-                boolean hasCreated = LogHandler.createLogFile();
-                System.out.println("Log file is created :"  + hasCreated);
-
-                storageHandler = new StorageHandler();
-
-                UIHandler uiHandler = new UIHandler();
-                uiHandler.initializeUI(activity,preferences);
-
-                Log.d("state","start of onStart");
-                LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
-                        Build.VERSION_CODES.M, false);
-                LogHandler.saveLog("The action on log file was performed", false);
-
-                UIHelper uiHelper = new UIHelper();
-
-                new Thread(() -> {
-                    if(!InternetManager.getInternetStatus(getApplicationContext()).equals("noInternet")) {
-                        boolean databaseIsBackedUp = dbHelper.backUpDataBaseToDrive(getApplicationContext());
-                        if(!databaseIsBackedUp){
-                            LogHandler.saveLog("Database is not backed up ", true);
-                        }
-                    }
-                }).start();
-
-                new Thread(() -> {
-                    if (Deactivation.isDeactivationFileExists()){
-                        MainActivity.activity.runOnUiThread(() -> Toast.makeText(getApplicationContext(),
-                                "you're deActivated, Call support", Toast.LENGTH_SHORT).show());
-                        MainActivity.activity.finish();
-                    }
-                    if (Profile.hasJsonChanged()){
-                        System.out.println("profile json changed");
-                        dbHelper.updateDatabaseBasedOnJson();
-                    }
-                }).start();
-
-
-
-
-
-
-
-
-                String refreshToken = "";
-                String[] accessTokens = new String[1];
-                List<String[]> accountRows = DBHelper.getAccounts(new String[]{"type","userEmail","refreshToken","accessToken"});
-                for (String[] row : accountRows) {
-                    if (row.length > 0 && row[1] != null) {
-                        refreshToken = row[2];
-                        String finalRefreshToken1 = refreshToken;
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    System.out.println("for Email : " + GoogleCloud.isAccessTokenValid(googleCloud.updateAccessToken(finalRefreshToken1).getAccessToken()));
-                                } catch (IOException e) {
-                                    System.out.println("error in here "+e.getLocalizedMessage());
-                                }
-                            }
-                        }).start();
-                    }
-                }
-
-                signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
-                        result -> {
-                            if(result.getResultCode() == RESULT_OK){
-                                isLoginProcessOn = true;
-                                LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-                                View[] child = {backupButtonsLinearLayout.getChildAt(
-                                        backupButtonsLinearLayout.getChildCount() - 1)};
-                                UIHandler.setLastBackupAccountButtonClickableFalse(activity);
-                                try{
-                                    Thread signInToBackUpThread = new Thread(() -> {
-                                        LogHandler.saveLog("Started to get signInResult.",false);
-                                        final GoogleCloud.signInResult signInResult =
-                                                googleCloud.handleSignInToBackupResult(result.getData());
-                                        LogHandler.saveLog("Finished to get signInResult.",false);
-                                        String userEmail = signInResult.getUserEmail();
-                                        String accessToken = signInResult.getTokens().getAccessToken();
-
-                                        LogHandler.saveLog("Started to read profile map content.",false);
-                                        JsonObject resultJson = Profile.readProfileMapContent(userEmail,accessToken);
-                                        LogHandler.saveLog("Finished to read profile map content.",false);
-
-                                        if(resultJson != null){
-                                            LogHandler.saveLog("@@@" + "read profile : " + resultJson.toString(),false);
-                                        }
-
-                                        LogHandler.saveLog("Started to set json modified time.",false);
-                                        SharedPreferencesHandler.setJsonModifiedTime(preferences);
-                                        LogHandler.saveLog("Finished to set json modified time.",false);
-
-                                        LogHandler.saveLog("@@@" + "json last modified : " + SharedPreferencesHandler.getJsonModifiedTime(preferences),false);
-
-                                        LogHandler.saveLog("Started to check if it's linked to accounts.",false);
-                                        boolean isLinked = Profile.isLinkedToAccounts(resultJson,userEmail);
-                                        LogHandler.saveLog("@@@" + "is linked to other accounts : " + isLinked,false);
-                                        LogHandler.saveLog("Finished to check if it's linked to accounts.",false);
-                                        if (isLinked){
-                                            UIHandler.displayLinkProfileDialog(signInToBackUpLauncher, child,
-                                                    resultJson, signInResult);
-                                        }else{
-                                            Profile profile = new Profile();
-                                            profile.linkToAccounts(signInResult,child);
-                                        }
-
-                                        child[0].setClickable(true);
-                                    });
-                                    signInToBackUpThread.start();
-                                }catch (Exception e){
-                                    LogHandler.saveLog("Failed to sign in to backup : "  + e.getLocalizedMessage());
-                                }finally {
-                                    isLoginProcessOn = false;
-                                }
-                            }
-                            else{
-                                UIHandler.handleFailedSignInToBackUp(activity, signInToBackUpLauncher, result);
-                            }
-                        });
-
-                UIHandler.updateButtonsListeners(signInToBackUpLauncher);
-
-                uiHelper.syncSwitchMaterialButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        if(uiHelper.syncSwitchMaterialButton.isChecked()){
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                if (!TimerService.isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
-                                    startService(serviceIntent);
-//                                wifiOnlySwitchMaterial.setThumbTintList(UIHelper.onSwitchMaterialThumb);
-//                                wifiOnlySwitchMaterial.setTrackTintList(UIHelper.onSwitchMaterialTrack);
-//                                wifiOnlySwitchMaterial.setAlpha(1.0f);
-                                    SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true, MainActivity.preferences);
-                                }
-                            }
-                        }else{
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                if (TimerService.isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
-                                    stopService(serviceIntent);
-                                }
-                            }
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    uiHelper.syncMessageTextView.setVisibility(View.GONE);
-                                    UIHelper.waitingSyncGif.setVisibility(View.GONE);
-                                }
-                            });
-                        }
-                    }
-                });
-            }else{
-                if(!isReadAndWritePermissionGranted && isStoragePermissionGranted){
-                    Toast.makeText(getApplicationContext(),"Read and Write Permissions Denied", Toast.LENGTH_LONG).show();
-                }
+            }catch (Exception e){
+                System.out.println("permission error:" + e.getLocalizedMessage());
             }
 
-//            wifiOnlySwitchMaterial.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View view) {
-//                    if(wifiOnlySwitchMaterial.isChecked()){
-//                        runOnUiThread( () -> {
-//                            wifiOnlySwitchMaterial.setThumbTintList(UIHelper.onSwitchMaterialThumb);
-//                            wifiOnlySwitchMaterial.setTrackTintList(UIHelper.onSwitchMaterialTrack);
-//                            wifiOnlySwitchMaterial.setAlpha(1.0f);
-//                        });
-//                        SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",true, preferences);
-//                    }else{
-////                        runOnUiThread( () -> {
-////                            wifiOnlySwitchMaterial.setThumbTintList(UIHelper.offSwitchMaterialThumb);
-////                            wifiOnlySwitchMaterial.setTrackTintList(UIHelper.offSwitchMaterialTrack);
-////                        });
-//                        SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",false,preferences);
-//                    }
-//                }
-//            });
-//            LogHandler.saveLog("--------------------------end of onStart----------------------------",false);
+            Log.d("state","end of onStart");
         }
 
     @Override
     public void onResume(){
         super.onResume();
-        Log.e("deviceName on2 resume:", String.valueOf((dbHelper == null)));
+        Log.d("state","start of onResume");
+        System.out.println("is: " +isStoragePermissionGranted  + " " + isReadAndWritePermissionGranted);
+        if(isStoragePermissionGranted && isReadAndWritePermissionGranted){
+            boolean hasCreated = LogHandler.createLogFile();
+            System.out.println("Log file is created :"  + hasCreated);
+
+            storageHandler = new StorageHandler();
+
+            UIHandler uiHandler = new UIHandler();
+            uiHandler.initializeUI(activity,preferences);
+
+            Log.d("state","start of onStart");
+            LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
+                    Build.VERSION_CODES.M, false);
+            LogHandler.saveLog("The action on log file was performed", false);
+
+            UIHelper uiHelper = new UIHelper();
+
+            new Thread(() -> {
+                if(!InternetManager.getInternetStatus(getApplicationContext()).equals("noInternet")) {
+                    boolean databaseIsBackedUp = dbHelper.backUpDataBaseToDrive(getApplicationContext());
+                    if(!databaseIsBackedUp){
+                        LogHandler.saveLog("Database is not backed up ", true);
+                    }
+                }
+            }).start();
+
+            new Thread(() -> {
+                if (Deactivation.isDeactivationFileExists()){
+                    MainActivity.activity.runOnUiThread(() -> Toast.makeText(getApplicationContext(),
+                            "you're deActivated, Call support", Toast.LENGTH_SHORT).show());
+                    MainActivity.activity.finish();
+                }
+                if (Profile.hasJsonChanged()){
+                    System.out.println("profile json changed");
+                    dbHelper.updateDatabaseBasedOnJson();
+                }
+            }).start();
+
+
+            String refreshToken = "";
+            String[] accessTokens = new String[1];
+            List<String[]> accountRows = DBHelper.getAccounts(new String[]{"type","userEmail","refreshToken","accessToken"});
+            for (String[] row : accountRows) {
+                if (row.length > 0 && row[1] != null) {
+                    refreshToken = row[2];
+                    String finalRefreshToken1 = refreshToken;
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                System.out.println("for Email : " + GoogleCloud.isAccessTokenValid(googleCloud.updateAccessToken(finalRefreshToken1).getAccessToken()));
+                            } catch (IOException e) {
+                                System.out.println("error in here "+e.getLocalizedMessage());
+                            }
+                        }
+                    }).start();
+                }
+            }
+
+            signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                    result -> {
+                        if(result.getResultCode() == RESULT_OK){
+                            isLoginProcessOn = true;
+                            LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+                            View[] child = {backupButtonsLinearLayout.getChildAt(
+                                    backupButtonsLinearLayout.getChildCount() - 1)};
+                            UIHandler.setLastBackupAccountButtonClickableFalse(activity);
+                            try{
+                                Thread signInToBackUpThread = new Thread(() -> {
+                                    LogHandler.saveLog("Started to get signInResult.",false);
+                                    final GoogleCloud.signInResult signInResult =
+                                            googleCloud.handleSignInToBackupResult(result.getData());
+                                    LogHandler.saveLog("Finished to get signInResult.",false);
+                                    String userEmail = signInResult.getUserEmail();
+                                    String accessToken = signInResult.getTokens().getAccessToken();
+
+                                    LogHandler.saveLog("Started to read profile map content.",false);
+                                    JsonObject resultJson = Profile.readProfileMapContent(userEmail,accessToken);
+                                    LogHandler.saveLog("Finished to read profile map content.",false);
+
+                                    if(resultJson != null){
+                                        LogHandler.saveLog("@@@" + "read profile : " + resultJson.toString(),false);
+                                    }
+
+                                    LogHandler.saveLog("Started to set json modified time.",false);
+                                    SharedPreferencesHandler.setJsonModifiedTime(preferences);
+                                    LogHandler.saveLog("Finished to set json modified time.",false);
+
+                                    LogHandler.saveLog("@@@" + "json last modified : " + SharedPreferencesHandler.getJsonModifiedTime(preferences),false);
+
+                                    LogHandler.saveLog("Started to check if it's linked to accounts.",false);
+                                    boolean isLinked = Profile.isLinkedToAccounts(resultJson,userEmail);
+                                    LogHandler.saveLog("@@@" + "is linked to other accounts : " + isLinked,false);
+                                    LogHandler.saveLog("Finished to check if it's linked to accounts.",false);
+                                    if (isLinked){
+                                        UIHandler.displayLinkProfileDialog(signInToBackUpLauncher, child,
+                                                resultJson, signInResult);
+                                    }else{
+                                        Profile profile = new Profile();
+                                        profile.linkToAccounts(signInResult,child);
+                                    }
+
+                                    child[0].setClickable(true);
+                                });
+                                signInToBackUpThread.start();
+                            }catch (Exception e){
+                                LogHandler.saveLog("Failed to sign in to backup : "  + e.getLocalizedMessage());
+                            }finally {
+                                isLoginProcessOn = false;
+                            }
+                        }
+                        else{
+                            UIHandler.handleFailedSignInToBackUp(activity, signInToBackUpLauncher, result);
+                        }
+                    });
+
+            UIHandler.updateButtonsListeners(signInToBackUpLauncher);
+        }else{
+            if(!isReadAndWritePermissionGranted && isStoragePermissionGranted){
+                Toast.makeText(getApplicationContext(),"Read and Write Permissions Denied", Toast.LENGTH_LONG).show();
+            }
+        }
+        Log.d("state","end of onResume");
     }
 
     @Override
     public void onPause(){
         super.onPause();
+        Log.d("state","start of onPause");
+        Log.d("state","end of onPause");
+    }
+
+    @Override
+    public void onStop(){
+        super.onStop();
+        Log.d("state","start of onStop");
+        Log.d("state","end of onStop");
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Log.d("state","start of onDestroyed");
+//        finish();
         System.out.println("Here stopping the timer on ui in onDestroy");
         if(androidTimer != null){
             androidTimer.cancel();
             androidTimer.purge();
         }
+        if(UITimer != null){
+            UITimer.cancel();
+            UITimer.purge();
+        }
+        Log.d("state","end of onDestroyed");
     }
+//
+//    @Override
+//    public void onBackPressed() {
+//        Log.d("state","start of onBackPressed");
+//        FragmentManager fragmentManager = getSupportFragmentManager();
+//        if (fragmentManager.getBackStackEntryCount() > 0) {
+//            fragmentManager.popBackStack();
+//        } else {
+//            // Example 2: Show confirmation dialog before finishing
+//            new AlertDialog.Builder(this)
+//                    .setTitle("Confirm Exit")
+//                    .setMessage("Do you really want to exit?")
+//                    .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+//                        stopService(serviceIntent);
+//                        if (androidTimer != null) {
+//                            androidTimer.cancel();
+//                            androidTimer.purge();
+//                        }
+//                        if (UITimer != null) {
+//                            UITimer.cancel();
+//                            UITimer.purge();
+//                        }
+//                        SharedPreferences preferences = getPreferences(Context.MODE_PRIVATE);
+//                        SharedPreferences.Editor editor = preferences.edit();
+//                        editor.clear();
+//                        editor.apply();
+//
+//                        finishAffinity();
+//                        System.exit(0);
+//                    })
+//                    .setNegativeButton(android.R.string.no, null)
+//                    .show();
+//        }
+//        Log.d("state","end of onBackPressed");
+//    }
 
     private void initAppUI(){
         UIHandler uiHandler = new UIHandler();
@@ -307,7 +301,6 @@
         uiHandler.initializeDeviceButton(false);
         uiHandler.initializeSyncButton();
         uiHandler.initializeWifiOnlyButton();
-
         uiHandler.initializeButtons(MainActivity.googleCloud);
     }
 

@@ -30,7 +30,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class Profile {
-    UIHandler uiHandler = new UIHandler();
     public static JsonObject createProfileMapContentBasedOnDB(){
         JsonObject resultJson = new JsonObject();
         try{
@@ -201,7 +200,7 @@ public class Profile {
     }
 
     public static boolean isLinkedToAccounts(JsonObject resultJson, String userEmail){
-        final boolean[] isLinkedToAccounts = {false};
+        boolean[] isLinkedToAccounts = {false};
         Thread isLinkedToAccountsThread = new Thread(() -> {
             try{
                 if(resultJson != null){
@@ -258,7 +257,7 @@ public class Profile {
 
     public static boolean deleteProfileJson(String userEmail) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        final boolean[] isDeleted = {false};
+        boolean[] isDeleted = {false};
         Callable<Boolean> uploadTask = () -> {
             try {
                 String driveBackupAccessToken;
@@ -428,7 +427,7 @@ public class Profile {
 
     public static boolean backUpProfileMap(boolean hasRemoved, String signedOutEmail) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        final boolean[] isBackedUp = {false};
+        boolean[] isBackedUp = {false};
         Callable<Boolean> uploadTask = () -> {
             try {
                 String driveBackupAccessToken;
@@ -648,6 +647,7 @@ public class Profile {
                         new Thread(GoogleDrive::cleanDriveFolders).start();
 
                         LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
+                        UIHandler uiHandler = new UIHandler();
                         uiHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,
                                 child,signInLinkedAccountResult);
 
@@ -723,7 +723,7 @@ public class Profile {
                         signInResult.getStorage().getUsedInGmailAndPhotosStorage());
 
                 new Thread(GoogleDrive::cleanDriveFolders).start();
-
+                UIHandler uiHandler = new UIHandler();
                 uiHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,
                         child,signInResult);
 

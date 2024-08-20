@@ -52,9 +52,8 @@
     import java.util.concurrent.Future;
 
     public class GoogleCloud extends AppCompatActivity {
-        private final Activity activity;
+        private Activity activity;
         private GoogleSignInClient googleSignInClient;
-        UIHelper uiHelper = new UIHelper();
 
         public GoogleCloud(FragmentActivity activity){
             this.activity = activity;
@@ -195,7 +194,7 @@
         }
 
         public static class signInResult{
-            private final String userEmail;
+            private String userEmail;
             private boolean isHandled;
             private boolean isInAccounts;
             private GoogleCloud.Tokens tokens;
@@ -221,7 +220,7 @@
         }
 
         public signInResult handleSignInToPrimaryResult(Intent data){
-            final boolean[] isHandled = {false};
+            boolean[] isHandled = {false};
             boolean isInAccounts = false;
             String userEmail = "";
             String authCode;
@@ -294,11 +293,11 @@
         }
 
         public signInResult handleSignInToBackupResult(Intent data){
-            final String[] userEmail = {null};
-            final boolean[] isInAccounts = {false};
-            final Tokens[] tokens = {null};
-            final Storage[] storage = {null};
-            final boolean[] isHandled = {false};
+            String[] userEmail = {null};
+            boolean[] isInAccounts = {false};
+            Tokens[] tokens = {null};
+            Storage[] storage = {null};
+            boolean[] isHandled = {false};
             Thread handleSignInToBackupResultThread = new Thread(() -> {
                 try{
                     Task<GoogleSignInAccount> googleSignInTask = GoogleSignIn.getSignedInAccountFromIntent(data);
@@ -388,14 +387,13 @@
             newLoginButton.setVisibility(View.VISIBLE);
             newLoginButton.setPadding(40,0,150,0);
             newLoginButton.setTextSize(10);
+            UIHelper uiHelper = new UIHelper();
             newLoginButton.setTextColor(uiHelper.buttonTextColor);
-//            newLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
             newLoginButton.setBackgroundResource(R.drawable.gradient_purple);
             newLoginButton.setId(View.generateViewId());
 
             DisplayMetrics displayMetrics = new DisplayMetrics();
             activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-            int windowWidth = displayMetrics.widthPixels;
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     200
@@ -549,10 +547,10 @@
         public Storage getStorage(GoogleCloud.Tokens tokens){
             ExecutorService executor = Executors.newSingleThreadExecutor();
             String accessToken = tokens.getAccessToken();
-            final Storage[] storage = new Storage[1];
-            final Double[] totalStorage = new Double[1];
-            final Double[] usedStorage = new Double[1];
-            final Double[] usedInDriveStorage = new Double[1];
+            Storage[] storage = new Storage[1];
+            Double[] totalStorage = new Double[1];
+            Double[] usedStorage = new Double[1];
+            Double[] usedInDriveStorage = new Double[1];
             Callable<Storage> backgroundTask = () -> {
                 try {
                     Drive driveService = GoogleDrive.initializeDrive(accessToken);
@@ -640,7 +638,7 @@
 
         public static boolean startInvalidateTokenThread(String buttonText){
             LogHandler.saveLog("Starting invalidate token Thread", false);
-            final boolean[] isInvalidated = {false};
+            boolean[] isInvalidated = {false};
             Thread invalidateTokenThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -662,7 +660,7 @@
 
         private static boolean startDeleteProfileJsonThread(String buttonText){
             LogHandler.saveLog("Starting Delete Profile Json Thread", false);
-            final boolean[] isDeleted = {false};
+            boolean[] isDeleted = {false};
             Thread deleteProfileJsonThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -684,7 +682,7 @@
 
         private static boolean startDeleteDatabaseThread(String buttonText){
             LogHandler.saveLog("Starting Delete Database Thread", false);
-            final boolean[] isDeleted = {false};
+            boolean[] isDeleted = {false};
             Thread deleteDatabaseThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -722,7 +720,7 @@
 
         private static boolean startProfileJsonBackUpAfterSignOutThread(String buttonText){
             LogHandler.saveLog("Starting Profile Json BackUp After Sign Out Thread", false);
-            final boolean[] isBackedUp = {false};
+            boolean[] isBackedUp = {false};
             Thread profileJsonBackUpAfterSignOutThread = new Thread(() -> {
                 MainActivity.dbHelper.deleteFromAccountsTable(buttonText, "backup");
                 MainActivity.dbHelper.deleteAccountFromDriveTable(buttonText);

@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Environment;
@@ -14,28 +13,44 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 public class PermissionManager {
-    private static final int WAIT_INTERVAL = 1000;
-    public static final int READ_WRITE_PERMISSION_REQUEST_CODE = 1;
+    private static int WAIT_INTERVAL = 1000;
+    public static int READ_WRITE_PERMISSION_REQUEST_CODE = 1;
     public interface PermissionResultCallback {
         void onPermissionGranted();
         void onPermissionDenied();
     }
-    public void requestPermissions(Activity activity) {
-        requestStorageAccess(activity, new PermissionManager.PermissionResultCallback() {
-            @Override
-            public void onPermissionGranted() {
-                MainActivity.isStoragePermissionGranted = true;
-                requestReadWritePermissions(activity);
-            }
+    public void requestPermissions(Activity activity){
+        Thread s = new Thread( ()-> {
+            requestStorageAccess(activity, new PermissionManager.PermissionResultCallback() {
+                @Override
+                public void onPermissionGranted() {
+                    MainActivity.isStoragePermissionGranted = true;
+                    requestReadAndWritePermissions(activity, new PermissionResultCallback() {
+                        @Override
+                        public void onPermissionGranted() {
+                            MainActivity.isReadAndWritePermissionGranted = true;
+                        }
 
-            @Override
-            public void onPermissionDenied() {
-                showPermissionDeniedMessage();
-            }
+                        @Override
+                        public void onPermissionDenied() {
+                            MainActivity.isReadAndWritePermissionGranted = false;
+                        }
+                    });
+                }
+
+                @Override
+                public void onPermissionDenied() {
+                    showPermissionDeniedMessage();
+                }
+            });
         });
+        s.start();
+        try{
+            s.join();
+        }catch (Exception e){ }
     }
 
-    private void requestReadWritePermissions(Activity activity) {
+    private void requestReadAndWritePermissions(Activity activity, PermissionResultCallback callback) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             String[] permissions = {
                     Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -46,15 +61,20 @@ public class PermissionManager {
             boolean isWritePermissionGranted = ContextCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
 
             if (isReadPermissionGranted && isWritePermissionGranted) {
-                MainActivity.isReadAndWritePermissionGranted = true;
+                callback.onPermissionGranted();
             } else {
-                System.out.println("here in this666");
-                System.out.println("Requesting permissions");
                 ActivityCompat.requestPermissions(activity, permissions, READ_WRITE_PERMISSION_REQUEST_CODE);
-                System.out.println("Permissions requested");
+                new Thread(() -> {
+                    boolean granted = waitForReadAndWriteAccess(activity,callback);
+                    if (granted) {
+                        activity.runOnUiThread(callback::onPermissionGranted);
+                    } else {
+                        activity.runOnUiThread(callback::onPermissionDenied);
+                    }
+                }).start();
             }
         }else{
-            MainActivity.isReadAndWritePermissionGranted = true;
+            callback.onPermissionGranted();
         }
     }
 
@@ -77,6 +97,25 @@ public class PermissionManager {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 while (!Environment.isExternalStorageManager()) {
+                    Thread.sleep(WAIT_INTERVAL);
+                }
+            }
+            return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean waitForReadAndWriteAccess(Activity activity,PermissionResultCallback callback) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                boolean isReadPermissionGranted = ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+                boolean isWritePermissionGranted = ContextCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+
+                while (!(isReadPermissionGranted && isWritePermissionGranted)) {
                     Thread.sleep(WAIT_INTERVAL);
                 }
             }

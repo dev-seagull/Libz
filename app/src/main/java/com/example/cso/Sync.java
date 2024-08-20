@@ -101,7 +101,7 @@ public class Sync {
             Long assetId = Long.valueOf(androidRow[8]);
 
             boolean isWifiOnlySwitchOn = SharedPreferencesHandler.getWifiOnlySwitchState();
-            if (!Thread.currentThread().isInterrupted() && uiHelper.syncSwitchMaterialButton.isChecked() &&  (isWifiOnlySwitchOn && InternetManager.getInternetStatus(context).equals("wifi")) || (!isWifiOnlySwitchOn) ){
+            if (!Thread.currentThread().isInterrupted() && (isWifiOnlySwitchOn && InternetManager.getInternetStatus(context).equals("wifi")) || (!isWifiOnlySwitchOn) ){
                 MainActivity.activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -110,8 +110,8 @@ public class Sync {
                         uiHelper.syncMessageTextView.setText("Syncing is in progress");
                         try{
                             if(!MainActivity.activity.isDestroyed()){
-                                Glide.with(MainActivity.activity).asGif().load(R.drawable.gifwaiting).into(UIHelper.waitingSyncGif);
-                                UIHelper.waitingSyncGif.setVisibility(View.VISIBLE);
+//                                Glide.with(MainActivity.activity).asGif().load(R.drawable.gifwaiting).into(UIHelper.waitingSyncGif);
+//                                UIHelper.waitingSyncGif.setVisibility(View.VISIBLE);
                             }
                         }catch (Exception e){
                             System.out.println(e.getLocalizedMessage());
@@ -241,12 +241,12 @@ public class Sync {
 
     public static void stopSync(){
         UIHelper uiHelper = new UIHelper();
-        uiHelper.activity.getApplicationContext().stopService(MainActivity.serviceIntent);
+        MainActivity.activity.getApplicationContext().stopService(MainActivity.serviceIntent);
     }
 
     public static void startSync(){
         UIHelper uiHelper = new UIHelper();
-        uiHelper.activity.getApplicationContext().startService(MainActivity.serviceIntent);
+        MainActivity.activity.getApplicationContext().startService(MainActivity.serviceIntent);
     }
 
 

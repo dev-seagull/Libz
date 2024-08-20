@@ -9,8 +9,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class JsonEncryptor {
 
-    private static final String ALGORITHM = "AES";
-    private static final String TRANSFORMATION = "AES";
+    private static String ALGORITHM = "AES";
+    private static String TRANSFORMATION = "AES";
 
     public static String encryptJsonContent(String jsonContent) {
         try {
