@@ -30,6 +30,17 @@ public class Sync {
                     syncAndroidToBackupAccount(account_row,amountSpaceToFreeUp,context);
                 }
             }
+            //need change
+            new Thread(() -> {
+                if(!InternetManager.getInternetStatus(context).equals("noInternet")) {
+                    boolean databaseIsBackedUp = DBHelper.backUpDataBaseToDrive(context);
+                    if(!databaseIsBackedUp){
+                        LogHandler.saveLog("Database is not backed up ", true);
+                    }
+                }
+            }).start();
+
+
             if(!InternetManager.isInternetReachable("https://drive.google.com")){
                 MainActivity.activity.runOnUiThread(new Runnable() {
                     @Override

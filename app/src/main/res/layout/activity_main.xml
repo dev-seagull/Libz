@@ -48,18 +48,8 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:paddingTop="16dp"
-                        android:orientation="vertical">
-                        <Button
-                            android:id="@+id/androidDeviceButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/gradient_color_bg"
-                            android:drawableLeft="@drawable/android_device_icon"
-                            android:textColor="@color/textColor"
-                            android:text="test"
-                            android:textSize="16sp"
-                            android:padding="12dp"
-                            app:backgroundTint="@null" />
+                        android:orientation="vertical"
+                        >
                     </LinearLayout>
 
                     <LinearLayout

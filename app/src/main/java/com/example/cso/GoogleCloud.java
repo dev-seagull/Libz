@@ -795,6 +795,7 @@
                         }
                         signInLinkedAccountsResult.add(signInResult);
                     }
+
                 }catch (Exception e){
                     LogHandler.saveLog("Failed in signInLinkedAccountsThread thread : " + e.getLocalizedMessage() , true);
                 }
@@ -806,7 +807,7 @@
                 LogHandler.saveLog("Finished to signInLinkedAccountsThread thread: " + e.getLocalizedMessage(), true);
             }
             if (!isHandled[0]){
-                return new ArrayList<>();
+                return null;
             }
             return signInLinkedAccountsResult;
         }

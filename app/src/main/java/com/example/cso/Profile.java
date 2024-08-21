@@ -596,7 +596,7 @@ public class Profile {
                 boolean isSignedIn = false;
                 ArrayList<GoogleCloud.signInResult> signInLinkedAccountsResult =
                         MainActivity.googleCloud.signInLinkedAccounts(resultJson, signInResult.getUserEmail());
-                if (signInLinkedAccountsResult != null && !signInLinkedAccountsResult.isEmpty()){
+                if (signInLinkedAccountsResult != null){
                     isSignedIn = true;
                 }
                 signInLinkedAccountsResult.add(signInResult);

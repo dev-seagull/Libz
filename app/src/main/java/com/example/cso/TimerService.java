@@ -67,7 +67,7 @@ public class TimerService extends Service {
             public void run() {
 //                try{
 
-                if (isTimerRunning || MainActivity.isLoginProcessOn) {
+                if (isTimerRunning || MainActivity.isAnyProccessOn) {
                     return;
                 }
                 isTimerRunning = true;

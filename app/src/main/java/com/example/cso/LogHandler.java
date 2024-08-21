@@ -130,7 +130,6 @@ public class LogHandler extends Application {
                 List<String> existingLines = readExistingLogLines();
                 String logEntry = createLogEntry(text,isError);
                 if(logEntry != null){
-                    assert existingLines != null;
                     existingLines.add(logEntry);
                     writeLogLines(existingLines);
                 }else{

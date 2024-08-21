@@ -1,5 +1,7 @@
 package com.example.cso;
 
+import android.widget.Toast;
+
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.services.drive.Drive;
@@ -42,6 +44,14 @@ public class Deactivation {
             LogHandler.saveLog("Failed to join download thread: " + e.getLocalizedMessage(), true);
         }
         return isFileExists[0];
+    }
+
+    public static void checkDeActivated() {
+        if (Deactivation.isDeactivationFileExists()){
+            MainActivity.activity.runOnUiThread(() -> Toast.makeText(MainActivity.activity,
+                    "you're deActivated, Call support", Toast.LENGTH_SHORT).show());
+            MainActivity.activity.finish();
+        }
     }
 
 }

@@ -31,7 +31,6 @@ public class UIHelper {
     TextView syncMessageTextView = MainActivity.activity.findViewById(R.id.syncMessageTextView);
     LinearLayout deviceButtons = MainActivity.activity.findViewById(R.id.deviceButtons);
     ColorStateList backupAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#FFC300"));
-    Button androidDeviceButton = MainActivity.activity.findViewById(R.id.androidDeviceButton);
     PieChart pieChart = MainActivity.activity.findViewById(R.id.pieChart);
     TextView directoryUsages = MainActivity.activity.findViewById(R.id.directoryUsages);
     static ColorStateList primaryAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#0D47A1"));
@@ -40,5 +39,7 @@ public class UIHelper {
     public int buttonTransparentTextColor = Color.argb(128, 255, 255, 255);
     public static Drawable driveImage = MainActivity.activity.getApplicationContext().getResources()
             .getDrawable(R.drawable.googledriveimage);
+    public Drawable deviceDrawble = MainActivity.activity.getApplicationContext().getResources().getDrawable(R.drawable.android_device_icon);
+    public int deviceBackgroundResource = R.drawable.gradient_color_bg;
 
 }

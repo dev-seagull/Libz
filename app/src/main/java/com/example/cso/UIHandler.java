@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Looper;
 import android.text.Layout;
@@ -88,59 +89,6 @@ public class UIHandler {
         }
     }
 
-    public void initializeUI(Activity activity, SharedPreferences preferences){
-
-        LogHandler.saveLog("---------------Start of app--------------", false);
-
-        Upgrade.versionHandler(preferences);
-        Log.e("this is new log", String.valueOf(activity == null) + " 1");
-        if(MainActivity.dbHelper.DATABASE_VERSION < 11) {
-            LogHandler.saveLog("Starting to update database from version 1 to version 2.", false);
-        }
-        Log.e("this is new log", String.valueOf(activity == null) + " 2");
-//            Upgrade.upgrade_33_to_34();
-        MainActivity.androidTimer = new Timer();
-        Log.e("this is new log", String.valueOf(activity == null) + " 3");
-        MainActivity.androidTimer.schedule(new TimerTask() {
-            public void run() {
-                if (MainActivity.androidTimerIsRunning){
-                    return;
-                }
-                MainActivity.androidTimerIsRunning = true;
-                LogHandler.saveLog("Started the android timer",false);
-                Thread androidUpdate = new Thread(() -> {
-                    if(!TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on")){
-                        Android.startThreads(activity);
-                    }
-                });
-                androidUpdate.start();
-                LogHandler.saveLog("Finished the android timer",false);
-            }
-        }, 2000, 5000);
-
-        Log.e("this is new log", String.valueOf(activity == null) + " 4");
-        MainActivity.UITimer = new Timer();
-        MainActivity.UITimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                try{
-                    if(uiHelper.pieChart.getVisibility() == View.VISIBLE){
-                        configurePieChartData();
-                        uiHelper.pieChart.invalidate();
-                        if(uiHelper.directoryUsages.getVisibility() == View.VISIBLE){
-                            displayDirectoryUsage();
-                        }
-                    }
-                    UIHandler.startUpdateUIThread(activity);
-                }catch (Exception e){
-                    LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
-                }
-            }
-        }, 2000, 1000);
-
-        Log.e("this is new log", String.valueOf(activity == null) + " 5");
-        LogHandler.saveLog("--------------------------end of onCreate----------------------------", false);
-    }
 
     public void addAbackUpAccountToUI(Activity activity, boolean isBackedUp,
                                              ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
@@ -163,7 +111,7 @@ public class UIHandler {
                             bt.setText(signInResult.getUserEmail());
                             bt.setBackgroundResource(R.drawable.gradient_purple);
                         }
-                        initializeDeviceButton(true);
+                        setupDeviceButtons();
                         updateButtonsListeners(signInToBackUpLauncher);
                     });
                 }
@@ -179,6 +127,15 @@ public class UIHandler {
         }
     }
 
+    public static void pieChartHandler(){
+        if(uiHelper.pieChart.getVisibility() == View.VISIBLE){
+            UIHandler.configurePieChartData();
+            uiHelper.pieChart.invalidate();
+            if(uiHelper.directoryUsages.getVisibility() == View.VISIBLE){
+                UIHandler.displayDirectoryUsage();
+            }
+        }
+    }
 
     public void initializeWifiOnlyButton(){
         boolean[] wifiOnlyState = {SharedPreferencesHandler.getWifiOnlySwitchState()};
@@ -399,50 +356,24 @@ public class UIHandler {
         return false;
     }
 
-    public void initializeDeviceButton(boolean linkedDeviceButton){
-        MainActivity.activity.runOnUiThread(()->{
-            if(!linkedDeviceButton){
-                setupAndroidDeviceButton();
-            } else {
-                setupLinkedDeviceButtons();
-            }
-        });
-    }
-
-    private void setupAndroidDeviceButton(){
-        uiHelper.androidDeviceButton.setText(MainActivity.androidDeviceName);
-        uiHelper.androidDeviceButton.setContentDescription(MainActivity.androidUniqueDeviceIdentifier);
-        addEffectsToDeviceButton(uiHelper.androidDeviceButton);
-        uiHelper.androidDeviceButton.setOnClickListener(
-            view -> {
-                boolean deviceButtonClickState = toggleDeviceButtonClickState();
-                if(!deviceButtonClickState){
-                    setupPieChart();
-                }else{
-                    hidePieChart();
-                }
-            }
-        );
-    }
-
-    private boolean toggleDeviceButtonClickState(){
+    private static boolean toggleDeviceButtonClickState(){
         boolean previousState = SharedPreferencesHandler.getCurrentDeviceClickedState();
         SharedPreferencesHandler.setSwitchState("currentDeviceClicked",!previousState,MainActivity.preferences);
         return !previousState;
     }
 
 
-    private void hidePieChart(){
+    private static void hidePieChart(){
         uiHelper.pieChart.setVisibility(View.GONE);
         uiHelper.chartInnerLayout.setVisibility(View.GONE);
         uiHelper.pieChartArrowDown.setVisibility(View.GONE);
         uiHelper.directoryUsages.setVisibility(View.GONE);
     }
 
-    private void setupLinkedDeviceButtons(){
+    public void setupDeviceButtons(){
         ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromDB();
         for (DeviceHandler device : devices) {
-            if (!isCurrentDevice(device) && !buttonExistsInUI(uiHelper.deviceButtons, device.getDeviceId())) {
+            if (!buttonExistsInUI(uiHelper.deviceButtons, device.getDeviceId())) {
                 Button newDeviceButton = createNewDeviceButton(MainActivity.activity, device);
                 uiHelper.deviceButtons.addView(newDeviceButton);
             }
@@ -453,11 +384,29 @@ public class UIHandler {
         return device.getDeviceId().equals(MainActivity.androidUniqueDeviceIdentifier);
     }
 
+    private static void setListenerToDeviceButtons(Button button, DeviceHandler device){
+        button.setOnClickListener(
+                view -> {
+                    if (isCurrentDevice(device)) {
+                        boolean deviceButtonClickState = toggleDeviceButtonClickState();
+                        if(!deviceButtonClickState){
+                            setupPieChart();
+                        }else{
+                            hidePieChart();
+                        }
+                    }else{
+                        //popup menu
+                    }
+                }
+        );
+    }
+
     private static Button createNewDeviceButton(Activity activity, DeviceHandler device) {
         Button newDeviceButton = new Button(activity);
         newDeviceButton.setText(device.getDeviceName());
         newDeviceButton.setContentDescription(device.getDeviceId());
         addEffectsToDeviceButton(newDeviceButton);
+        setListenerToDeviceButtons(newDeviceButton, device);
         return newDeviceButton;
     }
 
@@ -465,6 +414,16 @@ public class UIHandler {
         AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
         fadeIn.setDuration(2000);
         androidDeviceButton.startAnimation(fadeIn);
+        UIHelper uiHelper = new UIHelper();
+        androidDeviceButton.setBackgroundResource(uiHelper.deviceBackgroundResource);
+        Drawable loginButtonLeftDrawable = uiHelper.deviceDrawble;
+        androidDeviceButton.setCompoundDrawablesWithIntrinsicBounds
+                (loginButtonLeftDrawable, null, null, null);
+
+        androidDeviceButton.setTextColor(uiHelper.buttonTextColor);
+        androidDeviceButton.setTextSize(12);
+
+
         androidDeviceButton.setPadding(40,0,150,0);
         DisplayMetrics displayMetrics = new DisplayMetrics();
         MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -472,6 +431,9 @@ public class UIHandler {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 200
         );
+        if (!androidDeviceButton.getContentDescription().equals(MainActivity.androidUniqueDeviceIdentifier)) {
+            layoutParams.topMargin = 35;
+        }
         androidDeviceButton.setLayoutParams(layoutParams);
     }
 
@@ -712,37 +674,45 @@ public class UIHandler {
 
     public static void updateBackupButtonsListener(Activity activity, ActivityResultLauncher<Intent> signInToBackUpLauncher){
         LinearLayout backUpAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+
         for (int i = 0; i < backUpAccountsButtonsLinearLayout.getChildCount(); i++) {
             View childView = backUpAccountsButtonsLinearLayout.getChildAt(i);
             if (childView instanceof Button) {
                 Button button = (Button) childView;
                 button.setOnClickListener(
                         view -> {
+                            if (MainActivity.isAnyProccessOn) {
+                                return;
+                            }
+                            MainActivity.isAnyProccessOn = true;
                             String buttonText = button.getText().toString().toLowerCase();
                             if (buttonText.equals("add a back up account")) {
-                                button.setText("Wait");
+                                button.setText("signing in ...");
                                 button.setClickable(false);
                                 MainActivity.googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
                                 button.setClickable(true);
-                            } else if (buttonText.equals("Wait")){
+                            } else if (buttonText.equals("signing in ...")){
                                 button.setText("add a back up account");
+                            } else if (buttonText.equals("signing out...")){
+                                button.setText(button.getContentDescription());
                             } else {
-                                PopupMenu popupMenu = setPopUpMenuOnButton(activity, button);
-                                popupMenu.setOnMenuItemClickListener(item -> {
-                                    if (item.getItemId() == R.id.unlink) {
-                                        try {
-                                            button.setText("Wait");
-                                        }catch (Exception e){
-                                            LogHandler.saveLog(
-                                                    "Failed to handle ui after unlink : "
-                                                            + e.getLocalizedMessage(), true
-                                            );
+                                button.setContentDescription(buttonText);
+                                try{
+                                    PopupMenu popupMenu = setPopUpMenuOnButton(activity, button);
+                                    popupMenu.setOnMenuItemClickListener(item -> {
+                                        if (item.getItemId() == R.id.unlink) {
+                                            button.setText("signing out...");
+                                            button.setClickable(false);
+                                            GoogleCloud.startUnlinkThreads(buttonText, item, button);
+                                            button.setClickable(true);
                                         }
-                                        GoogleCloud.startUnlinkThreads(buttonText, item, button);
-                                    }
-                                    return true;
-                                });
-                                popupMenu.show();
+                                        return true;
+                                    });
+                                    popupMenu.show();
+                                }catch (Exception e){
+                                    button.setText(button.getContentDescription());
+                                }
+
                             }
                         }
                 );

@@ -28,6 +28,7 @@
     import java.io.IOException;
     import java.util.List;
     import java.util.Timer;
+    import java.util.TimerTask;
 
 
     public class MainActivity extends AppCompatActivity {
@@ -40,7 +41,7 @@
         public static String androidUniqueDeviceIdentifier;
         public static String androidDeviceName;
         public static SharedPreferences preferences;
-        public static boolean isLoginProcessOn = false;
+        public static boolean isAnyProccessOn = false;
         public static DBHelper dbHelper;
         public static StorageHandler storageHandler;
         public static Timer androidTimer;
@@ -67,6 +68,9 @@
             serviceIntent = new Intent(this , TimerService.class);
             androidDeviceName = DeviceName.getDeviceName();
 
+            Log.d("androidId", androidUniqueDeviceIdentifier);
+            Log.d("androidDeviceName", androidDeviceName);
+
             initAppUI();
 
 //            boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
@@ -78,12 +82,14 @@
 
             signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                     result -> {
+                        Log.d("signInToBackUpLauncher", "result code: " + result.getResultCode());
+                        Log.d("signInToBackUpLauncher", "result data: " + result.getData());
                         if(result.getResultCode() == RESULT_OK){
-                            isLoginProcessOn = true;
+                            isAnyProccessOn = true;
+
                             LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
                             View[] child = {backupButtonsLinearLayout.getChildAt(
                                     backupButtonsLinearLayout.getChildCount() - 1)};
-                            UIHandler.setLastBackupAccountButtonClickableFalse(activity);
                             try{
                                 Thread signInToBackUpThread = new Thread(() -> {
                                     LogHandler.saveLog("Started to get signInResult.",false);
@@ -125,10 +131,9 @@
                             }catch (Exception e){
                                 LogHandler.saveLog("Failed to sign in to backup : "  + e.getLocalizedMessage());
                             }finally {
-                                isLoginProcessOn = false;
+                                isAnyProccessOn = false;
                             }
-                        }
-                        else{
+                        }else{
                             UIHandler.handleFailedSignInToBackUp(activity, signInToBackUpLauncher, result);
                         }
                     });
@@ -138,61 +143,49 @@
 
 
 
-        @Override
-        protected void onStart(){
-            super.onStart();
-            Log.d("state","start of onStart");
+    @Override
+    protected void onStart(){
+        super.onStart();
+        Log.d("state","start of onStart");
 
-            System.out.println(isStoragePermissionGranted);
-            System.out.println(isReadAndWritePermissionGranted);
-            Thread permissionThread = new Thread(() -> {
-                permissionManager.requestPermissions(this);
-            });
-            permissionThread.start();
-            try{
-                permissionThread.join();
-            }catch (Exception e){
-                System.out.println("permission error:" + e.getLocalizedMessage());
-            }
-
-            Log.d("state","end of onStart");
+        Log.d("permissions","isStoragePermissionGranted : " + isStoragePermissionGranted);
+        Log.d("permissions","isReadAndWritePermissionGranted : " + isReadAndWritePermissionGranted);
+        Thread permissionThread = new Thread(() -> {
+            permissionManager.requestPermissions(this);
+        });
+        permissionThread.start();
+        try{
+            permissionThread.join();
+        }catch (Exception e){
+            System.out.println("permission error:" + e.getLocalizedMessage());
         }
+
+        Log.d("state","end of onStart");
+    }
+
 
     @Override
     public void onResume(){
         super.onResume();
         Log.d("state","start of onResume");
-        System.out.println("is: " +isStoragePermissionGranted  + " " + isReadAndWritePermissionGranted);
+
         if(isGettingReadAndWritePermission){
             try {
-                Thread.sleep(5000);
+                Thread.sleep(4000);
             } catch (Exception e) {
+                System.out.println("Error while waiting : " + e.getLocalizedMessage());
             }
         }
+        Log.d("permissions","isStoragePermissionGranted : " + isStoragePermissionGranted);
+        Log.d("permissions","isReadAndWritePermissionGranted : " + isReadAndWritePermissionGranted);
         if(isStoragePermissionGranted && isReadAndWritePermissionGranted){
             boolean hasCreated = LogHandler.createLogFile();
-            System.out.println("Log file is created :"  + hasCreated);
+            Log.d("logFile","Log file is created :"  + hasCreated);
 
             storageHandler = new StorageHandler();
+            Upgrade.versionHandler(preferences);
 
-            UIHandler uiHandler = new UIHandler();
-            uiHandler.initializeUI(activity,preferences);
-
-            Log.d("state","start of onStart");
-            LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
-                    Build.VERSION_CODES.M, false);
-            LogHandler.saveLog("The action on log file was performed", false);
-
-            UIHelper uiHelper = new UIHelper();
-
-            new Thread(() -> {
-                if(!InternetManager.getInternetStatus(getApplicationContext()).equals("noInternet")) {
-                    boolean databaseIsBackedUp = dbHelper.backUpDataBaseToDrive(getApplicationContext());
-                    if(!databaseIsBackedUp){
-                        LogHandler.saveLog("Database is not backed up ", true);
-                    }
-                }
-            }).start();
+            setupTimers();
 
             new Thread(() -> {
                 if (Deactivation.isDeactivationFileExists()){
@@ -205,32 +198,10 @@
                     dbHelper.updateDatabaseBasedOnJson();
                 }
             }).start();
-
-
-            String refreshToken = "";
-            String[] accessTokens = new String[1];
-            List<String[]> accountRows = DBHelper.getAccounts(new String[]{"type","userEmail","refreshToken","accessToken"});
-            for (String[] row : accountRows) {
-                if (row.length > 0 && row[1] != null) {
-                    refreshToken = row[2];
-                    String finalRefreshToken1 = refreshToken;
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                System.out.println("for Email : " + GoogleCloud.isAccessTokenValid(googleCloud.updateAccessToken(finalRefreshToken1).getAccessToken()));
-                            } catch (IOException e) {
-                                System.out.println("error in here "+e.getLocalizedMessage());
-                            }
-                        }
-                    }).start();
-                }
-            }
-
             UIHandler.updateButtonsListeners(signInToBackUpLauncher);
         }else{
             if(!isReadAndWritePermissionGranted && isStoragePermissionGranted){
-                Toast.makeText(getApplicationContext(),"Read and Write Permissions Denied", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(),"Read and Write Permissions Required", Toast.LENGTH_LONG).show();
             }
         }
         Log.d("state","end of onResume");
@@ -264,8 +235,11 @@
             UITimer.cancel();
             UITimer.purge();
         }
+        finishAffinity();
+        System.exit(0);
         Log.d("state","end of onDestroyed");
     }
+
 //
 //    @Override
 //    public void onBackPressed() {
@@ -305,13 +279,51 @@
     private void initAppUI(){
         UIHandler uiHandler = new UIHandler();
         uiHandler.initializeDrawerLayout();
-        uiHandler.initializeDeviceButton(false);
+        uiHandler.setupDeviceButtons();
         uiHandler.initializeSyncButton();
         uiHandler.initializeWifiOnlyButton();
         uiHandler.initializeButtons(MainActivity.googleCloud);
     }
 
-}
+
+        public void setupTimers(){
+            if (MainActivity.androidTimer == null){
+                MainActivity.androidTimer = new Timer();
+                MainActivity.androidTimer.schedule(new TimerTask() {
+                    public void run() {
+                        if (MainActivity.androidTimerIsRunning){
+                            return;
+                        }
+                        MainActivity.androidTimerIsRunning = true;
+                        LogHandler.saveLog("Started the android timer",false);
+                        Thread androidUpdate = new Thread(() -> {
+                            if(!TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on")){
+                                Android.startThreads(activity);
+                            }
+                        });
+                        androidUpdate.start();
+                        LogHandler.saveLog("Finished the android timer",false);
+                    }
+                }, 1000, 5000);
+            }
+
+            if (MainActivity.UITimer == null){
+                MainActivity.UITimer = new Timer();
+                MainActivity.UITimer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        try{
+                            UIHandler.pieChartHandler();
+                            UIHandler.startUpdateUIThread(activity);
+                        }catch (Exception e){
+                            LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
+                        }
+                    }
+                }, 1000, 1000);
+            }
+        }
+
+    }
 
 
 
