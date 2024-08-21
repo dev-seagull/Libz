@@ -21,6 +21,7 @@ public class PermissionManager {
     }
     public void requestPermissions(Activity activity){
         Thread s = new Thread( ()-> {
+            MainActivity.isGettingReadAndWritePermission = true;
             requestStorageAccess(activity, new PermissionManager.PermissionResultCallback() {
                 @Override
                 public void onPermissionGranted() {
@@ -29,11 +30,13 @@ public class PermissionManager {
                         @Override
                         public void onPermissionGranted() {
                             MainActivity.isReadAndWritePermissionGranted = true;
+                            MainActivity.isGettingReadAndWritePermission = false;
                         }
 
                         @Override
                         public void onPermissionDenied() {
                             MainActivity.isReadAndWritePermissionGranted = false;
+                            MainActivity.isGettingReadAndWritePermission = false;
                         }
                     });
                 }
@@ -114,13 +117,16 @@ public class PermissionManager {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 boolean isReadPermissionGranted = ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
                 boolean isWritePermissionGranted = ContextCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-
                 while (!(isReadPermissionGranted && isWritePermissionGranted)) {
+                    isReadPermissionGranted = ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+                    isWritePermissionGranted = ContextCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
                     Thread.sleep(WAIT_INTERVAL);
                 }
             }
+            MainActivity.isReadAndWritePermissionGranted = true;
             return true;
         } catch (InterruptedException e) {
+            System.out.println("pwr: " + e.getLocalizedMessage());
             Thread.currentThread().interrupt();
             return false;
         } catch (Exception e) {

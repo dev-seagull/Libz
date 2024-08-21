@@ -33,6 +33,7 @@
     public class MainActivity extends AppCompatActivity {
         public static boolean isStoragePermissionGranted = false;
         public static boolean isReadAndWritePermissionGranted = false;
+        public static boolean isGettingReadAndWritePermission = false;
         public static Activity activity ;
         public static GoogleCloud googleCloud;
         public static ActivityResultLauncher<Intent> signInToBackUpLauncher;
@@ -74,94 +75,6 @@
 //                DBHelper.startOldDatabaseDeletionThread(getApplicationContext());
 //                SharedPreferencesHandler.setFirstTime(preferences);
 //            }
-
-            Log.d("state","end of onCreate");
-        }
-
-
-
-        @Override
-        protected void onStart(){
-            super.onStart();
-            Log.d("state","start of onStart");
-
-            System.out.println(isStoragePermissionGranted);
-            System.out.println(isReadAndWritePermissionGranted);
-            Thread permissionThread = new Thread(() -> {
-                permissionManager.requestPermissions(this);
-            });
-            permissionThread.start();
-            try{
-                permissionThread.join();
-            }catch (Exception e){
-                System.out.println("permission error:" + e.getLocalizedMessage());
-            }
-
-            Log.d("state","end of onStart");
-        }
-
-    @Override
-    public void onResume(){
-        super.onResume();
-        Log.d("state","start of onResume");
-        System.out.println("is: " +isStoragePermissionGranted  + " " + isReadAndWritePermissionGranted);
-        if(isStoragePermissionGranted && isReadAndWritePermissionGranted){
-            boolean hasCreated = LogHandler.createLogFile();
-            System.out.println("Log file is created :"  + hasCreated);
-
-            storageHandler = new StorageHandler();
-
-            UIHandler uiHandler = new UIHandler();
-            uiHandler.initializeUI(activity,preferences);
-
-            Log.d("state","start of onStart");
-            LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
-                    Build.VERSION_CODES.M, false);
-            LogHandler.saveLog("The action on log file was performed", false);
-
-            UIHelper uiHelper = new UIHelper();
-
-            new Thread(() -> {
-                if(!InternetManager.getInternetStatus(getApplicationContext()).equals("noInternet")) {
-                    boolean databaseIsBackedUp = dbHelper.backUpDataBaseToDrive(getApplicationContext());
-                    if(!databaseIsBackedUp){
-                        LogHandler.saveLog("Database is not backed up ", true);
-                    }
-                }
-            }).start();
-
-            new Thread(() -> {
-                if (Deactivation.isDeactivationFileExists()){
-                    MainActivity.activity.runOnUiThread(() -> Toast.makeText(getApplicationContext(),
-                            "you're deActivated, Call support", Toast.LENGTH_SHORT).show());
-                    MainActivity.activity.finish();
-                }
-                if (Profile.hasJsonChanged()){
-                    System.out.println("profile json changed");
-                    dbHelper.updateDatabaseBasedOnJson();
-                }
-            }).start();
-
-
-            String refreshToken = "";
-            String[] accessTokens = new String[1];
-            List<String[]> accountRows = DBHelper.getAccounts(new String[]{"type","userEmail","refreshToken","accessToken"});
-            for (String[] row : accountRows) {
-                if (row.length > 0 && row[1] != null) {
-                    refreshToken = row[2];
-                    String finalRefreshToken1 = refreshToken;
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                System.out.println("for Email : " + GoogleCloud.isAccessTokenValid(googleCloud.updateAccessToken(finalRefreshToken1).getAccessToken()));
-                            } catch (IOException e) {
-                                System.out.println("error in here "+e.getLocalizedMessage());
-                            }
-                        }
-                    }).start();
-                }
-            }
 
             signInToBackUpLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                     result -> {
@@ -219,6 +132,100 @@
                             UIHandler.handleFailedSignInToBackUp(activity, signInToBackUpLauncher, result);
                         }
                     });
+
+            Log.d("state","end of onCreate");
+        }
+
+
+
+        @Override
+        protected void onStart(){
+            super.onStart();
+            Log.d("state","start of onStart");
+
+            System.out.println(isStoragePermissionGranted);
+            System.out.println(isReadAndWritePermissionGranted);
+            Thread permissionThread = new Thread(() -> {
+                permissionManager.requestPermissions(this);
+            });
+            permissionThread.start();
+            try{
+                permissionThread.join();
+            }catch (Exception e){
+                System.out.println("permission error:" + e.getLocalizedMessage());
+            }
+
+            Log.d("state","end of onStart");
+        }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        Log.d("state","start of onResume");
+        System.out.println("is: " +isStoragePermissionGranted  + " " + isReadAndWritePermissionGranted);
+        if(isGettingReadAndWritePermission){
+            try {
+                Thread.sleep(5000);
+            } catch (Exception e) {
+            }
+        }
+        if(isStoragePermissionGranted && isReadAndWritePermissionGranted){
+            boolean hasCreated = LogHandler.createLogFile();
+            System.out.println("Log file is created :"  + hasCreated);
+
+            storageHandler = new StorageHandler();
+
+            UIHandler uiHandler = new UIHandler();
+            uiHandler.initializeUI(activity,preferences);
+
+            Log.d("state","start of onStart");
+            LogHandler.saveLog("Build.VERSION.SDK_INT and Build.VERSION_CODES.M : " + Build.VERSION.SDK_INT +
+                    Build.VERSION_CODES.M, false);
+            LogHandler.saveLog("The action on log file was performed", false);
+
+            UIHelper uiHelper = new UIHelper();
+
+            new Thread(() -> {
+                if(!InternetManager.getInternetStatus(getApplicationContext()).equals("noInternet")) {
+                    boolean databaseIsBackedUp = dbHelper.backUpDataBaseToDrive(getApplicationContext());
+                    if(!databaseIsBackedUp){
+                        LogHandler.saveLog("Database is not backed up ", true);
+                    }
+                }
+            }).start();
+
+            new Thread(() -> {
+                if (Deactivation.isDeactivationFileExists()){
+                    MainActivity.activity.runOnUiThread(() -> Toast.makeText(getApplicationContext(),
+                            "you're deActivated, Call support", Toast.LENGTH_SHORT).show());
+                    MainActivity.activity.finish();
+                }
+                if (Profile.hasJsonChanged()){
+                    System.out.println("profile json changed");
+                    dbHelper.updateDatabaseBasedOnJson();
+                }
+            }).start();
+
+
+            String refreshToken = "";
+            String[] accessTokens = new String[1];
+            List<String[]> accountRows = DBHelper.getAccounts(new String[]{"type","userEmail","refreshToken","accessToken"});
+            for (String[] row : accountRows) {
+                if (row.length > 0 && row[1] != null) {
+                    refreshToken = row[2];
+                    String finalRefreshToken1 = refreshToken;
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                System.out.println("for Email : " + GoogleCloud.isAccessTokenValid(googleCloud.updateAccessToken(finalRefreshToken1).getAccessToken()));
+                            } catch (IOException e) {
+                                System.out.println("error in here "+e.getLocalizedMessage());
+                            }
+                        }
+                    }).start();
+                }
+            }
 
             UIHandler.updateButtonsListeners(signInToBackUpLauncher);
         }else{
