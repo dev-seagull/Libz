@@ -1,6 +1,13 @@
 package com.example.cso;
 
 
+import android.content.Context;
+import android.widget.Toast;
+
+import com.google.api.client.http.FileContent;
+import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.model.FileList;
+
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -13,6 +20,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,6 +28,82 @@ import java.util.concurrent.Future;
 
 public class Support {
     public static String supportEmail = MainActivity.activity.getResources().getString(R.string.supportEmail);
+
+    public static boolean isBackupDBFileExists() {
+        String fileName = "backupDB_" + MainActivity.androidUniqueDeviceIdentifier + ".json";
+        boolean[] isFileExists = {false};
+        Thread downloadThread = new Thread(() -> {
+            try {
+                String accessToken = MainActivity.googleCloud.updateAccessToken(Support.getSupportRefreshToken()).getAccessToken();
+                Drive service = GoogleDrive.initializeDrive(accessToken);
+
+                String query = "name = '" + fileName + "'";
+                FileList result = service.files().list()
+                        .setQ(query)
+                        .setSpaces("drive")
+                        .setFields("files(id, name)")
+                        .execute();
+
+                if (!result.getFiles().isEmpty()) {
+                    LogHandler.saveLog("File not found: " + fileName, true);
+                    isFileExists[0] = true;
+                }
+            }catch (Exception e) {
+                LogHandler.saveLog("Failed to check file existing : " + e.getLocalizedMessage(), true);
+            }
+        });
+        downloadThread.start();
+        try {
+            downloadThread.join();
+        } catch (InterruptedException e) {
+            LogHandler.saveLog("Failed to join download thread: " + e.getLocalizedMessage(), true);
+        }
+        return isFileExists[0];
+    }
+
+    public static void checkSupportBackupRequired() {
+        if (isBackupDBFileExists()){
+            backUpDataBaseToDrive();
+        }
+    }
+
+    public static void backUpDataBaseToDrive() {
+        String dataBasePath = MainActivity.activity.getDatabasePath("StashDatabase").getPath();
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Callable<Boolean> uploadTask = () -> {
+            try {
+                String driveBackUpRefreshToken = getSupportRefreshToken();
+                String driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackUpRefreshToken).getAccessToken();
+                Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
+                String fileName = "backupDB_" + MainActivity.androidUniqueDeviceIdentifier + ".db";
+                try {
+                    com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+                    fileMetadata.setName(fileName);
+                    File androidFile = new File(dataBasePath);
+                    if (!androidFile.exists()) {
+                        LogHandler.saveLog("Failed to upload database from Android to backup because it doesn't exist", true);
+                    }
+                    FileContent mediaContent = new FileContent("application/x-sqlite3", androidFile);
+                    if (mediaContent == null) {
+                        LogHandler.saveLog("Failed to upload database from Android to backup because it's null", true);
+                    }
+                    com.google.api.services.drive.model.File uploadFile =
+                            service.files().create(fileMetadata, mediaContent).setFields("id").execute();
+                    String uploadFileId = uploadFile.getId();
+                    return true;
+                } catch (Exception e) {
+                    LogHandler.saveLog("Failed to set profile map content:" + e.getLocalizedMessage(), true);
+                }
+            } catch (Exception e) {
+
+            }
+            return false;
+        };
+    }
+
+
+
 //    public static boolean sendEmail(String message, File attachment) {
 //        ExecutorService executor = Executors.newSingleThreadExecutor();
 //        Callable<Boolean> uploadTask = () -> {

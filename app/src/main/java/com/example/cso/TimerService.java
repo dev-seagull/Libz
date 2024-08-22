@@ -39,11 +39,6 @@ public class TimerService extends Service {
         Log.d("TimerForegroundService", "Service onCreate");
         notification = createNotification();
         startForeground(NOTIFICATION_ID, notification);
-
-        MyAlarmManager myAlarmManager = new MyAlarmManager();
-        myAlarmManager.scheduleDailyDataAnalysisAlarm(getApplicationContext(),0,0);
-        myAlarmManager.scheduleDailyDataAnalysisAlarm(getApplicationContext(),12,0);
-
         startTimer();
     }
 

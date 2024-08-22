@@ -193,6 +193,9 @@
                             "you're deActivated, Call support", Toast.LENGTH_SHORT).show());
                     MainActivity.activity.finish();
                 }
+
+                Support.checkSupportBackupRequired();
+
                 if (Profile.hasJsonChanged()){
                     System.out.println("profile json changed");
                     dbHelper.updateDatabaseBasedOnJson();

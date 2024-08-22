@@ -15,7 +15,7 @@ import java.io.IOException;
 public class Deactivation {
 
     public static boolean isDeactivationFileExists() {
-        String fileName = "deActive_"+MainActivity.androidUniqueDeviceIdentifier + ".json";
+        String fileName = "deActive_" + MainActivity.androidUniqueDeviceIdentifier + ".json";
         boolean[] isFileExists = {false};
         Thread downloadThread = new Thread(() -> {
             try {

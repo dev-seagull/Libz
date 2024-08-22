@@ -1155,6 +1155,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+
     private ArrayList<String> selectAllAssetIds() {
         ArrayList<String> assetIds = new ArrayList<>();
         String sqlQuery = "SELECT id FROM ASSET";
@@ -1168,10 +1169,10 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             } while (cursor.moveToNext());
         }
-
         cursor.close();
         return assetIds;
     }
+
 
     public static boolean backUpDataBaseToDrive(Context context) {
         String dataBasePath = context.getDatabasePath("StashDatabase").getPath();
