@@ -1,10 +1,9 @@
 package com.example.cso;
 
-import static com.example.cso.MainActivity.signInToBackUpLauncher;
-
 import android.content.Intent;
 import android.os.Build;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -14,6 +13,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -115,30 +116,35 @@ public class Profile {
         Thread readProdileMapContentThread = new Thread(() -> {
             try{
                 Drive service = GoogleDrive.initializeDrive(accessToken);
-                List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail, accessToken);
+                List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail, accessToken, service);
                 for (com.google.api.services.drive.model.File existingFile : existingFiles) {
                     for (int i = 0; i < 3; i++) {
                         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                        service.files().get(existingFile.getId())
-                                .executeMediaAndDownloadTo(outputStream);
+                        try {
+                            service.files().get(existingFile.getId())
+                                    .executeMediaAndDownloadTo(outputStream);
 
-                        String jsonString = outputStream.toString();
-                        resultJson[0] = JsonParser.parseString(jsonString).getAsJsonObject();
-
-                        LogHandler.saveLog("resultJson is: " + resultJson[0].toString() + " [Thread: " + Thread.currentThread().getName() + "]", false);
-
-                        outputStream.close();
+                            String jsonString = outputStream.toString();
+                            resultJson[0] = JsonParser.parseString(jsonString).getAsJsonObject();
+                            if(resultJson[0] != null){
+                                break;
+                            }
+                        }catch (Exception e){
+                            FirebaseCrashlytics.getInstance().recordException(e);
+                        }finally {
+                            outputStream.close();
+                        }
                     }
                 }
             }catch (Exception e){
-                LogHandler.saveLog("Failed to read profile map content : " + e.getLocalizedMessage(), true);
+                FirebaseCrashlytics.getInstance().recordException(e);
             }
         });
         readProdileMapContentThread.start();
         try{
             readProdileMapContentThread.join();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to join readProdileMapContentThread: " + e.getLocalizedMessage(), true);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
         return resultJson[0];
     }
@@ -151,7 +157,8 @@ public class Profile {
                 try{
                     System.out.println("access token in method readProfileMapName: " + accessToken);
                     System.out.println("user email in method readProfileMapName: " + userEmail);
-                    List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail, accessToken);
+                    Drive service = GoogleDrive.initializeDrive(accessToken);
+                    List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail, accessToken, service);
                     System.out.println("size of files in profile folder: " + existingFiles.size());
                     for (com.google.api.services.drive.model.File existingFile : existingFiles) {
                         resultJsonName[0] = existingFile.getName();
@@ -175,14 +182,12 @@ public class Profile {
         return resultJsonName[0];
     }
 
-    private static List<com.google.api.services.drive.model.File> getFilesInProfileFolder(String userEmail, String accessToken){
+    private static List<com.google.api.services.drive.model.File> getFilesInProfileFolder(String userEmail, String accessToken, Drive service){
         List<com.google.api.services.drive.model.File> existingFiles = null;
         try {
-            Drive service = GoogleDrive.initializeDrive(accessToken);
-
             String folderName = "stash_user_profile";
             String stashUserProfileFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail, folderName, true, accessToken);
-            System.out.println("stash user profile folder id: " + stashUserProfileFolderId);
+
             if (stashUserProfileFolderId != null && !stashUserProfileFolderId.isEmpty()) {
                 FileList fileList = service.files().list()
                         .setQ("name contains 'profileMap_' and '" + stashUserProfileFolderId + "' in parents")
@@ -190,11 +195,11 @@ public class Profile {
                         .setFields("files(id,name)")
                         .execute();
                 existingFiles = fileList.getFiles();
-                System.out.println("size of files in profile folder: " + existingFiles.size());
+                Log.d("folder", "n files in profile folder: " + existingFiles.size());
                 return existingFiles;
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to get files in profile folder : " + e.getLocalizedMessage(), true);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
         return existingFiles;
     }
@@ -204,55 +209,61 @@ public class Profile {
         Thread isLinkedToAccountsThread = new Thread(() -> {
             try{
                 if(resultJson != null){
-                    List<String[]> accountRows = DBHelper.getAccounts(new String[]{"userEmail", "type"});
-                    List<String> backupAccountsInDevice = new ArrayList<>();
-                    for (String[] accountRow : accountRows) {
-                        if (accountRow[1].equals("backup")){
-                            backupAccountsInDevice.add(accountRow[0]);
-                        }
-                    }
-                    backupAccountsInDevice.add(userEmail);
+                    ArrayList<String> backupAccountsInDevice = DBHelper.getBackupAccountsInDevice(userEmail);
 
                     JsonArray backupAccountsArray = resultJson.getAsJsonArray("backupAccounts");
-                    System.out.println("backup accounts in json: " + backupAccountsArray);
-                    for (JsonElement element : backupAccountsArray) {
-                        JsonObject accountObject = element.getAsJsonObject();
-                        String backupEmail = accountObject.get("backupEmail").getAsString();
-                        if (!backupAccountsInDevice.contains(backupEmail)) {
-                            LogHandler.saveLog("A new email found:" + backupEmail,false);
-                            isLinkedToAccounts[0] = true;
-                        }
-                    }
-
-                    if (resultJson.has("deviceInfo")) {
-                        JsonArray deviceInfoArray = resultJson.getAsJsonArray("deviceInfo");
-                        for (JsonElement element : deviceInfoArray) {
-                            JsonObject deviceInfoObject = element.getAsJsonObject();
-                            String deviceIdentifier = deviceInfoObject.get("deviceId").getAsString();
-                            ArrayList<DeviceHandler> currentDevices = new ArrayList<>();
-                            ArrayList<String> currentDeviceIdList = new ArrayList<>();
-                            for(DeviceHandler device: currentDevices){
-                                currentDeviceIdList.add(device.getDeviceId());
-                            }
-                            if (!currentDeviceIdList.contains(deviceIdentifier)) {
-                                System.out.println("A new device found:" + deviceIdentifier);
-                                isLinkedToAccounts[0] = true;
-                            }
+                    isLinkedToAccounts[0] = checkNewBackupEmails(backupAccountsArray,backupAccountsInDevice);
+                    if(!isLinkedToAccounts[0]){
+                        if (resultJson.has("deviceInfo")) {
+                            JsonArray deviceInfoArray = resultJson.getAsJsonArray("deviceInfo");
+                            isLinkedToAccounts[0] = checkNewDevices(deviceInfoArray);
                         }
                     }
                 }
             }catch (Exception e){
-                LogHandler.saveLog("Failed to check if it's a new profile: " + e.getLocalizedMessage(), true);
+                FirebaseCrashlytics.getInstance().recordException(e);
             }
         });
+
         isLinkedToAccountsThread.start();
         try {
             isLinkedToAccountsThread.join();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to join sign in to isLinkedToAccounts thread : " + e.getLocalizedMessage(), true);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
-        LogHandler.saveLog("isLinked is: " + isLinkedToAccounts[0], false);
+
         return isLinkedToAccounts[0];
+    }
+
+    private static boolean checkNewDevices(JsonArray deviceInfoArray){
+        boolean isLinked = false;
+
+        ArrayList<DeviceHandler> currentDeviceIdList = MainActivity.dbHelper.getDevicesFromDB();
+        for (JsonElement element : deviceInfoArray) {
+            JsonObject deviceInfoObject = element.getAsJsonObject();
+            String deviceIdentifier = deviceInfoObject.get("deviceId").getAsString();
+            if (!currentDeviceIdList.contains(deviceIdentifier)) {
+                Log.d("signInToBackUpLauncher","A new device found: " + deviceIdentifier);
+                isLinked = true;
+            }
+        }
+
+        return isLinked;
+    }
+
+    private static boolean checkNewBackupEmails(JsonArray backupAccountsArray, ArrayList<String> backupAccountsInDevice) {
+        boolean isLinked = false;
+
+        for (JsonElement element : backupAccountsArray) {
+            JsonObject accountObject = element.getAsJsonObject();
+            String backupEmail = accountObject.get("backupEmail").getAsString();
+            if (!backupAccountsInDevice.contains(backupEmail)) {
+                Log.d("signInToBackUpLauncher","A new email found: " + backupEmail);
+                isLinked = true;
+            }
+        }
+
+        return isLinked;
     }
 
     public static boolean deleteProfileJson(String userEmail) {
@@ -307,32 +318,28 @@ public class Profile {
                         .execute();
 
                 Date date = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
-                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss",Locale.US);
                 String currentDate = formatter.format(date);
                 String fileName = "profileMap_" + currentDate + ".json";
+
                 List<com.google.api.services.drive.model.File> existingFiles = fileList.getFiles();
                 for(com.google.api.services.drive.model.File profileFile: existingFiles){
-                    System.out.println("Older name:" + profileFile.getName() + " new name: " + fileName);
-                    if(deleteOlderProfileFiles){
-                        if(!profileFile.getName().equals(fileName)){
-                            service.files().delete(profileFile.getId()).execute();
-                        }
-                    }else {
-                        if(profileFile.getName().equals(fileName)){
-                            service.files().delete(profileFile.getId()).execute();
-                            break;
-                        }
+                    if (deleteOlderProfileFiles && !profileFile.getName().equals(fileName)) {
+                        service.files().delete(profileFile.getId()).execute();
+                    } else if (!deleteOlderProfileFiles && profileFile.getName().equals(fileName)) {
+                        service.files().delete(profileFile.getId()).execute();
+                        break;
                     }
                 }
             }catch (Exception e) {
-                LogHandler.saveLog("Failed to delete profile files: " + e.getLocalizedMessage(), true);
+                FirebaseCrashlytics.getInstance().recordException(e);
             }
         });
         deleteProfileFileThread.start();
         try{
             deleteProfileFileThread.join();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to join deleteOlderProfileFileThread: " + e.getLocalizedMessage(), true);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
     }
 
@@ -371,7 +378,8 @@ public class Profile {
 
     private static boolean checkDeletionStatusAfterProfileLogin(String userEmail,String accessToken){
         try{
-            List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail,accessToken);
+            Drive service = GoogleDrive.initializeDrive(accessToken);
+            List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail,accessToken, service);
             if (existingFiles.size() == 1) {
                 return true;
             }
@@ -381,7 +389,7 @@ public class Profile {
         return false;
     }
 
-    public static boolean backUpJsonFile(JsonObject resultJson, GoogleCloud.signInResult signInResult, ActivityResultLauncher<Intent> signInToBackUpLauncher){
+    public static boolean backUpJsonFile(JsonObject resultJson, GoogleCloud.SignInResult signInResult, ActivityResultLauncher<Intent> signInToBackUpLauncher){
         boolean[] isBackedUp = {false};
         Thread backUpJsonThread = new Thread(() -> {
             try{
@@ -392,25 +400,15 @@ public class Profile {
                             createOrGetSubDirectoryInStashSyncedAssetsFolder(signInResult.getUserEmail(),folder_name
                                     , true, signInResult.getTokens().getAccessToken());
 
-                    LogHandler.saveLog("@@@" + "profile folder id for account " + signInResult.getUserEmail() + " : "+profileFolderId,false);
                     String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,"profile", resultJson);
                     if (uploadedFileId == null | uploadedFileId.isEmpty()) {
-                        LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
+                        Log.d("error","Failed to upload profileMap, it's null");
                     }else{
                         isBackedUp[0] = true;
                     }
                 }else{
-                    LogHandler.saveLog("login with back up launcher failed with get Handle Status 1 : " + signInResult.getHandleStatus());
-                    MainActivity.activity.runOnUiThread(() -> {
-                        LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
-                        View child2 = backupButtonsLinearLayout.getChildAt(
-                                backupButtonsLinearLayout.getChildCount() - 1);
-                        if(child2 instanceof Button){
-                            Button bt = (Button) child2;
-                            bt.setText("ADD A BACK UP ACCOUNT");
-                        }
-                        UIHandler.updateButtonsListeners(signInToBackUpLauncher);
-                    });
+                    Log.d("signInToBackUpLauncher","Back up launcher failed with status : " + signInResult.getHandleStatus());
+                    UIHandler.handleSignInFailure(signInToBackUpLauncher);
                 }
             }catch (Exception e){
                 LogHandler.saveLog("Failed to backup json file: " + e.getLocalizedMessage(), true);
@@ -449,7 +447,7 @@ public class Profile {
                         deleteProfileFiles(service, profileFolderId);
                         boolean isDeleted = checkDeletionStatus(service,profileFolderId);
                         if(isDeleted){
-                            String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,"signout",null);
+                            String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,"unlink",null);
                             if (uploadedFileId == null | uploadedFileId.isEmpty()) {
                                 LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
                             }else{
@@ -477,42 +475,65 @@ public class Profile {
         return isBackedUpFuture;
     }
 
-    private static String setAndCreateProfileMapContent(Drive service,String profileFolderId,String loginStatus, Object attachedFile){
+    private static String setAndCreateProfileMapContent(Drive service,String profileFolderId,
+                                                        String loginStatus, Object attachedFile){
         String uploadFileId = "";
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
         Date date = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
         String currentDate = formatter.format(date);
         String fileName = "profileMap_" + currentDate + ".json";
-        LogHandler.saveLog("@@@" + "name of json file is : "+ fileName,false);
         try{
             com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
             fileMetadata.setName(fileName);
             fileMetadata.setParents(java.util.Collections.singletonList(profileFolderId));
-            JsonObject content = null;
-            if(loginStatus.equals("unlink")){
-                content = createProfileMapContentBasedOnDB();
-                String unlinkedEmail = (String) attachedFile;
-                content = Profile.removeAccountFromJson(content,unlinkedEmail);
-            }else if(loginStatus.equals("profile")){
-                JsonObject resultJson = (JsonObject) attachedFile ;
-                content = addDeviceInfoToJson(resultJson);
-            }else if(loginStatus.equals("login")){
-                content = createProfileMapContentBasedOnDB();
-                JsonObject resultJson = (JsonObject) attachedFile ;
-                content = addAccountToJson(content,resultJson);
-            }
+
+            JsonObject content = prepareProfileMapContent(loginStatus, attachedFile);
+
             String contentString = content.toString();
             ByteArrayContent mediaContent = ByteArrayContent.fromString("application/json", contentString);
+
             com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
                     .setFields("id")
                     .execute();
+
             uploadFileId = uploadedFile.getId();
-            LogHandler.saveLog("@@@" + "profile map upload file id is : "+ uploadFileId,false);
+            Log.d("profileMapContent" , "Upload file is : "+ uploadFileId);
         }catch (Exception e){
             LogHandler.saveLog("Failed to set profile map content:" + e.getLocalizedMessage(), true);
         }finally {
             return uploadFileId;
         }
+    }
+
+    private static JsonObject prepareProfileMapContent(String loginStatus, Object attachedFile){
+        JsonObject content = new JsonObject();
+        try {
+            switch (loginStatus) {
+                case "unlink":
+                    content = createProfileMapContentBasedOnDB();
+                    String unlinkedEmail = (String) attachedFile;
+                    content = Profile.removeAccountFromJson(content, unlinkedEmail);
+                    break;
+
+                case "profile":
+                    JsonObject resultJson = (JsonObject) attachedFile;
+                    content = addDeviceInfoToJson(resultJson);
+                    break;
+
+                case "login":
+                    content = createProfileMapContentBasedOnDB();
+                    resultJson = (JsonObject) attachedFile;
+                    content = addAccountToJson(content, resultJson);
+                    break;
+
+                default:
+                    Log.d("profileMapContent","Invalid login status: " + loginStatus);
+                    break;
+            }
+        } catch (Exception e) {
+            FirebaseCrashlytics.getInstance().recordException(e);
+        }
+        return content;
     }
 
      public static JsonObject addDeviceInfoToJson(JsonObject profileJson) {
@@ -536,7 +557,7 @@ public class Profile {
 
     private static String uploadProfileContent(Drive service, String profileFolderId, JsonObject profileContent){
         String uploadFileId = "";
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss",Locale.US);
         Date date = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
         String currentDate = formatter.format(date);
         String fileName = "profileMap_" + currentDate + ".json";
@@ -579,7 +600,7 @@ public class Profile {
 
     public static Date convertFileNameToTimeStamp(String fileName){
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss",Locale.US);
             String timestamp = fileName.substring(fileName.indexOf('_') + 1, fileName.lastIndexOf('.'));
             return dateFormat.parse(timestamp);
         }catch (Exception e){
@@ -589,91 +610,35 @@ public class Profile {
     }
 
     public void startSignInToProfileThread(ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
-                                                  JsonObject resultJson,GoogleCloud.signInResult signInResult){
-        LogHandler.saveLog("Start adding linked accounts thread", false);
+                                           JsonObject resultJson, GoogleCloud.SignInResult signInResult){
+        Log.d("signInToBackUpLauncher","Adding linked accounts started");
         Thread addingLinkedAccountsThread = new Thread(() -> {
             try {
-                boolean isSignedIn = false;
-                ArrayList<GoogleCloud.signInResult> signInLinkedAccountsResult =
-                        MainActivity.googleCloud.signInLinkedAccounts(resultJson, signInResult.getUserEmail());
-                if (signInLinkedAccountsResult != null){
-                    isSignedIn = true;
-                }
-                signInLinkedAccountsResult.add(signInResult);
+                boolean isDone = false;
+                ArrayList<GoogleCloud.SignInResult> linkedAccounts = MainActivity.googleCloud.signInLinkedAccounts(resultJson, signInResult.getUserEmail());
+                if(linkedAccounts != null) {
+                    Log.d("signInToBackUpLauncher", "Handling backups started");
+                    boolean isAllBackedUp = handleBackups(resultJson, signInToBackUpLauncher, linkedAccounts);
+                    Log.d("signInToBackUpLauncher", "isAllBackedUp: " + isAllBackedUp);
+                    if (isAllBackedUp) {
+                        Log.d("signInToBackUpLauncher", "handleDeviceInsertion started");
+                        handleDeviceInsertion(resultJson);
+                        Log.d("signInToBackUpLauncher", "handleDeviceInsertion finished");
 
-                LogHandler.saveLog("@@@" + "can sign in to linked accounts (size of signin results): " + signInLinkedAccountsResult.size(),false);
+                        Log.d("signInToBackUpLauncher", "handleNewAccounts started");
+                        handleNewAccounts(signInToBackUpLauncher, child, linkedAccounts);
+                        Log.d("signInToBackUpLauncher", "handleNewAccounts finished");
 
-                boolean isBackedUp = false;
-                ArrayList<GoogleCloud.signInResult> backedUpSignInResults = new ArrayList<>();
-                if(isSignedIn){
-                    for (GoogleCloud.signInResult signInLinkedAccountResult: signInLinkedAccountsResult) {
-                        isBackedUp = Profile.backUpJsonFile(resultJson,signInLinkedAccountResult, signInToBackUpLauncher);
-                        if (!isBackedUp){
-                            for(GoogleCloud.signInResult backedUpSignInResult: backedUpSignInResults){
-                                String userEmail = backedUpSignInResult.getUserEmail();
-                                String accessToken = backedUpSignInResult.getTokens().getAccessToken();
-                                Profile.deleteProfileFile(userEmail,accessToken,false);
-                            }
-                            break;
-                        }else{
-                            backedUpSignInResults.add(signInLinkedAccountResult);
-                        }
+                        GoogleDrive.startThreads();
+                        isDone = true;
                     }
                 }
 
-                LogHandler.saveLog("@@@" + "can back up to all accounts : " + isBackedUp,false);
-                if(isBackedUp && isSignedIn){
-                    ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromJson(resultJson);
-                    for(DeviceHandler device: devices){
-                        LogHandler.saveLog("@@@" + "found device " + device.deviceName + " in result json",false);
-                        DeviceHandler.insertIntoDeviceTable(device.deviceName,device.deviceId);
-                    }
-
-                    for (GoogleCloud.signInResult signInLinkedAccountResult: signInLinkedAccountsResult){
-                        String userEmail = signInLinkedAccountResult.getUserEmail();
-                        String accessToken = signInLinkedAccountResult.getTokens().getAccessToken();
-                        Profile.deleteProfileFile(userEmail, accessToken, true);
-
-                        LogHandler.saveLog("Starting insertIntoAccounts for linked accounts",false);
-                        MainActivity.dbHelper.insertIntoAccounts(signInLinkedAccountResult.getUserEmail(),
-                                "backup",signInLinkedAccountResult.getTokens().getRefreshToken(),
-                                signInLinkedAccountResult.getTokens().getAccessToken(),
-                                signInLinkedAccountResult.getStorage().getTotalStorage(),
-                                signInLinkedAccountResult.getStorage().getUsedStorage(),
-                                signInLinkedAccountResult.getStorage().getUsedInDriveStorage(),
-                                signInLinkedAccountResult.getStorage().getUsedInGmailAndPhotosStorage());
-                        LogHandler.saveLog("Finished to insertIntoAccounts for linked accounts",false);
-
-                        new Thread(GoogleDrive::cleanDriveFolders).start();
-
-                        LogHandler.saveLog("Starting addAbackUpAccountToUI thread",false);
-                        UIHandler uiHandler = new UIHandler();
-                        uiHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,
-                                child,signInLinkedAccountResult);
-
-                        LogHandler.saveLog("Finished addAbackUpAccountToUI thread for linked account",false);
-                    }
-
-                    LogHandler.saveLog("Starting Drive threads",false);
-                    GoogleDrive.startThreads();
-                    LogHandler.saveLog("Finished Drive threads",false);
-                }else{
-                    LogHandler.saveLog("login with back up launcher failed with get Handle Status 2 : " + signInResult.getHandleStatus());
-                    MainActivity.activity.runOnUiThread(() -> {
-                        LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
-                        View child2 = backupButtonsLinearLayout.getChildAt(
-                                backupButtonsLinearLayout.getChildCount() - 1);
-                        if(child2 instanceof Button){
-                            Button bt = (Button) child2;
-                            bt.setText("ADD A BACK UP ACCOUNT");
-                        }
-                        UIHandler.updateButtonsListeners(signInToBackUpLauncher);
-                    });
+                if(!isDone){
+                    UIHandler.handleSignInFailure(signInToBackUpLauncher);
                 }
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    System.out.println("is display4 in main thread: "  + Looper.getMainLooper().isCurrentThread());
-                }
+                Log.d("signInToBackUpLauncher","Adding linked accounts finished");
             } catch (Exception e) {
                 LogHandler.saveLog("Failed to add linked accounts: " + e.getLocalizedMessage(), true);
             }
@@ -681,7 +646,87 @@ public class Profile {
         addingLinkedAccountsThread.start();
     }
 
-    public void linkToAccounts(GoogleCloud.signInResult signInResult,View[] child){
+    private static void handleDeviceInsertion(JsonObject resultJson){
+        Thread handleDeviceInsertionThread =  new Thread(() -> {
+            try{
+                ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromJson(resultJson);
+                for (DeviceHandler device : devices) {
+                    Log.d("signInToBackUpLauncher","Inserted " + device.getDeviceId() +  " into device table");
+                    DeviceHandler.insertIntoDeviceTable(device.deviceName, device.deviceId);
+                }
+            }catch (Exception e){
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
+        });
+        handleDeviceInsertionThread.start();
+        try{
+            handleDeviceInsertionThread.join();
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+    }
+
+    private static void handleNewAccounts(ActivityResultLauncher<Intent> signInToBackUpLauncher,
+                                          View[] child, ArrayList<GoogleCloud.SignInResult> signInLinkedAccountsResult){
+        Thread handleAccountInsertionThread =  new Thread(() -> {
+           try{
+               for (GoogleCloud.SignInResult signInLinkedAccountResult : signInLinkedAccountsResult) {
+                   String userEmail = signInLinkedAccountResult.getUserEmail();
+                   String accessToken = signInLinkedAccountResult.getTokens().getAccessToken();
+
+                   Profile.deleteProfileFile(userEmail, accessToken, true);
+
+                   MainActivity.dbHelper.insertIntoAccounts(signInLinkedAccountResult.getUserEmail(),
+                           "backup", signInLinkedAccountResult.getTokens().getRefreshToken(),
+                           signInLinkedAccountResult.getTokens().getAccessToken(),
+                           signInLinkedAccountResult.getStorage().getTotalStorage(),
+                           signInLinkedAccountResult.getStorage().getUsedStorage(),
+                           signInLinkedAccountResult.getStorage().getUsedInDriveStorage(),
+                           signInLinkedAccountResult.getStorage().getUsedInGmailAndPhotosStorage());
+
+                   new Thread(GoogleDrive::cleanDriveFolders).start();
+
+                   UIHandler uiHandler = new UIHandler();
+                   uiHandler.addAbackUpAccountToUI(MainActivity.activity, true, signInToBackUpLauncher,
+                           child, signInLinkedAccountResult);
+               }
+           }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e) ;}
+        });
+        handleAccountInsertionThread.start();
+        try{
+            handleAccountInsertionThread.join();
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e) ;}
+    }
+
+    private boolean handleBackups(JsonObject resultJson, ActivityResultLauncher<Intent> signInToBackUpLauncher
+            , ArrayList<GoogleCloud.SignInResult> linkedAccounts) {
+        final boolean[] isBackedUp = {false};
+        ArrayList<GoogleCloud.SignInResult> backedUpSignInResults = new ArrayList<>();
+        Thread handleBackupsThread =  new Thread(() -> {
+            for (GoogleCloud.SignInResult signInLinkedAccountResult : linkedAccounts) {
+                isBackedUp[0] = Profile.backUpJsonFile(resultJson, signInLinkedAccountResult, signInToBackUpLauncher);
+                if (!isBackedUp[0]) {
+                    handleBackupFailure(backedUpSignInResults);
+                    break;
+                } else {
+                    backedUpSignInResults.add(signInLinkedAccountResult);
+                }
+            }
+        });
+        handleBackupsThread.start();
+        try{
+            handleBackupsThread.join();
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        return isBackedUp[0];
+    }
+
+    private static void handleBackupFailure(ArrayList<GoogleCloud.SignInResult> backedUpSignInResults){
+        for(GoogleCloud.SignInResult backedUpSignInResult: backedUpSignInResults){
+            String userEmail = backedUpSignInResult.getUserEmail();
+            String accessToken = backedUpSignInResult.getTokens().getAccessToken();
+            Profile.deleteProfileFile(userEmail, accessToken, false);
+        }
+    }
+
+    public void linkToAccounts(GoogleCloud.SignInResult signInResult,View[] child,ActivityResultLauncher<Intent> signInToBackUpLauncher){
         Thread linkToAccountsThread = new Thread(() -> {
             ArrayList<String[]> existingAccounts = (ArrayList<String[]>) DBHelper.getAccounts(new String[]{"userEmail", "type", "refreshToken"});
             existingAccounts.add(new String[]{signInResult.getUserEmail(), "backup", signInResult.getTokens().getRefreshToken()});

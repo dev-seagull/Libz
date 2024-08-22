@@ -1,16 +1,9 @@
 package com.example.cso;
 
-import static com.example.cso.MainActivity.signInToBackUpLauncher;
-
-import android.app.ProgressDialog;
-import android.hardware.camera2.params.DynamicRangeProfiles;
-import android.view.View;
-import android.widget.Button;
-import android.widget.LinearLayout;
+import android.util.Log;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -18,14 +11,11 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import com.google.api.services.drive.model.Permission;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
-import net.sqlcipher.database.SQLiteDebug;
-
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -43,42 +33,33 @@ public class GoogleDrive {
     public static String createOrGetStashSyncedAssetsFolderInDrive(String userEmail, boolean isLogin, String accessToken){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         String syncAssetsFolderIdStr = null;
+
         Callable<String> createFolderTask = () -> {
             String syncAssetsFolderId = null;
             try {
-                String driveBackupAccessToken = "";
-                if(isLogin){
-                    driveBackupAccessToken = accessToken;
-                }else{
-                    List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","refreshToken"});
-                    for(String[] account_row: account_rows){
-                        String selectedUserEmail = account_row[0];
-                        if(selectedUserEmail.equals(userEmail)){
-                            String driveBackupRefreshToken = account_row[1];
-                            driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
-                        }
-                    }
-                }
+                String driveBackupAccessToken = isLogin ? accessToken : DBHelper.getDriveBackupAccessToken(userEmail);
 
                 Drive service = initializeDrive(driveBackupAccessToken);
                 FileList result = getStashSyncedAssetsFolderInDrive(service);
+
                 if (result != null && !result.getFiles().isEmpty()) {
                     syncAssetsFolderId = result.getFiles().get(0).getId();
-                    System.out.println("sync asset folder id:" + syncAssetsFolderId);
+                    Log.d("folder","stash_synced_assets id:" + syncAssetsFolderId);
                     return syncAssetsFolderId;
                 }
 
                 syncAssetsFolderId = createStashSyncedAssetFolder(service);
             }catch (Exception e){
-                LogHandler.saveLog("Error in creating stash synced assets folder in drive 1 : "+ userEmail + e.getLocalizedMessage(),true);
+                FirebaseCrashlytics.getInstance().recordException(e);
             }
             return syncAssetsFolderId;
         };
+
         Future<String> future = executor.submit(createFolderTask);
         try{
             syncAssetsFolderIdStr = future.get();
         }catch (Exception e){
-            LogHandler.saveLog("Error in creating stash synced assets folder in drive 2 : "+ userEmail + e.getLocalizedMessage(),true);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
         return syncAssetsFolderIdStr;
     }
@@ -86,38 +67,30 @@ public class GoogleDrive {
     public static String createOrGetSubDirectoryInStashSyncedAssetsFolder(String userEmail, String folderName, boolean isLogin, String accessToken){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         String folderIdStr = null;
+
         Callable<String> createFolderTask = () -> {
             String folderId = null;
             try {
-                String driveBackupAccessToken = "";
-                if(isLogin){
-                    driveBackupAccessToken = accessToken;
-                }else{
-                    List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","refreshToken"});
-                    for(String[] account_row: account_rows){
-                        String selectedUserEmail = account_row[0];
-                        if(selectedUserEmail.equals(userEmail)){
-                            String driveBackupRefreshToken = account_row[1];
-                            driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
-                        }
-                    }
-                }
+                String driveBackupAccessToken = isLogin ? accessToken : DBHelper.getDriveBackupAccessToken(userEmail);
 
                 Drive service = initializeDrive(driveBackupAccessToken);
-                String parentFolderId =  GoogleDrive.createOrGetStashSyncedAssetsFolderInDrive(userEmail, isLogin, driveBackupAccessToken);
+                String parentFolderId = GoogleDrive.createOrGetStashSyncedAssetsFolderInDrive(userEmail, isLogin, driveBackupAccessToken);
+
                 if (parentFolderId == null){
-                    LogHandler.saveLog("No parent folder was found in Google Drive back up account when creating sub directory",true);
+                    Log.d("folder","No parent folder was found (sub directory error)");
+                    return null;
                 }
+
                 FileList result = getSubDirectoryInStashSyncedAssetsFolder(service,folderName,parentFolderId);
                 if (result != null && !result.getFiles().isEmpty()) {
                     folderId = result.getFiles().get(0).getId();
-                    System.out.println("sync asset folder id:" + folderId);
+                    Log.d("folder",folderName+ " id:" + folderId);
                     return folderId;
                 }
 
                 folderId = createSubDirectoryInStashSyncedAssetsFolder(service,folderName,parentFolderId);
             }catch (Exception e){
-                LogHandler.saveLog("Error in creating stash synced assets folder in drive 3 : "+ userEmail + e.getLocalizedMessage(),true);
+                FirebaseCrashlytics.getInstance().recordException(e);
             }
             return folderId;
         };
@@ -125,47 +98,53 @@ public class GoogleDrive {
         try{
             folderIdStr = future.get();
         }catch (Exception e){
-            LogHandler.saveLog("Error in creating stash synced assets folder in drive 4 : "+ userEmail + e.getLocalizedMessage(),true);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
         return folderIdStr;
     }
 
 
-    private static FileList getStashSyncedAssetsFolderInDrive(Drive service){
-        FileList result = null;
-        try{
+        private static FileList getStashSyncedAssetsFolderInDrive(Drive service){
+            FileList result = null;
             String folderName = "stash_synced_assets";
             String query = "mimeType='application/vnd.google-apps.folder' and name='" + folderName + "' and 'root' in parents and trashed=false";
-            result = service.files().list()
-                    .setQ(query)
-                    .setSpaces("drive")
-                    .setFields("files(id)")
-                    .execute();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to get stash synced folder in drive", true);
+
+            try{
+                result = service.files().list()
+                        .setQ(query)
+                        .setSpaces("drive")
+                        .setFields("files(id)")
+                        .execute();
+            }catch (Exception e){
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
+            return result;
         }
-        return result;
-    }
 
     private static String createStashSyncedAssetFolder(Drive service){
         String syncAssetsFolderId = "";
+        String folderName = "stash_synced_assets";
+        File folder_metadata = new File();
         try{
-            File folder_metadata =
-                    new File();
-            String folderName = "stash_synced_assets";
             folder_metadata.setName(folderName);
             folder_metadata.setMimeType("application/vnd.google-apps.folder");
-            File folder = service.files().create(folder_metadata).setFields("id").execute();
+            File folder = service.files().create(folder_metadata)
+                    .setFields("id")
+                    .execute();
+
             syncAssetsFolderId = folder.getId();
+            Log.d("folder","stash_synced_assets id:" + syncAssetsFolderId);
         }catch (Exception e){
-            LogHandler.saveLog("Failed to create stash synced asset folder : " + e.getLocalizedMessage(), true);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
         return syncAssetsFolderId;
     }
 
     private static FileList getSubDirectoryInStashSyncedAssetsFolder(Drive service,String folderName, String parentFolderId){
-        String query = "mimeType='application/vnd.google-apps.folder' and name='" + folderName + "' and '" + parentFolderId + "' in parents and trashed=false";
+        String query = "mimeType='application/vnd.google-apps.folder' and name='"
+                + folderName + "' and '" + parentFolderId + "' in parents and trashed=false";
         FileList result = null;
+
         try{
             result = service.files().list()
                     .setQ(query)
@@ -173,25 +152,28 @@ public class GoogleDrive {
                     .setFields("files(id)")
                     .execute();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to get sub directory in stash synced asset folder :" + e.getLocalizedMessage(), true);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
         return result;
     }
 
     private static String createSubDirectoryInStashSyncedAssetsFolder(Drive service,String folderName, String parentFolderId){
         File folderMetadata = new File();
-        File folder = null;
+        String folderId = null;
+
         try{
             folderMetadata.setName(folderName);
             folderMetadata.setMimeType("application/vnd.google-apps.folder");
             folderMetadata.setParents(Collections.singletonList(parentFolderId));
-            folder = service.files().create(folderMetadata)
+            File folder = service.files().create(folderMetadata)
                     .setFields("id")
                     .execute();
+
+            folderId = folder.getId();
         }catch (Exception e){
             LogHandler.saveLog("Failed to create sub directory in stash synced asset folder :" + e.getLocalizedMessage(), true);
         }
-        return folder.getId();
+        return folderId;
     }
 
     public static ArrayList<DriveAccountInfo.MediaItem> getMediaItems(String userEmail, boolean isLogin, String accessToken) {
@@ -262,20 +244,21 @@ public class GoogleDrive {
         String[] driveColumns = {"fileHash", "id","assetId", "fileId", "fileName", "userEmail"};
         List<String[]> drive_rows = MainActivity.dbHelper.getDriveTable(driveColumns, userEmail);
         ArrayList<String> fileHashChecker = new ArrayList<>();
+
         for(String[] drive_row: drive_rows){
             String fileHash = drive_row[0];
             String id= drive_row[1];
             String assetId = drive_row[2];
             String fileId = drive_row[3];
-            String fileName = drive_row[4];
+
             if(fileHashChecker.contains(fileHash)){
                 ExecutorService executor = Executors.newSingleThreadExecutor();
                 Callable<Boolean> backgroundTask = () -> {
                     Boolean[] isDeleted = new Boolean[1];
                     try{
-                        isDeleted[0] = deleteMediaItem(accessToken, fileId, assetId, fileName);
+                        isDeleted[0] = deleteMediaItem(accessToken, fileId);
                     }catch (Exception e){
-                        LogHandler.saveLog("error in deleting duplicated media items in drive: " + e.getLocalizedMessage());
+                        FirebaseCrashlytics.getInstance().recordException(e);
                     }
                     return isDeleted[0];
                 };
@@ -284,7 +267,7 @@ public class GoogleDrive {
                 try{
                     isDeletedFuture = future.get();
                 }catch (Exception e ){
-                    LogHandler.saveLog("Exception when trying to delete file from drive back up: " + e.getLocalizedMessage());
+                    FirebaseCrashlytics.getInstance().recordException(e);
                 }
                 if(isDeletedFuture){
                     MainActivity.dbHelper.deleteFileFromDriveTable(fileHash, id, assetId, fileId , userEmail);
@@ -296,7 +279,8 @@ public class GoogleDrive {
         }
     }
 
-    private static boolean deleteMediaItem(String accessToken, String fileId, String assetId, String fileName){
+
+    private static boolean deleteMediaItem(String accessToken, String fileId){
         boolean isDeleted = false;
         try{
             URL url = new URL("https://www.googleapis.com/drive/v3/files/" + fileId);
@@ -306,22 +290,14 @@ public class GoogleDrive {
                 connection.setRequestProperty("Content-type", "application/json");
                 connection.setRequestProperty("Authorization", "Bearer " + accessToken);
                 int responseCode = connection.getResponseCode();
-                LogHandler.saveLog("responseCode of deleting duplicate drive : " + responseCode,false);
+
+                Log.d("backup","Deleting duplicate drive : " + responseCode);
                 if(responseCode == HttpURLConnection.HTTP_NO_CONTENT){
-                    LogHandler.saveLog("Deleting Duplicated file in backup drive with fileId :" +
-                            fileId  + " and assetId : " + assetId + " and fileName : " +
-                            fileName,false);
-                    isDeleted = true;
-                    break;
-                }else{
-                    LogHandler.saveLog("Retrying to delete duplicated file " + fileName+
-                            "from Drive back up account" +
-                            " with response code of " + responseCode);
-                    isDeleted = false;
+                    return true;
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to delete media item: " + e.getLocalizedMessage(), true);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
         return isDeleted;
     }
@@ -363,39 +339,33 @@ public class GoogleDrive {
     }
 
     public static void startUpdateDriveFilesThread(){
-        LogHandler.saveLog("Starting startUpdateDriveFilesThread", false);
-        try {
-            Thread updateDriveFilesThread = new Thread(() -> {
-                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(new String[]{"userEmail","type"});
+        Log.d("Threads","startUpdateDriveFiles thread finished");
+        Thread updateDriveFilesThread = new Thread(() -> {
+            List<String[]> account_rows = MainActivity.dbHelper.getAccounts(new String[]{"userEmail","type"});
+
+            try{
                 for(String[] account_row : account_rows){
                     String type = account_row[1];
                     if (type.equals("backup")){
                         String userEmail = account_row[0];
                         ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail, false, null);
-                        System.out.println(driveMediaItems.size()+" drive media items found");
-                        LogHandler.saveLog(driveMediaItems.size()+" drive media items found", false);
+                        Log.d("backup",driveMediaItems.size() + " media items found in drive backup");
+
                         for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
                             Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
                             if (last_insertId != -1) {
                                 MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
                                         driveMediaItem.getHash(), userEmail);
-                            } else {
-                                LogHandler.saveLog("Failed to insert file into drive table: " + driveMediaItem.getFileName());
                             }
                         }
                     }
                 }
-            });
-            updateDriveFilesThread.start();
-            try {
-                updateDriveFilesThread.join();
-            } catch (Exception e) {
-                LogHandler.saveLog("Failed to join update drive files thread in  " +
-                        " updateDriveAccountsFilesStatus", true);
-            }
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to run delete redundant drive files from account : " +e.getLocalizedMessage(), true);
-        }
+            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        });
+        updateDriveFilesThread.start();
+        try {
+            updateDriveFilesThread.join();
+        } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
         LogHandler.saveLog("Finished startUpdateDriveFilesThread", false);
     }
 
@@ -424,11 +394,12 @@ public class GoogleDrive {
     }
 
     private static void startDeleteRedundantDriveThread(){
-        LogHandler.saveLog("Starting startDeleteRedundantDriveThread", false);
+        Log.d("Threads","startDeleteRedundantDrive thread started");
         Thread deleteRedundantDriveThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 List<String[]> account_rows = MainActivity.dbHelper.getAccounts(new String[]{"userEmail", "type"});
+
                 for(String[] account_row : account_rows) {
                     String type = account_row[1];
                     if(type.equals("backup")){
@@ -436,8 +407,7 @@ public class GoogleDrive {
                         ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail, false, null);
                         ArrayList<String> driveFileIds = new ArrayList<>();
                         for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
-                            String fileId = driveMediaItem.getId();
-                            driveFileIds.add(fileId);
+                            driveFileIds.add( driveMediaItem.getId());
                         }
                         MainActivity.dbHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
                     }
@@ -448,18 +418,19 @@ public class GoogleDrive {
         try{
             deleteRedundantDriveThread.join();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to join delete redundant drive thread: " + e.getLocalizedMessage(), true );
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
-        LogHandler.saveLog("Finished startDeleteRedundantDriveThread", false);
+        Log.d("Threads","startDeleteRedundantDrive thread finished");
     }
 
     private static void startDeleteDuplicatedInDriveThread() {
-        LogHandler.saveLog("Starting startDeleteDuplicatedInDriveThread", false);
+        Log.d("Threads","startDeleteDuplicatedInDrive thread started");
         Thread deleteDuplicatedInDriveThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 String[] columns = {"refreshToken","userEmail", "type"};
                 List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
+
                 for(String[] account_row : account_rows) {
                     String type = account_row[2];
                     if(type.equals("backup")){
@@ -469,31 +440,33 @@ public class GoogleDrive {
                         GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
                     }
                 }
+
             }
         });
+
         deleteDuplicatedInDriveThread.start();
         try {
             deleteDuplicatedInDriveThread.join();
-        } catch (Exception e) {
-            LogHandler.saveLog("Failed to join delete duplicated in drive thread: " + e.getLocalizedMessage(), true);
-        }
-        LogHandler.saveLog("Finished startDeleteDuplicatedInDriveThread", false);
+        } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+
+        Log.d("Threads","startDeleteDuplicatedInDrive thread finished");
     }
 
-    public static void startUpdateDriveStorageThread() {
-        LogHandler.saveLog("Starting startUpdateDriveStorageThread", false);
+    public static void startUpdateStorageThread() {
+        Log.d("Threads","startUpdateStorage thread started");
         Thread updateDriveStorage = new Thread(new Runnable() {
             @Override
             public void run() {
                 String[] columns = {"refreshToken","userEmail", "type"};
                 List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
+
                 for(String[] account_row : account_rows) {
-                    String type = account_row[2];
-//                    if(type.equals("backup")){
-                    String userEmail = account_row[1];
                     String refreshToken = account_row[0];
+                    String userEmail = account_row[1];
+                    String type = account_row[2];
                     String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
                     GoogleCloud.Storage storage = MainActivity.googleCloud.getStorage(new GoogleCloud.Tokens(accessToken,refreshToken));
+
                     Map<String, Object> updatedValues = new HashMap<String, Object>() {{
                         put("totalStorage", storage.getTotalStorage());
                     }};
@@ -510,7 +483,6 @@ public class GoogleDrive {
                         put("UsedInGmailAndPhotosStorage", storage.getUsedInGmailAndPhotosStorage());
                     }};
                     MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
-//                    }
                 }
             }
         });
@@ -518,13 +490,13 @@ public class GoogleDrive {
         try {
             updateDriveStorage.join();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to join update drive storage thread: " + e.getLocalizedMessage(), true);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
-        LogHandler.saveLog("Finished startDeleteDuplicatedInDriveThread", false);
+        Log.d("Threads","startUpdateStorage thread finished");
     }
 
     public static void startThreads(){
-        startUpdateDriveStorageThread();
+        startUpdateStorageThread();
         startDeleteRedundantDriveThread();
         startUpdateDriveFilesThread();
         startDeleteDuplicatedInDriveThread();

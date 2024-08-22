@@ -11,6 +11,7 @@ import android.text.TextUtils;
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -1023,7 +1024,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to get AccessToken from Db via refreshToken");
+            FirebaseCrashlytics.getInstance().recordException(e);
         }finally {
             cursor.close();
         }
@@ -1429,7 +1430,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public static void insertMediaItemsAfterSignInToBackUp(GoogleCloud.signInResult signInResult){
+    public static void insertMediaItemsAfterSignInToBackUp(GoogleCloud.SignInResult signInResult){
         Thread insertMediaItemsThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -1558,24 +1559,32 @@ public class DBHelper extends SQLiteOpenHelper {
     public ArrayList<DeviceHandler> getDevicesFromDB(){
         Cursor cursor = null;
         ArrayList<DeviceHandler> devices = new ArrayList<>();
+        String sqlQuery = "SELECT * FROM DEVICE";
+
         try{
-            String sqlQuery = "SELECT * FROM DEVICE";
             cursor = dbReadable.rawQuery(sqlQuery,new String[]{});
             if(cursor != null && cursor.moveToFirst()){
                 int deviceIdColumnIndex = cursor.getColumnIndex("deviceId");
                 int  deviceNameColumnIndex = cursor.getColumnIndex("deviceName");
-                if(deviceNameColumnIndex >= 0 && deviceIdColumnIndex >= 0){
-                    String deviceId =  cursor.getString(deviceIdColumnIndex);
-                    String deviceName = cursor.getString(deviceNameColumnIndex);
-                    devices.add(new DeviceHandler(deviceName,deviceId));
+
+                while (!cursor.isAfterLast()) {
+                    if (deviceIdColumnIndex >= 0 && deviceNameColumnIndex >= 0) {
+                        String deviceId = cursor.getString(deviceIdColumnIndex);
+                        String deviceName = cursor.getString(deviceNameColumnIndex);
+                        devices.add(new DeviceHandler(deviceName, deviceId));
+                    }
+                    cursor.moveToNext();
                 }
             }
+
         }catch (Exception e){
-            LogHandler.saveLog("Failed to select from ASSET in insertAssetData method: " + e.getLocalizedMessage());
+            FirebaseCrashlytics.getInstance().recordException(e);
         }finally {
+
             if(cursor != null){
                 cursor.close();
             }
+
             return devices;
         }
     }
@@ -1652,5 +1661,36 @@ public class DBHelper extends SQLiteOpenHelper {
             LogHandler.saveLog("Failed to select from ACCOUNTS in getAssetsFolderId method: " + e.getLocalizedMessage());
         }
         return null;
+    }
+
+    public static String getDriveBackupAccessToken(String userEmail){
+        try{
+            List<String[]> accountRows = DBHelper.getAccounts(new String[]{"userEmail","type", "refreshToken"});
+            for (String[] accountRow : accountRows) {
+                String selectedUserEmail = accountRow[0];
+                String type = accountRow[1];
+                if (selectedUserEmail.equals(userEmail) && type.equals("backup")) {
+                    String driveBackupRefreshToken = accountRow[1];
+                    return MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
+                }
+            }
+        }catch (Exception e){
+            FirebaseCrashlytics.getInstance().recordException(e);
+        }
+        return null;
+    }
+
+    public static ArrayList<String> getBackupAccountsInDevice(String userEmail) {
+        List<String[]> accountRows = DBHelper.getAccounts(new String[]{"userEmail", "type"});
+        ArrayList<String> backupAccountsInDevice = new ArrayList<>();
+
+        for (String[] accountRow : accountRows) {
+            if (accountRow[1].equals("backup")) {
+                backupAccountsInDevice.add(accountRow[0]);
+            }
+        }
+
+        backupAccountsInDevice.add(userEmail);
+        return backupAccountsInDevice;
     }
 }

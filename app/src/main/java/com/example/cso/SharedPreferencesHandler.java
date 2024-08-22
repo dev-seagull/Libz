@@ -1,13 +1,8 @@
 package com.example.cso;
 
 import android.content.SharedPreferences;
-import android.os.Build;
-import android.os.Looper;
-import android.view.View;
-import android.widget.Button;
-import android.widget.LinearLayout;
 
-import com.google.gson.JsonObject;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -46,19 +41,23 @@ public class SharedPreferencesHandler {
 
     public static void setJsonModifiedTime(SharedPreferences sharedPreferences) {
         Thread setJsonModifiedTimeThread = new Thread(()-> {
-            Date now = new Date();
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
-            String currentTimestamp = dateFormat.format(now);
+            try{
+                Date now = new Date();
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+                String currentTimestamp = dateFormat.format(now);
 
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putString("jsonModifiedTime", currentTimestamp);
-            editor.apply();
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("jsonModifiedTime", currentTimestamp);
+                editor.apply();
+            }catch (Exception e){
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
         });
         setJsonModifiedTimeThread.start();
         try{
             setJsonModifiedTimeThread.join();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to join setJsonModifiedTimeThread: " + e.getLocalizedMessage(), true);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
     }
 

@@ -2,14 +2,11 @@ package com.example.cso;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.os.Looper;
 import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -50,14 +47,13 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class UIHandler {
     public static TextView directoryUsages = MainActivity.activity.findViewById(R.id.directoryUsages);
@@ -92,33 +88,32 @@ public class UIHandler {
 
     public void addAbackUpAccountToUI(Activity activity, boolean isBackedUp,
                                              ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
-                                             GoogleCloud.signInResult signInResult){
+                                             GoogleCloud.SignInResult signInResult){
         Thread uiThread = new Thread(() -> {
-            try{
                 if (isBackedUp) {
                     activity.runOnUiThread(() -> {
-                        LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-                        Button newBackupLoginButton = MainActivity.googleCloud.createBackUpLoginButton(backupButtonsLinearLayout);
-//                        newBackupLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
-                        newBackupLoginButton.setBackgroundResource(R.drawable.gradient_purple);
-                        child[0] = backupButtonsLinearLayout.getChildAt(
-                                backupButtonsLinearLayout.getChildCount() - 2);
-                        LogHandler.saveLog(signInResult.getUserEmail()
-                                + " has logged in to the backup account", false);
+                        try{
+                            LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+                            Button newBackupLoginButton = MainActivity.googleCloud.createBackUpLoginButton(backupButtonsLinearLayout);
+                            newBackupLoginButton.setBackgroundResource(R.drawable.gradient_purple);
 
-                        if (child[0] instanceof Button) {
-                            Button bt = (Button) child[0];
-                            bt.setText(signInResult.getUserEmail());
-                            bt.setBackgroundResource(R.drawable.gradient_purple);
-                        }
-                        setupDeviceButtons();
-                        updateButtonsListeners(signInToBackUpLauncher);
+                            child[0] = backupButtonsLinearLayout.getChildAt(
+                                    backupButtonsLinearLayout.getChildCount() - 2);
+
+                            if (child[0] instanceof Button) {
+                                Button bt = (Button) child[0];
+                                bt.setText(signInResult.getUserEmail());
+                                bt.setBackgroundResource(R.drawable.gradient_purple);
+                            }
+
+                            setupDeviceButtons();
+
+                            updateButtonsListeners(signInToBackUpLauncher);
+                        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
                     });
                 }
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to add a backup account to ui: " + e.getLocalizedMessage(), true);
-            }
         });
+
         uiThread.start();
         try{
             uiThread.join();
@@ -651,22 +646,6 @@ public class UIHandler {
         LogHandler.saveLog("Finished startUpdateUIThread", false);
     }
 
-    public static void handleFailedSignInToBackUp(Activity activity, ActivityResultLauncher<Intent> signInToBackUpLauncher,
-                                                  ActivityResult result){
-        activity.runOnUiThread(() -> {
-            LogHandler.saveLog("login with back up launcher failed with get Handle Status 3:" + result.getResultCode());
-            LinearLayout backupAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-            View childview = backupAccountsButtonsLinearLayout.getChildAt(
-                    backupAccountsButtonsLinearLayout.getChildCount() - 1);
-            if(childview instanceof Button){
-                Button bt = (Button) childview;
-                bt.setText("ADD A BACK UP ACCOUNT");
-            }
-            updateButtonsListeners(signInToBackUpLauncher);
-        });
-    }
-
-
     public static void updateButtonsListeners(ActivityResultLauncher<Intent> signInToBackUpLauncher) {
 //            updatePrimaryButtonsListener();
         updateBackupButtonsListener(MainActivity.activity, signInToBackUpLauncher);
@@ -764,72 +743,34 @@ public class UIHandler {
     }
 
     public static void displayLinkProfileDialog(ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
-                                                JsonObject resultJson,GoogleCloud.signInResult signInResult){
+                                                JsonObject resultJson, GoogleCloud.SignInResult signInResult){
         MainActivity.activity.runOnUiThread(() -> {
             try{
-
-                LogHandler.saveLog("@@@" + "signin result is : " +signInResult.getUserEmail() +" is handled : "+ signInResult.getHandleStatus(),false);
                 String userEmail = signInResult.getUserEmail();
+                String message = "This account is already linked with an existing profile. This action " +
+                        "will link a profile to this device. If you want to add "
+                        + userEmail + " alone, you have to unlink from the existing profile.";
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
-                builder.setMessage(userEmail + " belongs to another profile.\nWe can add the " +
-                        "corresponding profile which includes linked accounts to " + userEmail + ".\n" +
-                        "If you like to add " + userEmail + " alone, you have to sign this out from the previous profile.");
-                builder.setTitle("Add Profile");
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    System.out.println("is display1 in main thread: "  + Looper.getMainLooper().isCurrentThread());
-                }
-
-                builder.setPositiveButton("Add", (dialog, id) -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        System.out.println("is display2 in main thread: "  + Looper.getMainLooper().isCurrentThread());
-                    }
-                    dialog.dismiss();
-                    Profile profile = new Profile();
-                    profile.startSignInToProfileThread(signInToBackUpLauncher,child,resultJson,signInResult);
-                });
-
-                builder.setNegativeButton("Don't add", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.dismiss();
-                    }});
-
-                builder.setCancelable(false);
+                builder.setTitle("Existing profile detected")
+                       .setMessage(message)
+                       .setPositiveButton("Proceed", (dialog, id) -> {
+                            Log.d("signInToBackUpLauncher","Proceed pressed");
+                            dialog.dismiss();
+                            Profile profile = new Profile();
+                            profile.startSignInToProfileThread(signInToBackUpLauncher,child,resultJson,signInResult);
+                        }).setNegativeButton("Cancel", (dialog, id) -> {
+                            Log.d("signInToBackUpLauncher","Cancel pressed");
+                            dialog.dismiss();
+                            UIHandler.handleSignInFailure(signInToBackUpLauncher);
+                        }).setCancelable(false);
 
                 AlertDialog alertDialog = builder.create();
                 alertDialog.show();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to display link profile dialog : " + e.getLocalizedMessage(), true);
+                FirebaseCrashlytics.getInstance().recordException(e);
             }
         });
-    }
-
-    public void reInitializeButtons(Activity activity,GoogleCloud googleCloud){
-//            LinearLayout primaryLinearLayout = activity.findViewById(R.id.primaryAccountsButtons);
-//            for (int i = 0; i < primaryLinearLayout.getChildCount(); i++) {
-//                View child = primaryLinearLayout.getChildAt(i);
-//                if (child instanceof Button) {
-//                    primaryLinearLayout.removeView(child);
-//                    i--;
-//                }
-//            }
-
-        LinearLayout backupLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-        for (int i = 0; i < backupLinearLayout.getChildCount(); i++) {
-            View child = backupLinearLayout.getChildAt(i);
-            if (child instanceof Button) {
-                backupLinearLayout.removeView(child);
-                i--;
-            }
-        }
-
-        initializeButtons(googleCloud);
-
-//            Button newGoogleLoginButton = googleCloud.createPrimaryLoginButton(primaryLinearLayout);
-//            newGoogleLoginButton.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-        Button newBackupLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
-//        newBackupLoginButton.setBackgroundTintList(uiHelper.backupAccountButtonColor);
-        newBackupLoginButton.setBackgroundResource(R.drawable.gradient_purple);
     }
 
     public static boolean showMoveDriveFilesDialog(String userEmail){
@@ -849,13 +790,15 @@ public class UIHandler {
 
             String[] text = {""};
             boolean[] ableToMoveAllAssets = {false};
-            if (totalFreeSpace < assetsSize){
-                text[0] = "We will move approximately" + totalFreeSpace /1024 + " GB out of " + assetsSize/1024 + " GB of your assets in "+ userEmail +" to other accounts." +
-                        "\nWarning : there is not enough space to move all of it. We wont be responsible for "+ (assetsSize - totalFreeSpace)/1024 + " GB of your assets that remain in "+userEmail+"." ;
-            }else{
-                text[0] = "We will move all your assets in "+ userEmail +" to other accounts." ;
+            if (totalFreeSpace < assetsSize) {
+                text[0] = "Approximately " + totalFreeSpace / 1024 + " GB out of " + assetsSize / 1024 + " GB of your assets in " + userEmail + " will be moved to other accounts." +
+                        "\nWarning: Not enough space is available to move all of it. " + (assetsSize - totalFreeSpace) / 1024 + " GB of your assets will remain in " + userEmail + ".";
+
+            } else {
+                text[0] = "All of your assets in " + userEmail + " will be moved to other accounts.";
                 ableToMoveAllAssets[0] = true;
             }
+
 
             int finalTotalFreeSpace = totalFreeSpace;
             MainActivity.activity.runOnUiThread(() -> {
@@ -864,7 +807,7 @@ public class UIHandler {
                     builder.setMessage(text[0]);
                     builder.setTitle("Unlink Drive Account");
 
-                    builder.setPositiveButton("Unlink", (dialog, id) -> {
+                    builder.setPositiveButton("Proceed", (dialog, id) -> {
                         dialog.dismiss();
                         System.out.println("wantToUnlink : " + "true");
                         GoogleDrive.moveFromSourceToDestinationAccounts(userEmail,ableToMoveAllAssets[0],(assetsSize - finalTotalFreeSpace));
@@ -889,4 +832,16 @@ public class UIHandler {
         return wantToUnlink[0];
     }
 
+    public static void handleSignInFailure(ActivityResultLauncher<Intent> signInToBackUpLauncher){
+        MainActivity.activity.runOnUiThread(() -> {
+            LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
+            View child = backupButtonsLinearLayout.getChildAt(
+                    backupButtonsLinearLayout.getChildCount() - 1);
+            if(child instanceof Button){
+                Button bt = (Button) child;
+                bt.setText("ADD A BACK UP ACCOUNT");
+            }
+            UIHandler.updateButtonsListeners(signInToBackUpLauncher);
+        });
+    }
 }

@@ -2,12 +2,10 @@
 
     import android.app.Activity;
     import android.content.Intent;
-    import android.content.res.ColorStateList;
     import android.graphics.Color;
     import android.graphics.drawable.Drawable;
-    import android.os.Build;
-    import android.os.Looper;
     import android.util.DisplayMetrics;
+    import android.util.Log;
     import android.view.Gravity;
     import android.view.MenuItem;
     import android.view.View;
@@ -29,7 +27,7 @@
     import com.google.android.gms.common.api.Scope;
     import com.google.android.gms.tasks.Task;
     import com.google.api.services.drive.Drive;
-    import com.google.api.services.drive.model.File;
+    import com.google.firebase.crashlytics.FirebaseCrashlytics;
     import com.google.gson.JsonArray;
     import com.google.gson.JsonObject;
 
@@ -193,7 +191,7 @@
             return isValid;
         }
 
-        public static class signInResult{
+        public static class SignInResult {
             private String userEmail;
             private boolean isHandled;
             private boolean isInAccounts;
@@ -201,7 +199,7 @@
             private Storage storage;
             private ArrayList<DriveAccountInfo.MediaItem> mediaItems;
 
-            private signInResult(String userEmail, boolean isHandled, boolean isInAccounts,
+            private SignInResult(String userEmail, boolean isHandled, boolean isInAccounts,
                                  GoogleCloud.Tokens tokens, Storage storage, ArrayList<DriveAccountInfo.MediaItem> mediaItems) {
                 this.userEmail = userEmail;
                 this.isHandled = isHandled;
@@ -219,7 +217,7 @@
             public ArrayList<DriveAccountInfo.MediaItem> getMediaItems() {return mediaItems;}
         }
 
-        public signInResult handleSignInToPrimaryResult(Intent data){
+        public SignInResult handleSignInToPrimaryResult(Intent data){
             boolean[] isHandled = {false};
             boolean isInAccounts = false;
             String userEmail = "";
@@ -255,11 +253,11 @@
             }catch (Exception e){
                 LogHandler.saveLog("handle primary sign in result failed: " + e.getLocalizedMessage(), true);
             }
-            return new signInResult(userEmail, isHandled[0], isInAccounts, tokens, storage, new ArrayList<>());
+            return new SignInResult(userEmail, isHandled[0], isInAccounts, tokens, storage, new ArrayList<>());
         }
 
 
-        public signInResult handleSignInLinkedBackupResult(String userEmail, String refreshToken){
+        public SignInResult handleSignInLinkedBackupResult(String userEmail, String refreshToken){
             boolean isInAccounts = false;
             GoogleCloud.Tokens tokens = null;
             Storage storage = null;
@@ -277,7 +275,7 @@
                     tokens = new Tokens(accessToken,refreshToken);
                     storage = getStorage(tokens);
                     if (userEmail != null && tokens.getRefreshToken() != null && tokens.getAccessToken() != null) {
-                        return new signInResult(userEmail, true, false,
+                        return new SignInResult(userEmail, true, false,
                                 tokens, storage, null);
                     }
                 }else {
@@ -289,10 +287,10 @@
             }catch (Exception e){
                 LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
             }
-            return new signInResult(userEmail, false, isInAccounts, tokens, storage, null);
+            return new SignInResult(userEmail, false, isInAccounts, tokens, storage, null);
         }
 
-        public signInResult handleSignInToBackupResult(Intent data){
+        public SignInResult handleSignInToBackupResult(Intent data){
             String[] userEmail = {null};
             boolean[] isInAccounts = {false};
             Tokens[] tokens = {null};
@@ -338,7 +336,7 @@
             }catch (Exception e){
                 LogHandler.saveLog("Failed to join   handleSignInToBackupResultThread.start(): " + e.getLocalizedMessage(), true );
             }
-            return new signInResult(userEmail[0], isHandled[0], isInAccounts[0], tokens[0], storage[0], null);
+            return new SignInResult(userEmail[0], isHandled[0], isInAccounts[0], tokens[0], storage[0], null);
         }
 
         public Button createPrimaryLoginButton(LinearLayout linearLayout){
@@ -743,17 +741,10 @@
 
         public static void startUnlinkThreads(String buttonText, MenuItem item, Button button){
             Thread startSignOutThreads = new Thread(() -> {
-                GoogleDrive.startUpdateDriveStorageThread();
+                GoogleDrive.startUpdateStorageThread();
                 boolean wantToUnlink = UIHandler.showMoveDriveFilesDialog(buttonText);
 
-
                 //note :  handle button text if click on wait button
-
-
-
-
-
-
 
 
 //                boolean isProfileJsonDeleted = startDeleteProfileJsonThread(buttonText);
@@ -771,45 +762,45 @@
             startSignOutThreads.start();
         }
 
-        public ArrayList<GoogleCloud.signInResult> signInLinkedAccounts(JsonObject resultJson, String userEmail){
-            ArrayList<GoogleCloud.signInResult> signInLinkedAccountsResult = new ArrayList<>();
+        public ArrayList<SignInResult> signInLinkedAccounts(JsonObject resultJson, String userEmail){
+            ArrayList<SignInResult> signInLinkedAccountsResult = new ArrayList<>();
             boolean[] isHandled = {true};
+
             Thread signInLinkedAccountsThread =  new Thread(() -> {
                 try{
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        System.out.println("is display3 in main thread: "  + Looper.getMainLooper().isCurrentThread());
-                    }
                     JsonArray backupAccounts =  resultJson.get("backupAccounts").getAsJsonArray();
                     for (int i = 0;i < backupAccounts.size();i++){
                         JsonObject backupAccount = backupAccounts.get(i).getAsJsonObject();
                         String linkedUserEmail = backupAccount.get("backupEmail").getAsString();
                         String refreshToken = backupAccount.get("refreshToken").getAsString();
+
                         if (linkedUserEmail.equals(userEmail)){
                             continue;
                         }
-                        GoogleCloud.signInResult signInResult =
+
+                        SignInResult signInResult =
                                 handleSignInLinkedBackupResult(linkedUserEmail,refreshToken);
                         if (!signInResult.isHandled){
                             isHandled[0] = false;
                             break;
                         }
+
+                        Log.d("signInToBackUpLauncher",userEmail + " handling: " + isHandled[0]);
+
                         signInLinkedAccountsResult.add(signInResult);
                     }
 
                 }catch (Exception e){
-                    LogHandler.saveLog("Failed in signInLinkedAccountsThread thread : " + e.getLocalizedMessage() , true);
+                    FirebaseCrashlytics.getInstance().recordException(e);
                 }
             });
             signInLinkedAccountsThread.start();
             try{
                 signInLinkedAccountsThread.join();
             }catch (Exception e){
-                LogHandler.saveLog("Finished to signInLinkedAccountsThread thread: " + e.getLocalizedMessage(), true);
+                FirebaseCrashlytics.getInstance().recordException(e);
             }
-            if (!isHandled[0]){
-                return null;
-            }
-            return signInLinkedAccountsResult;
+            return isHandled[0] ? signInLinkedAccountsResult : null;
         }
 
       }

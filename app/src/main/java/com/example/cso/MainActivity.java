@@ -1,11 +1,9 @@
     package com.example.cso;
 
     import android.app.Activity;
-    import android.app.AlertDialog;
     import android.content.Context;
     import android.content.Intent;
     import android.content.SharedPreferences;
-    import android.os.Build;
     import android.os.Bundle;
     import android.provider.Settings;
     import android.util.Log;
@@ -16,17 +14,12 @@
     import androidx.activity.result.ActivityResultLauncher;
     import androidx.activity.result.contract.ActivityResultContracts;
     import androidx.appcompat.app.AppCompatActivity;
-    import androidx.fragment.app.FragmentActivity;
-    import androidx.fragment.app.FragmentManager;
 
-    import com.google.firebase.FirebaseApp;
     import com.google.firebase.analytics.FirebaseAnalytics;
     import com.google.firebase.crashlytics.FirebaseCrashlytics;
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
 
-    import java.io.IOException;
-    import java.util.List;
     import java.util.Timer;
     import java.util.TimerTask;
 
@@ -86,55 +79,56 @@
                         Log.d("signInToBackUpLauncher", "result data: " + result.getData());
                         if(result.getResultCode() == RESULT_OK){
                             isAnyProccessOn = true;
-
                             LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-                            View[] child = {backupButtonsLinearLayout.getChildAt(
+                            View[] lastButton = {backupButtonsLinearLayout.getChildAt(
                                     backupButtonsLinearLayout.getChildCount() - 1)};
-                            try{
-                                Thread signInToBackUpThread = new Thread(() -> {
-                                    LogHandler.saveLog("Started to get signInResult.",false);
-                                    final GoogleCloud.signInResult signInResult =
+                            Thread signInToBackUpThread = new Thread(() -> {
+                                try {
+                                    Log.d("signInToBackUpLauncher","Sign in started");
+                                    final GoogleCloud.SignInResult signInResult =
                                             googleCloud.handleSignInToBackupResult(result.getData());
-                                    LogHandler.saveLog("Finished to get signInResult.",false);
+                                    Log.d("signInToBackUpLauncher","Sign in finished");
+
                                     String userEmail = signInResult.getUserEmail();
                                     String accessToken = signInResult.getTokens().getAccessToken();
+                                    Log.d("signInToBackUpLauncher","userEmail: " + userEmail);
+                                    Log.d("signInToBackUpLauncher","accessTokenNull : " + (accessToken == null));
 
-                                    LogHandler.saveLog("Started to read profile map content.",false);
+                                    Log.d("signInToBackUpLauncher","Reading profile map started");
                                     JsonObject resultJson = Profile.readProfileMapContent(userEmail,accessToken);
-                                    LogHandler.saveLog("Finished to read profile map content.",false);
+                                    Log.d("signInToBackUpLauncher","Reading profile map finished");
 
                                     if(resultJson != null){
-                                        LogHandler.saveLog("@@@" + "read profile : " + resultJson.toString(),false);
+                                        Log.d("signInToBackUpLauncher","Profile map: " + resultJson.toString());
                                     }
 
-                                    LogHandler.saveLog("Started to set json modified time.",false);
+                                    Log.d("signInToBackUpLauncher", "Setting json modified time started");
                                     SharedPreferencesHandler.setJsonModifiedTime(preferences);
-                                    LogHandler.saveLog("Finished to set json modified time.",false);
+                                    Log.d("signInToBackUpLauncher", "Setting json modified time finished: " +  SharedPreferencesHandler.getJsonModifiedTime(preferences));
 
-                                    LogHandler.saveLog("@@@" + "json last modified : " + SharedPreferencesHandler.getJsonModifiedTime(preferences),false);
-
-                                    LogHandler.saveLog("Started to check if it's linked to accounts.",false);
+                                    Log.d("signInToBackUpLauncher","Checking if it's linked to accounts started");
                                     boolean isLinked = Profile.isLinkedToAccounts(resultJson,userEmail);
-                                    LogHandler.saveLog("@@@" + "is linked to other accounts : " + isLinked,false);
-                                    LogHandler.saveLog("Finished to check if it's linked to accounts.",false);
+                                    Log.d("signInToBackUpLauncher","Checking if it's linked to accounts finished: " + isLinked);
+
                                     if (isLinked){
-                                        UIHandler.displayLinkProfileDialog(signInToBackUpLauncher, child,
+                                        UIHandler.displayLinkProfileDialog(signInToBackUpLauncher, lastButton,
                                                 resultJson, signInResult);
                                     }else{
                                         Profile profile = new Profile();
-                                        profile.linkToAccounts(signInResult,child);
+                                        profile.linkToAccounts(signInResult,lastButton,signInToBackUpLauncher);
                                     }
 
-                                    child[0].setClickable(true);
-                                });
-                                signInToBackUpThread.start();
-                            }catch (Exception e){
-                                LogHandler.saveLog("Failed to sign in to backup : "  + e.getLocalizedMessage());
-                            }finally {
-                                isAnyProccessOn = false;
-                            }
+                                    lastButton[0].setClickable(true);
+
+                                }catch (Exception e){
+                                    FirebaseCrashlytics.getInstance().recordException(e);
+                                }finally {
+                                    isAnyProccessOn = false;
+                                }
+                            });
+                            signInToBackUpThread.start();
                         }else{
-                            UIHandler.handleFailedSignInToBackUp(activity, signInToBackUpLauncher, result);
+                            UIHandler.handleSignInFailure(signInToBackUpLauncher);
                         }
                     });
 
@@ -201,6 +195,7 @@
                     dbHelper.updateDatabaseBasedOnJson();
                 }
             }).start();
+
             UIHandler.updateButtonsListeners(signInToBackUpLauncher);
         }else{
             if(!isReadAndWritePermissionGranted && isStoragePermissionGranted){
@@ -243,41 +238,6 @@
         Log.d("state","end of onDestroyed");
     }
 
-//
-//    @Override
-//    public void onBackPressed() {
-//        Log.d("state","start of onBackPressed");
-//        FragmentManager fragmentManager = getSupportFragmentManager();
-//        if (fragmentManager.getBackStackEntryCount() > 0) {
-//            fragmentManager.popBackStack();
-//        } else {
-//            // Example 2: Show confirmation dialog before finishing
-//            new AlertDialog.Builder(this)
-//                    .setTitle("Confirm Exit")
-//                    .setMessage("Do you really want to exit?")
-//                    .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-//                        stopService(serviceIntent);
-//                        if (androidTimer != null) {
-//                            androidTimer.cancel();
-//                            androidTimer.purge();
-//                        }
-//                        if (UITimer != null) {
-//                            UITimer.cancel();
-//                            UITimer.purge();
-//                        }
-//                        SharedPreferences preferences = getPreferences(Context.MODE_PRIVATE);
-//                        SharedPreferences.Editor editor = preferences.edit();
-//                        editor.clear();
-//                        editor.apply();
-//
-//                        finishAffinity();
-//                        System.exit(0);
-//                    })
-//                    .setNegativeButton(android.R.string.no, null)
-//                    .show();
-//        }
-//        Log.d("state","end of onBackPressed");
-//    }
 
     private void initAppUI(){
         UIHandler uiHandler = new UIHandler();
