@@ -250,40 +250,42 @@
 
 
         public void setupTimers(){
-            if (MainActivity.androidTimer == null){
-                MainActivity.androidTimer = new Timer();
-                MainActivity.androidTimer.schedule(new TimerTask() {
-                    public void run() {
-                        if (MainActivity.androidTimerIsRunning){
-                            return;
-                        }
-                        MainActivity.androidTimerIsRunning = true;
-                        LogHandler.saveLog("Started the android timer",false);
-                        Thread androidUpdate = new Thread(() -> {
-                            if(!TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on")){
-                                Android.startThreads(activity);
+            try{
+                if (MainActivity.androidTimer == null){
+                    MainActivity.androidTimer = new Timer();
+                    MainActivity.androidTimer.schedule(new TimerTask() {
+                        public void run() {
+                            if (androidTimerIsRunning){
+                                return;
                             }
-                        });
-                        androidUpdate.start();
-                        LogHandler.saveLog("Finished the android timer",false);
-                    }
-                }, 1000, 5000);
-            }
-
-            if (MainActivity.UITimer == null){
-                MainActivity.UITimer = new Timer();
-                MainActivity.UITimer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        try{
-                            UIHandler.pieChartHandler();
-                            UIHandler.startUpdateUIThread(activity);
-                        }catch (Exception e){
-                            LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
+                            androidTimerIsRunning = true;
+                            Log.d("Threads","Android timer started");
+                            if(!TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on")){
+                                Thread androidUpdateThread = new Thread(() -> { Android.startThreads(activity); } );
+                                androidUpdateThread.start();
+                            }
+                            Log.d("Threads","Android timer finished");
                         }
-                    }
-                }, 1000, 1000);
-            }
+                    }, 1000, 5000);
+                }
+            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+
+            try{
+                if (MainActivity.UITimer == null){
+                    MainActivity.UITimer = new Timer();
+                    MainActivity.UITimer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            try{
+                                UIHandler.pieChartHandler();
+                                UIHandler.startUpdateUIThread(activity);
+                            }catch (Exception e){
+                                LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
+                            }
+                        }
+                    }, 1000, 1000);
+                }
+            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e);}
         }
 
     }
