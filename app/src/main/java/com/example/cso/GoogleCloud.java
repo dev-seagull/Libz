@@ -275,6 +275,7 @@
                     tokens = new Tokens(accessToken,refreshToken);
                     storage = getStorage(tokens);
                     if (userEmail != null && tokens.getRefreshToken() != null && tokens.getAccessToken() != null) {
+
                         return new SignInResult(userEmail, true, false,
                                 tokens, storage, null);
                     }
@@ -326,6 +327,7 @@
                             Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
                         });
                     }
+                    GoogleDriveFolders.initializeAllFolders(userEmail[0],tokens[0].getAccessToken());
                 }catch (Exception e){
                     LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
                 }
@@ -696,8 +698,7 @@
                     }
                     if((driveBackupAccessToken != null) && !driveBackupAccessToken.isEmpty()){
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                        String folder_name = "libz_database";
-                        String databaseFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(buttonText,folder_name, false, null);
+                        String databaseFolderId = GoogleDriveFolders.getDatabaseFolderId(buttonText);
                         DBHelper.deleteDatabaseFiles(service,databaseFolderId);
                         isDeleted[0] = DBHelper.checkDeletionStatus(service,databaseFolderId);
                         if(!isDeleted[0]){

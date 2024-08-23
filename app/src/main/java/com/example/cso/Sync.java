@@ -77,7 +77,7 @@ public class Sync {
         try{
             String userEmail = accountRow[0];
             String refreshToken = accountRow[4];
-            String syncedAssetsSubFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail,"assets", false, null);
+            String syncedAssetsSubFolderId = GoogleDriveFolders.getAssetsFolderId(userEmail);
 
             double driveFreeSpace = calculateDriveFreeSpace(accountRow);
             System.out.println("This is drive free space " + driveFreeSpace);

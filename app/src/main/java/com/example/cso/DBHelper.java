@@ -1200,8 +1200,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackUpRefreshToken).getAccessToken();
                         userEmail[0] = drive_backUp_account[0];
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                        String folder_name = "libz_database";
-                        String databaseFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail[0],folder_name, false, null);
+                        String databaseFolderId = GoogleDriveFolders.getDatabaseFolderId(userEmail[0]);
 //                        deleteDatabaseFiles(service, databaseFolderId);
 //                        boolean isDeleted = checkDeletionStatus(service,databaseFolderId);
                         if(true){
@@ -1223,8 +1222,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 driveBackupAccessToken = Support.requestAccessToken(driveBackUpRefreshToken).getAccessToken();
                 userEmail[0] = "sofatest40";
                 Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                String folder_name = "libz_database";
-                String databaseFolderId = GoogleDrive.createOrGetSubDirectoryInStashSyncedAssetsFolder(userEmail[0],folder_name, false, null);
+                String databaseFolderId = GoogleDriveFolders.getDatabaseFolderId(userEmail[0]);
 //                        deleteDatabaseFiles(service, databaseFolderId);
 //                        boolean isDeleted = checkDeletionStatus(service,databaseFolderId);
                 if(true){
@@ -1662,6 +1660,59 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         return null;
     }
+
+    public static String getParentFolderIdFromDB(String userEmail){
+        String sqlQuery = "SELECT parentFolderId FROM ACCOUNTS WHERE userEmail =?";
+        Cursor cursor = null;
+        try {
+            cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
+            if (cursor!= null && cursor.moveToFirst()) {
+                int folderIdColumnIndex = cursor.getColumnIndex("parentFolderId");
+                if (folderIdColumnIndex >= 0) {
+                    return cursor.getString(folderIdColumnIndex);
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to select from ACCOUNTS in getParentFolderIdFromDB method: " + e.getLocalizedMessage());
+        }
+        return null;
+    }
+
+    public static String getProfileFolderIdFromDB(String userEmail){
+        String sqlQuery = "SELECT profileFolderId FROM ACCOUNTS WHERE userEmail =?";
+        Cursor cursor = null;
+        try {
+            cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
+            if (cursor!= null && cursor.moveToFirst()) {
+                int folderIdColumnIndex = cursor.getColumnIndex("profileFolderId");
+                if (folderIdColumnIndex >= 0) {
+                    return cursor.getString(folderIdColumnIndex);
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to select from ACCOUNTS in getProfileFolderIdFromDB method: " + e.getLocalizedMessage());
+        }
+        return null;
+    }
+
+
+    public static String getDatabaseFolderIdFromDB(String userEmail){
+        String sqlQuery = "SELECT databaseFolderId FROM ACCOUNTS WHERE userEmail =?";
+        Cursor cursor = null;
+        try {
+            cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
+            if (cursor!= null && cursor.moveToFirst()) {
+                int folderIdColumnIndex = cursor.getColumnIndex("databaseFolderId");
+                if (folderIdColumnIndex >= 0) {
+                    return cursor.getString(folderIdColumnIndex);
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to select from ACCOUNTS in getDatabaseFolderIdFromDB method: " + e.getLocalizedMessage());
+        }
+        return null;
+    }
+
 
     public static String getDriveBackupAccessToken(String userEmail){
         try{
