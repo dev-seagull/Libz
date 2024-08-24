@@ -1,5 +1,6 @@
 package com.example.cso;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -22,8 +23,6 @@ public class UIHelper {
     NavigationView navigationView = MainActivity.activity.findViewById(R.id.navigationView);
     AppCompatButton infoButton = MainActivity.activity.findViewById(R.id.infoButton);
     DrawerLayout drawerLayout = MainActivity.activity.findViewById(R.id.drawer_layout);
-    ImageView pieChartArrowDown = MainActivity.activity.findViewById(R.id.pieChartArrowDown);
-    LinearLayout chartInnerLayout = MainActivity.activity.findViewById(R.id.chartInnerLayout);
     public TextView syncButtonText = MainActivity.activity.findViewById(R.id.syncButtonText);
     TextView wifiButtonText = MainActivity.activity.findViewById(R.id.wifiButtonText);
     ImageButton wifiButton = MainActivity.activity.findViewById(R.id.wifiButton);
@@ -31,15 +30,17 @@ public class UIHelper {
     TextView syncMessageTextView = MainActivity.activity.findViewById(R.id.syncMessageTextView);
     LinearLayout deviceButtons = MainActivity.activity.findViewById(R.id.deviceButtons);
     ColorStateList backupAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#FFC300"));
-    PieChart pieChart = MainActivity.activity.findViewById(R.id.pieChart);
-    TextView directoryUsages = MainActivity.activity.findViewById(R.id.directoryUsages);
     static ColorStateList primaryAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#0D47A1"));
 //    public static ImageView waitingSyncGif = MainActivity.activity.findViewById(R.id.waitingSyncGif);
     public int buttonTextColor = Color.WHITE;
     public int buttonTransparentTextColor = Color.argb(128, 255, 255, 255);
+    @SuppressLint("UseCompatLoadingForDrawables")
     public static Drawable driveImage = MainActivity.activity.getApplicationContext().getResources()
             .getDrawable(R.drawable.googledriveimage);
-    public Drawable deviceDrawble = MainActivity.activity.getApplicationContext().getResources().getDrawable(R.drawable.android_device_icon);
+    @SuppressLint("UseCompatLoadingForDrawables")
+    public Drawable deviceDrawable = MainActivity.activity.getApplicationContext().getResources().getDrawable(R.drawable.android_device_icon);
+    @SuppressLint("UseCompatLoadingForDrawables")
+    public Drawable threeDotMenuDrawable = MainActivity.activity.getApplicationContext().getResources().getDrawable(R.drawable.three_dot_menu);
     public int deviceBackgroundResource = R.drawable.gradient_color_bg;
 
 }

@@ -2,6 +2,7 @@ package com.example.cso;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
@@ -23,6 +24,7 @@ import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TextView;
@@ -31,7 +33,9 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.core.view.GravityCompat;
+import androidx.savedstate.SavedStateRegistry;
 
+import com.anychart.charts.Pie;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
@@ -43,6 +47,7 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
@@ -50,13 +55,16 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
+import org.checkerframework.checker.units.qual.C;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import kotlinx.coroutines.FlowPreview;
+
 public class UIHandler {
-    public static TextView directoryUsages = MainActivity.activity.findViewById(R.id.directoryUsages);
     public static UIHelper uiHelper = new UIHelper();
     LiquidFillButton syncButton = MainActivity.activity.findViewById(R.id.syncButton);
     private boolean isWifiOnlyOn = false;
@@ -77,13 +85,13 @@ public class UIHandler {
         }
     }
 
-    public static void updateDirectoriesUsages(){
-        HashMap<String,String> dirHashMap = StorageHandler.directoryUIDisplay();
-        directoryUsages.setText("");
-        for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
-            directoryUsages.append(entry.getKey() + ": " + entry.getValue() + " GB\n");
-        }
-    }
+//    public static void updateDirectoriesUsages(){
+//        HashMap<String,String> dirHashMap = StorageHandler.directoryUIDisplay();
+//        directoryUsages.setText("");
+//        for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
+//            directoryUsages.append(entry.getKey() + ": " + entry.getValue() + " GB\n");
+//        }
+//    }
 
 
     public void addAbackUpAccountToUI(Activity activity, boolean isBackedUp,
@@ -119,16 +127,6 @@ public class UIHandler {
             uiThread.join();
         }catch (Exception e){
             LogHandler.saveLog("Failed to join add a backup account to ui thread: " + e.getLocalizedMessage(), true);
-        }
-    }
-
-    public static void pieChartHandler(){
-        if(uiHelper.pieChart.getVisibility() == View.VISIBLE){
-            UIHandler.configurePieChartData();
-            uiHelper.pieChart.invalidate();
-            if(uiHelper.directoryUsages.getVisibility() == View.VISIBLE){
-                UIHandler.displayDirectoryUsage();
-            }
         }
     }
 
@@ -337,101 +335,6 @@ public class UIHandler {
         }
     }
 
-
-    private static boolean buttonExistsInUI(LinearLayout deviceButtons, String deviceId){
-        int deviceButtonsCount = deviceButtons.getChildCount();
-        for(int i=1; i < deviceButtonsCount ; i++){
-            View childView = deviceButtons.getChildAt(i);
-            if(childView instanceof Button){
-                if(childView.getContentDescription().equals(deviceId)){
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private static boolean toggleDeviceButtonClickState(){
-        boolean previousState = SharedPreferencesHandler.getCurrentDeviceClickedState();
-        SharedPreferencesHandler.setSwitchState("currentDeviceClicked",!previousState,MainActivity.preferences);
-        return !previousState;
-    }
-
-
-    private static void hidePieChart(){
-        uiHelper.pieChart.setVisibility(View.GONE);
-        uiHelper.chartInnerLayout.setVisibility(View.GONE);
-        uiHelper.pieChartArrowDown.setVisibility(View.GONE);
-        uiHelper.directoryUsages.setVisibility(View.GONE);
-    }
-
-    public void setupDeviceButtons(){
-        ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromDB();
-        for (DeviceHandler device : devices) {
-            if (!buttonExistsInUI(uiHelper.deviceButtons, device.getDeviceId())) {
-                Button newDeviceButton = createNewDeviceButton(MainActivity.activity, device);
-                uiHelper.deviceButtons.addView(newDeviceButton);
-            }
-        }
-    }
-
-    private static boolean isCurrentDevice(DeviceHandler device) {
-        return device.getDeviceId().equals(MainActivity.androidUniqueDeviceIdentifier);
-    }
-
-    private static void setListenerToDeviceButtons(Button button, DeviceHandler device){
-        button.setOnClickListener(
-                view -> {
-                    if (isCurrentDevice(device)) {
-                        boolean deviceButtonClickState = toggleDeviceButtonClickState();
-                        if(!deviceButtonClickState){
-                            setupPieChart();
-                        }else{
-                            hidePieChart();
-                        }
-                    }else{
-                        //popup menu
-                    }
-                }
-        );
-    }
-
-    private static Button createNewDeviceButton(Activity activity, DeviceHandler device) {
-        Button newDeviceButton = new Button(activity);
-        newDeviceButton.setText(device.getDeviceName());
-        newDeviceButton.setContentDescription(device.getDeviceId());
-        addEffectsToDeviceButton(newDeviceButton);
-        setListenerToDeviceButtons(newDeviceButton, device);
-        return newDeviceButton;
-    }
-
-    private static void addEffectsToDeviceButton(Button androidDeviceButton){
-        AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
-        fadeIn.setDuration(2000);
-        androidDeviceButton.startAnimation(fadeIn);
-        UIHelper uiHelper = new UIHelper();
-        androidDeviceButton.setBackgroundResource(uiHelper.deviceBackgroundResource);
-        Drawable loginButtonLeftDrawable = uiHelper.deviceDrawble;
-        androidDeviceButton.setCompoundDrawablesWithIntrinsicBounds
-                (loginButtonLeftDrawable, null, null, null);
-
-        androidDeviceButton.setTextColor(uiHelper.buttonTextColor);
-        androidDeviceButton.setTextSize(12);
-
-
-        androidDeviceButton.setPadding(40,0,150,0);
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                200
-        );
-        if (!androidDeviceButton.getContentDescription().equals(MainActivity.androidUniqueDeviceIdentifier)) {
-            layoutParams.topMargin = 35;
-        }
-        androidDeviceButton.setLayoutParams(layoutParams);
-    }
-
     private static void handeSyncSwitchMaterialButton(UIHelper uiHelper, Activity activity){
         if (!TimerService.isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
 //            uiHelper.syncSwitchMaterialButton.setChecked(false);
@@ -461,20 +364,6 @@ public class UIHandler {
                 );
         MainActivity.dbHelper.getAndroidSyncedAssetsOnThisDevice();
 
-        BarChart barChart = MainActivity.activity.findViewById(R.id.barChart);
-//        barChart.setVisibility(View.VISIBLE);
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        int windowWidth = displayMetrics.widthPixels;
-        int windowHeight = displayMetrics.heightPixels;
-        int chartWidth = windowWidth;
-        int chartHeight = (int) (windowHeight * 0.25);
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        layoutParams.setMargins(10,200,10,200);
-        barChart.setLayoutParams(layoutParams);
-
         ArrayList<BarEntry> syncedEntries = new ArrayList<>();
         syncedEntries.add(new BarEntry(0f, new float[]{android_synced_assets_count}));
 
@@ -497,137 +386,7 @@ public class UIHandler {
                 return String.format("%d", (int) value);
             }
         });
-
-        barChart.setData(barData);
-
-        barChart.setDrawBarShadow(false);
-        barChart.setDrawValueAboveBar(true); // Display values on bars
-        barChart.setMaxVisibleValueCount(2);
-        barChart.setPinchZoom(false);
-        barChart.setHorizontalScrollBarEnabled(false);
-        barChart.setVerticalScrollBarEnabled(false);
-        barChart.setFitBars(true);
-        barChart.getDescription().setEnabled(false);
-
-        XAxis xAxis = barChart.getXAxis();
-        xAxis.setDrawGridLines(false);
-        xAxis.setDrawAxisLine(false);
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-
-        YAxis leftAxis = barChart.getAxisLeft();
-        leftAxis.setDrawGridLines(false);
-        leftAxis.setDrawAxisLine(false);
-        leftAxis.setGranularity(1f);
-        xAxis.setDrawLabels(false);
-        leftAxis.setDrawLabels(false);
-
-        YAxis rightAxis = barChart.getAxisRight();
-        rightAxis.setDrawGridLines(false);
-        rightAxis.setDrawAxisLine(false);
-        rightAxis.setGranularity(1f);
-        rightAxis.setDrawLabels(false);
-
-
-//        barChart.setBackgroundColor(getResources().getColor(android.R.color.white)); // Set background color
-
-        barChart.invalidate();    }
-
-    private static void setupPieChart() {
-        uiHelper.pieChart.setVisibility(View.VISIBLE);
-        uiHelper.chartInnerLayout.setVisibility(View.VISIBLE);
-        uiHelper.pieChartArrowDown.setVisibility(View.VISIBLE);
-        setupPieChartDimensions();
-        configurePieChartData();
-        configurePieChartLegend();
-        configurePieChartInteractions();
-        uiHelper.pieChart.invalidate();
-    }
-
-    private static void setupPieChartDimensions() {
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-
-        int chartHeight = (int) (displayMetrics.heightPixels * 0.25);
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                displayMetrics.widthPixels, chartHeight
-        );
-
-        uiHelper.pieChart.setLayoutParams(layoutParams);
-    }
-
-    private static void configurePieChartData() {
-        StorageHandler storageHandler = new StorageHandler();
-
-        double freeSpace = storageHandler.getFreeSpace();
-        double totalStorage = storageHandler.getTotalStorage();
-        double mediaStorage = Double.parseDouble(MainActivity.dbHelper.getPhotosAndVideosStorage());
-        double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
-
-        ArrayList<PieEntry> entries = new ArrayList<>();
-        entries.add(new PieEntry((float) freeSpace, "Free Space(GB)"));
-        entries.add(new PieEntry((float) mediaStorage, "Media(GB)"));
-        entries.add(new PieEntry((float) usedSpaceExcludingMedia, "Others(GB)"));
-
-        PieDataSet dataSet = new PieDataSet(entries, null);
-        int[] colors = {
-                Color.parseColor("#1E88E5"),
-                Color.parseColor("#64B5F6"),
-                Color.parseColor("#B3E5FC")
-        };
-        dataSet.setColors(colors);
-        dataSet.setValueTextColor(Color.parseColor("#212121"));
-        dataSet.setValueTextSize(14f);
-
-        PieData data = new PieData(dataSet);
-        uiHelper.pieChart.setData(data);
-        uiHelper.pieChart.getDescription().setEnabled(false);
-        uiHelper.pieChart.setDrawEntryLabels(true);
-        uiHelper.pieChart.setDrawHoleEnabled(true);
-        uiHelper.pieChart.setDrawHoleEnabled(false);
-    }
-
-    private static void configurePieChartLegend() {
-        Legend legend = uiHelper.pieChart.getLegend();
-        legend.setEnabled(false);
-    }
-
-    private static void configurePieChartInteractions() {
-        uiHelper.pieChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
-            @Override
-            public void onValueSelected(Entry e, Highlight h) {
-                handlePieChartSelection((int) h.getX());
-            }
-
-            @Override
-            public void onNothingSelected() {
-                directoryUsages.setVisibility(View.GONE);
-            }
-        });
-    }
-
-    private static void handlePieChartSelection(int index) {
-        PieData pieData = uiHelper.pieChart.getData();
-        PieDataSet pieDataSet = (PieDataSet) pieData.getDataSet();
-        String label = pieDataSet.getEntryForIndex(index).getLabel();
-
-        if ("Media(GB)".equals(label)) {
-            displayDirectoryUsage();
-        } else {
-            directoryUsages.setVisibility(View.GONE);
-        }
-    }
-
-    private static void displayDirectoryUsage() {
-        directoryUsages.setVisibility(View.VISIBLE);
-        HashMap<String, String> dirHashMap = StorageHandler.directoryUIDisplay();
-        StringBuilder usageText = new StringBuilder();
-
-        for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
-            usageText.append(String.format("%-10s: %s GB\n", entry.getKey(), entry.getValue()));
-        }
-        directoryUsages.setText(usageText.toString());
-        directoryUsages.setTextColor(Color.parseColor("#212121"));
-    }
+}
 
     public static void startUpdateUIThread(Activity activity){
         LogHandler.saveLog("Starting startUpdateUIThread", false);
@@ -844,4 +603,316 @@ public class UIHandler {
             UIHandler.updateButtonsListeners(signInToBackUpLauncher);
         });
     }
+
+
+
+    //---------------------------------- //---------------------------------- Device Buttons //---------------------------------- //----------------------------------
+
+
+    public void setupDeviceButtons(){
+        ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromDB();
+        for (DeviceHandler device : devices) {
+            if (!buttonExistsInUI(device.getDeviceId())) {
+                View newDeviceButtonView = createNewDeviceButtonView(MainActivity.activity, device);
+                uiHelper.deviceButtons.addView(newDeviceButtonView);
+            }
+        }
+    }
+
+    private static boolean buttonExistsInUI(String deviceId){
+        LinearLayout deviceButtons = uiHelper.deviceButtons;
+        int deviceButtonsCount = deviceButtons.getChildCount();
+        for(int i=0 ; i < deviceButtonsCount ; i++){
+            LinearLayout deviceButtonView = (LinearLayout) deviceButtons.getChildAt(i);
+            int deviceViewChildrenCount = deviceButtonView.getChildCount();
+            for (int j = 0; j <= deviceViewChildrenCount; j++) {
+                View deviceButtonChild = deviceButtonView.getChildAt(j);
+                if (deviceButtonChild instanceof Button){
+                    if(deviceButtonChild.getContentDescription().equals(deviceId)){
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean isCurrentDevice(DeviceHandler device) {
+        return device.getDeviceId().equals(MainActivity.androidUniqueDeviceIdentifier);
+    } // for more data
+
+    private static void setListenerToDeviceButtons(Button button){
+        button.setOnClickListener(
+                UIHandler::changeDeviceDetailsVisibility
+        );
+    }
+
+    private static Button createNewDeviceButton(Context context, DeviceHandler device) {
+        Button newDeviceButton = new Button(context);
+        newDeviceButton.setText(device.getDeviceName());
+        newDeviceButton.setContentDescription(device.getDeviceId());
+        addEffectsToDeviceButton(newDeviceButton);
+        setListenerToDeviceButtons(newDeviceButton);
+        return newDeviceButton;
+    }
+
+    private static void addEffectsToDeviceButton(Button androidDeviceButton){
+        AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
+        fadeIn.setDuration(2000);
+        androidDeviceButton.startAnimation(fadeIn);
+        UIHelper uiHelper = new UIHelper();
+        androidDeviceButton.setBackgroundResource(uiHelper.deviceBackgroundResource);
+        Drawable deviceButtonDrawable = uiHelper.deviceDrawable;
+        Drawable deviceButtonMenu = uiHelper.threeDotMenuDrawable;
+        
+        androidDeviceButton.setCompoundDrawablesWithIntrinsicBounds
+                (deviceButtonDrawable, null, null, null);
+
+        androidDeviceButton.setTextColor(uiHelper.buttonTextColor);
+        androidDeviceButton.setTextSize(12);
+
+        androidDeviceButton.setPadding(40,0,150,0);
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                200
+        );
+        if (!androidDeviceButton.getContentDescription().equals(MainActivity.androidUniqueDeviceIdentifier)) {
+            layoutParams.topMargin = 35;
+        }
+        androidDeviceButton.setLayoutParams(layoutParams);
+    }
+
+    public LinearLayout createNewDeviceButtonView(Context context, DeviceHandler device) {
+        LinearLayout layout = new LinearLayout(context);
+        layout.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setGravity(Gravity.CENTER);
+
+        Button button = createNewDeviceButton(context, device);
+
+        LinearLayout chartInnerLayout = createDeviceDetailsLayout(context);
+
+        ImageView pieChartArrowDown = createArrowDownImageView(context);
+
+        PieChart pieChart = createPieChart(context);
+
+        TextView directoryUsages = createDirectoryUsageTextView(context);
+
+        chartInnerLayout.addView(pieChartArrowDown);
+        chartInnerLayout.addView(pieChart);
+        chartInnerLayout.addView(directoryUsages);
+
+        layout.addView(button);
+        layout.addView(chartInnerLayout);
+
+        return layout;
+    }
+
+    private static PieChart createPieChart(Context context) {
+        PieChart pieChart = new PieChart(context);
+        configurePieChartDimensions(pieChart);
+        configurePieChartData(pieChart, new JsonObject());
+        configurePieChartLegend(pieChart);
+        configurePieChartInteractions(pieChart);
+        pieChart.invalidate();
+        return pieChart;
+    }
+
+    private static void configurePieChartDimensions(PieChart pieChart) {
+        pieChart.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+
+        int chartHeight = (int) (displayMetrics.heightPixels * 0.25);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                displayMetrics.widthPixels, chartHeight
+        );
+
+        pieChart.setLayoutParams(layoutParams);
+    }
+
+    private static void configurePieChartData(PieChart pieChart, JsonObject storageInfo) {
+        StorageHandler storageHandler = new StorageHandler();
+
+        double freeSpace = storageHandler.getFreeSpace();
+        double totalStorage = storageHandler.getTotalStorage();
+        double mediaStorage = Double.parseDouble(MainActivity.dbHelper.getPhotosAndVideosStorage());
+        double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
+
+        ArrayList<PieEntry> entries = new ArrayList<>();
+        entries.add(new PieEntry((float) freeSpace, "Free Space(GB)"));
+        entries.add(new PieEntry((float) mediaStorage, "Media(GB)"));
+        entries.add(new PieEntry((float) usedSpaceExcludingMedia, "Others(GB)"));
+
+        PieDataSet dataSet = new PieDataSet(entries, null);
+        int[] colors = {
+                Color.parseColor("#1E88E5"),
+                Color.parseColor("#64B5F6"),
+                Color.parseColor("#B3E5FC")
+        };
+        dataSet.setColors(colors);
+        dataSet.setValueTextColor(Color.parseColor("#212121"));
+        dataSet.setValueTextSize(14f);
+
+        PieData data = new PieData(dataSet);
+        pieChart.setData(data);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setDrawEntryLabels(true);
+        pieChart.setDrawHoleEnabled(true);
+        pieChart.setDrawHoleEnabled(false);
+    }
+
+    private static void configurePieChartLegend(PieChart pieChart) {
+        Legend legend = pieChart.getLegend();
+        legend.setEnabled(false);
+    }
+
+    private static void configurePieChartInteractions(PieChart pieChart) {
+        pieChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
+            @Override
+            public void onValueSelected(Entry e, Highlight h) {
+                handlePieChartSelection(pieChart,(int) h.getX());
+            }
+
+            @Override
+            public void onNothingSelected() {
+
+            }
+        });
+    }
+
+    private static void handlePieChartSelection(PieChart pieChart, int index) {
+        PieData pieData = pieChart.getData();
+        PieDataSet pieDataSet = (PieDataSet) pieData.getDataSet();
+        String label = pieDataSet.getEntryForIndex(index).getLabel();
+
+        if ("Media(GB)".equals(label)) {
+//            displayDirectoryUsage();
+        } else {
+
+        }
+    }
+
+    private static LinearLayout createDeviceDetailsLayout(Context context) {
+        LinearLayout chartInnerLayout = new LinearLayout(context);
+        chartInnerLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        chartInnerLayout.setOrientation(LinearLayout.VERTICAL);
+        chartInnerLayout.setGravity(Gravity.CENTER);
+        chartInnerLayout.setPadding(8, 8, 8, 8);
+        chartInnerLayout.setElevation(4f);
+        chartInnerLayout.setBackgroundResource(R.drawable.border_background);
+        chartInnerLayout.setVisibility(View.GONE);
+        return chartInnerLayout;
+    }
+
+    private static ImageView createArrowDownImageView(Context context){
+        ImageView pieChartArrowDown = new ImageView(context);
+        LinearLayout.LayoutParams arrowParams = new LinearLayout.LayoutParams(25, 70);
+        arrowParams.setMargins(0, 0, -5, 0);
+        pieChartArrowDown.setLayoutParams(arrowParams);
+        pieChartArrowDown.setBackgroundResource(R.drawable.arrowdown);
+        return pieChartArrowDown;
+    }
+
+    private static TextView createDirectoryUsageTextView(Context context){
+        TextView directoryUsages = new TextView(context);
+        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        textParams.setMargins(3, 25, 3, 0);
+        directoryUsages.setLayoutParams(textParams);
+//        directoryUsages.setFontFamily(ResourcesCompat.getFont(context, R.font.sans_serif));
+        directoryUsages.setGravity(Gravity.CENTER);
+        directoryUsages.setTextSize(12);
+        return directoryUsages;
+    }
+
+    private static void changeDeviceDetailsVisibility(View currentView){
+        LinearLayout deviceButtonView = (LinearLayout) currentView.getParent();
+        int deviceViewChildrenCount = deviceButtonView.getChildCount();
+        for (int j = 0; j < deviceViewChildrenCount; j++) {
+            View view = deviceButtonView.getChildAt(j);
+            if (!(view instanceof Button)) {
+                if (view.getVisibility() == View.VISIBLE) {
+                    view.setVisibility(View.GONE);
+                }else{
+                    view.setVisibility(View.VISIBLE);
+                }
+                return;
+            }
+        }
+    }
+
+//    public static void pieChartHandler(){
+//        if(uiHelper.pieChart.getVisibility() == View.VISIBLE){
+//            UIHandler.configurePieChartData();
+//            uiHelper.pieChart.invalidate();
+//            if(uiHelper.directoryUsages.getVisibility() == View.VISIBLE){
+//                UIHandler.displayDirectoryUsage();
+//            }
+//        }
+//    }
+
+/*
+    private static void displayDirectoryUsage() {
+        directoryUsages.setVisibility(View.VISIBLE);
+        HashMap<String, String> dirHashMap = StorageHandler.directoryUIDisplay();
+        StringBuilder usageText = new StringBuilder();
+
+        for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
+            usageText.append(String.format("%-10s: %s GB\n", entry.getKey(), entry.getValue()));
+        }
+        directoryUsages.setText(usageText.toString());
+        directoryUsages.setTextColor(Color.parseColor("#212121"));
+    }
+*/
+
+
+ /*
+    private static void configurePieChartData(PieChart pieChart) {
+        StorageHandler storageHandler = new StorageHandler();
+
+        double freeSpace = storageHandler.getFreeSpace();
+        double totalStorage = storageHandler.getTotalStorage();
+        double mediaStorage = Double.parseDouble(MainActivity.dbHelper.getPhotosAndVideosStorage());
+        double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
+
+        ArrayList<PieEntry> entries = new ArrayList<>();
+        entries.add(new PieEntry((float) freeSpace, "Free Space(GB)"));
+        entries.add(new PieEntry((float) mediaStorage, "Media(GB)"));
+        entries.add(new PieEntry((float) usedSpaceExcludingMedia, "Others(GB)"));
+
+        PieDataSet dataSet = new PieDataSet(entries, null);
+        int[] colors = {
+                Color.parseColor("#1E88E5"),
+                Color.parseColor("#64B5F6"),
+                Color.parseColor("#B3E5FC")
+        };
+        dataSet.setColors(colors);
+        dataSet.setValueTextColor(Color.parseColor("#212121"));
+        dataSet.setValueTextSize(14f);
+
+        PieData data = new PieData(dataSet);
+        pieChart.setData(data);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setDrawEntryLabels(true);
+        pieChart.setDrawHoleEnabled(true);
+        pieChart.setDrawHoleEnabled(false);
+    }
+*/
+
+    //---------------------------------- //---------------------------------- //---------------------------------- //----------------------------------
+
 }

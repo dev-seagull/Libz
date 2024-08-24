@@ -277,7 +277,7 @@
                         @Override
                         public void run() {
                             try{
-                                UIHandler.pieChartHandler();
+//                                UIHandler.pieChartHandler();
                                 UIHandler.startUpdateUIThread(activity);
                             }catch (Exception e){
                                 LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
