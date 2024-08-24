@@ -151,34 +151,30 @@ public class Profile {
 
     public static String readProfileMapName(String userEmail, String accessToken) {
         String[] resultJsonName = {null};
-        Thread readProdileMapContentThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    System.out.println("access token in method readProfileMapName: " + accessToken);
-                    System.out.println("user email in method readProfileMapName: " + userEmail);
-                    Drive service = GoogleDrive.initializeDrive(accessToken);
-                    List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail, service);
-                    System.out.println("size of files in profile folder: " + existingFiles.size());
-                    for (com.google.api.services.drive.model.File existingFile : existingFiles) {
-                        resultJsonName[0] = existingFile.getName();
-                        System.out.println("existing file name: " + existingFile.getName());
-                        if (resultJsonName[0]!= null && !resultJsonName[0].isEmpty() && resultJsonName[0].contains("profileMap_")) {
-                            System.out.println("result json name : " + resultJsonName[0] + " found. Exiting loop. ");
-                            break;
-                        }
+
+        Thread readProdileMapContentThread = new Thread( () -> {
+            try{
+                Log.d("Threads","Map file name searching started");
+                Drive service = GoogleDrive.initializeDrive(accessToken);
+                List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail, service);
+
+                for (com.google.api.services.drive.model.File existingFile : existingFiles) {
+                    resultJsonName[0] = existingFile.getName();
+                    Log.d("jsonChange","Map files found: " + resultJsonName[0]);
+                    if (resultJsonName[0]!= null && !resultJsonName[0].isEmpty() && resultJsonName[0].contains("profileMap_")) {
+                        Log.d("Threads","Map file name searching finished");
+                        break;
                     }
-                }catch (Exception e){
-                    LogHandler.saveLog("Failed to read profile map content : " + e.getLocalizedMessage(), true);
                 }
-            }
+                Log.d("Threads","Map file name searching finished");
+            }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
         });
+
         readProdileMapContentThread.start();
         try {
             readProdileMapContentThread.join();
-        } catch (InterruptedException e) {
-            LogHandler.saveLog("Interrupted while waiting for read profile map content thread to finish: " + e.getLocalizedMessage());
-        }
+        } catch (InterruptedException e) { FirebaseCrashlytics.getInstance().recordException(e); }
+
         return resultJsonName[0];
     }
 
@@ -570,23 +566,36 @@ public class Profile {
     }
 
     public static boolean hasJsonChanged(){
-        List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
-        for (String[] account : accounts) {
-            if (account[1].equals("backup")) {
-                String resultJsonName = readProfileMapName(account[0], MainActivity.googleCloud.updateAccessToken(account[2]).getAccessToken());
-                if (resultJsonName!= null &&!resultJsonName.isEmpty()){
-                    continue;
-                }
-                Date lastModifiedDateOfJson = convertFileNameToTimeStamp(resultJsonName);
-                Date lastModifiedDateOfPreferences =  SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
-                if (lastModifiedDateOfJson!= null && lastModifiedDateOfPreferences!= null && lastModifiedDateOfJson.after(lastModifiedDateOfPreferences)){
-                    return true;
-                } else {
-                    return false;
+        boolean hasChanged = false;
+        try{
+            List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
+
+            for (String[] account : accounts) {
+                if (account[1].equals("backup")) {
+                    String accessToken = MainActivity.googleCloud.updateAccessToken(account[2]).getAccessToken();
+                    String resultJsonName = readProfileMapName(account[0],accessToken);
+
+                    if (resultJsonName!= null || !resultJsonName.isEmpty()){
+                        Log.d("jsonChange","Json file not found");
+                        continue;
+                    }
+
+                    Date lastModifiedDateOfJson = convertFileNameToTimeStamp(resultJsonName);
+                    Date lastModifiedDateOfPreferences =  SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
+                    Log.d("jsonChange","lastModifiedDateOfJson: " + lastModifiedDateOfJson.toString());
+                    Log.d("jsonChange","lastModifiedDateOfPreferences: " + lastModifiedDateOfPreferences.toString());
+
+                    if (lastModifiedDateOfJson!= null && lastModifiedDateOfPreferences!= null){
+                        hasChanged = lastModifiedDateOfJson.after(lastModifiedDateOfPreferences);
+                    } else {
+                        hasChanged = false;
+                    }
                 }
             }
+        } catch (Exception e) {
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
-        return true;
+        return hasChanged;
     }
 
     public static Date convertFileNameToTimeStamp(String fileName){
@@ -595,7 +604,7 @@ public class Profile {
             String timestamp = fileName.substring(fileName.indexOf('_') + 1, fileName.lastIndexOf('.'));
             return dateFormat.parse(timestamp);
         }catch (Exception e){
-            LogHandler.saveLog("Failed to convert filename ("+fileName +") to timestamp : " + e.getLocalizedMessage(), true);
+            FirebaseCrashlytics.getInstance().recordException(e);
             return null;
         }
     }

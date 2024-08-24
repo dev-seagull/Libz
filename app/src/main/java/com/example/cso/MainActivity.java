@@ -187,8 +187,7 @@
                 Support.checkSupportBackupRequired();
 
                 if (Profile.hasJsonChanged()){
-                    System.out.println("profile json changed");
-                    dbHelper.updateDatabaseBase dOnJson();
+                    dbHelper.updateDatabaseBasedOnJson();
                 }
             }).start();
 
