@@ -1,5 +1,6 @@
 package com.example.cso;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -17,12 +18,14 @@ import android.text.style.TypefaceSpan;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
+import android.view.inputmethod.InputMethodSubtype;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -52,6 +55,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.google.api.services.drive.Drive;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
@@ -422,13 +426,15 @@ public class UIHandler {
                             if (MainActivity.isAnyProccessOn) {
                                 return;
                             }
-                            MainActivity.isAnyProccessOn = true;
+
                             String buttonText = button.getText().toString().toLowerCase();
                             if (buttonText.equals("add a back up account")) {
+                                MainActivity.isAnyProccessOn = true;
                                 button.setText("signing in ...");
                                 button.setClickable(false);
                                 MainActivity.googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
                                 button.setClickable(true);
+                                MainActivity.isAnyProccessOn = false;
                             } else if (buttonText.equals("signing in ...")){
                                 button.setText("add a back up account");
                             } else if (buttonText.equals("signing out...")){
@@ -436,13 +442,15 @@ public class UIHandler {
                             } else {
                                 button.setContentDescription(buttonText);
                                 try{
-                                    PopupMenu popupMenu = setPopUpMenuOnButton(activity, button);
+                                    PopupMenu popupMenu = setPopUpMenuOnButton(activity, button,"account");
                                     popupMenu.setOnMenuItemClickListener(item -> {
                                         if (item.getItemId() == R.id.unlink) {
+                                            MainActivity.isAnyProccessOn = true;
                                             button.setText("signing out...");
                                             button.setClickable(false);
                                             GoogleCloud.startUnlinkThreads(buttonText, item, button);
                                             button.setClickable(true);
+                                            MainActivity.isAnyProccessOn = false;
                                         }
                                         return true;
                                     });
@@ -492,14 +500,32 @@ public class UIHandler {
         LogHandler.saveLog("Finished Ui Thread For Sign Out Thread", false);
     }
 
-    private static PopupMenu setPopUpMenuOnButton(Activity activity, Button button){
+    private static PopupMenu setPopUpMenuOnButton(Activity activity, Button button, String type) {
         PopupMenu popupMenu = new PopupMenu(activity.getApplicationContext(), button, Gravity.CENTER);
+
+        // Inflate the menu first
         popupMenu.getMenuInflater().inflate(R.menu.account_button_menu, popupMenu.getMenu());
+        Menu menu = popupMenu.getMenu();
+
+        int unlink = 0;
+        int details = 1;
+        int reportStolen = 2;
+
+        // Remove items based on the type
+        if (type.equals("ownDevice")) {
+            menu.removeItem(menu.getItem(unlink).getItemId());
+            menu.removeItem(menu.getItem(reportStolen - 1 ).getItemId());
+        } else if (type.equals("account")) {
+            menu.removeItem(menu.getItem(reportStolen).getItemId());
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             popupMenu.setGravity(Gravity.CENTER);
         }
+
         return popupMenu;
     }
+
 
     public static void displayLinkProfileDialog(ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
                                                 JsonObject resultJson, GoogleCloud.SignInResult signInResult){
@@ -537,11 +563,14 @@ public class UIHandler {
         try {
             List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","totalStorage","usedStorage"});
             int totalFreeSpace = 0;
+            int[] otherAccountsSize = {0};
+
             for (String[] account : accounts) {
                 if (!account[0].equals(userEmail)){
                     int totalStorage = Integer.parseInt(account[1]);
                     int usedStorage = Integer.parseInt(account[2]);
                     totalFreeSpace += totalStorage - usedStorage;
+                    otherAccountsSize[0] += 1 ;
                 }
             }
 
@@ -549,14 +578,19 @@ public class UIHandler {
 
             String[] text = {""};
             boolean[] ableToMoveAllAssets = {false};
-            if (totalFreeSpace < assetsSize) {
-                text[0] = "Approximately " + totalFreeSpace / 1024 + " GB out of " + assetsSize / 1024 + " GB of your assets in " + userEmail + " will be moved to other accounts." +
-                        "\nWarning: Not enough space is available to move all of it. " + (assetsSize - totalFreeSpace) / 1024 + " GB of your assets will remain in " + userEmail + ".";
+            if (otherAccountsSize[0] == 0){
+                text[0] = "Caution : All of your assets in " + userEmail + "will be out of sync";
+            }else{
+                if (totalFreeSpace < assetsSize) {
+                    text[0] = "Approximately " + totalFreeSpace / 1024 + " GB out of " + assetsSize / 1024 + " GB of your assets in " + userEmail + " will be moved to other accounts." +
+                            "\nWarning: Not enough space is available to move all of it. " + (assetsSize - totalFreeSpace) / 1024 + " GB of your assets will remain in " + userEmail + ".";
 
-            } else {
-                text[0] = "All of your assets in " + userEmail + " will be moved to other accounts.";
-                ableToMoveAllAssets[0] = true;
+                } else {
+                    text[0] = "All of your assets in " + userEmail + " will be moved to other accounts.";
+                    ableToMoveAllAssets[0] = true;
+                }
             }
+
 
 
             int finalTotalFreeSpace = totalFreeSpace;
@@ -568,8 +602,14 @@ public class UIHandler {
 
                     builder.setPositiveButton("Proceed", (dialog, id) -> {
                         dialog.dismiss();
-                        System.out.println("wantToUnlink : " + "true");
-                        GoogleDrive.moveFromSourceToDestinationAccounts(userEmail,ableToMoveAllAssets[0],(assetsSize - finalTotalFreeSpace));
+                        if (otherAccountsSize[0] == 0) {
+                            String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
+                            Drive service = GoogleDrive.initializeDrive(accessToken);
+                            GoogleDrive.unlinkSingleAccount(userEmail,service,ableToMoveAllAssets[0]);
+                        }else{
+                            GoogleDrive.moveFromSourceToDestinationAccounts(userEmail,ableToMoveAllAssets[0],(assetsSize - finalTotalFreeSpace));
+                        }
+
                         System.out.println("finish moving files");
                     });
 
@@ -641,10 +681,32 @@ public class UIHandler {
         return device.getDeviceId().equals(MainActivity.androidUniqueDeviceIdentifier);
     } // for more data
 
-    private static void setListenerToDeviceButtons(Button button){
-        button.setOnClickListener(
-                UIHandler::changeDeviceDetailsVisibility
-        );
+    private static void setListenerToDeviceButtons(Button button, DeviceHandler device){
+        button.setOnClickListener( view -> {
+            LinearLayout detailsView = getDetailsView(button);
+            if (detailsView.getVisibility() == View.VISIBLE){
+                detailsView.setVisibility(View.GONE);
+                return;
+            }
+            String type = "device";
+            if (isCurrentDevice(device)){
+                System.out.println("" +button.getContentDescription());
+                type = "ownDevice";
+            }
+            PopupMenu popupMenu = setPopUpMenuOnButton(MainActivity.activity, button,type);
+            popupMenu.setOnMenuItemClickListener(item -> {
+                if (item.getItemId() == R.id.unlink) {
+                    button.setText("signing out...");
+                    button.setClickable(false);
+//                    GoogleCloud.startUnlinkThreads(buttonText, item, button);
+                    button.setClickable(true);
+                }else if (item.getItemId() == R.id.details){
+                    detailsView.setVisibility(View.VISIBLE);
+                }
+                return true;
+            });
+            popupMenu.show();
+            });
     }
 
     private static Button createNewDeviceButton(Context context, DeviceHandler device) {
@@ -652,7 +714,7 @@ public class UIHandler {
         newDeviceButton.setText(device.getDeviceName());
         newDeviceButton.setContentDescription(device.getDeviceId());
         addEffectsToDeviceButton(newDeviceButton);
-        setListenerToDeviceButtons(newDeviceButton);
+        setListenerToDeviceButtons(newDeviceButton, device);
         return newDeviceButton;
     }
 
@@ -848,11 +910,22 @@ public class UIHandler {
                 if (view.getVisibility() == View.VISIBLE) {
                     view.setVisibility(View.GONE);
                 }else{
-                    view.setVisibility(View.VISIBLE);
                 }
                 return;
             }
         }
+    }
+
+    private static LinearLayout getDetailsView(Button button){
+        LinearLayout deviceButtonView = (LinearLayout) button.getParent();
+        int deviceViewChildrenCount = deviceButtonView.getChildCount();
+        for (int j = 0; j < deviceViewChildrenCount; j++) {
+            View view = deviceButtonView.getChildAt(j);
+            if (!(view instanceof Button)) {
+                return (LinearLayout) view;
+            }
+        }
+        return null;
     }
 
 //    public static void pieChartHandler(){

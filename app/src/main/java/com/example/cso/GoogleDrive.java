@@ -322,22 +322,24 @@ public class GoogleDrive {
                     String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
                     GoogleCloud.Storage storage = MainActivity.googleCloud.getStorage(new GoogleCloud.Tokens(accessToken,refreshToken));
 
-                    Map<String, Object> updatedValues = new HashMap<String, Object>() {{
-                        put("totalStorage", storage.getTotalStorage());
-                    }};
-                    MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
-                    updatedValues = new HashMap<String, Object>() {{
-                        put("usedStorage", storage.getUsedStorage());
-                    }};
-                    MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
-                    updatedValues = new HashMap<String, Object>() {{
-                        put("usedInDriveStorage", storage.getUsedInDriveStorage());
-                    }};
-                    MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
-                    updatedValues = new HashMap<String, Object>() {{
-                        put("UsedInGmailAndPhotosStorage", storage.getUsedInGmailAndPhotosStorage());
-                    }};
-                    MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                    if (storage != null) {
+                        Map<String, Object> updatedValues = new HashMap<String, Object>() {{
+                            put("totalStorage", storage.getTotalStorage());
+                        }};
+                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                        updatedValues = new HashMap<String, Object>() {{
+                            put("usedStorage", storage.getUsedStorage());
+                        }};
+                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                        updatedValues = new HashMap<String, Object>() {{
+                            put("usedInDriveStorage", storage.getUsedInDriveStorage());
+                        }};
+                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                        updatedValues = new HashMap<String, Object>() {{
+                            put("UsedInGmailAndPhotosStorage", storage.getUsedInGmailAndPhotosStorage());
+                        }};
+                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                    }
                 }
             }
         });
@@ -430,22 +432,25 @@ public class GoogleDrive {
             }
 
             if(isBackedUpAndDeleted){
-                String syncAssetsFolderId = GoogleDriveFolders.getParentFolderId(sourceUserEmail);
-                System.out.println("starting to recursively delete files ");
-                recursivelyDeleteFolder(sourceDriveService,syncAssetsFolderId,ableToMoveAllAssets);
-                boolean isRevoked = false;
-                System.out.println("starting to revoke ");
-                isRevoked = GoogleCloud.startInvalidateTokenThread(sourceUserEmail);
-                if (isRevoked){
-                    System.out.println("starting to delete account and related asset");
-                    MainActivity.dbHelper.deleteAccountAndRelatedAssets(sourceUserEmail);
-                    GoogleDrive.startThreads();
-                }
+                unlinkSingleAccount(sourceUserEmail,sourceDriveService,ableToMoveAllAssets);
             }
         });
 
         moveFromSourceToDestinationAccountsThread.start();
+    }
 
+    public static void unlinkSingleAccount(String sourceUserEmail, Drive sourceDriveService, boolean ableToMoveAllAssets){
+        String syncAssetsFolderId = GoogleDriveFolders.getParentFolderId(sourceUserEmail);
+        System.out.println("starting to recursively delete files ");
+        recursivelyDeleteFolder(sourceDriveService,syncAssetsFolderId,ableToMoveAllAssets);
+        boolean isRevoked = false;
+        System.out.println("starting to revoke ");
+        isRevoked = GoogleCloud.startInvalidateTokenThread(sourceUserEmail);
+        if (isRevoked){
+            System.out.println("starting to delete account and related asset");
+            MainActivity.dbHelper.deleteAccountAndRelatedAssets(sourceUserEmail);
+            GoogleDrive.startThreads();
+        }
     }
 
 

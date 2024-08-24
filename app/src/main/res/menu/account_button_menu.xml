@@ -6,5 +6,12 @@
         android:id="@+id/unlink"
         android:title="Unlink"
         />
-
+    <item
+        android:id="@+id/details"
+        android:title="Details"
+        />
+    <item
+        android:id="@+id/reportStolen"
+        android:title="reportStolen"
+        />
 </menu>
