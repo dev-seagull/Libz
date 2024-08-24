@@ -3,6 +3,7 @@ package com.example.cso;
 import static com.example.cso.DBHelper.dbReadable;
 import static com.example.cso.DBHelper.dbWritable;
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -54,7 +55,7 @@ public class DeviceHandler {
             dbWritable.execSQL(sqlQuery, new Object[]{deviceName, deviceId});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to insert into device table: " + e.getLocalizedMessage(), true);
+            FirebaseCrashlytics.getInstance().recordException(e);
         } finally {
             dbWritable.endTransaction();
         }

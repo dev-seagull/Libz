@@ -1,11 +1,13 @@
 package com.example.cso;
 
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -16,7 +18,8 @@ public class Deactivation {
 
     public static boolean isDeactivationFileExists() {
         String fileName = "deActive_" + MainActivity.androidUniqueDeviceIdentifier + ".json";
-        boolean[] isFileExists = {false};
+        boolean[] fileExists = {false};
+
         Thread downloadThread = new Thread(() -> {
             try {
                 String accessToken = MainActivity.googleCloud.updateAccessToken(Support.getSupportRefreshToken()).getAccessToken();
@@ -30,28 +33,22 @@ public class Deactivation {
                         .execute();
 
                 if (!result.getFiles().isEmpty()) {
-                    LogHandler.saveLog("File not found: " + fileName, true);
-                    isFileExists[0] = true;
+                    Log.d("Deactivate","Deactivation file found: " +fileName );
+                    fileExists[0] = true;
+                }else{
+                    Log.d("Deactivate","Deactivation file not found: " +fileName );
                 }
             }catch (Exception e) {
-                LogHandler.saveLog("Failed to check file existing : " + e.getLocalizedMessage(), true);
+                FirebaseCrashlytics.getInstance().recordException(e);
             }
         });
         downloadThread.start();
         try {
             downloadThread.join();
         } catch (InterruptedException e) {
-            LogHandler.saveLog("Failed to join download thread: " + e.getLocalizedMessage(), true);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
-        return isFileExists[0];
-    }
-
-    public static void checkDeActivated() {
-        if (Deactivation.isDeactivationFileExists()){
-            MainActivity.activity.runOnUiThread(() -> Toast.makeText(MainActivity.activity,
-                    "you're deActivated, Call support", Toast.LENGTH_SHORT).show());
-            MainActivity.activity.finish();
-        }
+        return fileExists[0];
     }
 
 }

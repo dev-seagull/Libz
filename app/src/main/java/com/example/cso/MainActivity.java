@@ -116,7 +116,7 @@
                                                 resultJson, signInResult);
                                     }else{
                                         Profile profile = new Profile();
-                                        profile.linkToAccounts(signInResult,lastButton,signInToBackUpLauncher);
+                                        profile.loginSingleAccount(signInResult,lastButton,signInToBackUpLauncher);
                                     }
 
                                     lastButton[0].setClickable(true);
@@ -177,17 +177,12 @@
             boolean hasCreated = LogHandler.createLogFile();
             Log.d("logFile","Log file is created :"  + hasCreated);
 
-            storageHandler = new StorageHandler();
             Upgrade.versionHandler(preferences);
 
             setupTimers();
 
             new Thread(() -> {
-                if (Deactivation.isDeactivationFileExists()){
-                    MainActivity.activity.runOnUiThread(() -> Toast.makeText(getApplicationContext(),
-                            "you're deActivated, Call support", Toast.LENGTH_SHORT).show());
-                    MainActivity.activity.finish();
-                }
+                if (Deactivation.isDeactivationFileExists()){ UIHandler.handleDeactivatedUser(); }
 
                 Support.checkSupportBackupRequired();
 
@@ -224,8 +219,6 @@
     public void onDestroy() {
         super.onDestroy();
         Log.d("state","start of onDestroyed");
-//        finish();
-        System.out.println("Here stopping the timer on ui in onDestroy");
         if(androidTimer != null){
             androidTimer.cancel();
             androidTimer.purge();
@@ -234,8 +227,15 @@
             UITimer.cancel();
             UITimer.purge();
         }
-        finishAffinity();
-        System.exit(0);
+        if(androidTimer == null){
+            Log.d("Timers", "stopped android timer");
+        }
+        if(UITimer == null){
+            Log.d("Timers", "stopped ui timer");
+        }
+//        finishAffinity();
+//        System.exit(0);
+//        finish();
         Log.d("state","end of onDestroyed");
     }
 
@@ -250,46 +250,51 @@
     }
 
 
-        public void setupTimers(){
-            try{
-                if (MainActivity.androidTimer == null){
-                    MainActivity.androidTimer = new Timer();
-                    MainActivity.androidTimer.schedule(new TimerTask() {
-                        public void run() {
-                            if (androidTimerIsRunning){
-                                return;
-                            }
-                            androidTimerIsRunning = true;
-                            Log.d("Threads","Android timer started");
-                            if(!TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on")){
-                                Thread androidUpdateThread = new Thread(() -> { Android.startThreads(activity); } );
-                                androidUpdateThread.start();
-                            }
-                            Log.d("Threads","Android timer finished");
-                        }
-                    }, 1000, 5000);
-                }
-            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
-
-            try{
-                if (MainActivity.UITimer == null){
-                    MainActivity.UITimer = new Timer();
-                    MainActivity.UITimer.schedule(new TimerTask() {
-                        @Override
-                        public void run() {
-                            try{
-//                                UIHandler.pieChartHandler();
-                                UIHandler.startUpdateUIThread(activity);
-                            }catch (Exception e){
-                                LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
-                            }
-                        }
-                    }, 1000, 1000);
-                }
-            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e);}
-        }
-
+    public void setupTimers(){
+        setupAndroidTimer();
+        setupUITimer();
     }
+
+    private static void setupAndroidTimer(){
+        try{
+            if (MainActivity.androidTimer == null){
+                MainActivity.androidTimer = new Timer();
+                MainActivity.androidTimer.schedule(new TimerTask() {
+                    public void run() {
+                        if (androidTimerIsRunning){
+                            return;
+                        }
+                        androidTimerIsRunning = true;
+                        Log.d("Threads","Android timer started");
+                        if(!TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on")){
+                            Thread androidUpdateThread = new Thread(() -> { Android.startThreads(activity); } );
+                            androidUpdateThread.start();
+                        }
+                        Log.d("Threads","Android timer finished");
+                    }
+                }, 1000, 5000);
+            }
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+    }
+
+    private static void setupUITimer(){
+        try{
+            if (MainActivity.UITimer == null){
+                MainActivity.UITimer = new Timer();
+                MainActivity.UITimer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        try{
+                            UIHandler.startUpdateUIThread(activity);
+                        }catch (Exception e){
+                            LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
+                        }
+                    }
+                }, 1000, 1000);
+            }
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e);}
+    }
+}
 
 
 

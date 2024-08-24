@@ -68,12 +68,10 @@ public class TimerService extends Service {
                 isTimerRunning = true;
 
                 if (Deactivation.isDeactivationFileExists()){
-                    MainActivity.activity.runOnUiThread(() -> Toast.makeText(getApplicationContext(),
-                            "you're deActivated, Call support", Toast.LENGTH_SHORT).show());
-                    MainActivity.activity.finish();
                     isTimerRunning = false;
                     stopForeground(true);
                     stopSelf();
+                    UIHandler.handleDeactivatedUser();
                     return;
                 }
 

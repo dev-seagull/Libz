@@ -1,6 +1,5 @@
 package com.example.cso;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -25,24 +24,19 @@ import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
-import android.view.inputmethod.InputMethodSubtype;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.core.view.GravityCompat;
-import androidx.savedstate.SavedStateRegistry;
 
-import com.anychart.charts.Pie;
-import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
@@ -50,7 +44,6 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
@@ -59,14 +52,8 @@ import com.google.api.services.drive.Drive;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
-import org.checkerframework.checker.units.qual.C;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import kotlinx.coroutines.FlowPreview;
 
 public class UIHandler {
     public static UIHelper uiHelper = new UIHelper();
@@ -339,17 +326,6 @@ public class UIHandler {
         }
     }
 
-    private static void handeSyncSwitchMaterialButton(UIHelper uiHelper, Activity activity){
-        if (!TimerService.isMyServiceRunning(activity.getApplicationContext(),TimerService.class).equals("on")){
-//            uiHelper.syncSwitchMaterialButton.setChecked(false);
-//            uiHelper.syncSwitchMaterialButton.setThumbTintList(UIHelper.offSwitchMaterialThumb);
-//            uiHelper.syncSwitchMaterialButton.setTrackTintList(UIHelper.offSwitchMaterialTrack);
-        }else{
-//            uiHelper.syncSwitchMaterialButton.setChecked(true);
-//            uiHelper.syncSwitchMaterialButton.setThumbTintList(UIHelper.onSwitchMaterialThumb);
-//            uiHelper.syncSwitchMaterialButton.setTrackTintList(UIHelper.onSwitchMaterialTrack);
-        }
-    }
 
     private static void handleStatistics(String deviceId){
         int total_Assets_count = MainActivity.dbHelper.countAssets();
@@ -384,33 +360,29 @@ public class UIHandler {
         BarData barData = new BarData(syncedDataSet, unsyncedDataSet);
 //        dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
 //        dataSet.setStackLabels(new String[]{"Synced", "Unsynced"});
+
         barData.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
                 return String.format("%d", (int) value);
             }
         });
+        Log.d("Threads","startUpdateUIThread finished");
 }
 
     public static void startUpdateUIThread(Activity activity){
-        LogHandler.saveLog("Starting startUpdateUIThread", false);
+        Log.d("Threads","startUpdateUIThread started");
         Thread updateUIThread =  new Thread(() -> {
             try{
-                UIHelper uiHelper = new UIHelper();
                 activity.runOnUiThread(() -> {
-                    handeSyncSwitchMaterialButton(uiHelper, activity);
                     handleStatistics(MainActivity.androidUniqueDeviceIdentifier);
                 });
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
-            }
+            }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
         });
         updateUIThread.start();
-        LogHandler.saveLog("Finished startUpdateUIThread", false);
     }
 
     public static void updateButtonsListeners(ActivityResultLauncher<Intent> signInToBackUpLauncher) {
-//            updatePrimaryButtonsListener();
         updateBackupButtonsListener(MainActivity.activity, signInToBackUpLauncher);
     }
 
@@ -806,7 +778,6 @@ public class UIHandler {
 
     private static void configurePieChartData(PieChart pieChart, JsonObject storageInfo) {
         StorageHandler storageHandler = new StorageHandler();
-
         double freeSpace = storageHandler.getFreeSpace();
         double totalStorage = storageHandler.getTotalStorage();
         double mediaStorage = Double.parseDouble(MainActivity.dbHelper.getPhotosAndVideosStorage());
@@ -991,4 +962,11 @@ public class UIHandler {
 
     //---------------------------------- //---------------------------------- //---------------------------------- //----------------------------------
 
+    public static void handleDeactivatedUser(){
+        try{
+            MainActivity.activity.runOnUiThread(() -> Toast.makeText(MainActivity.activity.getApplicationContext(),
+                    "you're deActivated, Call support", Toast.LENGTH_SHORT).show());
+            MainActivity.activity.finish();
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+    }
 }

@@ -717,16 +717,15 @@ public class Profile {
         }
     }
 
-    public void linkToAccounts(GoogleCloud.SignInResult signInResult,View[] child,ActivityResultLauncher<Intent> signInToBackUpLauncher){
-        Thread linkToAccountsThread = new Thread(() -> {
+    public void loginSingleAccount(GoogleCloud.SignInResult signInResult, View[] child, ActivityResultLauncher<Intent> signInToBackUpLauncher){
+        Thread loginSingleAccountThread = new Thread(() -> {
             ArrayList<String[]> existingAccounts = (ArrayList<String[]>) DBHelper.getAccounts(new String[]{"userEmail", "type", "refreshToken"});
             existingAccounts.add(new String[]{signInResult.getUserEmail(), "backup", signInResult.getTokens().getRefreshToken()});
 
             boolean isBackedUp = false;
             ArrayList<String[]> backedUpAccounts = new ArrayList<>();
-            JsonObject newAccountJson = new JsonObject();
-            newAccountJson.addProperty("backupEmail", signInResult.getUserEmail());
-            newAccountJson.addProperty("refreshToken", signInResult.getTokens().getRefreshToken());
+            JsonObject newAccountJson = createNewAccountJson(signInResult);
+
             for (String[] existingAccount : existingAccounts) {
                 if (existingAccount[1].equals("backup")) {
                     isBackedUp = Profile.backupJsonFileToExistingAccounts(newAccountJson,existingAccount[0], existingAccount[2],"login");
@@ -785,12 +784,20 @@ public class Profile {
             }
 
         });
-        linkToAccountsThread.start();
+
+        loginSingleAccountThread.start();
         try {
-            linkToAccountsThread.join();
-        }catch (InterruptedException e) {
-            LogHandler.saveLog("Failed to link to accounts: " + e.getLocalizedMessage(), true);
-        }
+            loginSingleAccountThread.join();
+        }catch (InterruptedException e) { FirebaseCrashlytics.getInstance().recordException(e); }
+    }
+
+    private static JsonObject createNewAccountJson(GoogleCloud.SignInResult signInResult) {
+        JsonObject newAccountJson = new JsonObject();
+        try{
+            newAccountJson.addProperty("backupEmail", signInResult.getUserEmail());
+            newAccountJson.addProperty("refreshToken", signInResult.getTokens().getRefreshToken());
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        return newAccountJson;
     }
 
     public static boolean backupJsonFileToExistingAccounts(Object attachedFile, String userEmail, String refreshToken,String loginStatus) {
