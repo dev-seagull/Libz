@@ -188,7 +188,7 @@
 
                 if (Profile.hasJsonChanged()){
                     System.out.println("profile json changed");
-                    dbHelper.updateDatabaseBasedOnJson();
+                    dbHelper.updateDatabaseBase dOnJson();
                 }
             }).start();
 
