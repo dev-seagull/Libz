@@ -576,10 +576,12 @@ public class UIHandler {
 
             int assetsSize = GoogleDrive.getAssetsSizeOfDriveAccount(userEmail);
 
+            System.out.println("other accounts size : " + otherAccountsSize[0]);
+
             String[] text = {""};
             boolean[] ableToMoveAllAssets = {false};
             if (otherAccountsSize[0] == 0){
-                text[0] = "Caution : All of your assets in " + userEmail + "will be out of sync";
+                text[0] = "Caution : All of your assets in " + userEmail + " will be out of sync.";
             }else{
                 if (totalFreeSpace < assetsSize) {
                     text[0] = "Approximately " + totalFreeSpace / 1024 + " GB out of " + assetsSize / 1024 + " GB of your assets in " + userEmail + " will be moved to other accounts." +
@@ -653,6 +655,7 @@ public class UIHandler {
         ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromDB();
         for (DeviceHandler device : devices) {
             if (!buttonExistsInUI(device.getDeviceId())) {
+                System.out.println("creating button for device " + device.getDeviceName());
                 View newDeviceButtonView = createNewDeviceButtonView(MainActivity.activity, device);
                 uiHelper.deviceButtons.addView(newDeviceButtonView);
             }
