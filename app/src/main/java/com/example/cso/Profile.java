@@ -35,14 +35,12 @@ public class Profile {
         JsonObject resultJson = new JsonObject();
         try{
             JsonArray backupAccountsJson = createBackUpAccountsJson();
-            JsonArray primaryAccountsJson = createPrimaryAccountsJson();
             JsonArray deviceInfoJson = createDeviceInfoJsonBasedDB();
 
             resultJson.add("backupAccounts", backupAccountsJson);
-            resultJson.add("primaryAccounts", primaryAccountsJson);
             resultJson.add("deviceInfo", deviceInfoJson);
         }catch (Exception e){
-            LogHandler.saveLog("Failed to create profile map content : " + e.getLocalizedMessage() , true);
+            FirebaseCrashlytics.getInstance().recordException(e);
         }finally {
             return  resultJson;
         }
@@ -92,24 +90,6 @@ public class Profile {
         }
     }
 
-    private static JsonArray createPrimaryAccountsJson(){
-        JsonArray primaryAccountsJson = new JsonArray();
-        try{
-            List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
-            for (String[] account_row : account_rows){
-                if (account_row[1].equals("primary")){
-                    JsonObject primaryAccount = new JsonObject();
-                    primaryAccount.addProperty("primaryEmail", account_row[0]);
-                    primaryAccount.addProperty("refreshToken", account_row[2]);
-                    primaryAccountsJson.add(primaryAccount);
-                }
-            }
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to create primary accounts json: " + e.getLocalizedMessage(), true);
-        }finally {
-            return primaryAccountsJson;
-        }
-    }
 
     public static JsonObject readProfileMapContent(String userEmail, String accessToken) {
         JsonObject[] resultJson = {null};
@@ -777,13 +757,7 @@ public class Profile {
             }else{
                 LogHandler.saveLog("login with back up launcher failed with response code : " + signInResult.getHandleStatus());
                 MainActivity.activity.runOnUiThread(() -> {
-                    LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
-                    View child2 = backupButtonsLinearLayout.getChildAt(
-                            backupButtonsLinearLayout.getChildCount() - 1);
-                    if(child2 instanceof Button){
-                        Button bt = (Button) child2;
-                        bt.setText("ADD A BACK UP ACCOUNT");
-                    }
+                    UIHandler.handleSignInFailure(signInToBackUpLauncher);
                     UIHandler.updateButtonsListeners(signInToBackUpLauncher);
                 });
             }
