@@ -1,12 +1,8 @@
 package com.example.cso;
 
 import android.content.Intent;
-import android.os.Build;
-import android.os.Looper;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.LinearLayout;
 
 import androidx.activity.result.ActivityResultLauncher;
 
@@ -583,7 +579,7 @@ public class Profile {
                         Log.d("signInToBackUpLauncher", "handleDeviceInsertion finished");
 
                         Log.d("signInToBackUpLauncher", "handleNewAccounts started");
-                        handleNewAccounts(signInToBackUpLauncher, child, linkedAccounts);
+                        handleNewAccounts(linkedAccounts);
                         Log.d("signInToBackUpLauncher", "handleNewAccounts finished");
 
                         GoogleDrive.startThreads();
@@ -616,10 +612,10 @@ public class Profile {
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
     }
 
-    private static void handleNewAccounts(ActivityResultLauncher<Intent> signInToBackUpLauncher,
-                                          View[] child, ArrayList<GoogleCloud.SignInResult> signInLinkedAccountsResult){
+    private static void handleNewAccounts(ArrayList<GoogleCloud.SignInResult> signInLinkedAccountsResult){
         Thread handleAccountInsertionThread =  new Thread(() -> {
            try{
+               Log.d("Threads" ,"handleAccountInsertionThread started");
                for (GoogleCloud.SignInResult signInLinkedAccountResult : signInLinkedAccountsResult) {
                    String userEmail = signInLinkedAccountResult.getUserEmail();
                    String accessToken = signInLinkedAccountResult.getTokens().getAccessToken();
@@ -634,6 +630,7 @@ public class Profile {
                            signInLinkedAccountResult.getStorage().getUsedInDriveStorage(),
                            signInLinkedAccountResult.getStorage().getUsedInGmailAndPhotosStorage());
                }
+               Log.d("Threads" ,"handleAccountInsertionThread finished");
            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e) ;}
         });
         handleAccountInsertionThread.start();
@@ -672,9 +669,9 @@ public class Profile {
         }
     }
 
-    public void loginSingleAccount(GoogleCloud.SignInResult signInResult, View[] child, ActivityResultLauncher<Intent> signInToBackUpLauncher){
+    public void loginSingleAccount(GoogleCloud.SignInResult signInResult){
         Thread loginSingleAccountThread = new Thread(() -> {
-            ArrayList<String[]> existingAccounts = (ArrayList<String[]>) DBHelper.getAccounts(new String[]{"userEmail", "type", "refreshToken"});
+            List<String[]> existingAccounts = DBHelper.getAccounts(new String[]{"userEmail", "type", "refreshToken"});
             existingAccounts.add(new String[]{signInResult.getUserEmail(), "backup", signInResult.getTokens().getRefreshToken()});
 
             boolean isBackedUp = false;
@@ -683,13 +680,9 @@ public class Profile {
 
             for (String[] existingAccount : existingAccounts) {
                 if (existingAccount[1].equals("backup")) {
-                    isBackedUp = Profile.backupJsonFileToExistingAccounts(newAccountJson,existingAccount[0], existingAccount[2],"login");
+                    isBackedUp = Profile.backupJsonFileToExistingAccount(newAccountJson,existingAccount[0], existingAccount[2],"login");
                     if (!isBackedUp){
-                        for(String[] backedUpExistingAccount: backedUpAccounts){
-                            String userEmail = backedUpExistingAccount[0];
-                            String accessToken = MainActivity.googleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
-                            Profile.deleteProfileFile(userEmail, accessToken, false);
-                        }
+                        handleLoginToSingleAccountFailure(backedUpAccounts);
                         break;
                     }else{
                         backedUpAccounts.add(existingAccount);
@@ -697,13 +690,30 @@ public class Profile {
                 }
             }
 
-
             if(isBackedUp){
-                for(String[] backedUpExistingAccount: existingAccounts){
+                handleLoginToSingleAccountSuccess(backedUpAccounts,signInResult);
+                GoogleDrive.startThreads();
+            }else{
+                LogHandler.saveLog("login with back up launcher failed with response code : " + signInResult.getHandleStatus());
+            }
+        });
+
+        loginSingleAccountThread.start();
+        try {
+            loginSingleAccountThread.join();
+        }catch (InterruptedException e) { FirebaseCrashlytics.getInstance().recordException(e); }
+    }
+
+    private static void handleLoginToSingleAccountSuccess(List<String[]> backedUpAccounts,GoogleCloud.SignInResult signInResult){
+        Thread handleLoginToSingleAccountSuccessThread = new Thread( () -> {
+            Log.d("Threads" ,"handleLoginToSingleAccountSuccessThread started");
+            try{
+                for(String[] backedUpExistingAccount: backedUpAccounts){
                     String userEmail = backedUpExistingAccount[0];
                     String accessToken = MainActivity.googleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
-                    Profile.deleteProfileFile(userEmail, accessToken, true);
+                    Profile.deleteProfileFile(userEmail, accessToken, false);
                 }
+
                 MainActivity.dbHelper.insertIntoAccounts(signInResult.getUserEmail(),
                         "backup",signInResult.getTokens().getRefreshToken(),
                         signInResult.getTokens().getAccessToken(),
@@ -711,24 +721,21 @@ public class Profile {
                         signInResult.getStorage().getUsedStorage(),
                         signInResult.getStorage().getUsedInDriveStorage(),
                         signInResult.getStorage().getUsedInGmailAndPhotosStorage());
-
-                LogHandler.saveLog("Starting Drive threads",false);
-                GoogleDrive.startThreads();
-                LogHandler.saveLog("Finished Drive threads",false);
-            }else{
-                LogHandler.saveLog("login with back up launcher failed with response code : " + signInResult.getHandleStatus());
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                System.out.println("is display4 in main thread: "  + Looper.getMainLooper().isCurrentThread());
-            }
-
+                Log.d("Threads" ,"handleLoginToSingleAccountSuccessThread finished");
+            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
         });
+        handleLoginToSingleAccountSuccessThread.start();
+        try{
+            handleLoginToSingleAccountSuccessThread.join();
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+    }
 
-        loginSingleAccountThread.start();
-        try {
-            loginSingleAccountThread.join();
-        }catch (InterruptedException e) { FirebaseCrashlytics.getInstance().recordException(e); }
+    private static void handleLoginToSingleAccountFailure(List<String[]> backedUpAccounts){
+        for(String[] backedUpExistingAccount: backedUpAccounts){
+            String userEmail = backedUpExistingAccount[0];
+            String accessToken = MainActivity.googleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
+            Profile.deleteProfileFile(userEmail, accessToken, false);
+        }
     }
 
     private static JsonObject createNewAccountJson(GoogleCloud.SignInResult signInResult) {
@@ -740,7 +747,7 @@ public class Profile {
         return newAccountJson;
     }
 
-    public static boolean backupJsonFileToExistingAccounts(Object attachedFile, String userEmail, String refreshToken,String loginStatus) {
+    public static boolean backupJsonFileToExistingAccount(Object attachedFile, String userEmail, String refreshToken, String loginStatus) {
         boolean[] isBackedUp = {false};
         Thread backUpJsonThread = new Thread(() -> {
             try{
@@ -885,7 +892,7 @@ public class Profile {
         boolean isBackedUp = false;
         for(String[] account: existingAccounts){
             if (account[1].equals("backup") && !account[0].equals(unlinkedUserEmail)){
-                isBackedUp = backupJsonFileToExistingAccounts(unlinkedUserEmail, account[0], account[2],"unlink");
+                isBackedUp = backupJsonFileToExistingAccount(unlinkedUserEmail, account[0], account[2],"unlink");
                 if (!isBackedUp){
                     for(String[] backedUpExistingAccount: backedUpAccounts){
                         String userEmail = backedUpExistingAccount[0];
