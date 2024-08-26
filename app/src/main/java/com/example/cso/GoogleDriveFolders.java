@@ -14,10 +14,14 @@ import java.util.HashMap;
 import java.util.List;
 
 public class GoogleDriveFolders {
-    public static String parentFolderName = "stash_synced_assets";
+    public static String parentFolderName = "libz_app";
     public static String assetsFolderName = "assets";
-    public static String profileFolderName = "stash_user_profile";
-    public static String databaseFolderName = "libz_database";
+    public static String profileFolderName = "profile";
+    public static String databaseFolderName = "database";
+    public static String oldParentFolderName = "stash_synced_assets";
+    public static String oldProfileFolderName = "stash_user_profile";
+    public static String oldDatabaseFolderName = "libz_database";
+    public static String oldAssetsFolderName = "assets";
 
     public static void initializeFolders(String userEmail, String accessToken){
         initializeParentFolder(userEmail,accessToken);
