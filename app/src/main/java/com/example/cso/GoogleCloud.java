@@ -327,6 +327,10 @@
                             Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
                         });
                     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 22c79698a7a84201eed18cd0ccabddf4334ee688
                 }catch (Exception e){
                     LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
                 }
