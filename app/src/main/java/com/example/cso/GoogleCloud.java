@@ -327,7 +327,6 @@
                             Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
                         });
                     }
-                    GoogleDriveFolders.initializeAllFolders(userEmail[0],tokens[0].getAccessToken());
                 }catch (Exception e){
                     LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
                 }

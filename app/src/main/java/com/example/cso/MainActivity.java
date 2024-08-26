@@ -86,7 +86,7 @@
                             Thread signInToBackUpThread = new Thread(() -> {
                                 try {
                                     Log.d("signInToBackUpLauncher","Sign in started");
-                                    final GoogleCloud.SignInResult signInResult =
+                                    GoogleCloud.SignInResult signInResult =
                                             googleCloud.handleSignInToBackupResult(result.getData());
                                     Log.d("signInToBackUpLauncher","Sign in finished");
 
@@ -94,6 +94,10 @@
                                     String accessToken = signInResult.getTokens().getAccessToken();
                                     Log.d("signInToBackUpLauncher","userEmail: " + userEmail);
                                     Log.d("signInToBackUpLauncher","accessTokenNull : " + (accessToken == null));
+
+                                    Log.d("signInToBackUpLauncher","Sign in started");
+                                    GoogleDriveFolders.initializeFolders(userEmail,accessToken);
+                                    Log.d("signInToBackUpLauncher","Sign in finished");
 
                                     Log.d("signInToBackUpLauncher","Reading profile map started");
                                     JsonObject resultJson = Profile.readProfileMapContent(userEmail,accessToken);
