@@ -15,21 +15,32 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class GoogleDriveFolders {
-    public static String parentFolderName = "stash_synced_assets";
+    public static String parentFolderName = "libz_app";
     public static String assetsFolderName = "assets";
-    public static String profileFolderName = "stash_user_profile";
-    public static String databaseFolderName = "libz_database";
+    public static String profileFolderName = "profile";
+    public static String databaseFolderName = "database";
+    public static String oldParentFolderName = "stash_synced_assets";
+    public static String oldProfileFolderName = "stash_user_profile";
+    public static String oldDatabaseFolderName = "libz_database";
+    public static String oldAssetsFolderName = "assets";
 
     public static void initializeAllFolders(String userEmail, String accessToken){
         System.out.println("initializing all folders for user " + userEmail + "with access token " + accessToken);
-        initializeParentFolder(userEmail,accessToken);
+        createParentFolder(userEmail,accessToken);
         initializeProfileFolder(userEmail,accessToken);
         initializeDatabaseFolder(userEmail,accessToken);
         initializeAssetsFolder(userEmail,accessToken);
     }
-    public static void initializeParentFolder(String userEmail, String accessToken){
+    public static void createParentFolder(String userEmail, String accessToken){
         Drive service = GoogleDrive.initializeDrive(accessToken);
+        System.out.println("service is : " + service);
+        try {
+            System.out.println("is access token valid for parent : " + GoogleCloud.isAccessTokenValid(accessToken));
+        }catch (Exception e){
+            System.out.println("Access token exception : " + e.getLocalizedMessage());
+        }
         String syncAssetsFolderId = searchForParentFolder(service);
+        System.out.println("sync assets fodler id after search is : " + syncAssetsFolderId);
         if (syncAssetsFolderId != null){
             String finalSyncAssetsFolderId = syncAssetsFolderId;
             HashMap<String, Object> updatedValues = new HashMap<String, Object>() {{
@@ -41,21 +52,24 @@ public class GoogleDriveFolders {
             try{
                 folder_metadata.setName(parentFolderName);
                 folder_metadata.setMimeType("application/vnd.google-apps.folder");
+                System.out.println("try to create folder");
                 File folder = service.files().create(folder_metadata)
                         .setFields("id")
                         .execute();
-
+                System.out.println("after try to create folder : " + folder.getId());
                 syncAssetsFolderId = folder.getId();
                 Log.d("folder","stash_synced_assets id:" + syncAssetsFolderId);
                 String finalSyncAssetsFolderId = syncAssetsFolderId;
                 HashMap<String, Object> updatedValues = new HashMap<String, Object>() {{
                     put("parentFolderId", finalSyncAssetsFolderId);
                 }};
+                System.out.println("hash map is : " + updatedValues);
                 MainActivity.dbHelper.updateAccounts(userEmail,updatedValues, "backup");
 
             }catch (Exception e){
+                System.out.println("failed to create parent folder : " + e.getLocalizedMessage());
                 FirebaseCrashlytics.getInstance().recordException(e);
-            }
+             }
         }
     }
 
@@ -77,7 +91,7 @@ public class GoogleDriveFolders {
             return syncAssetsFolderId;
         }else{
             String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
-            initializeParentFolder(userEmail,accessToken);
+            createParentFolder(userEmail,accessToken);
             return DBHelper.getParentFolderIdFromDB(userEmail);
         }
     }
