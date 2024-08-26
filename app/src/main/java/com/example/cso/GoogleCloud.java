@@ -341,78 +341,6 @@
             return new SignInResult(userEmail[0], isHandled[0], isInAccounts[0], tokens[0], storage[0], null);
         }
 
-        public Button createPrimaryLoginButton(LinearLayout linearLayout){
-            Button newLoginButton = new Button(activity);
-            Drawable loginButtonLeftDrawable = activity.getApplicationContext().getResources()
-                    .getDrawable(R.drawable.googlephotosimage);
-            newLoginButton.setCompoundDrawablesWithIntrinsicBounds
-                    (loginButtonLeftDrawable, null, null, null);
-
-            newLoginButton.setText("Add a primary account");
-            newLoginButton.setGravity(Gravity.CENTER);
-            newLoginButton.setVisibility(View.VISIBLE);
-            newLoginButton.setBackgroundTintList(UIHelper.primaryAccountButtonColor);
-            newLoginButton.setPadding(40,0,150,0);
-            newLoginButton.setTextSize(12);
-            newLoginButton.setTextColor(Color.WHITE);
-            newLoginButton.setId(View.generateViewId());
-            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    200
-            );
-            layoutParams.setMargins(0,20,0,16);
-            newLoginButton.setLayoutParams(layoutParams);
-
-            AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
-            fadeIn.setDuration(2000);
-            newLoginButton.startAnimation(fadeIn);
-
-            if(linearLayout != null){
-                linearLayout.addView(newLoginButton);
-            }else{
-                LogHandler.saveLog("Creating a new login button failed", true);
-            }
-            return newLoginButton;
-        }
-
-        public Button createBackUpLoginButton(LinearLayout linearLayout){
-            Button newLoginButton = new Button(activity);
-            Drawable loginButtonLeftDrawable = UIHelper.driveImage;
-            newLoginButton.setCompoundDrawablesWithIntrinsicBounds
-                    (loginButtonLeftDrawable, null, null, null);
-            newLoginButton.setText("Add a back up account");
-            newLoginButton.setBackgroundResource(R.drawable.gradient_purple);
-            newLoginButton.setGravity(Gravity.CENTER);
-            newLoginButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-            newLoginButton.setVisibility(View.VISIBLE);
-            newLoginButton.setPadding(40,0,150,0);
-            newLoginButton.setTextSize(10);
-            UIHelper uiHelper = new UIHelper();
-            newLoginButton.setTextColor(uiHelper.buttonTextColor);
-            newLoginButton.setBackgroundResource(R.drawable.gradient_purple);
-            newLoginButton.setId(View.generateViewId());
-
-            DisplayMetrics displayMetrics = new DisplayMetrics();
-            activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    200
-            );
-            layoutParams.setMargins(0,20,0,16);
-            newLoginButton.setLayoutParams(layoutParams);
-
-            AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
-            fadeIn.setDuration(2000);
-            newLoginButton.startAnimation(fadeIn);
-
-            if(linearLayout != null){
-                linearLayout.addView(newLoginButton);
-            }else{
-                LogHandler.saveLog("Creating a new login button failed", true);
-            }
-            return newLoginButton;
-        }
-
         private GoogleCloud.Tokens getTokens(String authCode){
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<GoogleCloud.Tokens> backgroundTokensTask = () -> {
@@ -740,10 +668,11 @@
             return isBackedUp[0];
         }
 
-        public static void startUnlinkThreads(String buttonText, MenuItem item, Button button){
+        public static void startUnlinkThreads(String buttonText){
             Thread startSignOutThreads = new Thread(() -> {
                 GoogleDrive.startUpdateStorageThread();
                 boolean wantToUnlink = UIHandler.showMoveDriveFilesDialog(buttonText);
+                UIHandler.setupAccountButtons();
 
                 //note :  handle button text if click on wait button
 

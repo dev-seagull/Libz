@@ -65,7 +65,7 @@
             Log.d("androidId", androidUniqueDeviceIdentifier);
             Log.d("androidDeviceName", androidDeviceName);
 
-            initAppUI();
+            UIHandler.initAppUI();
 
 //            boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
 //            if(isFirstTime){
@@ -118,9 +118,7 @@
                                         Profile profile = new Profile();
                                         profile.loginSingleAccount(signInResult,lastButton,signInToBackUpLauncher);
                                     }
-
                                     lastButton[0].setClickable(true);
-
                                 }catch (Exception e){
                                     FirebaseCrashlytics.getInstance().recordException(e);
                                 }finally {
@@ -129,7 +127,7 @@
                             });
                             signInToBackUpThread.start();
                         }else{
-                            UIHandler.handleSignInFailure(signInToBackUpLauncher);
+                            UIHandler.setupAccountButtons();
                         }
                     });
 
@@ -191,7 +189,7 @@
                 }
             }).start();
 
-            UIHandler.updateButtonsListeners(signInToBackUpLauncher);
+            UIHandler.setupAccountButtons();
         }else{
             if(!isReadAndWritePermissionGranted && isStoragePermissionGranted){
                 Toast.makeText(getApplicationContext(),"Read and Write Permissions Required", Toast.LENGTH_LONG).show();
@@ -239,14 +237,6 @@
     }
 
 
-    private void initAppUI(){
-        UIHandler uiHandler = new UIHandler();
-        uiHandler.initializeDrawerLayout();
-        uiHandler.setupDeviceButtons();
-        uiHandler.initializeSyncButton();
-        uiHandler.initializeWifiOnlyButton();
-        uiHandler.initializeButtons(MainActivity.googleCloud);
-    }
 
 
     public void setupTimers(){

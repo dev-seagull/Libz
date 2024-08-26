@@ -376,7 +376,7 @@ public class Profile {
                     }
                 }else{
                     Log.d("signInToBackUpLauncher","Back up launcher failed with status : " + signInResult.getHandleStatus());
-                    UIHandler.handleSignInFailure(signInToBackUpLauncher);
+                    UIHandler.setupAccountButtons();
                 }
             }catch (Exception e){
                 LogHandler.saveLog("Failed to backup json file: " + e.getLocalizedMessage(), true);
@@ -613,11 +613,6 @@ public class Profile {
                         isDone = true;
                     }
                 }
-
-                if(!isDone){
-                    UIHandler.handleSignInFailure(signInToBackUpLauncher);
-                }
-
                 Log.d("signInToBackUpLauncher","Adding linked accounts finished");
             } catch (Exception e) {
                 LogHandler.saveLog("Failed to add linked accounts: " + e.getLocalizedMessage(), true);
@@ -661,12 +656,6 @@ public class Profile {
                            signInLinkedAccountResult.getStorage().getUsedStorage(),
                            signInLinkedAccountResult.getStorage().getUsedInDriveStorage(),
                            signInLinkedAccountResult.getStorage().getUsedInGmailAndPhotosStorage());
-
-                   new Thread(GoogleDrive::cleanDriveFolders).start();
-
-                   UIHandler uiHandler = new UIHandler();
-                   uiHandler.addAbackUpAccountToUI(MainActivity.activity, true, signInToBackUpLauncher,
-                           child, signInLinkedAccountResult);
                }
            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e) ;}
         });
@@ -746,20 +735,11 @@ public class Profile {
                         signInResult.getStorage().getUsedInDriveStorage(),
                         signInResult.getStorage().getUsedInGmailAndPhotosStorage());
 
-                new Thread(GoogleDrive::cleanDriveFolders).start();
-                UIHandler uiHandler = new UIHandler();
-                uiHandler.addAbackUpAccountToUI(MainActivity.activity,true,signInToBackUpLauncher,
-                        child,signInResult);
-
                 LogHandler.saveLog("Starting Drive threads",false);
                 GoogleDrive.startThreads();
                 LogHandler.saveLog("Finished Drive threads",false);
             }else{
                 LogHandler.saveLog("login with back up launcher failed with response code : " + signInResult.getHandleStatus());
-                MainActivity.activity.runOnUiThread(() -> {
-                    UIHandler.handleSignInFailure(signInToBackUpLauncher);
-                    UIHandler.updateButtonsListeners(signInToBackUpLauncher);
-                });
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
