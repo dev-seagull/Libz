@@ -21,6 +21,7 @@ public class GoogleDriveFolders {
     public static String databaseFolderName = "libz_database";
 
     public static void initializeAllFolders(String userEmail, String accessToken){
+        System.out.println("initializing all folders for user " + userEmail + "with access token " + accessToken);
         initializeParentFolder(userEmail,accessToken);
         initializeProfileFolder(userEmail,accessToken);
         initializeDatabaseFolder(userEmail,accessToken);
@@ -28,26 +29,46 @@ public class GoogleDriveFolders {
     }
     public static void initializeParentFolder(String userEmail, String accessToken){
         Drive service = GoogleDrive.initializeDrive(accessToken);
-        String syncAssetsFolderId = "";
-        File folder_metadata = new File();
-        try{
-            folder_metadata.setName(parentFolderName);
-            folder_metadata.setMimeType("application/vnd.google-apps.folder");
-            File folder = service.files().create(folder_metadata)
-                    .setFields("id")
-                    .execute();
-
-            syncAssetsFolderId = folder.getId();
-            Log.d("folder","stash_synced_assets id:" + syncAssetsFolderId);
+        String syncAssetsFolderId = searchForParentFolder(service);
+        if (syncAssetsFolderId != null){
             String finalSyncAssetsFolderId = syncAssetsFolderId;
             HashMap<String, Object> updatedValues = new HashMap<String, Object>() {{
                 put("parentFolderId", finalSyncAssetsFolderId);
             }};
             MainActivity.dbHelper.updateAccounts(userEmail,updatedValues, "backup");
+        }else{
+            File folder_metadata = new File();
+            try{
+                folder_metadata.setName(parentFolderName);
+                folder_metadata.setMimeType("application/vnd.google-apps.folder");
+                File folder = service.files().create(folder_metadata)
+                        .setFields("id")
+                        .execute();
 
-        }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+                syncAssetsFolderId = folder.getId();
+                Log.d("folder","stash_synced_assets id:" + syncAssetsFolderId);
+                String finalSyncAssetsFolderId = syncAssetsFolderId;
+                HashMap<String, Object> updatedValues = new HashMap<String, Object>() {{
+                    put("parentFolderId", finalSyncAssetsFolderId);
+                }};
+                MainActivity.dbHelper.updateAccounts(userEmail,updatedValues, "backup");
+
+            }catch (Exception e){
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
         }
+    }
+
+    public static String searchForParentFolder(Drive service){
+        try{
+            FileList files = service.files().list().execute();
+            for (File file : files.getFiles()) {
+                if (file.getName().equals(parentFolderName)){
+                    return file.getId();
+                }
+            }
+        }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
+        return null;
     }
 
     public static String getParentFolderId(String userEmail){

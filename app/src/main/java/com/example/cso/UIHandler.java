@@ -66,7 +66,7 @@ public class UIHandler {
         setupDeviceButtons();
         initializeSyncButton();
         initializeWifiOnlyButton();
-        setupAccountButtons();
+        setupAccountButtons();//initialize
     }
 
     public static void initializeWifiOnlyButton(){
@@ -418,7 +418,8 @@ public class UIHandler {
                         if (otherAccountsSize[0] == 0) {
                             String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
                             Drive service = GoogleDrive.initializeDrive(accessToken);
-                            GoogleDrive.unlinkSingleAccount(userEmail,service,ableToMoveAllAssets[0]);
+                            new Thread(() -> GoogleDrive.unlinkSingleAccount(userEmail,service,ableToMoveAllAssets[0])).start();
+                            UIHandler.setupAccountButtons();//unlink
                         }else{
                             GoogleDrive.moveFromSourceToDestinationAccounts(userEmail,ableToMoveAllAssets[0],(assetsSize - finalTotalFreeSpace));
                         }
@@ -898,7 +899,6 @@ public class UIHandler {
                         }
 
                     }
-                    setupAccountButtons();
                 }
         );
     }

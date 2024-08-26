@@ -116,7 +116,7 @@
                                                 resultJson, signInResult);
                                     }else{
                                         Profile profile = new Profile();
-                                        profile.loginSingleAccount(signInResult,lastButton,signInToBackUpLauncher);
+                                        profile.loginSingleAccount(signInResult);
                                     }
                                     lastButton[0].setClickable(true);
                                 }catch (Exception e){
@@ -124,6 +124,7 @@
                                 }finally {
                                     isAnyProccessOn = false;
                                 }
+                                UIHandler.setupAccountButtons();
                             });
                             signInToBackUpThread.start();
                         }else{
@@ -186,10 +187,10 @@
 
                 if (Profile.hasJsonChanged()){
                     dbHelper.updateDatabaseBasedOnJson();
+                    UIHandler.setupAccountButtons();
                 }
             }).start();
 
-            UIHandler.setupAccountButtons();
         }else{
             if(!isReadAndWritePermissionGranted && isStoragePermissionGranted){
                 Toast.makeText(getApplicationContext(),"Read and Write Permissions Required", Toast.LENGTH_LONG).show();

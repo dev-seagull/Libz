@@ -372,7 +372,6 @@ public class Profile {
                     }
                 }else{
                     Log.d("signInToBackUpLauncher","Back up launcher failed with status : " + signInResult.getHandleStatus());
-                    UIHandler.setupAccountButtons();
                 }
             }catch (Exception e){
                 LogHandler.saveLog("Failed to backup json file: " + e.getLocalizedMessage(), true);
