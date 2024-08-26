@@ -434,22 +434,31 @@ public class GoogleDrive {
             if(isBackedUpAndDeleted){
                 unlinkSingleAccount(sourceUserEmail,sourceDriveService,ableToMoveAllAssets);
             }
+            UIHandler.setupAccountButtons();//unlink
         });
 
         moveFromSourceToDestinationAccountsThread.start();
     }
 
     public static void unlinkSingleAccount(String sourceUserEmail, Drive sourceDriveService, boolean ableToMoveAllAssets){
-        String syncAssetsFolderId = GoogleDriveFolders.getParentFolderId(sourceUserEmail);
-        System.out.println("starting to recursively delete files ");
-        recursivelyDeleteFolder(sourceDriveService,syncAssetsFolderId,ableToMoveAllAssets);
-        boolean isRevoked = false;
-        System.out.println("starting to revoke ");
-        isRevoked = GoogleCloud.startInvalidateTokenThread(sourceUserEmail);
-        if (isRevoked){
-            System.out.println("starting to delete account and related asset");
-            MainActivity.dbHelper.deleteAccountAndRelatedAssets(sourceUserEmail);
-            GoogleDrive.startThreads();
+        Thread unlinkSingleAccountThread = new Thread( () -> {
+            String syncAssetsFolderId = GoogleDriveFolders.getParentFolderId(sourceUserEmail);
+            System.out.println("starting to recursively delete files ");
+            recursivelyDeleteFolderThread(sourceDriveService,syncAssetsFolderId,ableToMoveAllAssets);
+            boolean isRevoked = false;
+            System.out.println("starting to revoke ");
+            isRevoked = GoogleCloud.startInvalidateTokenThread(sourceUserEmail);
+            if (isRevoked){
+                System.out.println("starting to delete account and related asset");
+                MainActivity.dbHelper.deleteAccountAndRelatedAssets(sourceUserEmail);
+                GoogleDrive.startThreads();
+            }
+        });
+        unlinkSingleAccountThread.start();
+        try{
+            unlinkSingleAccountThread.join();
+        }catch (Exception e){
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
     }
 
@@ -594,6 +603,16 @@ public class GoogleDrive {
         } catch (Exception e) {
             LogHandler.saveLog("failed to delete files and folders from drive : " + e.getLocalizedMessage()) ;
         }
+    }
+
+    public static void recursivelyDeleteFolderThread(Drive service,String folderId,boolean completeMove){
+        Thread recursivelyDeleteFolderThread = new Thread(() -> {
+            recursivelyDeleteFolder(service,folderId,completeMove);
+        });
+        recursivelyDeleteFolderThread.start();
+        try{
+            recursivelyDeleteFolderThread.join();
+        }catch (Exception e) {FirebaseCrashlytics.getInstance().recordException(e);}
     }
 
     public static void cleanDriveFolders() {

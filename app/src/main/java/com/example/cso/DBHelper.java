@@ -1547,11 +1547,17 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
     public void deleteAccountAndRelatedAssets(String userEmail){
-        deleteFromAccountsTable(userEmail,"backup");
-        deleteAccountFromDriveTable(userEmail);
-        deleteRedundantAsset();
-        // delete button
-        System.out.println("------------------------------------- email " + userEmail + "deleted from this profile");
+        Thread deleteAccountAndRelatedAssetsThread = new Thread(() -> {
+            deleteFromAccountsTable(userEmail,"backup");
+            deleteAccountFromDriveTable(userEmail);
+            deleteRedundantAsset();
+            // delete button
+            System.out.println("------------------------------------- email " + userEmail + "deleted from this profile");
+        });
+        deleteAccountAndRelatedAssetsThread.start();
+        try{
+            deleteAccountAndRelatedAssetsThread.join();
+        }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
     }
 
     public ArrayList<DeviceHandler> getDevicesFromDB(){

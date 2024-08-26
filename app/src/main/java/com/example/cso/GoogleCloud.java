@@ -649,7 +649,7 @@
             Thread startSignOutThreads = new Thread(() -> {
                 GoogleDrive.startUpdateStorageThread();
                 boolean wantToUnlink = UIHandler.showMoveDriveFilesDialog(buttonText);
-                UIHandler.setupAccountButtons();
+
 
                 //note :  handle button text if click on wait button
 
