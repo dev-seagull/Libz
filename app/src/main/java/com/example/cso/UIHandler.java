@@ -1,5 +1,7 @@
 package com.example.cso;
 
+import static com.example.cso.MainActivity.signInToBackUpLauncher;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -57,95 +59,41 @@ import java.util.List;
 
 public class UIHandler {
     public static UIHelper uiHelper = new UIHelper();
-    LiquidFillButton syncButton = MainActivity.activity.findViewById(R.id.syncButton);
-    private boolean isWifiOnlyOn = false;
+    static LiquidFillButton syncButton = MainActivity.activity.findViewById(R.id.syncButton);
 
-    public UIHandler(){
-        uiHelper = new UIHelper();
+    public static void initAppUI(){
+        initializeDrawerLayout();
+        setupDeviceButtons();
+        initializeSyncButton();
+        initializeWifiOnlyButton();
+        setupAccountButtons();
     }
 
-    public static void setLastBackupAccountButtonClickableFalse(Activity activity) {
-        try {
-            LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-            View[] child = {backupButtonsLinearLayout.getChildAt(
-                    backupButtonsLinearLayout.getChildCount() - 1)};
-            activity.runOnUiThread(() ->
-                    child[0].setClickable(false));
-        } catch (Exception e) {
-            LogHandler.saveLog("Failed to set last back up button clickable false:" + e.getLocalizedMessage(), true);
-        }
-    }
-
-//    public static void updateDirectoriesUsages(){
-//        HashMap<String,String> dirHashMap = StorageHandler.directoryUIDisplay();
-//        directoryUsages.setText("");
-//        for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
-//            directoryUsages.append(entry.getKey() + ": " + entry.getValue() + " GB\n");
-//        }
-//    }
-
-
-    public void addAbackUpAccountToUI(Activity activity, boolean isBackedUp,
-                                             ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
-                                             GoogleCloud.SignInResult signInResult){
-        Thread uiThread = new Thread(() -> {
-                if (isBackedUp) {
-                    activity.runOnUiThread(() -> {
-                        try{
-                            LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-                            Button newBackupLoginButton = MainActivity.googleCloud.createBackUpLoginButton(backupButtonsLinearLayout);
-                            newBackupLoginButton.setBackgroundResource(R.drawable.gradient_purple);
-
-                            child[0] = backupButtonsLinearLayout.getChildAt(
-                                    backupButtonsLinearLayout.getChildCount() - 2);
-
-                            if (child[0] instanceof Button) {
-                                Button bt = (Button) child[0];
-                                bt.setText(signInResult.getUserEmail());
-                                bt.setBackgroundResource(R.drawable.gradient_purple);
-                            }
-
-                            setupDeviceButtons();
-
-                            updateButtonsListeners(signInToBackUpLauncher);
-                        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
-                    });
-                }
-        });
-
-        uiThread.start();
-        try{
-            uiThread.join();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to join add a backup account to ui thread: " + e.getLocalizedMessage(), true);
-        }
-    }
-
-    public void initializeWifiOnlyButton(){
+    public static void initializeWifiOnlyButton(){
         boolean[] wifiOnlyState = {SharedPreferencesHandler.getWifiOnlySwitchState()};
         if(wifiOnlyState[0]){
             uiHelper.wifiButtonText.setTextColor(uiHelper.buttonTextColor);
         }else{
             uiHelper.wifiButtonText.setTextColor(uiHelper.buttonTransparentTextColor);
         }
-        updateButtonBackground(uiHelper.wifiButton, wifiOnlyState[0]);
+        updateSyncAndWifiButtonBackground(uiHelper.wifiButton, wifiOnlyState[0]);
 
         uiHelper.wifiButton.setOnClickListener(view -> {
                 handleWifiOnlyButtonClick();
         });
     }
 
-    private void handleWifiOnlyButtonClick(){
+    private static void handleWifiOnlyButtonClick(){
         boolean currentWifiOnlyState = toggleWifiOnlyOnState();
         if(currentWifiOnlyState){
             uiHelper.wifiButtonText.setTextColor(uiHelper.buttonTextColor);
         }else{
             uiHelper.wifiButtonText.setTextColor(uiHelper.buttonTransparentTextColor);
         }
-        updateButtonBackground(uiHelper.wifiButton,currentWifiOnlyState);
+        updateSyncAndWifiButtonBackground(uiHelper.wifiButton,currentWifiOnlyState);
     }
 
-    public void initializeSyncButton(){
+    public static void initializeSyncButton(){
         boolean[] syncState = {SharedPreferencesHandler.getSyncSwitchState()};
         boolean isServiceRunning = TimerService.isMyServiceRunning(MainActivity.activity.getApplicationContext(), TimerService.class).equals("on");
         if(syncState[0] && isServiceRunning){
@@ -153,20 +101,20 @@ public class UIHandler {
         }else{
             SharedPreferencesHandler.setSwitchState("syncSwitchState",false,MainActivity.preferences);
         }
-        updateButtonBackground(syncButton, syncState[0]);
+        updateSyncAndWifiButtonBackground(syncButton, syncState[0]);
 
         syncButton.setOnClickListener(view -> {
             handleSyncButtonClick();
         });
     }
 
-    private void startSyncButtonAnimation(){
+    private static void startSyncButtonAnimation(){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             syncButton.startFillAnimation();
         }
     }
 
-    private void handleSyncButtonClick(){
+    private static void handleSyncButtonClick(){
         boolean currentSyncState = toggleSyncState();
         boolean isServiceRunning = TimerService.isMyServiceRunning(MainActivity.activity.getApplicationContext(), TimerService.class).equals("on");
         if(currentSyncState){
@@ -174,10 +122,10 @@ public class UIHandler {
         }else{
             stopSyncIfRunning(isServiceRunning);
         }
-        updateButtonBackground(syncButton,currentSyncState);
+        updateSyncAndWifiButtonBackground(syncButton,currentSyncState);
     }
 
-    private void startSyncIfNotRunning(boolean isServiceRunning){
+    private static void startSyncIfNotRunning(boolean isServiceRunning){
         try{
             if(!isServiceRunning){
                 Sync.startSync();
@@ -187,7 +135,7 @@ public class UIHandler {
         }catch (Exception e){}
     }
 
-    private void stopSyncIfRunning(boolean isServiceRunning){
+    private static void stopSyncIfRunning(boolean isServiceRunning){
         try{
             if(isServiceRunning){
                 Sync.stopSync();
@@ -196,7 +144,7 @@ public class UIHandler {
         }catch (Exception e){}
     }
 
-    private RotateAnimation createContinuousRotateAnimation() {
+    private static RotateAnimation createContinuousRotateAnimation() {
         RotateAnimation continuousRotate = new RotateAnimation(0, 360,
                 Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
         continuousRotate.setDuration(4000);
@@ -205,7 +153,7 @@ public class UIHandler {
         return continuousRotate;
     }
 
-    private void updateSyncButtonRotationState(RotateAnimation animation, boolean isSyncOn) {
+    private static void updateSyncButtonRotationState(RotateAnimation animation, boolean isSyncOn) {
         if (isSyncOn) {
             uiHelper.syncButtonText.startAnimation(animation);
         } else {
@@ -213,7 +161,7 @@ public class UIHandler {
         }
     }
 
-    private boolean toggleSyncState() {
+    private static boolean toggleSyncState() {
         try{
             boolean state = SharedPreferencesHandler.getSyncSwitchState();
             SharedPreferencesHandler.setSwitchState("syncSwitchState",!state,MainActivity.preferences);
@@ -222,14 +170,13 @@ public class UIHandler {
         return false;
     }
 
-    private boolean toggleWifiOnlyOnState() {
+    private static boolean toggleWifiOnlyOnState() {
         boolean previousState = SharedPreferencesHandler.getWifiOnlySwitchState();
         SharedPreferencesHandler.setSwitchState("wifiOnlySwitchState",!previousState,MainActivity.preferences);
         return !previousState;
     }
 
-
-    private void updateButtonBackground(View button, Boolean state) {
+    private static void updateSyncAndWifiButtonBackground(View button, Boolean state) {
         try{
             TextView textView;
             if (button.getId() == R.id.syncButton){
@@ -251,7 +198,7 @@ public class UIHandler {
         }catch (Exception e){}
     }
 
-    public void initializeDrawerLayout(){
+    public static void initializeDrawerLayout(){
         System.out.println(MainActivity.activity);
         setupDrawerToggle();
         setMenuItems();
@@ -276,7 +223,6 @@ public class UIHandler {
             setMenuItemTitle(R.id.navMenuItem2, "Device id: " + MainActivity.androidUniqueDeviceIdentifier);
         }catch (Exception e) {
         }
-
     }
 
     private static void setMenuItemTitle(int menuItemId, String text) {
@@ -299,31 +245,6 @@ public class UIHandler {
                 uiHelper.drawerLayout.openDrawer(GravityCompat.END);
             }
         });
-    }
-
-    public void initializeButtons(GoogleCloud googleCloud){
-        initializeAccountButtons(googleCloud);
-        initializeAddAnAccountButton(googleCloud);
-    }
-
-    private void initializeAddAnAccountButton(GoogleCloud googleCloud){
-        Button newBackupLoginButton = googleCloud.createBackUpLoginButton(uiHelper.backupAccountsButtonsLayout);
-        newBackupLoginButton.setBackgroundResource(R.drawable.gradient_purple);
-    }
-
-    private void initializeAccountButtons(GoogleCloud googleCloud) {
-        String[] columnsList = {"userEmail", "type", "refreshToken"};
-        List<String[]> accountRows = DBHelper.getAccounts(columnsList);
-        for (String[] accountRow : accountRows) {
-            String userEmail = accountRow[0];
-            String type = accountRow[1];
-            if (type.equals("primary")) {
-            } else if (type.equals("backup")) {
-                LinearLayout backupLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
-                Button newGoogleLoginButton = googleCloud.createBackUpLoginButton(backupLinearLayout);
-                newGoogleLoginButton.setText(userEmail);
-            }
-        }
     }
 
 
@@ -382,61 +303,6 @@ public class UIHandler {
         updateUIThread.start();
     }
 
-    public static void updateButtonsListeners(ActivityResultLauncher<Intent> signInToBackUpLauncher) {
-        updateBackupButtonsListener(MainActivity.activity, signInToBackUpLauncher);
-    }
-
-    public static void updateBackupButtonsListener(Activity activity, ActivityResultLauncher<Intent> signInToBackUpLauncher){
-        LinearLayout backUpAccountsButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
-
-        for (int i = 0; i < backUpAccountsButtonsLinearLayout.getChildCount(); i++) {
-            View childView = backUpAccountsButtonsLinearLayout.getChildAt(i);
-            if (childView instanceof Button) {
-                Button button = (Button) childView;
-                button.setOnClickListener(
-                        view -> {
-                            if (MainActivity.isAnyProccessOn) {
-                                return;
-                            }
-
-                            String buttonText = button.getText().toString().toLowerCase();
-                            if (buttonText.equals("add a back up account")) {
-                                MainActivity.isAnyProccessOn = true;
-                                button.setText("signing in ...");
-                                button.setClickable(false);
-                                MainActivity.googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
-                                button.setClickable(true);
-                                MainActivity.isAnyProccessOn = false;
-                            } else if (buttonText.equals("signing in ...")){
-                                button.setText("add a back up account");
-                            } else if (buttonText.equals("signing out...")){
-                                button.setText(button.getContentDescription());
-                            } else {
-                                button.setContentDescription(buttonText);
-                                try{
-                                    PopupMenu popupMenu = setPopUpMenuOnButton(activity, button,"account");
-                                    popupMenu.setOnMenuItemClickListener(item -> {
-                                        if (item.getItemId() == R.id.unlink) {
-                                            MainActivity.isAnyProccessOn = true;
-                                            button.setText("signing out...");
-                                            button.setClickable(false);
-                                            GoogleCloud.startUnlinkThreads(buttonText, item, button);
-                                            button.setClickable(true);
-                                            MainActivity.isAnyProccessOn = false;
-                                        }
-                                        return true;
-                                    });
-                                    popupMenu.show();
-                                }catch (Exception e){
-                                    button.setText(button.getContentDescription());
-                                }
-
-                            }
-                        }
-                );
-            }
-        }
-    }
 
     public static void startUiThreadForSignOut(MenuItem item, Button button, String buttonText, boolean isBackedUp){
         LogHandler.saveLog("Starting Ui Thread For Sign Out Thread", false);
@@ -472,32 +338,6 @@ public class UIHandler {
         LogHandler.saveLog("Finished Ui Thread For Sign Out Thread", false);
     }
 
-    private static PopupMenu setPopUpMenuOnButton(Activity activity, Button button, String type) {
-        PopupMenu popupMenu = new PopupMenu(activity.getApplicationContext(), button, Gravity.CENTER);
-
-        // Inflate the menu first
-        popupMenu.getMenuInflater().inflate(R.menu.account_button_menu, popupMenu.getMenu());
-        Menu menu = popupMenu.getMenu();
-
-        int unlink = 0;
-        int details = 1;
-        int reportStolen = 2;
-
-        // Remove items based on the type
-        if (type.equals("ownDevice")) {
-            menu.removeItem(menu.getItem(unlink).getItemId());
-            menu.removeItem(menu.getItem(reportStolen - 1 ).getItemId());
-        } else if (type.equals("account")) {
-            menu.removeItem(menu.getItem(reportStolen).getItemId());
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            popupMenu.setGravity(Gravity.CENTER);
-        }
-
-        return popupMenu;
-    }
-
 
     public static void displayLinkProfileDialog(ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
                                                 JsonObject resultJson, GoogleCloud.SignInResult signInResult){
@@ -519,7 +359,6 @@ public class UIHandler {
                         }).setNegativeButton("Cancel", (dialog, id) -> {
                             Log.d("signInToBackUpLauncher","Cancel pressed");
                             dialog.dismiss();
-                            UIHandler.handleSignInFailure(signInToBackUpLauncher);
                         }).setCancelable(false);
 
                 AlertDialog alertDialog = builder.create();
@@ -605,25 +444,10 @@ public class UIHandler {
         return wantToUnlink[0];
     }
 
-    public static void handleSignInFailure(ActivityResultLauncher<Intent> signInToBackUpLauncher){
-        MainActivity.activity.runOnUiThread(() -> {
-            LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
-            View child = backupButtonsLinearLayout.getChildAt(
-                    backupButtonsLinearLayout.getChildCount() - 1);
-            if(child instanceof Button){
-                Button bt = (Button) child;
-                bt.setText("ADD A BACK UP ACCOUNT");
-            }
-            UIHandler.updateButtonsListeners(signInToBackUpLauncher);
-        });
-    }
-
-
 
     //---------------------------------- //---------------------------------- Device Buttons //---------------------------------- //----------------------------------
 
-
-    public void setupDeviceButtons(){
+    public static void setupDeviceButtons(){
         ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromDB();
         for (DeviceHandler device : devices) {
             if (!buttonExistsInUI(device.getDeviceId())) {
@@ -694,9 +518,9 @@ public class UIHandler {
     }
 
     private static void addEffectsToDeviceButton(Button androidDeviceButton){
-        AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
-        fadeIn.setDuration(2000);
-        androidDeviceButton.startAnimation(fadeIn);
+//        AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
+//        fadeIn.setDuration(2000);
+//        androidDeviceButton.startAnimation(fadeIn);
         UIHelper uiHelper = new UIHelper();
         androidDeviceButton.setBackgroundResource(uiHelper.deviceBackgroundResource);
         Drawable deviceButtonDrawable = uiHelper.deviceDrawable;
@@ -721,7 +545,7 @@ public class UIHandler {
         androidDeviceButton.setLayoutParams(layoutParams);
     }
 
-    public LinearLayout createNewDeviceButtonView(Context context, DeviceHandler device) {
+    public static LinearLayout createNewDeviceButtonView(Context context, DeviceHandler device) {
         LinearLayout layout = new LinearLayout(context);
         layout.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -875,21 +699,6 @@ public class UIHandler {
         return directoryUsages;
     }
 
-    private static void changeDeviceDetailsVisibility(View currentView){
-        LinearLayout deviceButtonView = (LinearLayout) currentView.getParent();
-        int deviceViewChildrenCount = deviceButtonView.getChildCount();
-        for (int j = 0; j < deviceViewChildrenCount; j++) {
-            View view = deviceButtonView.getChildAt(j);
-            if (!(view instanceof Button)) {
-                if (view.getVisibility() == View.VISIBLE) {
-                    view.setVisibility(View.GONE);
-                }else{
-                }
-                return;
-            }
-        }
-    }
-
     private static LinearLayout getDetailsView(Button button){
         LinearLayout deviceButtonView = (LinearLayout) button.getParent();
         int deviceViewChildrenCount = deviceButtonView.getChildCount();
@@ -969,4 +778,157 @@ public class UIHandler {
             MainActivity.activity.finish();
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
     }
+
+    //---------------------------------- //---------------------------------- Account Button //---------------------------------- //----------------------------------
+
+    public static void setupAccountButtons(){
+        MainActivity.activity.runOnUiThread(() -> {
+            LinearLayout backupAccountsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
+            backupAccountsLinearLayout.removeAllViews();
+            String[] columnsList = {"userEmail", "type", "refreshToken"};
+            List<String[]> accountRows = DBHelper.getAccounts(columnsList);
+            for (String[] accountRow : accountRows) {
+                String userEmail = accountRow[0];
+                String type = accountRow[1];
+                if (type.equals("primary")) {
+                } else if (type.equals("backup")) {
+                    if (!accountButtonExistsInUI(userEmail)){
+                        Button newGoogleLoginButton = createBackUpAccountButton(MainActivity.activity);
+                        newGoogleLoginButton.setText(userEmail);
+                        setListenerToAccountButton(newGoogleLoginButton,MainActivity.activity);
+                        backupAccountsLinearLayout.addView(newGoogleLoginButton);
+                    }
+                }
+            }
+            // add a back up account button
+            if (!accountButtonExistsInUI("add a back up account")){
+                Button newGoogleLoginButton = createBackUpAccountButton(MainActivity.activity);
+                newGoogleLoginButton.setText("add a back up account");
+                setListenerToAccountButton(newGoogleLoginButton,MainActivity.activity);
+                backupAccountsLinearLayout.addView(newGoogleLoginButton);
+            }
+        });
+    }
+
+    private static boolean accountButtonExistsInUI(String userEmail){
+        LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
+        int backupButtonsCount = backupButtonsLinearLayout.getChildCount();
+        for(int i=0 ; i < backupButtonsCount ; i++){
+            Button backupButtonChild =  (Button) backupButtonsLinearLayout.getChildAt(i);
+            if(backupButtonChild.getText().toString().equalsIgnoreCase(userEmail)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+//    private static void removeRedundant
+
+    public static Button createBackUpAccountButton(Activity activity){
+        Button newLoginButton = new Button(activity);
+        addEffectsToAccountButton(newLoginButton, activity);
+        return newLoginButton;
+    }
+
+    public static void addEffectsToAccountButton(Button newLoginButton, Activity activity){
+        Drawable loginButtonLeftDrawable = UIHelper.driveImage;
+        newLoginButton.setCompoundDrawablesWithIntrinsicBounds
+                (loginButtonLeftDrawable, null, null, null);
+        newLoginButton.setBackgroundResource(R.drawable.gradient_purple);
+        newLoginButton.setGravity(Gravity.CENTER);
+        newLoginButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        newLoginButton.setVisibility(View.VISIBLE);
+        newLoginButton.setPadding(40,0,150,0);
+        newLoginButton.setTextSize(10);
+        UIHelper uiHelper = new UIHelper();
+        newLoginButton.setTextColor(uiHelper.buttonTextColor);
+        newLoginButton.setBackgroundResource(R.drawable.gradient_purple);
+        newLoginButton.setId(View.generateViewId());
+
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                200
+        );
+        layoutParams.setMargins(0,20,0,16);
+        newLoginButton.setLayoutParams(layoutParams);
+
+//        AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
+//        fadeIn.setDuration(1000);
+//        newLoginButton.startAnimation(fadeIn);
+    }
+
+    public static void setListenerToAccountButton(Button button, Activity activity) {
+        button.setOnClickListener(
+                view -> {
+                    if (MainActivity.isAnyProccessOn) {
+                        return;
+                    }
+                    String buttonText = button.getText().toString().toLowerCase();
+                    if (buttonText.equals("add a back up account")) {
+                        MainActivity.isAnyProccessOn = true;
+                        button.setText("signing in ...");
+                        button.setClickable(false);
+                        MainActivity.googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
+                        button.setClickable(true);
+                        MainActivity.isAnyProccessOn = false;
+                    } else if (buttonText.equals("signing in ...")){
+                        button.setText("add a back up account");
+                    } else if (buttonText.equals("signing out...")){
+                        button.setText(button.getContentDescription());
+                    } else {
+                        button.setContentDescription(buttonText);
+                        try{
+                            PopupMenu popupMenu = setPopUpMenuOnButton(activity, button,"account");
+                            popupMenu.setOnMenuItemClickListener(item -> {
+                                if (item.getItemId() == R.id.unlink) {
+                                    MainActivity.isAnyProccessOn = true;
+                                    button.setText("signing out...");
+                                    button.setClickable(false);
+                                    GoogleCloud.startUnlinkThreads(buttonText);
+                                    button.setClickable(true);
+                                    MainActivity.isAnyProccessOn = false;
+                                }
+                                return true;
+                            });
+                            popupMenu.show();
+                        }catch (Exception e){
+                            button.setText(button.getContentDescription());
+                        }
+
+                    }
+                    setupAccountButtons();
+                }
+        );
+    }
+
+    private static PopupMenu setPopUpMenuOnButton(Activity activity, Button button, String type) {
+        PopupMenu popupMenu = new PopupMenu(activity.getApplicationContext(), button, Gravity.CENTER);
+
+        // Inflate the menu first
+        popupMenu.getMenuInflater().inflate(R.menu.account_button_menu, popupMenu.getMenu());
+        Menu menu = popupMenu.getMenu();
+
+        int unlink = 0;
+        int details = 1;
+        int reportStolen = 2;
+
+        // Remove items based on the type
+        if (type.equals("ownDevice")) {
+            menu.removeItem(menu.getItem(unlink).getItemId());
+            menu.removeItem(menu.getItem(reportStolen - 1 ).getItemId());
+        } else if (type.equals("account")) {
+            menu.removeItem(menu.getItem(reportStolen).getItemId());
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            popupMenu.setGravity(Gravity.CENTER);
+        }
+
+        return popupMenu;
+    }
+
+
+
 }
