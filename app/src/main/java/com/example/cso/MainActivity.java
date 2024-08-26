@@ -216,20 +216,8 @@
     public void onDestroy() {
         super.onDestroy();
         Log.d("state","start of onDestroyed");
-        if(androidTimer != null){
-            androidTimer.cancel();
-            androidTimer.purge();
-        }
-        if(UITimer != null){
-            UITimer.cancel();
-            UITimer.purge();
-        }
-        if(androidTimer == null){
-            Log.d("Timers", "stopped android timer");
-        }
-        if(UITimer == null){
-            Log.d("Timers", "stopped ui timer");
-        }
+        destroyAndroidTimer();
+        destroyUITimer();
 //        finishAffinity();
 //        System.exit(0);
 //        finish();
@@ -237,7 +225,25 @@
     }
 
 
+    private void destroyAndroidTimer(){
+        if(androidTimer != null){
+            androidTimer.cancel();
+            androidTimer.purge();
+        }
+        if(androidTimer == null){
+            Log.d("Timers", "stopped android timer");
+        }
+    }
 
+    private void destroyUITimer(){
+        if(UITimer != null){
+            UITimer.cancel();
+            UITimer.purge();
+        }
+        if(UITimer == null){
+            Log.d("Timers", "stopped ui timer");
+        }
+    }
 
     public void setupTimers(){
         setupAndroidTimer();
