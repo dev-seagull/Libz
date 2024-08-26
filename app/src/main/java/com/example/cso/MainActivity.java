@@ -95,7 +95,9 @@
                                     Log.d("signInToBackUpLauncher","userEmail: " + userEmail);
                                     Log.d("signInToBackUpLauncher","accessTokenNull : " + (accessToken == null));
 
-                                    GoogleDriveFolders.initializeAllFolders(userEmail,accessToken);
+                                    Log.d("signInToBackUpLauncher","Sign in started");
+                                    GoogleDriveFolders.initializeFolders(userEmail,accessToken);
+                                    Log.d("signInToBackUpLauncher","Sign in finished");
 
                                     Log.d("signInToBackUpLauncher","Reading profile map started");
                                     JsonObject resultJson = Profile.readProfileMapContent(userEmail,accessToken);
