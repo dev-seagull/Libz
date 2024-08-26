@@ -522,29 +522,6 @@ public class Profile {
         }
     }
 
-    private static String uploadProfileContent(Drive service, String profileFolderId, JsonObject profileContent){
-        String uploadFileId = "";
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss",Locale.US);
-        Date date = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
-        String currentDate = formatter.format(date);
-        String fileName = "profileMap_" + currentDate + ".json";
-        try{
-            com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-            fileMetadata.setName(fileName);
-            fileMetadata.setParents(java.util.Collections.singletonList(profileFolderId));
-            String content = profileContent.toString();
-            ByteArrayContent mediaContent = ByteArrayContent.fromString("application/json", content);
-            com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
-                    .setFields("id")
-                    .execute();
-            uploadFileId = uploadedFile.getId();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to set profile map content:" + e.getLocalizedMessage(), true);
-        }finally {
-            return uploadFileId;
-        }
-    }
-
     public static boolean hasJsonChanged(){
         boolean hasChanged = false;
         try{

@@ -152,7 +152,7 @@
         try{
             permissionThread.join();
         }catch (Exception e){
-            System.out.println("permission error:" + e.getLocalizedMessage());
+            Log.d("error","Permission error: " + e.getLocalizedMessage());
         }
 
         Log.d("state","end of onStart");

@@ -717,29 +717,6 @@
             return isDeleted[0];
         }
 
-        private static boolean startProfileJsonBackUpAfterSignOutThread(String buttonText){
-            LogHandler.saveLog("Starting Profile Json BackUp After Sign Out Thread", false);
-            boolean[] isBackedUp = {false};
-            Thread profileJsonBackUpAfterSignOutThread = new Thread(() -> {
-                MainActivity.dbHelper.deleteFromAccountsTable(buttonText, "backup");
-                MainActivity.dbHelper.deleteAccountFromDriveTable(buttonText);
-                MainActivity.dbHelper.deleteRedundantAsset();
-                SharedPreferencesHandler.setJsonModifiedTime(MainActivity.preferences);
-                isBackedUp[0] = Profile.backUpProfileMap(true,buttonText);
-                if(!isBackedUp[0]){
-                    LogHandler.saveLog("Profile Json back up is not working when signing out.", true);
-                }
-            });
-            profileJsonBackUpAfterSignOutThread.start();
-            try{
-                profileJsonBackUpAfterSignOutThread.join();
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to join Profile Json Back Up After Sign Out Thread: " + e.getLocalizedMessage(), true );
-            }
-            LogHandler.saveLog("Finished  Profile Json Back Up After Sign Out Thread : " + isBackedUp[0], false);
-            return isBackedUp[0];
-        }
-
         public static void startUnlinkThreads(String buttonText, MenuItem item, Button button){
             Thread startSignOutThreads = new Thread(() -> {
                 GoogleDrive.startUpdateStorageThread();
