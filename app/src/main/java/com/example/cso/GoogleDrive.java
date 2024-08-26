@@ -600,19 +600,8 @@ public class GoogleDrive {
         Thread cleanDriveFoldersThread = new Thread(() -> {
             try{
                 List<String[]> accounts_rows = DBHelper.getAccounts(new String[]{"refreshToken","userEmail","parentFolderId","assetsFolderId","profileFolderId","databaseFolderId"});
-                Drive service;
                 for (String[] account_row: accounts_rows){
-                    String userEmail = account_row[1];
-                    System.out.println("----- processing account: " + userEmail);
-
-                    String accessToken = MainActivity.googleCloud.updateAccessToken(account_row[0]).getAccessToken();
-                    service = initializeDrive(accessToken);
-
-                    String parentFolderId = account_row[2];
-                    System.out.println("parent folder id before : " + parentFolderId);
-                    parentFolderId = cleanStashSyncFolder(parentFolderId,service,userEmail);
-                    System.out.println("parent folder id after : " + parentFolderId);
-
+                    cleanAccount(account_row);
                     String assetsFolderId = account_row[3];
                     cleanAssetsFolder(assetsFolderId,service,userEmail,parentFolderId);
 
@@ -629,15 +618,35 @@ public class GoogleDrive {
                 LogHandler.saveLog("Failed to clean drive folders: " + e.getLocalizedMessage(), true);
             }
         });
+
         cleanDriveFoldersThread.start();
         try {
             cleanDriveFoldersThread.join();
-        } catch (Exception e) {
-            LogHandler.saveLog("Failed to join cleanDriveFoldersThread : " + e.getLocalizedMessage());
-        }
+        } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
     }
 
-    public static String cleanStashSyncFolder(String inputParentFolderId,Drive service,String userEmail){
+    private static void cleanAccount(String[] account_row){
+        String userEmail = account_row[1];
+        String accessToken = MainActivity.googleCloud.updateAccessToken(account_row[0]).getAccessToken();
+        Drive service = initializeDrive(accessToken);
+
+        String parentFolderId = GoogleDriveFolders.getParentFolderId(userEmail);
+        parentFolderId = cleanParentFolder(parentFolderId,service,userEmail);
+
+        String assetsFolderId = account_row[3];
+        cleanAssetsFolder(assetsFolderId,service,userEmail,parentFolderId);
+
+        String profileFolderId = account_row[4];
+        cleanProfileFolder(profileFolderId,service,userEmail,parentFolderId);
+
+        String databaseFolderId = account_row[5];
+        cleanDatabaseFolder(databaseFolderId,service,userEmail,parentFolderId);
+
+        deleteOldDatabaseFiles(service,userEmail);
+        deleteOldProfileFiles(service,userEmail);
+    }
+
+    public static String cleanParentFolder(String inputParentFolderId, Drive service, String userEmail){
         String[] parentFolderId = {inputParentFolderId};
         Thread cleanStashSyncFolderThread = new Thread(() -> {
             if (parentFolderId[0] == null || parentFolderId[0].isEmpty()){
@@ -651,7 +660,7 @@ public class GoogleDrive {
                             .setSpaces("drive")
                             .setFields("files(id, parents,mimeType, name, permissions),nextPageToken")
                             .execute();
-                    System.out.println("----- found stash synced assets folders size : " + result.getFiles().size());
+                    Log.d("----- found stash synced assets folders size : " + result.getFiles().size());
                     if (!result.getFiles().isEmpty()){
                         if (hasDeletePermission(result.getFiles().get(0),service,userEmail)) {
                             parentFolderId[0] = result.getFiles().get(0).getId();
@@ -680,6 +689,7 @@ public class GoogleDrive {
                 }
             }
         });
+
         cleanStashSyncFolderThread.start();
         try {
             cleanStashSyncFolderThread.join();
@@ -689,6 +699,20 @@ public class GoogleDrive {
         return parentFolderId[0];
     }
 
+    private static void cleanPreviousStashFolders(){
+        try{
+            String query = "mimeType='application/vnd.google-apps.folder' and name='stash_synced_assets' and trashed=false";
+            result = service.files().list()
+                    .setQ(query)
+                    .setOrderBy("createdTime desc")
+                    .setSpaces("drive")
+                    .setFields("files(id, parents,mimeType, name, permissions),nextPageToken")
+                    .execute();
+    }
+
+    private static void cleanLibzParentFolders(){
+
+    }
     public static void cleanAssetsFolder(String assetsFolderId, Drive service, String userEmail, String parentFolderId){
         if (assetsFolderId == null || assetsFolderId.isEmpty()){
             try{
