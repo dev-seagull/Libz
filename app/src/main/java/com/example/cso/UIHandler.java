@@ -561,7 +561,7 @@ public class UIHandler {
 
         ImageView pieChartArrowDown = createArrowDownImageView(context);
 
-        PieChart pieChart = createPieChart(context);
+        PieChart pieChart = createPieChart(context,device);
 
         TextView directoryUsages = createDirectoryUsageTextView(context);
 
@@ -575,10 +575,10 @@ public class UIHandler {
         return layout;
     }
 
-    private static PieChart createPieChart(Context context) {
+    private static PieChart createPieChart(Context context, DeviceHandler device) {
         PieChart pieChart = new PieChart(context);
         configurePieChartDimensions(pieChart);
-        configurePieChartData(pieChart, new JsonObject());
+        configurePieChartData(pieChart, device);
         configurePieChartLegend(pieChart);
         configurePieChartInteractions(pieChart);
         pieChart.invalidate();
@@ -601,12 +601,11 @@ public class UIHandler {
         pieChart.setLayoutParams(layoutParams);
     }
 
-    private static void configurePieChartData(PieChart pieChart, JsonObject storageInfo) {
-        StorageHandler storageHandler = new StorageHandler();
-        double freeSpace = storageHandler.getFreeSpace();
-        double totalStorage = storageHandler.getTotalStorage();
-        double mediaStorage = Double.parseDouble(MainActivity.dbHelper.getPhotosAndVideosStorage());
-        double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
+    private static void configurePieChartData(PieChart pieChart, DeviceHandler device) {
+        JsonObject storageData = getDeviceStorageData(device);
+        double freeSpace = storageData.get("freeSpace").getAsDouble();
+        double mediaStorage = storageData.get("mediaStorage").getAsDouble();
+        double usedSpaceExcludingMedia = storageData.get("usedSpaceExcludingMedia").getAsDouble();
 
         ArrayList<PieEntry> entries = new ArrayList<>();
         entries.add(new PieEntry((float) freeSpace, "Free Space(GB)"));
@@ -629,6 +628,23 @@ public class UIHandler {
         pieChart.setDrawEntryLabels(true);
         pieChart.setDrawHoleEnabled(true);
         pieChart.setDrawHoleEnabled(false);
+    }
+
+    private static JsonObject getDeviceStorageData(DeviceHandler device){
+        JsonObject storageData = new JsonObject();
+        if (isCurrentDevice(device)){
+            StorageHandler storageHandler = new StorageHandler();
+            double freeSpace = storageHandler.getFreeSpace();
+            double totalStorage = storageHandler.getTotalStorage();
+            double mediaStorage = Double.parseDouble(MainActivity.dbHelper.getPhotosAndVideosStorage());
+            double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
+            storageData.addProperty("freeSpace",freeSpace);
+            storageData.addProperty("mediaStorage", mediaStorage);
+            storageData.addProperty("usedSpaceExcludingMedia", usedSpaceExcludingMedia);
+        }else{
+            storageData = StorageSync.downloadStorageJsonFileFromAccounts(device);
+        }
+        return storageData;
     }
 
     private static void configurePieChartLegend(PieChart pieChart) {
