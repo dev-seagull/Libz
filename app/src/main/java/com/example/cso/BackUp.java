@@ -138,6 +138,15 @@ public class BackUp {
                         case "png":
                             mediaContent = new FileContent("image/png", androidFile);
                             break;
+                        case "gif":
+                            mediaContent = new FileContent("image/gif", androidFile);
+                            break;
+                        case "bmp":
+                            mediaContent = new FileContent("image/bmp", androidFile);
+                            break;
+                        case "webp":
+                            mediaContent = new FileContent("image/webp", androidFile);
+                            break;
                         default:
                             mediaContent = new FileContent("image/" + mimeType.toLowerCase(), androidFile);
                             break;
