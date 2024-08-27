@@ -47,7 +47,7 @@ public class BackUp {
                 fileMetadata.setName(fileName);
                 String mimeTypeToUpload = Media.getMimeType(new File(filePath));
                 FileContent mediaContent = handleMediaFileContent(mimeTypeToUpload,androidFile,
-                        mimeType, filePath, fileName);
+                        mimeType, fileName);
                 fileMetadata.setParents(Collections.singletonList(syncAssetsFolderId));
                 if (mediaContent == null) {
                     LogHandler.saveLog("media content is null in syncAndroidToDrive", true);
@@ -123,35 +123,61 @@ public class BackUp {
             }
         }
     }
-    private static FileContent handleMediaFileContent(String mimeTypeToUpload, File androidFile, String mimeType,String filePath, String fileName){
+
+    private static FileContent handleMediaFileContent(String mimeTypeToUpload, java.io.File androidFile, String mimeType, String fileName) {
         FileContent mediaContent = null;
-        try{
-            if (Media.isImage(mimeTypeToUpload)) {
-                if (androidFile.exists()) {
-                    if (mimeType.toLowerCase().endsWith("jpg")) {
-                        mediaContent = new FileContent("image/jpeg",
-                                new File(filePath));
-                    } else {
-                        mediaContent = new FileContent("image/" + mimeType.toLowerCase(),
-                                new File(filePath));
+        try {
+            if (androidFile.exists()) {
+                // Handle image files
+                if (Media.isImage(mimeTypeToUpload)) {
+                    switch (mimeType.toLowerCase()) {
+                        case "jpg":
+                        case "jpeg":
+                            mediaContent = new FileContent("image/jpeg", androidFile);
+                            break;
+                        case "png":
+                            mediaContent = new FileContent("image/png", androidFile);
+                            break;
+                        case "gif":
+                            mediaContent = new FileContent("image/gif", androidFile);
+                            break;
+                        case "bmp":
+                            mediaContent = new FileContent("image/bmp", androidFile);
+                            break;
+                        case "webp":
+                            mediaContent = new FileContent("image/webp", androidFile);
+                            break;
+                        default:
+                            mediaContent = new FileContent("image/" + mimeType.toLowerCase(), androidFile);
+                            break;
+                    }
+                }
+                // Handle video files
+                else if (Media.isVideo(mimeTypeToUpload)) {
+                    switch (mimeType.toLowerCase()) {
+                        case "mp4":
+                            mediaContent = new FileContent("video/mp4", androidFile);
+                            break;
+                        case "mkv":
+                            mediaContent = new FileContent("video/x-matroska", androidFile);
+                            break;
+                        case "mov":
+                            mediaContent = new FileContent("video/quicktime", androidFile);
+                            break;
+                        case "avi":
+                            mediaContent = new FileContent("video/x-msvideo", androidFile);
+                            break;
+                        default:
+                            mediaContent = new FileContent("video/" + mimeType.toLowerCase(), androidFile);
+                            break;
                     }
                 } else {
-                    LogHandler.saveLog("The android file " + fileName + " doesn't exists in upload method");
+                    LogHandler.saveLog("Unsupported MIME type for file: " + mimeTypeToUpload, true);
                 }
-            } else if (Media.isVideo(mimeTypeToUpload)) {
-                if (new File(filePath).exists()) {
-                    if (mimeType.toLowerCase().endsWith("mkv")) {
-                        mediaContent = new FileContent("video/x-matroska",
-                                new File(filePath));
-                    } else {
-                        mediaContent = new FileContent("video/" + mimeType.toLowerCase(),
-                                new File(filePath));
-                    }
-                } else {
-                    LogHandler.saveLog("The android file " + fileName + " doesn't exists in upload method");
-                }
+            } else {
+                LogHandler.saveLog("The android file " + fileName + " doesn't exist in upload method", true);
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             LogHandler.saveLog("Failed to handle media file content: " + e.getLocalizedMessage(), true);
         }
         return mediaContent;

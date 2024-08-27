@@ -5,20 +5,30 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Media {
-    public static boolean isImage(String mimeType){
-        mimeType = mimeType.toLowerCase();
+    public static boolean isImage(String mimeType) {
+        String extension = getExtensionFromMimeType(mimeType);
         ArrayList<String> imageExtensions = new ArrayList<>(
-                Arrays.asList("jpeg", "jpg", "png", "gif", "bmp","webp")
+                Arrays.asList("jpeg", "jpg", "png", "gif", "bmp", "webp")
         );
-        return imageExtensions.contains(mimeType);
+        return imageExtensions.contains(extension);
     }
 
-    public static boolean isVideo(String mimeType){
-        mimeType = mimeType.toLowerCase();
+    public static boolean isVideo(String mimeType) {
+        String extension = getExtensionFromMimeType(mimeType);
         ArrayList<String> videoExtensions = new ArrayList<>(
-                Arrays.asList("mkv", "mp4","mov")
+                Arrays.asList("mkv", "mp4", "mov", "avi")
         );
-        return videoExtensions.contains(mimeType);
+        return videoExtensions.contains(extension);
+    }
+
+    private static String getExtensionFromMimeType(String mimeType) {
+        // Extract the part after the last dot
+        int lastDotIndex = mimeType.lastIndexOf('.');
+        if (lastDotIndex != -1 && lastDotIndex < mimeType.length() - 1) {
+            return mimeType.substring(lastDotIndex + 1).toLowerCase();
+        } else {
+            return "";
+        }
     }
 
     public static String getMimeType(File file){
