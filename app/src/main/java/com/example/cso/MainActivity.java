@@ -96,7 +96,7 @@
                                     Log.d("signInToBackUpLauncher","accessTokenNull : " + (accessToken == null));
 
                                     Log.d("signInToBackUpLauncher","Sign in started");
-                                    GoogleDriveFolders.initializeFolders(userEmail,accessToken);
+                                    GoogleDriveFolders.initializeParentFolder(userEmail,accessToken, true);
                                     Log.d("signInToBackUpLauncher","Sign in finished");
 
                                     Log.d("signInToBackUpLauncher","Reading profile map started");

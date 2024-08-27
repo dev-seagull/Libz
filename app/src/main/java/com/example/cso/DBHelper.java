@@ -1200,7 +1200,8 @@ public class DBHelper extends SQLiteOpenHelper {
                         driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackUpRefreshToken).getAccessToken();
                         userEmail[0] = drive_backUp_account[0];
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                        String databaseFolderId = GoogleDriveFolders.getDatabaseFolderId(userEmail[0]);
+                        String folderName = GoogleDriveFolders.databaseFolderName;
+                        String databaseFolderId = GoogleDriveFolders.getSubFolderId(userEmail[0], folderName);
 //                        deleteDatabaseFiles(service, databaseFolderId);
 //                        boolean isDeleted = checkDeletionStatus(service,databaseFolderId);
                         if(true){
@@ -1222,7 +1223,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 driveBackupAccessToken = Support.requestAccessToken(driveBackUpRefreshToken).getAccessToken();
                 userEmail[0] = "sofatest40";
                 Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                String databaseFolderId = GoogleDriveFolders.getDatabaseFolderId(userEmail[0]);
+                String folderName = GoogleDriveFolders.databaseFolderName;
+                String databaseFolderId = GoogleDriveFolders.getSubFolderId(userEmail[0], folderName);
 //                        deleteDatabaseFiles(service, databaseFolderId);
 //                        boolean isDeleted = checkDeletionStatus(service,databaseFolderId);
                 if(true){

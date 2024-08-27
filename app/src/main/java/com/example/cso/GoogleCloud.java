@@ -626,7 +626,8 @@
                     }
                     if((driveBackupAccessToken != null) && !driveBackupAccessToken.isEmpty()){
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                        String databaseFolderId = GoogleDriveFolders.getDatabaseFolderId(buttonText);
+                        String folderName = GoogleDriveFolders.databaseFolderName;
+                        String databaseFolderId = GoogleDriveFolders.getSubFolderId(buttonText, folderName);
                         DBHelper.deleteDatabaseFiles(service,databaseFolderId);
                         isDeleted[0] = DBHelper.checkDeletionStatus(service,databaseFolderId);
                         if(!isDeleted[0]){

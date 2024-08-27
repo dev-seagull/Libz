@@ -1,6 +1,7 @@
 package com.example.cso;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -74,7 +75,12 @@ public class Sync {
         try{
             String userEmail = accountRow[0];
             String refreshToken = accountRow[4];
-            String syncedAssetsSubFolderId = GoogleDriveFolders.getAssetsFolderId(userEmail);
+            String folderName = GoogleDriveFolders.assetsFolderName;
+            String syncedAssetsSubFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName);
+            if(syncedAssetsSubFolderId == null){
+                Log.d("folders","asset folder not found");
+                return;
+            }
 
             double driveFreeSpace = calculateDriveFreeSpace(accountRow);
             System.out.println("This is drive free space " + driveFreeSpace);

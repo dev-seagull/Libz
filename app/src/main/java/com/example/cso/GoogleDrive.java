@@ -48,9 +48,10 @@ public class GoogleDrive {
                         }
                     }
                 }
-                String assetsSubFolderId = GoogleDriveFolders.getAssetsFolderId(userEmail);
+                String folderName = GoogleDriveFolders.assetsFolderName;
+                String assetsSubFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName);
                 if (assetsSubFolderId == null){
-                    LogHandler.saveLog("No folder was found in Google Drive back up account",false);
+                    Log.d("folders","asset folder not found");
                     return mediaItems;
                 }
 
@@ -443,7 +444,9 @@ public class GoogleDrive {
     public static void unlinkSingleAccount(String sourceUserEmail, Drive sourceDriveService, boolean ableToMoveAllAssets){
         Thread unlinkSingleAccountThread = new Thread( () -> {
             String syncAssetsFolderId = GoogleDriveFolders.getParentFolderId(sourceUserEmail);
-            System.out.println("starting to recursively delete files ");
+            if(syncAssetsFolderId == null){
+                return;
+            }
             recursivelyDeleteFolderThread(sourceDriveService,syncAssetsFolderId,ableToMoveAllAssets);
             boolean isRevoked = false;
             System.out.println("starting to revoke ");
@@ -653,6 +656,9 @@ public class GoogleDrive {
         Drive service = initializeDrive(accessToken);
 
         String parentFolderId = GoogleDriveFolders.getParentFolderId(userEmail);
+        if(parentFolderId == null){
+            return;
+        }
         parentFolderId = cleanParentFolder(parentFolderId,service,userEmail);
 
 //        String assetsFolderId = account_row[3];

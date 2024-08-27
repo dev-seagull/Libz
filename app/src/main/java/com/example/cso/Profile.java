@@ -157,11 +157,12 @@ public class Profile {
     private static List<com.google.api.services.drive.model.File> getFilesInProfileFolder(String userEmail, Drive service){
         List<com.google.api.services.drive.model.File> existingFiles = null;
         try {
-            String stashUserProfileFolderId = GoogleDriveFolders.getProfileFolderId(userEmail);
+            String folderName = GoogleDriveFolders.profileFolderName;
+            String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName);
 
-            if (stashUserProfileFolderId != null && !stashUserProfileFolderId.isEmpty()) {
+            if (profileFolderId != null && !profileFolderId.isEmpty()) {
                 FileList fileList = service.files().list()
-                        .setQ("name contains 'profileMap_' and '" + stashUserProfileFolderId + "' in parents")
+                        .setQ("name contains 'profileMap_' and '" + profileFolderId + "' in parents")
                         .setSpaces("drive")
                         .setFields("files(id,name)")
                         .execute();
@@ -251,7 +252,8 @@ public class Profile {
                         driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
 
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                        String folderId = GoogleDriveFolders.getProfileFolderId(userEmail);
+                        String folderName = GoogleDriveFolders.profileFolderName;
+                        String folderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName);
                         deleteProfileFiles(service, folderId);
                         isDeleted[0] = checkDeletionStatus(service, folderId);
                     }
@@ -276,7 +278,8 @@ public class Profile {
         Thread deleteProfileFileThread = new Thread(() -> {
             try {
                 Drive service = GoogleDrive.initializeDrive(accessToken);
-                String folderId = GoogleDriveFolders.getProfileFolderId(userEmail);
+                String folderName = GoogleDriveFolders.profileFolderName;
+                String folderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName);
 
                 FileList fileList = service.files().list()
                         .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
@@ -362,7 +365,8 @@ public class Profile {
             try{
                 if (signInResult.getHandleStatus()) {
                     Drive service = GoogleDrive.initializeDrive(signInResult.getTokens().getAccessToken());
-                    String profileFolderId = GoogleDriveFolders.getProfileFolderId(signInResult.getUserEmail());
+                    String folderName = GoogleDriveFolders.profileFolderName;
+                    String profileFolderId = GoogleDriveFolders.getSubFolderId(signInResult.getUserEmail(), folderName);
 
                     String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,"profile", resultJson);
                     if (uploadedFileId == null | uploadedFileId.isEmpty()) {
@@ -405,7 +409,8 @@ public class Profile {
                         driveBackupRefreshToken = account_row[2];
                         driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                        String profileFolderId = GoogleDriveFolders.getProfileFolderId(account_row[0]);
+                        String folderName = GoogleDriveFolders.profileFolderName;
+                        String profileFolderId = GoogleDriveFolders.getSubFolderId(account_row[0], folderName);
                         deleteProfileFiles(service, profileFolderId);
                         boolean isDeleted = checkDeletionStatus(service,profileFolderId);
                         if(isDeleted){
@@ -752,7 +757,8 @@ public class Profile {
             try{
                 String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
                 Drive service = GoogleDrive.initializeDrive(accessToken);
-                String profileFolderId = GoogleDriveFolders.getProfileFolderId(userEmail);
+                String folderName = GoogleDriveFolders.profileFolderName;
+                String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName);
                 String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,loginStatus, attachedFile);
                 if (uploadedFileId == null | uploadedFileId.isEmpty()) {
                     LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
