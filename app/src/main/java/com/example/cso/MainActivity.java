@@ -95,9 +95,9 @@
                                     Log.d("signInToBackUpLauncher","userEmail: " + userEmail);
                                     Log.d("signInToBackUpLauncher","accessTokenNull : " + (accessToken == null));
 
-                                    Log.d("signInToBackUpLauncher","Sign in started");
+                                    Log.d("signInToBackUpLauncher","initializeParentFolder started");
                                     GoogleDriveFolders.initializeParentFolder(userEmail,accessToken, true);
-                                    Log.d("signInToBackUpLauncher","Sign in finished");
+                                    Log.d("signInToBackUpLauncher","initializeParentFolder finished");
 
                                     Log.d("signInToBackUpLauncher","Reading profile map started");
                                     JsonObject resultJson = Profile.readProfileMapContent(userEmail,accessToken);
@@ -120,7 +120,9 @@
                                                 resultJson, signInResult);
                                     }else{
                                         Profile profile = new Profile();
+                                        Log.d("signInToBackUpLauncher","loginSingleAccount started");
                                         profile.loginSingleAccount(signInResult);
+                                        Log.d("signInToBackUpLauncher","loginSingleAccount finished");
                                     }
                                     lastButton[0].setClickable(true);
                                 }catch (Exception e){

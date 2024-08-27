@@ -8,6 +8,7 @@ import androidx.activity.result.ActivityResultLauncher;
 
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonArray;
@@ -92,7 +93,7 @@ public class Profile {
         Thread readProdileMapContentThread = new Thread(() -> {
             try{
                 Drive service = GoogleDrive.initializeDrive(accessToken);
-                List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail, service);
+                List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail, service, accessToken);
                 for (com.google.api.services.drive.model.File existingFile : existingFiles) {
                     for (int i = 0; i < 3; i++) {
                         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -113,15 +114,18 @@ public class Profile {
                     }
                 }
             }catch (Exception e){
+                System.out.println("errr is r: " + e.getLocalizedMessage());
                 FirebaseCrashlytics.getInstance().recordException(e);
             }
         });
+
         readProdileMapContentThread.start();
         try{
             readProdileMapContentThread.join();
         }catch (Exception e){
             FirebaseCrashlytics.getInstance().recordException(e);
         }
+
         return resultJson[0];
     }
 
@@ -132,7 +136,7 @@ public class Profile {
             try{
                 Log.d("Threads","Map file name searching started");
                 Drive service = GoogleDrive.initializeDrive(accessToken);
-                List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail, service);
+                List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail, service, accessToken);
 
                 for (com.google.api.services.drive.model.File existingFile : existingFiles) {
                     resultJsonName[0] = existingFile.getName();
@@ -154,26 +158,35 @@ public class Profile {
         return resultJsonName[0];
     }
 
-    private static List<com.google.api.services.drive.model.File> getFilesInProfileFolder(String userEmail, Drive service){
-        List<com.google.api.services.drive.model.File> existingFiles = null;
-        try {
-            String folderName = GoogleDriveFolders.profileFolderName;
-            String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName);
+    private static List<com.google.api.services.drive.model.File> getFilesInProfileFolder(String userEmail, Drive service, String accessToken){
+        final List<com.google.api.services.drive.model.File>[] existingFiles = new List[]{new ArrayList<>()};
+        Thread getFilesInProfileFolderThread = new Thread(() -> {
+            try {
+                String folderName = GoogleDriveFolders.profileFolderName;
+                String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName, accessToken, true);
 
-            if (profileFolderId != null && !profileFolderId.isEmpty()) {
-                FileList fileList = service.files().list()
-                        .setQ("name contains 'profileMap_' and '" + profileFolderId + "' in parents")
-                        .setSpaces("drive")
-                        .setFields("files(id,name)")
-                        .execute();
-                existingFiles = fileList.getFiles();
-                Log.d("folder", "n files in profile folder: " + existingFiles.size());
-                return existingFiles;
+                if (profileFolderId != null && !profileFolderId.isEmpty()) {
+                    FileList fileList = service.files().list()
+                            .setQ("name contains 'profileMap_' and '" + profileFolderId + "' in parents")
+                            .setSpaces("drive")
+                            .setFields("files(id,name)")
+                            .execute();
+                    List<File> files = fileList.getFiles();
+                    existingFiles[0].addAll(files);
+                    Log.d("folder", "n files in profile folder: " + existingFiles[0].size());
+                }
+            }catch (Exception e){
+                System.out.println("errr is f:"  +e.getLocalizedMessage());
+                FirebaseCrashlytics.getInstance().recordException(e);
             }
-        }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
-        }
-        return existingFiles;
+        });
+
+        getFilesInProfileFolderThread.start();
+        try {
+            getFilesInProfileFolderThread.join();
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+
+        return existingFiles[0];
     }
 
     public static boolean isLinkedToAccounts(JsonObject resultJson, String userEmail){
@@ -237,49 +250,13 @@ public class Profile {
         return isLinked;
     }
 
-    public static boolean deleteProfileJson(String userEmail) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        boolean[] isDeleted = {false};
-        Callable<Boolean> uploadTask = () -> {
-            try {
-                String driveBackupAccessToken;
-                String driveBackupRefreshToken;
-                String[] selected_columns = {"userEmail", "type","refreshToken"};
-                List<String[]> account_rows = DBHelper.getAccounts(selected_columns);
-                for (String[] account_row : account_rows) {
-                    if (account_row[1].equals("backup") && account_row[0].equals(userEmail)) {
-                        driveBackupRefreshToken = account_row[2];
-                        driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
-
-                        Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                        String folderName = GoogleDriveFolders.profileFolderName;
-                        String folderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName);
-                        deleteProfileFiles(service, folderId);
-                        isDeleted[0] = checkDeletionStatus(service, folderId);
-                    }
-                }
-            } catch (Exception e) {
-                LogHandler.saveLog("Failed to upload profileMap from Android to backup in deleteProfileJson : " + e.getLocalizedMessage());
-            }
-            return isDeleted[0];
-        };
-
-        Future<Boolean> future = executor.submit(uploadTask);
-        boolean isDeletedFuture = false;
-        try {
-            isDeletedFuture = future.get();
-        } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete profile Content from account : " + e.getLocalizedMessage());
-        }
-        return isDeletedFuture;
-    }
 
     private static void deleteProfileFile(String userEmail, String accessToken, boolean deleteOlderProfileFiles){
         Thread deleteProfileFileThread = new Thread(() -> {
             try {
                 Drive service = GoogleDrive.initializeDrive(accessToken);
                 String folderName = GoogleDriveFolders.profileFolderName;
-                String folderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName);
+                String folderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName, accessToken, true);
 
                 FileList fileList = service.files().list()
                         .setQ("name contains 'profileMap' and '" + folderId + "' in parents")
@@ -349,7 +326,7 @@ public class Profile {
     private static boolean checkDeletionStatusAfterProfileLogin(String userEmail,String accessToken){
         try{
             Drive service = GoogleDrive.initializeDrive(accessToken);
-            List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail, service);
+            List<com.google.api.services.drive.model.File> existingFiles = getFilesInProfileFolder(userEmail, service, accessToken);
             if (existingFiles.size() == 1) {
                 return true;
             }
@@ -366,7 +343,8 @@ public class Profile {
                 if (signInResult.getHandleStatus()) {
                     Drive service = GoogleDrive.initializeDrive(signInResult.getTokens().getAccessToken());
                     String folderName = GoogleDriveFolders.profileFolderName;
-                    String profileFolderId = GoogleDriveFolders.getSubFolderId(signInResult.getUserEmail(), folderName);
+                    String profileFolderId = GoogleDriveFolders.getSubFolderId(signInResult.getUserEmail(), folderName,
+                            signInResult.getTokens().getAccessToken(), true);
 
                     String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,"profile", resultJson);
                     if (uploadedFileId == null | uploadedFileId.isEmpty()) {
@@ -390,86 +368,43 @@ public class Profile {
         return isBackedUp[0];
     }
 
-    public static boolean backUpProfileMap(boolean hasRemoved, String signedOutEmail) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        boolean[] isBackedUp = {false};
-        Callable<Boolean> uploadTask = () -> {
-            try {
-                String driveBackupAccessToken;
-                String driveBackupRefreshToken;
-                String[] selected_columns = {"userEmail", "type", "refreshToken"};
-                List<String[]> account_rows = DBHelper.getAccounts(selected_columns);
-                int backUpAccountCounts = 0;
-                for (String[] account_row : account_rows) {
-                    if (hasRemoved && account_row[0].equals(signedOutEmail)) {
-                        continue;
-                    }
-                    if (account_row[1].equals("backup")){
-                        backUpAccountCounts ++;
-                        driveBackupRefreshToken = account_row[2];
-                        driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
-                        Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                        String folderName = GoogleDriveFolders.profileFolderName;
-                        String profileFolderId = GoogleDriveFolders.getSubFolderId(account_row[0], folderName);
-                        deleteProfileFiles(service, profileFolderId);
-                        boolean isDeleted = checkDeletionStatus(service,profileFolderId);
-                        if(isDeleted){
-                            String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,"unlink",null);
-                            if (uploadedFileId == null | uploadedFileId.isEmpty()) {
-                                LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
-                            }else{
-                                isBackedUp[0] = true;
-                            }
-                        }
-                    }
-                }
-                if(backUpAccountCounts == 0){
-                    isBackedUp[0] = true;
-                }
-            } catch (Exception e) {
-                LogHandler.saveLog("Failed to upload profileMap from Android to backup in backUpProfileMap: " + e.getLocalizedMessage());
-            }
-            return isBackedUp[0];
-        };
-
-        Future<Boolean> future = executor.submit(uploadTask);
-        boolean isBackedUpFuture = false;
-        try{
-            isBackedUpFuture = future.get();
-        }catch (Exception e){
-            System.out.println(e.getLocalizedMessage());
-        }
-        return isBackedUpFuture;
-    }
-
     private static String setAndCreateProfileMapContent(Drive service,String profileFolderId,
                                                         String loginStatus, Object attachedFile){
-        String uploadFileId = "";
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
-        Date date = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
-        String currentDate = formatter.format(date);
-        String fileName = "profileMap_" + currentDate + ".json";
+        final String[] uploadFileId = {""};
+        Thread setAndCreateProfileMapContentThread = new Thread( () -> {
+            try{
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
+                Date date = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
+                String currentDate = formatter.format(date);
+                String fileName = "profileMap_" + currentDate + ".json";
+                try{
+                    com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+                    fileMetadata.setName(fileName);
+                    fileMetadata.setParents(java.util.Collections.singletonList(profileFolderId));
+
+                    JsonObject content = prepareProfileMapContent(loginStatus, attachedFile);
+
+                    String contentString = content.toString();
+                    ByteArrayContent mediaContent = ByteArrayContent.fromString("application/json", contentString);
+
+                    com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
+                            .setFields("id")
+                            .execute();
+
+                    uploadFileId[0] = uploadedFile.getId();
+                    Log.d("profileMapContent" , "Upload file is : "+ uploadFileId[0]);
+                }catch (Exception e){
+                    LogHandler.saveLog("Failed to set profile map content:" + e.getLocalizedMessage(), true);
+                }
+            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        });
+
+        setAndCreateProfileMapContentThread.start();
         try{
-            com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-            fileMetadata.setName(fileName);
-            fileMetadata.setParents(java.util.Collections.singletonList(profileFolderId));
+            setAndCreateProfileMapContentThread.join();
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
 
-            JsonObject content = prepareProfileMapContent(loginStatus, attachedFile);
-
-            String contentString = content.toString();
-            ByteArrayContent mediaContent = ByteArrayContent.fromString("application/json", contentString);
-
-            com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
-                    .setFields("id")
-                    .execute();
-
-            uploadFileId = uploadedFile.getId();
-            Log.d("profileMapContent" , "Upload file is : "+ uploadFileId);
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to set profile map content:" + e.getLocalizedMessage(), true);
-        }finally {
-            return uploadFileId;
-        }
+        return uploadFileId[0];
     }
 
     private static JsonObject prepareProfileMapContent(String loginStatus, Object attachedFile){
@@ -684,7 +619,10 @@ public class Profile {
 
             for (String[] existingAccount : existingAccounts) {
                 if (existingAccount[1].equals("backup")) {
-                    isBackedUp = Profile.backupJsonFileToExistingAccount(newAccountJson,existingAccount[0], existingAccount[2],"login");
+                    Log.d("signInToBackUpLauncher","backupJsonFileToExistingAccount started");
+                    isBackedUp = Profile.backupJsonFileToExistingAccount(newAccountJson,existingAccount[0],
+                            existingAccount[2],"login",signInResult.getTokens().getAccessToken());
+                    Log.d("signInToBackUpLauncher","backupJsonFileToExistingAccount finished: " + isBackedUp);
                     if (!isBackedUp){
                         handleLoginToSingleAccountFailure(backedUpAccounts);
                         break;
@@ -751,23 +689,27 @@ public class Profile {
         return newAccountJson;
     }
 
-    public static boolean backupJsonFileToExistingAccount(Object attachedFile, String userEmail, String refreshToken, String loginStatus) {
+    public static boolean backupJsonFileToExistingAccount(Object attachedFile, String userEmail, String refreshToken, String loginStatus,
+                                                          String accessToken) {
         boolean[] isBackedUp = {false};
+        final String[] finalAccessToken = {null};
         Thread backUpJsonThread = new Thread(() -> {
             try{
-                String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
-                Drive service = GoogleDrive.initializeDrive(accessToken);
+                if(loginStatus.equals("login")){
+                    finalAccessToken[0] = accessToken;
+                }else if (loginStatus.equals("unlink")){
+                    finalAccessToken[0] = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
+                }
+                Drive service = GoogleDrive.initializeDrive(finalAccessToken[0]);
                 String folderName = GoogleDriveFolders.profileFolderName;
-                String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName);
+                String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName, finalAccessToken[0], true);
                 String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,loginStatus, attachedFile);
                 if (uploadedFileId == null | uploadedFileId.isEmpty()) {
                     LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
                 }else{
                     isBackedUp[0] = true;
                 }
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to backup json file: " + e.getLocalizedMessage(), true);
-            }
+            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e);}
         });
         backUpJsonThread.start();
         try {
@@ -897,7 +839,7 @@ public class Profile {
         boolean isBackedUp = false;
         for(String[] account: existingAccounts){
             if (account[1].equals("backup") && !account[0].equals(unlinkedUserEmail)){
-                isBackedUp = backupJsonFileToExistingAccount(unlinkedUserEmail, account[0], account[2],"unlink");
+                isBackedUp = backupJsonFileToExistingAccount(unlinkedUserEmail, account[0], account[2],"unlink", null);
                 if (!isBackedUp){
                     for(String[] backedUpExistingAccount: backedUpAccounts){
                         String userEmail = backedUpExistingAccount[0];

@@ -75,8 +75,9 @@ public class Sync {
         try{
             String userEmail = accountRow[0];
             String refreshToken = accountRow[4];
+            String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
             String folderName = GoogleDriveFolders.assetsFolderName;
-            String syncedAssetsSubFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName);
+            String syncedAssetsSubFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName, accessToken, true);
             if(syncedAssetsSubFolderId == null){
                 Log.d("folders","asset folder not found");
                 return;

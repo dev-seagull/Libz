@@ -46,7 +46,7 @@ public class GoogleDriveFolders {
                     ArrayList<String> subFolders = new ArrayList<>(Arrays.asList
                             (profileFolderName, databaseFolderName, assetsFolderName));
                     for(String subFolder: subFolders){
-                        initializeSubFolders(service,parentFolderId,subFolder,userEmail);
+                        initializeSubFolder(service,parentFolderId,subFolder,userEmail);
                     }
                 }
             } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
@@ -59,7 +59,7 @@ public class GoogleDriveFolders {
     }
 
 
-    private static void initializeSubFolders(Drive service,String parentFolderId, String folderName, String userEmail){
+    private static void initializeSubFolder(Drive service, String parentFolderId, String folderName, String userEmail){
         Thread initializeSubFoldersThread = new Thread( () -> {
             String folderId = getSubFolderIdFromDrive(service,folderName,parentFolderId);
             Log.d("folders", "Folder :" + folderName + " and id: " + folderId);
@@ -68,10 +68,14 @@ public class GoogleDriveFolders {
                 folderId = createSubFolder(service,parentFolderId,folderName);
             }
 
-            String finalParentFolderId = parentFolderId;
-            HashMap<String, Object> updatedValues = new HashMap<String, Object>() {{
-                put("parentFolderId", finalParentFolderId);
-            }};
+            HashMap<String, Object> updatedValues = new HashMap<String, Object>() {};
+            if(folderName.equals(GoogleDriveFolders.databaseFolderName)){
+                updatedValues.put("databaseFolderId", folderId);
+            }else if(folderName.equals(GoogleDriveFolders.assetsFolderName)){
+                updatedValues.put("assetsFolderId", folderId);
+            }else if(folderName.equals(GoogleDriveFolders.profileFolderName)){
+                updatedValues.put("profileFolderId", folderId);
+            }
             MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, "backup");
 
             Log.d("folders", "Folder :" + folderName + " and id: " + folderId);
@@ -97,13 +101,17 @@ public class GoogleDriveFolders {
                        .execute();
 
                folderId[0] = subfolder.getId();
-           }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+           }catch (Exception e) {
+               FirebaseCrashlytics.getInstance().recordException(e);
+           }
         });
 
         createSubFolderThread.start();
         try{
             createSubFolderThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) {
+            FirebaseCrashlytics.getInstance().recordException(e);
+        }
 
         return folderId[0];
     }
@@ -179,18 +187,20 @@ public class GoogleDriveFolders {
         return folderId[0];
     }
 
-    public static String getParentFolderId(String userEmail){
+    public static String getParentFolderId(String userEmail, boolean isLogin, String accessToken){
         final String[] syncAssetsFolderId = {null};
         Thread getParentFolderIdThread = new Thread( () -> {
             try{
-                syncAssetsFolderId[0] = DBHelper.getParentFolderIdFromDB(userEmail);
-
-                if (syncAssetsFolderId[0] == null){
-                    String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
-                    initializeParentFolder(userEmail,accessToken, false);
+                if(isLogin){
+                    Drive service = GoogleDrive.initializeDrive(accessToken);
+                    syncAssetsFolderId[0] = getParentFolderIdFromDrive(service);
+                }else{
                     syncAssetsFolderId[0] = DBHelper.getParentFolderIdFromDB(userEmail);
+                    if(syncAssetsFolderId[0] == null){
+                        initializeParentFolder(userEmail,accessToken, false);
+                        syncAssetsFolderId[0] = DBHelper.getParentFolderIdFromDB(userEmail);
+                    }
                 }
-
             }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
         });
 
@@ -202,23 +212,35 @@ public class GoogleDriveFolders {
         return syncAssetsFolderId[0];
     }
 
-    public static String getSubFolderId(String userEmail, String folderName){
+    public static String getSubFolderId(String userEmail, String folderName, String accessToken, boolean isLogin){
         final String[] folderId = {null};
-        Thread getAssetsFolderIdThread = new Thread( () -> {
+        Thread getSubFolderIdThread = new Thread( () -> {
             try{
-                folderId[0] = DBHelper.getAssetsFolderId(userEmail);
-                if (folderId[0] == null){
-                    String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
-                    Drive service = GoogleDrive.initializeDrive(accessToken);
-                    initializeSubFolders(service, folderId[0],folderName,userEmail);
-                    folderId[0] = DBHelper.getAssetsFolderId(userEmail);
+
+                Drive service = null;
+                if(isLogin){
+                    service = GoogleDrive.initializeDrive(accessToken);
+                }else{
+                    String finalAccessToken = DBHelper.getDriveBackupAccessToken(userEmail);
+                    service = GoogleDrive.initializeDrive(finalAccessToken);
+                }
+
+                String parentFolderId = getParentFolderIdFromDrive(service);
+                if(isLogin){
+                    folderId[0] = getSubFolderIdFromDrive(service,folderName,parentFolderId);
+                }else{
+                    folderId[0] = DBHelper.getSubFolderIdFromDB(userEmail,folderName);
+                    if (folderId[0] == null){
+                        initializeSubFolder(service, parentFolderId,folderName,userEmail);
+                        folderId[0] = DBHelper.getSubFolderIdFromDB(userEmail,folderName);
+                    }
                 }
             }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e);}
         });
 
-        getAssetsFolderIdThread.start();
+        getSubFolderIdThread.start();
         try{
-            getAssetsFolderIdThread.join();
+            getSubFolderIdThread.join();
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
 
         return folderId[0];

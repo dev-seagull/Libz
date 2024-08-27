@@ -586,66 +586,6 @@
             return isInvalidated[0];
         }
 
-        private static boolean startDeleteProfileJsonThread(String buttonText){
-            LogHandler.saveLog("Starting Delete Profile Json Thread", false);
-            boolean[] isDeleted = {false};
-            Thread deleteProfileJsonThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    isDeleted[0] = Profile.deleteProfileJson(buttonText);
-                    if(!isDeleted[0]){
-                        LogHandler.saveLog("Profile Json is not deleted when signing out.");
-                    }
-                }
-            });
-            deleteProfileJsonThread.start();
-            try{
-                deleteProfileJsonThread.join();
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to join Delete Profile Json Thread: " + e.getLocalizedMessage(), true );
-            }
-            LogHandler.saveLog("Finished  Delete Profile Json Thread : " + isDeleted[0], false);
-            return isDeleted[0];
-        }
-
-        private static boolean startDeleteDatabaseThread(String buttonText){
-            LogHandler.saveLog("Starting Delete Database Thread", false);
-            boolean[] isDeleted = {false};
-            Thread deleteDatabaseThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    String driveBackupAccessToken = null;
-                    String driveBackupRefreshToken;
-                    String[] selected_columns = {"userEmail", "type","refreshToken"};
-                    List<String[]> account_rows = DBHelper.getAccounts(selected_columns);
-                    for (String[] account_row : account_rows) {
-                        if (account_row[1].equals("backup") && account_row[0].equals(buttonText)) {
-                            driveBackupRefreshToken = account_row[2];
-                            driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
-                        }
-                    }
-                    if((driveBackupAccessToken != null) && !driveBackupAccessToken.isEmpty()){
-                        Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
-                        String folderName = GoogleDriveFolders.databaseFolderName;
-                        String databaseFolderId = GoogleDriveFolders.getSubFolderId(buttonText, folderName);
-                        DBHelper.deleteDatabaseFiles(service,databaseFolderId);
-                        isDeleted[0] = DBHelper.checkDeletionStatus(service,databaseFolderId);
-                        if(!isDeleted[0]){
-                            LogHandler.saveLog("Database is not deleted when signing out.");
-                        }
-                    }
-                }
-            });
-            deleteDatabaseThread.start();
-            try{
-                deleteDatabaseThread.join();
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to join Delete Database Thread: " + e.getLocalizedMessage(), true );
-            }
-            LogHandler.saveLog("Finished  Delete Database Thread : " + isDeleted[0], false);
-            return isDeleted[0];
-        }
-
         public static void startUnlinkThreads(String buttonText){
             Thread startSignOutThreads = new Thread(() -> {
                 GoogleDrive.startUpdateStorageThread();

@@ -49,7 +49,7 @@ public class GoogleDrive {
                     }
                 }
                 String folderName = GoogleDriveFolders.assetsFolderName;
-                String assetsSubFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName);
+                String assetsSubFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName, backupAccessToken, isLogin);
                 if (assetsSubFolderId == null){
                     Log.d("folders","asset folder not found");
                     return mediaItems;
@@ -159,23 +159,31 @@ public class GoogleDrive {
     }
 
     public static Drive initializeDrive(String accessToken){
-        Drive service = null;
-        try{
-            NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-            JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-            String bearerToken = "Bearer " + accessToken;
-            HttpRequestInitializer requestInitializer = request -> {
-                request.getHeaders().setAuthorization(bearerToken);
-                request.getHeaders().setContentType("application/json");
-            };
-            service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-                    .setApplicationName("stash")
-                    .build();
+        final Drive[] service = {null};
+        Thread initializeDriveThread = new Thread(() -> {
+            try{
+                NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+                JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+                String bearerToken = "Bearer " + accessToken;
+                HttpRequestInitializer requestInitializer = request -> {
+                    request.getHeaders().setAuthorization(bearerToken);
+                    request.getHeaders().setContentType("application/json");
+                };
+                service[0] = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
+                        .setApplicationName("stash")
+                        .build();
 
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to initialize DRIVE : " + e.getLocalizedMessage(), true);
-        }
-        return service;
+            }catch (Exception e){
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
+        });
+
+        initializeDriveThread.start();
+        try{
+            initializeDriveThread.join();
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+
+        return service[0];
     }
 
     public static List<File> getDriveFolderFiles(Drive service, String folderId){
@@ -443,7 +451,7 @@ public class GoogleDrive {
 
     public static void unlinkSingleAccount(String sourceUserEmail, Drive sourceDriveService, boolean ableToMoveAllAssets){
         Thread unlinkSingleAccountThread = new Thread( () -> {
-            String syncAssetsFolderId = GoogleDriveFolders.getParentFolderId(sourceUserEmail);
+            String syncAssetsFolderId = GoogleDriveFolders.getParentFolderId(sourceUserEmail,false,null);
             if(syncAssetsFolderId == null){
                 return;
             }
@@ -655,7 +663,7 @@ public class GoogleDrive {
         String accessToken = MainActivity.googleCloud.updateAccessToken(account_row[0]).getAccessToken();
         Drive service = initializeDrive(accessToken);
 
-        String parentFolderId = GoogleDriveFolders.getParentFolderId(userEmail);
+        String parentFolderId = GoogleDriveFolders.getParentFolderId(userEmail,false,null);
         if(parentFolderId == null){
             return;
         }

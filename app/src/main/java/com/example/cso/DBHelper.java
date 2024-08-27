@@ -562,7 +562,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 valuesList.add(columnValue);
             }
 
-            sqlQueryBuilder.delete(sqlQueryBuilder.length() - 2, sqlQueryBuilder.length());//delete the last comma
+            sqlQueryBuilder.delete(sqlQueryBuilder.length() - 2, sqlQueryBuilder.length());
             sqlQueryBuilder.append(" WHERE userEmail = ? and type = ?");
             valuesList.add(userEmail);
             valuesList.add(type);
@@ -1201,7 +1201,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         userEmail[0] = drive_backUp_account[0];
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                         String folderName = GoogleDriveFolders.databaseFolderName;
-                        String databaseFolderId = GoogleDriveFolders.getSubFolderId(userEmail[0], folderName);
+                        String databaseFolderId = GoogleDriveFolders.getSubFolderId(userEmail[0], folderName, driveBackupAccessToken,false);
 //                        deleteDatabaseFiles(service, databaseFolderId);
 //                        boolean isDeleted = checkDeletionStatus(service,databaseFolderId);
                         if(true){
@@ -1224,7 +1224,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 userEmail[0] = "sofatest40";
                 Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                 String folderName = GoogleDriveFolders.databaseFolderName;
-                String databaseFolderId = GoogleDriveFolders.getSubFolderId(userEmail[0], folderName);
+                String databaseFolderId = GoogleDriveFolders.getSubFolderId(userEmail[0], folderName, driveBackupAccessToken, false);
 //                        deleteDatabaseFiles(service, databaseFolderId);
 //                        boolean isDeleted = checkDeletionStatus(service,databaseFolderId);
                 if(true){
@@ -1676,6 +1676,34 @@ public class DBHelper extends SQLiteOpenHelper {
             cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
             if (cursor!= null && cursor.moveToFirst()) {
                 int folderIdColumnIndex = cursor.getColumnIndex("parentFolderId");
+                if (folderIdColumnIndex >= 0) {
+                    return cursor.getString(folderIdColumnIndex);
+                }
+            }
+        }catch (Exception e){
+            LogHandler.saveLog("Failed to select from ACCOUNTS in getParentFolderIdFromDB method: " + e.getLocalizedMessage());
+        }
+        return null;
+    }
+
+    public static String getSubFolderIdFromDB(String userEmail, String folderName){
+        String sqlQuery = null;
+        String columnName = null;
+        if(folderName.equals(GoogleDriveFolders.databaseFolderName)){
+            columnName = "databaseFolderId";
+            sqlQuery = "SELECT " + columnName + " FROM ACCOUNTS WHERE userEmail =?";
+        }else if(folderName.equals(GoogleDriveFolders.assetsFolderName)){
+            columnName = "assetsFolderId";
+            sqlQuery = "SELECT " + columnName + " FROM ACCOUNTS WHERE userEmail =?";
+        }else if(folderName.equals(GoogleDriveFolders.profileFolderName)){
+            columnName = "profileFolderId";
+            sqlQuery = "SELECT " + columnName + " FROM ACCOUNTS WHERE userEmail =?";
+        }
+        Cursor cursor = null;
+        try {
+            cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
+            if (cursor!= null && cursor.moveToFirst()) {
+                int folderIdColumnIndex = cursor.getColumnIndex(columnName);
                 if (folderIdColumnIndex >= 0) {
                     return cursor.getString(folderIdColumnIndex);
                 }
