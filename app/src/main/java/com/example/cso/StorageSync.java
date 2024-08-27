@@ -43,7 +43,8 @@ public class StorageSync {
         Thread uploadStorageJsonFileThread = new Thread(() -> {
             Drive service = GoogleDrive.initializeDrive(accessToken);
             String fileName = "Storage_" + getAndroidId(context) + ".json";
-            String profileFolderId = GoogleDriveFolders.getProfileFolderId(userEmail);
+            String folderName = GoogleDriveFolders.profileFolderName;
+            String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName);
             String uploadFileId = "";
             try{
                 com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
@@ -109,7 +110,8 @@ public class StorageSync {
         Thread downloadStorageJsonThread = new Thread(() -> {
             Drive service = GoogleDrive.initializeDrive(accessToken);
             String fileName = "Storage_" + device.getDeviceId() + ".json";
-            String profileFolderId = GoogleDriveFolders.getProfileFolderId(userEmail);
+            String folderName = GoogleDriveFolders.profileFolderName;
+            String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName);
             try {
                 String fileId = searchForExistingFile(service, fileName,profileFolderId);
                 if (fileId != null) {
