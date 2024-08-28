@@ -108,15 +108,6 @@ public class TimerService extends Service {
                                 isTimerRunning = false;
                             }
 
-                            //                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
-                            //                    storageUpdaterThreadTemp.start();
-                            //                    try{
-                            //                        storageUpdaterThreadTemp.join();
-                            //                    }catch (InterruptedException e) {
-                            //                        LogHandler.saveLog("Failed to join storage update temp : " +
-                            //                                e.getLocalizedMessage(), true);
-                            //                    }
-
                         }).start();
 
                     }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }

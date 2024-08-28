@@ -4,6 +4,8 @@ import android.database.Cursor;
 import android.os.Environment;
 import android.os.StatFs;
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
+
 import java.io.File;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -14,7 +16,7 @@ import java.util.Locale;
 public class StorageHandler {
     private double totalStorage;
     private static long blockSize;
-    private static double optimizedFreeSpace = 0;
+    private static double desiredFreeSpace = 0;
     private double optimizedPercent = 0.15;
     private static double freeSpace;
     public double getTotalStorage() {
@@ -30,10 +32,10 @@ public class StorageHandler {
         this.blockSize = blockSize;
     }
     public double getOptimizedFreeSpace() {
-        return optimizedFreeSpace;
+        return desiredFreeSpace;
     }
     public void setOptimizedFreeSpace(double optimizedFreeSpace) {
-        this.optimizedFreeSpace = optimizedFreeSpace;
+        this.desiredFreeSpace = optimizedFreeSpace;
     }
     public double getOptimizedPercent() {
         return optimizedPercent;
@@ -52,39 +54,27 @@ public class StorageHandler {
     public StorageHandler(){
         this.blockSize = getDeviceBlockSize();
         this.totalStorage = getDeviceTotalStorage();
-        this.optimizedFreeSpace = this.totalStorage * optimizedPercent;
+        System.out.println("total space:"  + totalStorage);
+        this.desiredFreeSpace = this.totalStorage * optimizedPercent;
+        System.out.println("desired space:"  + desiredFreeSpace);
         this.freeSpace = getDeviceFreeStorage();
-        DeviceHandler.insertIntoDeviceTable(MainActivity.androidDeviceName,
-                MainActivity.androidUniqueDeviceIdentifier);
+        System.out.println("free space:"  + freeSpace);
     }
-
-    public static double freeStorageUpdater(){
-        freeSpace = getDeviceFreeStorage();
-        return freeSpace;
-    }
-
 
     public static double getAmountSpaceToFreeUp() {
-        String sqlQuery = "SELECT freeStorage FROM DEVICE WHERE deviceName = ?;";
-        Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery,new String[]{MainActivity.androidUniqueDeviceIdentifier});
+        double amount = 0.0;
         try{
-            if(cursor != null && cursor.moveToFirst()){
-                int result = cursor.getInt(0);
-                if(result == 1){
-                    freeSpace = cursor.getDouble(1);
-                }
+            double blockSize = getDeviceBlockSize();
+            double totalStorage = getDeviceTotalStorage() * 1024;
+            double desiredFreeSpace = (totalStorage * 0.15);
+            double freeSpace = getDeviceFreeStorage() * 1024;
+            System.out.println(desiredFreeSpace);
+            if(freeSpace < desiredFreeSpace){
+                amount = desiredFreeSpace - freeSpace;
             }
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to read free space from database method: " + e.getLocalizedMessage());
-        }finally {
-            if(cursor != null){
-                cursor.close();
-            }
-        }
-        if (freeSpace <= optimizedFreeSpace) {
-            return optimizedFreeSpace - freeSpace;
-        }
-        return 0.0;
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+
+        return amount;
     }
 
 
@@ -94,7 +84,7 @@ public class StorageHandler {
         return statFs.getBlockSizeLong();
     }
 
-    public double getDeviceTotalStorage(){
+    public static double getDeviceTotalStorage(){
         String externalStorageDirectory = Environment.getExternalStorageDirectory().getPath();
         StatFs statFs = new StatFs(externalStorageDirectory);
         long totalBlocks = statFs.getBlockCountLong();

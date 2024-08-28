@@ -93,7 +93,7 @@ public class Sync {
             List<String[]> sortedAndroidFiles = getSortedAndroidFiles();
 
             for (String[] androidRow : sortedAndroidFiles) {
-                double amountSpaceToFreeUp = StorageHandler.freeStorageUpdater();
+                double amountSpaceToFreeUp = StorageHandler.getAmountSpaceToFreeUp();
                 Log.d("service","amountSpaceToFreeUp : " + amountSpaceToFreeUp);
                 syncAndroidFile(androidRow, userEmail, refreshToken, syncedAssetsSubFolderId,
                         driveFreeSpace, amountSpaceToFreeUp, context, activity);
