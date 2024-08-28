@@ -938,17 +938,20 @@ public class DBHelper extends SQLiteOpenHelper {
         return count;
     }
 
-    public boolean backupAccountExists(){
-        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ACCOUNTS WHERE type = 'backup')";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
+    public static boolean anyBackupAccountExists(){
         boolean exists = false;
-        if(cursor != null && cursor.moveToFirst()){
-            int result = cursor.getInt(0);
-            if(result == 1){
-                exists = true;
+        try{
+            String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ACCOUNTS WHERE type = 'backup')";
+            Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
+            if(cursor != null && cursor.moveToFirst()){
+                int result = cursor.getInt(0);
+                if(result == 1){
+                    exists = true;
+                }
             }
-        }
-        cursor.close();
+            cursor.close();
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+
         return exists;
     }
 
@@ -1175,7 +1178,6 @@ public class DBHelper extends SQLiteOpenHelper {
     public static boolean backUpDataBaseToDrive(Context context) {
         String dataBasePath = context.getDatabasePath("StashDatabase").getPath();
         String[] userEmail = {""};
-        String[] uploadFileId = new String[1];
         boolean[] isBackedUp = {false};
 
         ExecutorService executor = Executors.newSingleThreadExecutor();

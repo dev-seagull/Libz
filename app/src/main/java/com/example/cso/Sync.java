@@ -2,10 +2,10 @@ package com.example.cso;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
@@ -13,68 +13,66 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Sync {
-    public static Thread syncThread;
-    private static  boolean isAllOfAccountsFull = true;
+//    private static boolean isAllOfAccountsFull = true;
     public static void syncAndroidFiles(Context context, Activity activity){
+        Log.d("Threads","startSyncThread started");
+        Thread syncThread =  new Thread( () -> {
+            try{
+//                double amountSpaceToFreeUp = StorageHandler.freeStorageUpdater();
+
+                List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","type",
+                        "totalStorage","usedStorage", "refreshToken","usedStorage","totalStorage"});
+                boolean accountExists = DBHelper.anyBackupAccountExists();
+                boolean isAllOfAccountsFull = true;
+
+                for(String[] account_row: account_rows){
+                    double usedStorage = Double.parseDouble(account_row[5]);
+                    Double totalStorage = Double.parseDouble(account_row[6]);
+                    boolean isAccountFull = GoogleDrive.isBackUpAccountFull(totalStorage,usedStorage);
+                    if(!isAccountFull){
+                        isAllOfAccountsFull = false;
+                        String type = account_row[1];
+                        if(type.equals("backup")){
+//                        syncAndroidToBackupAccount(account_row,amountSpaceToFreeUp,context, activity);
+                        }
+                    }
+                }
+
+                Log.d("service","isAllOfAccountsFull : " + isAllOfAccountsFull);
+                Log.d("service", "any backup account exists: " + accountExists);
+
+                if(!InternetManager.isInternetReachable("https://drive.google.com")){
+                    MainActivity.activity.runOnUiThread( () -> {
+                        Log.d("service","no internet connection");
+                        Toast.makeText(activity,
+                                "No internet connection!",
+                                Toast.LENGTH_LONG).show();
+                    });
+                }
+                else if(isAllOfAccountsFull && accountExists){
+                    MainActivity.activity.runOnUiThread(() -> {
+                        Toast.makeText(activity,
+                                "Sync failed! You are running out of space." +
+                                        " Add more back up accounts.",
+                                Toast.LENGTH_LONG).show();
+                    });
+                } else if(!accountExists){
+                    MainActivity.activity.runOnUiThread(() -> {
+                        Toast.makeText(activity,
+                                "There is no backup account to sync!",
+                                Toast.LENGTH_LONG).show();
+                    });
+                }
+
+            }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e);  }
+        });
+
+        syncThread.start();
         try{
-            isAllOfAccountsFull = true;
-            double amountSpaceToFreeUp = StorageHandler.freeStorageUpdater();
+            syncThread.join();
+        }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
 
-            String[] selected_accounts_columns = {"userEmail","type", "totalStorage","usedStorage", "refreshToken"};
-            List<String[]> account_rows = DBHelper.getAccounts(selected_accounts_columns);
-            boolean accountExists = false;
-
-            for(String[] account_row: account_rows){
-                String[] type = {account_row[1]};
-                accountExists = true;
-                if(type[0].equals("backup")){
-                    syncAndroidToBackupAccount(account_row,amountSpaceToFreeUp,context, activity);
-                }
-            }
-            //need change
-            new Thread(() -> {
-                if(!InternetManager.getInternetStatus(context).equals("noInternet")) {
-                    boolean databaseIsBackedUp = DBHelper.backUpDataBaseToDrive(context);
-                    if(!databaseIsBackedUp){
-                        LogHandler.saveLog("Database is not backed up ", true);
-                    }
-                }
-            }).start();
-
-
-            if(!InternetManager.isInternetReachable("https://drive.google.com")){
-                MainActivity.activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        TextView syncMessageTextView = MainActivity.activity.findViewById(R.id.syncMessageTextView);
-                        syncMessageTextView.setVisibility(View.VISIBLE);
-                        syncMessageTextView.setText("You're not connected to internet");
-                    }
-                });
-            }
-            else if(isAllOfAccountsFull && accountExists){
-                MainActivity.activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        TextView syncMessageTextView = MainActivity.activity.findViewById(R.id.syncMessageTextView);
-                        syncMessageTextView.setText("You are running out of space. Add more back up accounts.");
-                        syncMessageTextView.setVisibility(View.VISIBLE);
-                    }
-                });
-            }
-            else if(!accountExists){
-                MainActivity.activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        TextView syncMessageTextView = MainActivity.activity.findViewById(R.id.syncMessageTextView);
-                        syncMessageTextView.setText("Add an account to sync.");
-                        syncMessageTextView.setVisibility(View.VISIBLE);
-                    }
-                });
-            }
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to sync files: " + e.getLocalizedMessage(), true);
-        }
+        Log.d("Threads","startSyncThread finished");
     }
 
     private static void syncAndroidToBackupAccount(String[] accountRow, double amountSpaceToFreeUp,
@@ -95,7 +93,8 @@ public class Sync {
             if (driveFreeSpace <= 100){
                 return;
             }else{
-                isAllOfAccountsFull = false;
+                //should be global
+                boolean isAllOfAccountsFull = false;
             }
 
             List<String[]> sortedAndroidFiles = getSortedAndroidFiles();
@@ -241,24 +240,6 @@ public class Sync {
             LogHandler.saveLog("Failed to calculate drive free space: " + e.getLocalizedMessage(), true);
             return 0;
         }
-    }
-
-    public static void startSyncThread(Context context, Activity activity){
-        Log.d("Threads","startSyncThread started");
-        syncThread =  new Thread(() -> {
-            try{
-                Sync.syncAndroidFiles(context, activity);
-            }catch (Exception e){
-                LogHandler.saveLog("Failed in start sync thread : " + e.getLocalizedMessage() , true);
-            }
-        });
-        syncThread.start();
-        try{
-            syncThread.join();
-        }catch (Exception e){
-            LogHandler.saveLog("Finished to join sync thread: " + e.getLocalizedMessage(), true);
-        }
-        Log.d("Threads","startSyncThread started");
     }
 
     public static void stopSync(){

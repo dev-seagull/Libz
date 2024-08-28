@@ -1057,6 +1057,17 @@ public class GoogleDrive {
         }
     }
 
+    public static boolean isBackUpAccountFull(Double totalStorage, Double usedStorage){
+        try{
+            Double freeStorage =  totalStorage - usedStorage;
+            if(freeStorage > 50){
+                return false;
+            }else{
+                return true;
+            }
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
 
+        return true;
+    }
 }
 

@@ -92,13 +92,15 @@ public class TimerService extends Service {
                                     System.exit(0);
                                 }
 
+                                //if database needed to upload do it here
+
                                 if(!MainActivity.isAndroidTimerRunning){
                                     Android.startThreads(MainActivity.activity);
                                 }
 
                                 GoogleDrive.startThreads();
 
-                                Sync.startSyncThread(getApplicationContext(), MainActivity.activity);
+                                Sync.syncAndroidFiles(getApplicationContext(), MainActivity.activity);
 
                             }catch (Exception e) {
                                 FirebaseCrashlytics.getInstance().recordException(e);
