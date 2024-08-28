@@ -263,7 +263,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return columns;
     }
 
-    public long insertAssetData(String fileHash) {
+    public static long insertAssetData(String fileHash) {
 
         long lastInsertedId = -1;
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ASSET WHERE fileHash = ?)";
@@ -362,7 +362,7 @@ public class DBHelper extends SQLiteOpenHelper {
 //        cursor.close();
 //    }
 
-    private boolean assetExistsInDatabase(String assetId){
+    private static boolean assetExistsInDatabase(String assetId){
         boolean existsInDatabase = false;
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE assetId = ?) " +
                 "OR EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?) " +
@@ -465,7 +465,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public void insertTransactionsData(String source, String fileName, String destination
+    public static void insertTransactionsData(String source, String fileName, String destination
             ,String assetId, String operation, String fileHash) {
         dbWritable.beginTransaction();
         try{
@@ -482,7 +482,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public void insertIntoAccounts(String userEmail,String type,String refreshToken ,String accessToken,
+    public static void insertIntoAccounts(String userEmail,String type,String refreshToken ,String accessToken,
                                    Double totalStorage , Double usedStorage , Double usedInDriveStorage ,
                                    Double UsedInGmailAndPhotosStorage,String parentFolderId,
                                    String profileFolderId, String assetsFolderId, String databaseFolderId) {
@@ -555,7 +555,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return resultList;
     }
 
-    public void updateAccounts(String userEmail, Map<String, Object> updateValues,String type) {
+    public static void updateAccounts(String userEmail, Map<String, Object> updateValues,String type) {
         dbWritable.beginTransaction();
         try {
             StringBuilder sqlQueryBuilder = new StringBuilder("UPDATE ACCOUNTS SET ");
@@ -585,7 +585,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public boolean deleteFromAccountsTable(String userEmail, String type) {
+    public static boolean deleteFromAccountsTable(String userEmail, String type) {
         dbWritable.beginTransaction();
         try {
             String sqlQuery = "DELETE FROM ACCOUNTS WHERE userEmail = ? and type = ?";
@@ -604,7 +604,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     }
 
-    public boolean deleteAccountFromDriveTable(String userEmail) {
+    public static boolean deleteAccountFromDriveTable(String userEmail) {
         dbWritable.beginTransaction();
         try {
             String sqlQuery = "DELETE FROM DRIVE WHERE userEmail = ?";
@@ -640,7 +640,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public List<String []> getAndroidTable(String[] columns){
+    public static List<String []> getAndroidTable(String[] columns){
         List<String[]> resultList = new ArrayList<>();
 
         String sqlQuery = "SELECT ";
@@ -666,7 +666,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return resultList;
     }
 
-    public void insertIntoAndroidTable(long assetId,String fileName,String filePath,String device,
+    public static void insertIntoAndroidTable(long assetId,String fileName,String filePath,String device,
                                        String fileHash, Double fileSize,String dateModified,String mimeType) {
         fileHash = fileHash.toLowerCase();
         String sqlQuery = "";
@@ -685,15 +685,6 @@ public class DBHelper extends SQLiteOpenHelper {
                         "memeType) VALUES (?,?,?,?,?,?,?,?)";
                 Object[] values = new Object[]{assetId,fileName,filePath,device,
                         fileSize,fileHash,dateModified,mimeType};
-                String finalSqlQuery = sqlQuery;
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-//                        for(int i=0; i<500;i++){
-//                            support.sendQueryChange(finalSqlQuery,values);
-//                        }
-                    }
-                }).start();
 
                 dbWritable.execSQL(sqlQuery, values);
                 dbWritable.setTransactionSuccessful();
@@ -721,7 +712,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public boolean deleteFromAndroidTable(String assetId,String fileSize, String filePath, String fileName, String fileHash){
+    public static boolean deleteFromAndroidTable(String assetId,String fileSize, String filePath, String fileName, String fileHash){
         String sqlQuery = "DELETE FROM ANDROID WHERE fileSize = ?  and fileHash = ? and fileName =  ? and filePath = ?";
         dbWritable.beginTransaction();
         try {
@@ -743,7 +734,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return false;
     }
 
-    private boolean existsInAndroid(long assetId, String filePath, String device,
+    private static boolean existsInAndroid(long assetId, String filePath, String device,
                                     Double fileSize, String fileHash){
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE" +
                 " assetId = ? and filePath = ? and fileHash = ? and fileSize = ? and device = ?)";
@@ -766,7 +757,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return false;
     }
 
-    public boolean existsInAndroidWithoutHash(String filePath, String device,String date,
+    public static boolean existsInAndroidWithoutHash(String filePath, String device,String date,
                                               Double fileSize){
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM ANDROID WHERE" +
                 " filePath = ? and fileSize = ? and device = ? and dateModified = ?)";
@@ -789,7 +780,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return false;
     }
 
-    public void deleteFileFromDriveTable(String fileHash, String id, String assetId, String fileId, String userEmail){
+    public static void deleteFileFromDriveTable(String fileHash, String id, String assetId, String fileId, String userEmail){
         String sqlQuery  = "DELETE FROM DRIVE WHERE fileHash = ? and id = ? and assetId = ? and fileId = ? and userEmail = ?";
         dbWritable.execSQL(sqlQuery, new String[]{fileHash, id, assetId, fileId, userEmail});
 
@@ -809,7 +800,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public List<String[]> getDriveTable(String[] columns, String userEmail){
+    public static List<String[]> getDriveTable(String[] columns, String userEmail){
         List<String[]> resultList = new ArrayList<>();
 
         String sqlQuery = "SELECT ";
@@ -836,7 +827,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return resultList;
     }
 
-    public int countAndroidAssetsOnThisDevice(String deviceId){
+    public static int countAndroidAssetsOnThisDevice(String deviceId){
         String sqlQuery = "SELECT COUNT(DISTINCT assetId) AS pathCount FROM ANDROID where device = ?";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{deviceId});
         int pathCount = 0;
@@ -854,7 +845,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return pathCount;
     }
 
-    public int countAndroidAssets(){
+    public static int countAndroidAssets(){
         String sqlQuery = "SELECT COUNT(DISTINCT assetId) AS pathCount FROM ANDROID;";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{});
         int pathCount = 0;
@@ -872,7 +863,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return pathCount;
     }
 
-    public int countAssets(){
+    public static int countAssets(){
         int assetsCount = 0;
         Cursor cursor = null;
         String sqlQuery = "SELECT COUNT(id) AS assetsCount FROM ASSET";
@@ -898,7 +889,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return assetsCount;
     }
 
-    public int countAndroidSyncedAssetsOnThisDevice(String deviceId){
+    public static int countAndroidSyncedAssetsOnThisDevice(String deviceId){
         String sqlQuery = "SELECT COUNT(DISTINCT androidTable.assetId) AS rowCount FROM ANDROID androidTable\n" +
                 "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId WHERE androidTable.device = ?;";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{deviceId});
@@ -915,7 +906,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return count;
     }
 
-    public int getAndroidSyncedAssetsOnThisDevice(){
+    public static int getAndroidSyncedAssetsOnThisDevice(){
         String sqlQuery = "SELECT DISTINCT androidTable.assetId FROM ANDROID androidTable\n" +
                 "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId WHERE androidTable.device = ?;";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidUniqueDeviceIdentifier});
@@ -930,7 +921,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return 0;
     }
 
-    public int countAndroidUnsyncedAssets(){
+    public static int countAndroidUnsyncedAssets(){
         String sqlQuery = "SELECT COUNT(DISTINCT androidTable.assetId) AS rowCount FROM ANDROID androidTable\n" +
                 "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId;";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{});
@@ -1037,7 +1028,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return accessToken;
     }
 
-    public void deleteRedundantDriveFromDB(ArrayList<String> fileIds, String userEmail){
+    public static void deleteRedundantDriveFromDB(ArrayList<String> fileIds, String userEmail){
         String sqlQuery = "SELECT * FROM DRIVE where userEmail = ?";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
         if(cursor.moveToFirst()){
@@ -1096,7 +1087,7 @@ public class DBHelper extends SQLiteOpenHelper {
         Boolean existsInDrive = false;
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ? " +
                 "and fileHash = ?)";
-        Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), fileHash});
+        Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId), fileHash});
         try{
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
@@ -1114,7 +1105,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return existsInDrive;
     }
 
-    public void deleteRedundantAndroidFromDB(){
+    public static void deleteRedundantAndroidFromDB(){
         String sqlQuery = "SELECT * FROM ANDROID";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
         if(cursor.moveToFirst()){
@@ -1150,7 +1141,7 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
     }
 
-    public void deleteRedundantAsset(){
+    public static void deleteRedundantAsset(){
         ArrayList<String> assetIds = selectAllAssetIds();
         for (String assetId : assetIds){
             boolean existsInDatabase = false;
@@ -1163,7 +1154,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-    private ArrayList<String> selectAllAssetIds() {
+    private static ArrayList<String> selectAllAssetIds() {
         ArrayList<String> assetIds = new ArrayList<>();
         String sqlQuery = "SELECT id FROM ASSET";
         Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
@@ -1195,7 +1186,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 int backUpAccountCounts = 0;
 
                 String[] drive_backup_selected_columns = {"userEmail","type", "totalStorage","usedStorage", "refreshToken"};
-                List<String[]> drive_backUp_accounts = MainActivity.dbHelper.getAccounts(drive_backup_selected_columns);
+                List<String[]> drive_backUp_accounts = DBHelper.getAccounts(drive_backup_selected_columns);
                 for (String[] drive_backUp_account : drive_backUp_accounts) {
                     if (drive_backUp_account[1].equals("backup")) {
                         backUpAccountCounts++;
@@ -1203,7 +1194,7 @@ public class DBHelper extends SQLiteOpenHelper {
 //                        System.out.println("This is drive free space " + driveFreeSpace);
 //                        if (driveFreeSpace > 30){
                         driveBackUpRefreshToken = drive_backUp_account[4];
-                        driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackUpRefreshToken).getAccessToken();
+                        driveBackupAccessToken = GoogleCloud.updateAccessToken(driveBackUpRefreshToken).getAccessToken();
                         userEmail[0] = drive_backUp_account[0];
                         Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                         String folderName = GoogleDriveFolders.databaseFolderName;
@@ -1324,7 +1315,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
 
-    public String getPhotosAndVideosStorage(){
+    public static String getPhotosAndVideosStorage(){
 //        createIndex();
         double sum = 0.0;
         String query = "SELECT SUM(fileSize) FROM ANDROID";
@@ -1436,76 +1427,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public static void insertMediaItemsAfterSignInToBackUp(GoogleCloud.SignInResult signInResult){
-        Thread insertMediaItemsThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    for(DriveAccountInfo.MediaItem mediaItem : signInResult.getMediaItems()){
-                        long last_insertId = MainActivity.dbHelper.insertAssetData(mediaItem.getHash());
-                        if (last_insertId != -1) {
-                            DBHelper.insertIntoDriveTable(last_insertId, mediaItem.getId(), mediaItem.getFileName(),
-                                    mediaItem.getHash(), signInResult.getUserEmail());
-                        } else {
-                            LogHandler.saveLog("Failed to insert file into drive table: " + mediaItem.getFileName());
-                        }
-                    }
-                }catch (Exception e){
-                    LogHandler.saveLog("failed to insert media items into drive table : " + e.getLocalizedMessage());
-                }
-            }
-        });
-        insertMediaItemsThread.start();
-        try{
-            insertMediaItemsThread.join();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to join insert media items thread: " + e.getLocalizedMessage(), true);
-        }
-    }
-
-    public static void insertBackupFromProfileMap(JsonArray backupAccounts){
-        String sqlQuery = "Insert into ACCOUNTS (userEmail,type,refreshToken) values (?,?,?)";
-        DBHelper.dbWritable.beginTransaction();
-        for (int i = 0; i < backupAccounts.size(); i++) {
-            try {
-                JsonObject backupAccount = backupAccounts.get(i).getAsJsonObject();
-                String backupEmail = backupAccount.get("backupEmail").getAsString();
-                String refreshToken = backupAccount.get("refreshToken").getAsString();
-                if(!DBHelper.accountExists(backupEmail, "backup")){
-                    DBHelper.dbWritable.execSQL(sqlQuery, new String[]{backupEmail, "backup", refreshToken});
-                    DBHelper.dbWritable.setTransactionSuccessful();
-                }
-            } catch (SQLiteConstraintException e) {
-                LogHandler.saveLog("SQLiteConstraintException in insert backup accounts method " + e.getLocalizedMessage(), false);
-            } catch (Exception e) {
-                LogHandler.saveLog("Failed to insert backup accounts data into ACCOUNTS  : " + e.getLocalizedMessage(), true);
-            }
-        }
-        DBHelper.dbWritable.endTransaction();
-    }
-
-    public static void insertPrimaryFromProfileMap(JsonArray primaryAccounts){
-        String sqlQuery = "Insert into ACCOUNTS (userEmail,type,refreshToken) values (?,?,?)";
-        DBHelper.dbWritable.beginTransaction();
-        for (int i = 0; i < primaryAccounts.size(); i++) {
-            try {
-                JsonObject primaryAccount = primaryAccounts.get(i).getAsJsonObject();
-                String primaryEmail = primaryAccount.get("primaryEmail").getAsString();
-                String refreshToken = primaryAccount.get("refreshToken").getAsString();
-                if(!DBHelper.accountExists(primaryEmail, "primary")){
-                    DBHelper.dbWritable.execSQL(sqlQuery, new String[]{primaryEmail, "primary", refreshToken});
-                    DBHelper.dbWritable.setTransactionSuccessful();
-                }
-            } catch (SQLiteConstraintException e) {
-                LogHandler.saveLog("SQLiteConstraintException in insert primary accounts method " + e.getLocalizedMessage(), false);
-            } catch (Exception e) {
-                LogHandler.saveLog("Failed to insert primary accounts data into ACCOUNTS : " + e.getLocalizedMessage(), true);
-            }
-        }
-        DBHelper.dbWritable.endTransaction();
-    }
-
-    public void updateDatabaseBasedOnJson(){
+    public static void updateDatabaseBasedOnJson(){
         try{
             List<String[]> accounts = getAccounts(new String[]{"userEmail", "type", "refreshToken"});
             ArrayList<String> emailsInDevice = new ArrayList<>();
@@ -1517,7 +1439,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
             for (String[] account : accounts) {
                 if (account[1].equals("backup")) {
-                    String accessToken = MainActivity.googleCloud.updateAccessToken(account[2]).getAccessToken();
+                    String accessToken = GoogleCloud.updateAccessToken(account[2]).getAccessToken();
                     JsonObject resultJson = Profile.readProfileMapContent(account[0], accessToken);
                     if (!jsonBelongsToThisDeviceProfile(resultJson)){
                         JsonArray accountsInJson = resultJson.get("backupAccounts").getAsJsonArray();
@@ -1537,7 +1459,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-    public boolean jsonBelongsToThisDeviceProfile(JsonObject resultJson){
+    public static boolean jsonBelongsToThisDeviceProfile(JsonObject resultJson){
         try {
             JsonArray devicesInJson = resultJson.get("deviceInfo").getAsJsonArray();
             for (JsonElement device : devicesInJson){
@@ -1554,7 +1476,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-    public void deleteAccountAndRelatedAssets(String userEmail){
+    public static void deleteAccountAndRelatedAssets(String userEmail){
         Thread deleteAccountAndRelatedAssetsThread = new Thread(() -> {
             deleteFromAccountsTable(userEmail,"backup");
             deleteAccountFromDriveTable(userEmail);
@@ -1568,7 +1490,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
     }
 
-    public ArrayList<DeviceHandler> getDevicesFromDB(){
+    public static ArrayList<DeviceHandler> getDevicesFromDB(){
         Cursor cursor = null;
         ArrayList<DeviceHandler> devices = new ArrayList<>();
         String sqlQuery = "SELECT * FROM DEVICE";
@@ -1764,7 +1686,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 String type = accountRow[1];
                 if (selectedUserEmail.equals(userEmail) && type.equals("backup")) {
                     String driveBackupRefreshToken = accountRow[1];
-                    return MainActivity.googleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
+                    return GoogleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
                 }
             }
         }catch (Exception e){

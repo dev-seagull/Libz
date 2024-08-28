@@ -14,8 +14,8 @@ public class Sync {
         UIHelper uiHelper = new UIHelper();
         try{
             isAllOfAccountsFull = true;
-            MainActivity.storageHandler.freeStorageUpdater();
-            double amountSpaceToFreeUp = MainActivity.storageHandler.getAmountSpaceToFreeUp();
+            StorageHandler.freeStorageUpdater();
+            double amountSpaceToFreeUp = StorageHandler.getAmountSpaceToFreeUp();
 
             String[] selected_accounts_columns = {"userEmail","type", "totalStorage","usedStorage", "refreshToken"};
             List<String[]> account_rows = DBHelper.getAccounts(selected_accounts_columns);
@@ -75,7 +75,7 @@ public class Sync {
         try{
             String userEmail = accountRow[0];
             String refreshToken = accountRow[4];
-            String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
+            String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
             String folderName = GoogleDriveFolders.assetsFolderName;
             String syncedAssetsSubFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName, accessToken, true);
             if(syncedAssetsSubFolderId == null){
@@ -95,7 +95,7 @@ public class Sync {
             List<String[]> sortedAndroidFiles = getSortedAndroidFiles();
 
             for (String[] androidRow : sortedAndroidFiles) {
-                MainActivity.storageHandler.freeStorageUpdater();
+                StorageHandler.freeStorageUpdater();
                 syncAndroidFile(androidRow, userEmail, refreshToken, syncedAssetsSubFolderId,
                         driveFreeSpace, amountSpaceToFreeUp, context);
             }
@@ -134,7 +134,7 @@ public class Sync {
                     }
                 });
                 if (!DBHelper.androidFileExistsInDrive(assetId, fileHash)){
-                    String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
+                    String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
                     if(driveFreeSpace > Double.parseDouble(fileSize)) {
                         boolean isBackedUp = uploadAndroidToDrive(androidRow, userEmail, accessToken, syncedAssetsFolderId);
                         if (isBackedUp) {
@@ -209,7 +209,7 @@ public class Sync {
         ArrayList<String> file_hashes = new ArrayList<>() ;
 
         try{
-            List<String[]> android_rows =  MainActivity.dbHelper.getAndroidTable(selected_android_columns);
+            List<String[]> android_rows =  DBHelper.getAndroidTable(selected_android_columns);
             BackUp.sortAndroidItems(android_rows);
             for(String[] android_row: android_rows){
                 String fileHash = android_row[5];

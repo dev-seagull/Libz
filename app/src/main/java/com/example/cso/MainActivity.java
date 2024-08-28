@@ -29,14 +29,11 @@
         public static boolean isReadAndWritePermissionGranted = false;
         public static boolean isGettingReadAndWritePermission = false;
         public static Activity activity ;
-        public static GoogleCloud googleCloud;
         public static ActivityResultLauncher<Intent> signInToBackUpLauncher;
         public static String androidUniqueDeviceIdentifier;
         public static String androidDeviceName;
         public static SharedPreferences preferences;
         public static boolean isAnyProccessOn = false;
-        public static DBHelper dbHelper;
-        public static StorageHandler storageHandler;
         public static Timer androidTimer;
         public static Timer UITimer;
         public static Intent serviceIntent;
@@ -44,6 +41,7 @@
         private PermissionManager permissionManager = new PermissionManager();;
         public static FirebaseAnalytics mFirebaseAnalytics;
         public static String dataBaseName = "StashDatabase";
+        public static DBHelper dbHelper;
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -55,13 +53,17 @@
 
             preferences = getPreferences(Context.MODE_PRIVATE);
             mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
-            dbHelper = DBHelper.getInstance(this);
-            googleCloud = new GoogleCloud(this);
+
+            if(TimerService.timerDbHelper == null){
+                dbHelper = new DBHelper(this);
+            }
+
             androidUniqueDeviceIdentifier = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
             serviceIntent = new Intent(this , TimerService.class);
             androidDeviceName = DeviceName.getDeviceName();
             DeviceHandler.insertIntoDeviceTable(MainActivity.androidDeviceName,
                     MainActivity.androidUniqueDeviceIdentifier);
+            StorageHandler storageHandler = new StorageHandler();
             Log.d("androidId", androidUniqueDeviceIdentifier);
             Log.d("androidDeviceName", androidDeviceName);
 
@@ -87,7 +89,7 @@
                                 try {
                                     Log.d("signInToBackUpLauncher","Sign in started");
                                     GoogleCloud.SignInResult signInResult =
-                                            googleCloud.handleSignInToBackupResult(result.getData());
+                                            GoogleCloud.handleSignInToBackupResult(result.getData());
                                     Log.d("signInToBackUpLauncher","Sign in finished");
 
                                     String userEmail = signInResult.getUserEmail();
@@ -159,8 +161,8 @@
         }catch (Exception e){
             Log.d("error","Permission error: " + e.getLocalizedMessage());
         }
-        StorageSync.uploadStorageJsonFileToAccounts(this);
-        MyAlarmManager.setAlarmForStorageSync(getApplicationContext());
+//        StorageSync.uploadStorageJsonFileToAccounts(this);
+//        MyAlarmManager.setAlarmForStorageSync(getApplicationContext());
         Log.d("state","end of onStart");
     }
 
@@ -193,7 +195,7 @@
                 Support.checkSupportBackupRequired();
 
                 if (Profile.hasJsonChanged()){
-                    dbHelper.updateDatabaseBasedOnJson();
+                    DBHelper.updateDatabaseBasedOnJson();
                     UIHandler.setupAccountButtons();
                 }
             }).start();
@@ -227,9 +229,13 @@
         Log.d("state","start of onDestroyed");
         destroyAndroidTimer();
         destroyUITimer();
+        if(dbHelper != null){
+            dbHelper.close();
+        }
+        activity = null;
 //        finishAffinity();
 //        System.exit(0);
-//        finish();
+        finish();
         Log.d("state","end of onDestroyed");
     }
 
@@ -238,6 +244,7 @@
         if(androidTimer != null){
             androidTimer.cancel();
             androidTimer.purge();
+            androidTimer = null;
         }
         if(androidTimer == null){
             Log.d("Timers", "stopped android timer");
@@ -248,6 +255,7 @@
         if(UITimer != null){
             UITimer.cancel();
             UITimer.purge();
+            UITimer = null;
         }
         if(UITimer == null){
             Log.d("Timers", "stopped ui timer");

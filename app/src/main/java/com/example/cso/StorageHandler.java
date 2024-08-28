@@ -13,10 +13,10 @@ import java.util.Locale;
 
 public class StorageHandler {
     private double totalStorage;
-    private long blockSize;
-    private double optimizedFreeSpace = 0;
+    private static long blockSize;
+    private static double optimizedFreeSpace = 0;
     private double optimizedPercent = 0.15;
-    private double freeSpace;
+    private static double freeSpace;
     public double getTotalStorage() {
         return totalStorage;
     }
@@ -58,19 +58,20 @@ public class StorageHandler {
                 MainActivity.androidUniqueDeviceIdentifier);
     }
 
-    public void freeStorageUpdater(){
-        this.freeSpace = getDeviceFreeStorage();
+    public static double freeStorageUpdater(){
+        freeSpace = getDeviceFreeStorage();
+        return freeSpace;
     }
 
 
-    public double getAmountSpaceToFreeUp() {
+    public static double getAmountSpaceToFreeUp() {
         String sqlQuery = "SELECT freeStorage FROM DEVICE WHERE deviceName = ?;";
         Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery,new String[]{MainActivity.androidUniqueDeviceIdentifier});
         try{
             if(cursor != null && cursor.moveToFirst()){
                 int result = cursor.getInt(0);
                 if(result == 1){
-                    this.freeSpace = cursor.getDouble(1);
+                    freeSpace = cursor.getDouble(1);
                 }
             }
         }catch (Exception e){
@@ -80,8 +81,8 @@ public class StorageHandler {
                 cursor.close();
             }
         }
-        if (this.freeSpace <= optimizedFreeSpace) {
-            return optimizedFreeSpace - this.freeSpace;
+        if (freeSpace <= optimizedFreeSpace) {
+            return optimizedFreeSpace - freeSpace;
         }
         return 0.0;
     }
@@ -101,7 +102,7 @@ public class StorageHandler {
         return Double.valueOf(String.format(Locale.US,"%.1f", totalSpaceGB));
     }
 
-    public double getDeviceFreeStorage(){
+    public static double getDeviceFreeStorage(){
         String externalStorageDirectory = Environment.getExternalStorageDirectory().getPath();
         StatFs statFs = new StatFs(externalStorageDirectory);
         long availableBlocks = statFs.getAvailableBlocksLong();;
@@ -133,7 +134,7 @@ public class StorageHandler {
                 }
             }
 
-            List<String[]> androidRows = MainActivity.dbHelper.getAndroidTable(new String[]{"filePath", "fileSize"});
+            List<String[]> androidRows = DBHelper.getAndroidTable(new String[]{"filePath", "fileSize"});
             for (String[] row : androidRows) {
                 String filePath = row[0];
                 double fileSize = Double.valueOf(row[1]);

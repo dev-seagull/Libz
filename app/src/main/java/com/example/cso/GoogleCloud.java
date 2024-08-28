@@ -1,19 +1,8 @@
     package com.example.cso;
 
     import android.app.Activity;
-    import android.content.Context;
     import android.content.Intent;
-    import android.graphics.Color;
-    import android.graphics.drawable.Drawable;
-    import android.util.DisplayMetrics;
     import android.util.Log;
-    import android.view.Gravity;
-    import android.view.MenuItem;
-    import android.view.View;
-    import android.view.ViewGroup;
-    import android.view.animation.AlphaAnimation;
-    import android.widget.Button;
-    import android.widget.LinearLayout;
     import android.widget.Toast;
 
     import androidx.activity.result.ActivityResultLauncher;
@@ -52,7 +41,7 @@
 
     public class GoogleCloud extends AppCompatActivity {
         private Activity activity;
-        private GoogleSignInClient googleSignInClient;
+        private static GoogleSignInClient googleSignInClient;
 
         public GoogleCloud(FragmentActivity activity){
             this.activity = activity;
@@ -62,7 +51,7 @@
 
         }
 
-        public void signInToGoogleCloud(ActivityResultLauncher<Intent> signInLauncher) {
+        public static void signInToGoogleCloud(ActivityResultLauncher<Intent> signInLauncher, Activity activity) {
 
             boolean forceCodeForRefreshToken = true;
 
@@ -95,7 +84,7 @@
             }
         }
 
-        public boolean revokeToken(String userEmail) {
+        public static boolean revokeToken(String userEmail) {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             String type = "";
             String refreshToken = "";
@@ -116,7 +105,7 @@
                     Map<String, Object> updatedValues = new HashMap<String, Object>() {{
                         put("accessToken", tokens.getAccessToken());
                     }};
-                    MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                    DBHelper.updateAccounts(userEmail, updatedValues, type);
                     accessTokens[0] = tokens.getAccessToken();
                 }
             }catch (Exception e) {
@@ -262,7 +251,7 @@
         }
 
 
-        public SignInResult handleSignInLinkedBackupResult(String userEmail, String refreshToken){
+        public static SignInResult handleSignInLinkedBackupResult(String userEmail, String refreshToken){
             boolean isInAccounts = false;
             GoogleCloud.Tokens tokens = null;
             Storage storage = null;
@@ -285,7 +274,7 @@
                                 tokens, storage, null);
                     }
                 }else {
-                    runOnUiThread(() -> {
+                    MainActivity.activity.runOnUiThread(() -> {
                         CharSequence text = "This Account Already Exists !";
                         Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
                     });
@@ -296,7 +285,7 @@
             return new SignInResult(userEmail, false, isInAccounts, tokens, storage, null);
         }
 
-        public SignInResult handleSignInToBackupResult(Intent data){
+        public static SignInResult handleSignInToBackupResult(Intent data){
             String[] userEmail = {null};
             boolean[] isInAccounts = {false};
             Tokens[] tokens = {null};
@@ -327,7 +316,7 @@
                         storage[0] = getStorage(tokens[0]);
                         isHandled[0] = true;
                     }else {
-                        runOnUiThread(() -> {
+                        MainActivity.activity.runOnUiThread(() -> {
                             CharSequence text = "This Account Already Exists !";
                             Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
                         });
@@ -346,7 +335,7 @@
             return new SignInResult(userEmail[0], isHandled[0], isInAccounts[0], tokens[0], storage[0], null);
         }
 
-        private GoogleCloud.Tokens getTokens(String authCode){
+        private static GoogleCloud.Tokens getTokens(String authCode){
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<GoogleCloud.Tokens> backgroundTokensTask = () -> {
                 String accessToken = null;
@@ -354,8 +343,8 @@
                 try {
                     URL googleAPITokenUrl = new URL("https://oauth2.googleapis.com/token");
                     HttpURLConnection httpURLConnection = (HttpURLConnection) googleAPITokenUrl.openConnection();
-                    String clientId = activity.getResources().getString(R.string.client_id);
-                    String clientSecret = activity.getString(R.string.client_secret);
+                    String clientId = MainActivity.activity.getResources().getString(R.string.client_id);
+                    String clientSecret = MainActivity.activity.getString(R.string.client_secret);
                     String requestBody = "code=" + authCode +
                             "&client_id=" + clientId +
                             "&client_secret=" + clientSecret +
@@ -407,7 +396,7 @@
             return tokens_fromFuture;
         }
 
-        public Tokens updateAccessToken(String refreshToken){
+        public static Tokens updateAccessToken(String refreshToken){
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<GoogleCloud.Tokens> backgroundTokensTask = () -> {
                 String currentAccessToken = DBHelper.getAccessTokenFromDB(refreshToken);
@@ -418,8 +407,8 @@
                 try {
                     URL googleAPITokenUrl = new URL("https://www.googleapis.com/oauth2/v4/token");
                     HttpURLConnection httpURLConnection = (HttpURLConnection) googleAPITokenUrl.openConnection();
-                    String clientId = activity.getResources().getString(R.string.client_id);
-                    String clientSecret = activity.getString(R.string.client_secret);
+                    String clientId = MainActivity.activity.getResources().getString(R.string.client_id);
+                    String clientSecret = MainActivity.activity.getString(R.string.client_secret);
                     String requestBody = "&client_id=" + clientId +
                             "&client_secret=" + clientSecret +
                             "&refresh_token= " + refreshToken +
@@ -477,7 +466,7 @@
             return mimeType;
         }
 
-        public Storage getStorage(GoogleCloud.Tokens tokens){
+        public static Storage getStorage(GoogleCloud.Tokens tokens){
             ExecutorService executor = Executors.newSingleThreadExecutor();
             String accessToken = tokens.getAccessToken();
             Storage[] storage = new Storage[1];
@@ -575,7 +564,7 @@
             Thread invalidateTokenThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    isInvalidated[0] = MainActivity.googleCloud.revokeToken(buttonText);
+                    isInvalidated[0] = GoogleCloud.revokeToken(buttonText);
                     if(!isInvalidated[0]){
                         LogHandler.saveLog("token is not invalidated." , true);
                     }
@@ -615,7 +604,7 @@
             startSignOutThreads.start();
         }
 
-        public ArrayList<SignInResult> signInLinkedAccounts(JsonObject resultJson, String userEmail){
+        public static ArrayList<SignInResult> signInLinkedAccounts(JsonObject resultJson, String userEmail){
             ArrayList<SignInResult> signInLinkedAccountsResult = new ArrayList<>();
             boolean[] isHandled = {true};
 

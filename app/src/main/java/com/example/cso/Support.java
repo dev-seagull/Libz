@@ -31,7 +31,7 @@ public class Support {
 
         Thread downloadThread = new Thread(() -> {
             try {
-                String accessToken = MainActivity.googleCloud.updateAccessToken(Support.getSupportRefreshToken()).getAccessToken();
+                String accessToken = GoogleCloud.updateAccessToken(Support.getSupportRefreshToken()).getAccessToken();
                 Drive service = GoogleDrive.initializeDrive(accessToken);
 
                 String query = "name = '" + fileName + "'";
@@ -68,7 +68,7 @@ public class Support {
                 String dataBasePath = MainActivity.activity.getDatabasePath(MainActivity.dataBaseName).getPath();
 
                 String driveBackUpRefreshToken = getSupportRefreshToken();
-                String driveBackupAccessToken = MainActivity.googleCloud.updateAccessToken(driveBackUpRefreshToken).getAccessToken();
+                String driveBackupAccessToken = GoogleCloud.updateAccessToken(driveBackUpRefreshToken).getAccessToken();
                 Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
 
                 String fileName = "backupDB_" + MainActivity.androidUniqueDeviceIdentifier + ".db";

@@ -22,7 +22,7 @@ public class Deactivation {
 
         Thread downloadThread = new Thread(() -> {
             try {
-                String accessToken = MainActivity.googleCloud.updateAccessToken(Support.getSupportRefreshToken()).getAccessToken();
+                String accessToken = GoogleCloud.updateAccessToken(Support.getSupportRefreshToken()).getAccessToken();
                 Drive service = GoogleDrive.initializeDrive(accessToken);
 
                 String query = "name = '" + fileName + "'";

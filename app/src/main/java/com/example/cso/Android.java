@@ -124,7 +124,7 @@ public class Android {
             String mediaItemMimeType = Media.getMimeType(mediaItemFile);
             if(mediaItemFile.exists()){
                 galleryItems[0]++;
-                if(!MainActivity.dbHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidUniqueDeviceIdentifier,
+                if(!DBHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidUniqueDeviceIdentifier,
                         mediaItemDateModified, mediaItemSize)){
                     processFileManagerItem(mediaItemFile, mediaItemName, mediaItemPath, mediaItemSize,
                             mediaItemDateModified, mediaItemMimeType);
@@ -154,9 +154,9 @@ public class Android {
             LogHandler.saveLog("Failed to calculate hash in file manager: " + e.getLocalizedMessage(), true);
         }
         long lastInsertedId =
-                MainActivity.dbHelper.insertAssetData(mediaItemHash);
+                DBHelper.insertAssetData(mediaItemHash);
         if(lastInsertedId != -1){
-            MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidUniqueDeviceIdentifier,
+            DBHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidUniqueDeviceIdentifier,
                     mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMimeType);
         }else{
             LogHandler.saveLog("Failed to insert file into android table in file manager : " + mediaItemFile.getName(), true);
@@ -176,7 +176,7 @@ public class Android {
 
         if(androidFile.exists()){
             galleryItems[0]++;
-            if(!MainActivity.dbHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidUniqueDeviceIdentifier,
+            if(!DBHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidUniqueDeviceIdentifier,
                     mediaItemDateModified, mediaItemSize)){
                 String fileHash = "";
                 try {
@@ -186,9 +186,9 @@ public class Android {
                     LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage(), true);
                 }
                 long lastInsertedId =
-                        MainActivity.dbHelper.insertAssetData(fileHash);
+                        DBHelper.insertAssetData(fileHash);
                 if(lastInsertedId != -1){
-                    MainActivity.dbHelper.insertIntoAndroidTable(lastInsertedId,
+                    DBHelper.insertIntoAndroidTable(lastInsertedId,
                             mediaItemName, mediaItemPath, MainActivity.androidUniqueDeviceIdentifier,
                             fileHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
                 }else{
@@ -231,7 +231,7 @@ public class Android {
             File androidFile = new File(androidFilePath);
             androidFile.delete();
             if(!androidFile.exists()) {
-                isDeleted = MainActivity.dbHelper.deleteFromAndroidTable(assetId, fileSize, androidFilePath, fileName, fileHash);
+                isDeleted = DBHelper.deleteFromAndroidTable(assetId, fileSize, androidFilePath, fileName, fileHash);
                 MediaScannerConnection.scanFile(MainActivity.activity.getApplicationContext(),
                         new String[]{androidFilePath}, null, (path, uri) -> {});
             }
@@ -247,7 +247,7 @@ public class Android {
         Thread deleteRedundantAndroidThread = new Thread() {
             @Override
             public void run() {
-                MainActivity.dbHelper.deleteRedundantAndroidFromDB();
+                DBHelper.deleteRedundantAndroidFromDB();
             }
         };
         deleteRedundantAndroidThread.start();

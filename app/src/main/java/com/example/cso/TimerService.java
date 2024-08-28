@@ -22,97 +22,104 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class TimerService extends Service {
-    public static Timer timer;
-    private Thread androidThreads;
-    private Thread driveThreads;
-    private Thread syncThreads;
-    public boolean isTimerRunning = false;
-    public static TimerTask timerTask;
     private static int NOTIFICATION_ID = 12345;
     private static String CHANNEL_ID = "TimerServiceChannel";
     private static String CHANNEL_NAME = "Syncing Channel";
-    Notification notification;
+    private Timer timer;
+    private Thread androidThreads;
+    private Thread driveThreads;
+    private Thread syncThreads;
+    private boolean isTimerRunning = false;
+    private TimerTask timerTask;
+    public static DBHelper timerDbHelper;
+
+    private  Notification notification;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d("TimerForegroundService", "Service onCreate");
+        timerDbHelper = new DBHelper(this);
+        Log.d("service", "Service onCreate Started");
+        requestNotificationPermission();
+        createNotificationChannel();
         notification = createNotification();
         startForeground(NOTIFICATION_ID, notification);
         startTimer();
+        Log.d("service", "Service onCreate Finished");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("TimerForegroundService", "Service onStartCommand");
-        if (intent != null && intent.getAction() != null) {
-            if (intent.getAction().equals("STOP_SERVICE")) {
-                Log.d("TimerForegroundService","Service stopped");
-                stopTimer();
-                stopService(MainActivity.serviceIntent);
-            }
+        Log.d("service", "Service onStartCommand Started");
+        if (intent != null && intent.getAction() != null && intent.getAction().equals("STOP_SERVICE")) {
+            Log.d("service", "Service stop request received");
+            stopTimer();
+            stopService(MainActivity.serviceIntent);
+            Log.d("service","Service stopped");
         }
+        Log.d("service", "Service onStartCommand Finished");
         return Service.START_STICKY;
     }
 
     private void startTimer() {
-        timer = new Timer();
-        timerTask = new TimerTask() {
-            @Override
-            public void run() {
+        Log.d("service","Service Timer Started");
+        if(timer == null){
+            timer = new Timer();
+            timerTask = new TimerTask() {
+                @Override
+                public void run() {
 //                try{
 
-                if (isTimerRunning || MainActivity.isAnyProccessOn) {
-                    return;
-                }
-                isTimerRunning = true;
-
-                if (Deactivation.isDeactivationFileExists()){
-                    isTimerRunning = false;
-                    stopForeground(true);
-                    stopSelf();
-                    UIHandler.handleDeactivatedUser();
-                    return;
-                }
-
-                androidThreads = new Thread(new Runnable( ) {
-                    @Override
-                    public void run() {
-                        try {
-                            Android.startThreads(MainActivity.activity);
-                        } catch (Exception e) {
-                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
-                        }
+                    if (isTimerRunning || MainActivity.isAnyProccessOn) {
+                        return;
                     }
-                });
-                androidThreads.start();
+                    isTimerRunning = true;
 
-                driveThreads = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            GoogleDrive.startThreads();
-                        } catch (Exception e) {
-                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
-                        }
+                    if (Deactivation.isDeactivationFileExists()){
+                        isTimerRunning = false;
+                        stopForeground(true);
+                        stopSelf();
+                        UIHandler.handleDeactivatedUser();
+                        return;
                     }
-                });
-                driveThreads.start();
 
-                syncThreads = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            Sync.startSyncThread(getApplicationContext());
-                        } catch (Exception e) {
-                            LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
-                        } finally {
-                            System.out.println("here setting it to timer running false");
-                            isTimerRunning = false;
+                    androidThreads = new Thread(new Runnable( ) {
+                        @Override
+                        public void run() {
+                            try {
+                                Android.startThreads(MainActivity.activity);
+                            } catch (Exception e) {
+                                LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
+                            }
                         }
-                    }
-                });
-                syncThreads.start();
+                    });
+                    androidThreads.start();
+
+                    driveThreads = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                GoogleDrive.startThreads();
+                            } catch (Exception e) {
+                                LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
+                            }
+                        }
+                    });
+                    driveThreads.start();
+
+                    syncThreads = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                Sync.startSyncThread(getApplicationContext());
+                            } catch (Exception e) {
+                                LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
+                            } finally {
+                                isTimerRunning = false;
+                            }
+                        }
+                    });
+                    syncThreads.start();
 
 //                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
 //                    storageUpdaterThreadTemp.start();
@@ -125,49 +132,58 @@ public class TimerService extends Service {
 //                }catch (Exception e){
 //                    LogHandler.saveLog("Failed to run timer in service" + e.getLocalizedMessage() , true);
 //                }
-            }
-        };
+                }
+            };
 
-        timer.schedule(timerTask, 5000 , 1000);
+            timer.schedule(timerTask, 5000 , 1000);
+        }
+        Log.d("service","Service Timer Finished");
     }
 
-    public Notification createNotification() {
-
+    private void requestNotificationPermission(){
         Context context = getApplicationContext();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                Log.d("service","Notification Permission required");
                 int REQUEST_CODE = 1;
                 ActivityCompat.requestPermissions(MainActivity.activity, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE);
             }
         }
+    }
 
-        System.out.println("activity : " + MainActivity.activity);
+    private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel notificationChannel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME,
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-//            NotificationManager notificationManager = MainActivity.activity.getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(notificationChannel);
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    CHANNEL_ID,
+                    CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(serviceChannel);
+            }
         }
+    }
 
+    public Notification createNotification() {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.android_device_icon)
-                .setContentTitle("Syncing Service")
-                .setContentText("Syncing process is running in the background")
+                .setContentTitle("Syncing in progress...")
+                .setContentText("Syncing process is running in the background...")
                 .setPriority(NotificationCompat.PRIORITY_MAX)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText("Syncing process is running in the background"));
+                .setSmallIcon(R.drawable.libzlogo)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText("Syncing process is running in the background..."));
 
         Intent actionIntent = new Intent(getApplicationContext(), TimerService.class);
         actionIntent.setAction("STOP_SERVICE");
 
-        PendingIntent actionPendingIntent ;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-            actionPendingIntent = PendingIntent.getActivity(getApplicationContext(), 5, actionIntent, PendingIntent.FLAG_IMMUTABLE);
-        }else{
-            actionPendingIntent = PendingIntent.getActivity(getApplicationContext(), 5, actionIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        }
+       PendingIntent actionPendingIntent;
+       int request_code = 5;
+       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+           actionPendingIntent = PendingIntent.getService(this, request_code, actionIntent, PendingIntent.FLAG_IMMUTABLE);
+       } else {
+           actionPendingIntent = PendingIntent.getService(this, request_code, actionIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+       }
 
-//        PendingIntent actionPendingIntent = PendingIntent.getService(getApplicationContext(), 5, actionIntent, PendingIntent.FLAG_IMMUTABLE);
         builder.addAction(R.drawable.googledriveimage, "Stop Service", actionPendingIntent);
 
         return builder.build();
@@ -198,14 +214,39 @@ public class TimerService extends Service {
             timer.cancel();
             timer.purge();
         }
+
+        stopThreads();
+
         Log.d("TimerForegroundService", "Timer stopped");
+    }
+
+    private void stopThreads() {
+        if (androidThreads != null) {
+            androidThreads.interrupt();
+            androidThreads = null;
+        }
+
+        if (driveThreads != null) {
+            driveThreads.interrupt();
+            driveThreads = null;
+        }
+
+        if (syncThreads != null) {
+            syncThreads.interrupt();
+            syncThreads = null;
+        }
     }
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        Log.d("service", "Service onDestroy Started");
         stopTimer();
-        Log.d("TimerForegroundService", "Service onDestroy");
+        if (timerDbHelper != null) {
+            timerDbHelper.close();
+        }
+
+        super.onDestroy();
+        Log.d("service", "Service onDestroy Finished");
     }
 
     public static String isMyServiceRunning(Context context, Class<?> serviceClass) {

@@ -40,7 +40,7 @@ public class GoogleDriveFolders {
                 HashMap<String, Object> updatedValues = new HashMap<String, Object>() {{
                     put("parentFolderId", finalParentFolderId);
                 }};
-                MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, "backup");
+                DBHelper.updateAccounts(userEmail, updatedValues, "backup");
 
                 if(shouldInitSubFolders){
                     ArrayList<String> subFolders = new ArrayList<>(Arrays.asList
@@ -75,7 +75,7 @@ public class GoogleDriveFolders {
             }else if(folderName.equals(GoogleDriveFolders.profileFolderName)){
                 updatedValues.put("profileFolderId", folderId);
             }
-            MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, "backup");
+            DBHelper.updateAccounts(userEmail, updatedValues, "backup");
 
             Log.d("folders", "Folder :" + folderName + " and id: " + folderId);
         });

@@ -44,7 +44,7 @@ public class GoogleDrive {
                     List<String[]> account_rows = DBHelper.getAccounts(selected_accounts_columns);
                     for (String[] account_row : account_rows) {
                         if (account_row[0].equals(userEmail)) {
-                            backupAccessToken = MainActivity.googleCloud.updateAccessToken(account_row[1]).getAccessToken();
+                            backupAccessToken = GoogleCloud.updateAccessToken(account_row[1]).getAccessToken();
                         }
                     }
                 }
@@ -98,7 +98,7 @@ public class GoogleDrive {
 
     public static void deleteDuplicatedMediaItems(String accessToken, String userEmail){
         String[] driveColumns = {"fileHash", "id","assetId", "fileId", "fileName", "userEmail"};
-        List<String[]> drive_rows = MainActivity.dbHelper.getDriveTable(driveColumns, userEmail);
+        List<String[]> drive_rows = DBHelper.getDriveTable(driveColumns, userEmail);
         ArrayList<String> fileHashChecker = new ArrayList<>();
 
         for(String[] drive_row: drive_rows){
@@ -126,7 +126,7 @@ public class GoogleDrive {
                     FirebaseCrashlytics.getInstance().recordException(e);
                 }
                 if(isDeletedFuture){
-                    MainActivity.dbHelper.deleteFileFromDriveTable(fileHash, id, assetId, fileId , userEmail);
+                    DBHelper.deleteFileFromDriveTable(fileHash, id, assetId, fileId , userEmail);
                 }
 
             }else{
@@ -205,7 +205,7 @@ public class GoogleDrive {
     public static void startUpdateDriveFilesThread(){
         Log.d("Threads","startUpdateDriveFiles thread finished");
         Thread updateDriveFilesThread = new Thread(() -> {
-            List<String[]> account_rows = MainActivity.dbHelper.getAccounts(new String[]{"userEmail","type"});
+            List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","type"});
 
             try{
                 for(String[] account_row : account_rows){
@@ -216,9 +216,9 @@ public class GoogleDrive {
                         Log.d("backup",driveMediaItems.size() + " media items found in drive backup");
 
                         for(DriveAccountInfo.MediaItem driveMediaItem: driveMediaItems){
-                            Long last_insertId = MainActivity.dbHelper.insertAssetData(driveMediaItem.getHash());
+                            Long last_insertId = DBHelper.insertAssetData(driveMediaItem.getHash());
                             if (last_insertId != -1) {
-                                MainActivity.dbHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
+                                DBHelper.insertIntoDriveTable(last_insertId, driveMediaItem.getId(), driveMediaItem.getFileName(),
                                         driveMediaItem.getHash(), userEmail);
                             }
                         }
@@ -243,7 +243,7 @@ public class GoogleDrive {
                     String fileId = driveMediaItem.getId();
                     driveFileIds.add(fileId);
                 }
-                MainActivity.dbHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
+                DBHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
             });
             deleteRedundantDrive.start();
             try {
@@ -262,7 +262,7 @@ public class GoogleDrive {
         Thread deleteRedundantDriveThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(new String[]{"userEmail", "type"});
+                List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail", "type"});
 
                 for(String[] account_row : account_rows) {
                     String type = account_row[1];
@@ -273,7 +273,7 @@ public class GoogleDrive {
                         for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
                             driveFileIds.add( driveMediaItem.getId());
                         }
-                        MainActivity.dbHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
+                        DBHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
                     }
                 }
             }
@@ -293,14 +293,14 @@ public class GoogleDrive {
             @Override
             public void run() {
                 String[] columns = {"refreshToken","userEmail", "type"};
-                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
+                List<String[]> account_rows = DBHelper.getAccounts(columns);
 
                 for(String[] account_row : account_rows) {
                     String type = account_row[2];
                     if(type.equals("backup")){
                         String userEmail = account_row[1];
                         String refreshToken = account_row[0];
-                        String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
+                        String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
                         GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
                     }
                 }
@@ -322,32 +322,32 @@ public class GoogleDrive {
             @Override
             public void run() {
                 String[] columns = {"refreshToken","userEmail", "type"};
-                List<String[]> account_rows = MainActivity.dbHelper.getAccounts(columns);
+                List<String[]> account_rows = DBHelper.getAccounts(columns);
 
                 for(String[] account_row : account_rows) {
                     String refreshToken = account_row[0];
                     String userEmail = account_row[1];
                     String type = account_row[2];
-                    String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
-                    GoogleCloud.Storage storage = MainActivity.googleCloud.getStorage(new GoogleCloud.Tokens(accessToken,refreshToken));
+                    String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
+                    GoogleCloud.Storage storage = GoogleCloud.getStorage(new GoogleCloud.Tokens(accessToken,refreshToken));
 
                     if (storage != null) {
                         Map<String, Object> updatedValues = new HashMap<String, Object>() {{
                             put("totalStorage", storage.getTotalStorage());
                         }};
-                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                        DBHelper.updateAccounts(userEmail, updatedValues, type);
                         updatedValues = new HashMap<String, Object>() {{
                             put("usedStorage", storage.getUsedStorage());
                         }};
-                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                        DBHelper.updateAccounts(userEmail, updatedValues, type);
                         updatedValues = new HashMap<String, Object>() {{
                             put("usedInDriveStorage", storage.getUsedInDriveStorage());
                         }};
-                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                        DBHelper.updateAccounts(userEmail, updatedValues, type);
                         updatedValues = new HashMap<String, Object>() {{
                             put("UsedInGmailAndPhotosStorage", storage.getUsedInGmailAndPhotosStorage());
                         }};
-                        MainActivity.dbHelper.updateAccounts(userEmail, updatedValues, type);
+                        DBHelper.updateAccounts(userEmail, updatedValues, type);
                     }
                 }
             }
@@ -378,7 +378,7 @@ public class GoogleDrive {
             for (String[] account_row: accounts_rows){
                 if (account_row[1].equals(sourceUserEmail)){
                     String refreshToken = account_row[0];
-                    String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
+                    String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
                     sourceDriveService = initializeDrive(accessToken);
                     break;
                 }
@@ -392,7 +392,7 @@ public class GoogleDrive {
 
             System.out.println("source drive service created");
             String[] driveColumns = {"fileHash", "id","assetId", "fileId", "fileName", "userEmail"};
-            List<String[]> drive_rows = MainActivity.dbHelper.getDriveTable(driveColumns, sourceUserEmail);
+            List<String[]> drive_rows = DBHelper.getDriveTable(driveColumns, sourceUserEmail);
             CURRENT_DRIVE_ACCOUNT_INDEX = 0;
             ArrayList<Object> driveDestinationObject = getDestinationDrive(sourceUserEmail,accounts_rows);
             Drive destinationDriveService = (Drive) driveDestinationObject.get(0);
@@ -461,7 +461,7 @@ public class GoogleDrive {
             isRevoked = GoogleCloud.startInvalidateTokenThread(sourceUserEmail);
             if (isRevoked){
                 System.out.println("starting to delete account and related asset");
-                MainActivity.dbHelper.deleteAccountAndRelatedAssets(sourceUserEmail);
+                DBHelper.deleteAccountAndRelatedAssets(sourceUserEmail);
                 GoogleDrive.startThreads();
             }
         });
@@ -489,7 +489,7 @@ public class GoogleDrive {
                 }
                 if (CURRENT_DRIVE_ACCOUNT_INDEX == 0){
                     String refreshToken = account_row[0];
-                    String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
+                    String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
                     destinationDriveService = initializeDrive(accessToken);
                     driveDestinationObject.add(destinationDriveService);
                     driveDestinationObject.add(account_row[1]);
@@ -539,7 +539,7 @@ public class GoogleDrive {
             }catch (Exception e) {
                 LogHandler.saveLog("Failed to move file between accounts: " + e.getLocalizedMessage() + " and " + e.getMessage(), true);
             }try {
-                MainActivity.dbHelper.insertTransactionsData(sourceUserEmail, fileMetadata.getName(), destinationUserEmail
+                DBHelper.insertTransactionsData(sourceUserEmail, fileMetadata.getName(), destinationUserEmail
                         ,asset[0], "Transfer", asset[1]);
 
                 sourceAccount.files().delete(fileId).execute();
@@ -569,12 +569,12 @@ public class GoogleDrive {
             Drive service = null;
             for (String[] account_row: accounts_rows){
                 if (account_row[1].equals(userEmail)){
-                    String accessToken = MainActivity.googleCloud.updateAccessToken(account_row[0]).getAccessToken();
+                    String accessToken = GoogleCloud.updateAccessToken(account_row[0]).getAccessToken();
                     service = initializeDrive(accessToken);
                 }
             }
             String[] driveColumns = {"fileHash", "id","assetId", "fileId", "fileName", "userEmail"};
-            List<String[]> drive_rows = MainActivity.dbHelper.getDriveTable(driveColumns, userEmail);
+            List<String[]> drive_rows = DBHelper.getDriveTable(driveColumns, userEmail);
             for (String[] drive_row: drive_rows){
                 String fileId = drive_row[3];
                 int fileSize = service.files().get(fileId).size();
@@ -660,7 +660,7 @@ public class GoogleDrive {
 
     private static void cleanAccount(String[] account_row){
         String userEmail = account_row[1];
-        String accessToken = MainActivity.googleCloud.updateAccessToken(account_row[0]).getAccessToken();
+        String accessToken = GoogleCloud.updateAccessToken(account_row[0]).getAccessToken();
         Drive service = initializeDrive(accessToken);
 
         String parentFolderId = GoogleDriveFolders.getParentFolderId(userEmail,false,null);
@@ -693,7 +693,7 @@ public class GoogleDrive {
                     updatedValues = new HashMap<String, Object>() {{
                         put("parentFolderId", parentFolderId[0]);
                     }};
-                    MainActivity.dbHelper.updateAccounts(userEmail,updatedValues, "backup");
+                    DBHelper.updateAccounts(userEmail,updatedValues, "backup");
                     System.out.println("new parentFolderId: " + parentFolderId[0] + " updated");
                 }catch (Exception e){
                     LogHandler.saveLog("Failed to get stash synced folder in drive : " +e.getLocalizedMessage(), true);
@@ -806,7 +806,7 @@ public class GoogleDrive {
                     HashMap<String, Object> updatedValues = new HashMap<String, Object>() {{
                         put("assetsFolderId", finalAssetsFolderId);
                     }};
-                    MainActivity.dbHelper.updateAccounts(userEmail,updatedValues, "backup");
+                    DBHelper.updateAccounts(userEmail,updatedValues, "backup");
                 }
             }catch (Exception e){
                 LogHandler.saveLog("Failed to get stash synced folder in drive : " +e.getLocalizedMessage(), true);
@@ -841,7 +841,7 @@ public class GoogleDrive {
                 HashMap<String, Object> updatedValues = new HashMap<String, Object>() {{
                     put("profileFolderId", finalProfileFolderId);
                 }};
-                MainActivity.dbHelper.updateAccounts(userEmail,updatedValues, "backup");
+                DBHelper.updateAccounts(userEmail,updatedValues, "backup");
             }catch (Exception e){
                 LogHandler.saveLog("Failed to get stash synced folder in drive : " +e.getLocalizedMessage(), true);
             }
@@ -889,7 +889,7 @@ public class GoogleDrive {
                 HashMap<String, Object> updatedValues = new HashMap<String, Object>() {{
                     put("databaseFolderId", finalDatabaseFolderId);
                 }};
-                MainActivity.dbHelper.updateAccounts(userEmail,updatedValues, "backup");
+                DBHelper.updateAccounts(userEmail,updatedValues, "backup");
             }catch (Exception e){
                 LogHandler.saveLog("Failed to get stash synced folder in drive : " +e.getLocalizedMessage(), true);
             }

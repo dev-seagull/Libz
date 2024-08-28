@@ -294,7 +294,7 @@ public class GooglePhotos {
         String destinationFolderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()
                 + File.separator + "stash";
         String sqlQury = "SELECT * FROM PHOTOS";
-        Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQury, null);
+        Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQury, null);
         ArrayList<String[]> destinationFiles = new ArrayList<>();
         System.out.println("here2 in photos to drive");
         if(cursor.moveToFirst() && cursor != null){
@@ -400,7 +400,7 @@ public class GooglePhotos {
                             for (String part : destinationFile){
                                 System.out.println("part for upload photos from android to drive: " + part);
                             }
-                            MainActivity.dbHelper.insertTransactionsData(destinationFile[1], destinationFile[2],
+                            DBHelper.insertTransactionsData(destinationFile[1], destinationFile[2],
                                     destinationUserEmail, destinationFile[3], "syncPhotos" , destinationFile[4]);
                             finalUploadFileIds.add(uploadFileId);
                             LogHandler.saveLog("Uploading " + destinationFolderFile.getName()
@@ -461,7 +461,7 @@ public class GooglePhotos {
     private static boolean shouldDownloadAsset(String mediaItemId) {
         String sqlQuery = "SELECT assetId FROM PHOTOS WHERE " +
                 "EXISTS (SELECT 1 FROM PHOTOS WHERE fileId = ?)";
-        Cursor cursor = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery, new String[]{mediaItemId});
+        Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery, new String[]{mediaItemId});
         boolean existsInAssets =   cursor != null && cursor.moveToFirst();
         if (!existsInAssets) {
             return true;
@@ -470,7 +470,7 @@ public class GooglePhotos {
             if (assetIdColumnIndex >= 0) {
                 String assetId = cursor.getString(assetIdColumnIndex);
                 String sqlQuery2 = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ?)";
-                Cursor cursor2 = MainActivity.dbHelper.dbReadable.rawQuery(sqlQuery2, new String[]{assetId});
+                Cursor cursor2 = DBHelper.dbReadable.rawQuery(sqlQuery2, new String[]{assetId});
                 if (cursor2 != null && cursor2.moveToFirst()) {
                     int existsInDrive = cursor2.getInt(0);
                     System.out.println("exits in drive: " + existsInDrive + " " + assetId);
@@ -488,95 +488,6 @@ public class GooglePhotos {
         }
         return false;
     }
-
-//    private static boolean downloadMediaItem(GooglePhotos.MediaItem item, File destinationFolder, String userEmail) {
-//        final int MAX_RETRIES = 3;
-//        URL url;
-//        try {
-//            url = new URL(item.getBaseUrl() + "=d");
-//        } catch (MalformedURLException e) {
-//            LogHandler.saveLog("Malformed URL: " + e.getLocalizedMessage());
-//            return false;
-//        }
-//
-//        for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
-//            try {
-//                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-//                connection.setRequestMethod("GET");
-//                int responseCode = connection.getResponseCode();
-//                System.out.println("response coddde for download photos: " + responseCode);
-//                if (responseCode == HttpURLConnection.HTTP_OK) {
-//                    String inputStreamString = "";
-//                    int contentLength = connection.getContentLength();
-//                    File downloadFile = new File(destinationFolder, item.getFileName());
-//                    if (!downloadFile.exists()) {
-//                        boolean created = downloadFile.createNewFile();
-//                        if (!created) {
-//                            LogHandler.saveLog("Failed to create file for download: " + item.getFileName());
-//                            return false;
-//                        }
-//                    }
-//
-//                    try (InputStream inputStream = new BufferedInputStream(connection.getInputStream());
-//                         OutputStream outputStream = new FileOutputStream(downloadFile)) {
-//                        byte[] buffer = new byte[1024];
-//                        int bytesRead;
-//                        while ((bytesRead = inputStream.read(buffer)) != -1) {
-//                            outputStream.write(buffer, 0, bytesRead);
-//                        }
-//                    }
-//
-//                    String outputStream_string = "";
-//                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-//                        outputStream_string = new BufferedReader(new InputStreamReader(new FileInputStream(downloadFile)))
-//                                .lines().collect(Collectors.joining("\n"));
-//                    }
-//                    System.out.println("verification is : " + outputStream_string.equals(inputStreamString));
-//
-//                    if ((downloadFile.length() != (long) contentLength)
-////                            || (!outputStream_string.equals(inputStreamString))
-//                    ){
-//                        LogHandler.saveLog("Failed to download " + downloadFile.length() + "!=" + contentLength);
-//                        continue;
-//                    } else {
-//                        InputStream inputStream1 = new FileInputStream(downloadFile);
-//                        if (!decodeIsOk(inputStream1)){
-//                            LogHandler.saveLog("Failed to decode ");
-//                            continue;
-//                        }else{
-//                            inputStream1.close();
-//                        }
-//                    }
-//                    String fileHash = Hash.calculateHash(downloadFile);
-//                    long lastInsertedId = MainActivity.dbHelper.insertAssetData(fileHash);
-//                    if (lastInsertedId != -1) {
-//                        MainActivity.dbHelper.insertIntoPhotosTable(lastInsertedId, item.getId(), item.getFileName(), fileHash, userEmail, item.getCreationTime(), item.getBaseUrl());
-//                    } else {
-//                        LogHandler.saveLog("Last inserted id -1 in inserting into asset");
-//                        return false;
-//                    }
-//                    LogHandler.saveLog("Downloaded successfully: " + item.getFileName(), false);
-//                    return true;
-//                } else {
-//                    LogHandler.saveLog("Failed to download " + item.getFileName() + " with response code: " + responseCode);
-//                }
-//            } catch (IOException e) {
-//                LogHandler.saveLog("Attempt " + (attempt + 1) + " failed for " + item.getFileName() + ": " + e.getLocalizedMessage());
-//                try {
-//                    Thread.sleep(1000 * (attempt + 1));
-//                } catch (InterruptedException ie) {
-//                    Thread.currentThread().interrupt();
-//                    return false;
-//                }
-//            }
-//        }
-//
-//        LogHandler.saveLog("Failed to download " + item.getFileName() + " after " + MAX_RETRIES + " attempts.");
-//        return false;
-//    }
-
-
-
 
     //            displayDialogForRestoreAccountsDecision(preferences);
 //            signInToPrimaryLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),

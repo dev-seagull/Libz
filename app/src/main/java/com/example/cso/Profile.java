@@ -223,7 +223,7 @@ public class Profile {
     private static boolean checkNewDevices(JsonArray deviceInfoArray){
         boolean isLinked = false;
 
-        ArrayList<DeviceHandler> currentDeviceIdList = MainActivity.dbHelper.getDevicesFromDB();
+        ArrayList<DeviceHandler> currentDeviceIdList = DBHelper.getDevicesFromDB();
         for (JsonElement element : deviceInfoArray) {
             JsonObject deviceInfoObject = element.getAsJsonObject();
             String deviceIdentifier = deviceInfoObject.get("deviceId").getAsString();
@@ -463,7 +463,7 @@ public class Profile {
 
             for (String[] account : accounts) {
                 if (account[1].equals("backup")) {
-                    String accessToken = MainActivity.googleCloud.updateAccessToken(account[2]).getAccessToken();
+                    String accessToken = GoogleCloud.updateAccessToken(account[2]).getAccessToken();
                     String resultJsonName = readProfileMapName(account[0],accessToken);
 
                     if (resultJsonName!= null || !resultJsonName.isEmpty()){
@@ -506,7 +506,7 @@ public class Profile {
         Thread addingLinkedAccountsThread = new Thread(() -> {
             try {
                 boolean isDone = false;
-                ArrayList<GoogleCloud.SignInResult> linkedAccounts = MainActivity.googleCloud.signInLinkedAccounts(resultJson, signInResult.getUserEmail());
+                ArrayList<GoogleCloud.SignInResult> linkedAccounts = GoogleCloud.signInLinkedAccounts(resultJson, signInResult.getUserEmail());
                 if(linkedAccounts != null) {
                     Log.d("signInToBackUpLauncher", "Handling backups started");
                     boolean isAllBackedUp = handleBackups(resultJson, signInToBackUpLauncher, linkedAccounts);
@@ -565,7 +565,7 @@ public class Profile {
                    String assetsFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.assetsFolderName,accessToken,true);
                    String databaseFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.databaseFolderName,accessToken,true);
 
-                   MainActivity.dbHelper.insertIntoAccounts(signInLinkedAccountResult.getUserEmail(),
+                   DBHelper.insertIntoAccounts(signInLinkedAccountResult.getUserEmail(),
                            "backup", signInLinkedAccountResult.getTokens().getRefreshToken(),
                            signInLinkedAccountResult.getTokens().getAccessToken(),
                            signInLinkedAccountResult.getStorage().getTotalStorage(),
@@ -660,7 +660,7 @@ public class Profile {
             try{
                 for(String[] backedUpExistingAccount: backedUpAccounts){
                     String userEmail = backedUpExistingAccount[0];
-                    String accessToken = MainActivity.googleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
+                    String accessToken = GoogleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
                     Profile.deleteProfileFile(userEmail, accessToken, true);
                 }
 
@@ -672,7 +672,7 @@ public class Profile {
                 String assetsFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.assetsFolderName,accessToken,true);
                 String databaseFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.databaseFolderName,accessToken,true);
 
-                MainActivity.dbHelper.insertIntoAccounts(signInResult.getUserEmail(),
+                DBHelper.insertIntoAccounts(signInResult.getUserEmail(),
                         "backup",signInResult.getTokens().getRefreshToken(),
                         signInResult.getTokens().getAccessToken(),
                         signInResult.getStorage().getTotalStorage(),
@@ -694,7 +694,7 @@ public class Profile {
     private static void handleLoginToSingleAccountFailure(List<String[]> backedUpAccounts){
         for(String[] backedUpExistingAccount: backedUpAccounts){
             String userEmail = backedUpExistingAccount[0];
-            String accessToken = MainActivity.googleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
+            String accessToken = GoogleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
             Profile.deleteProfileFile(userEmail, accessToken, false);
         }
     }
@@ -717,7 +717,7 @@ public class Profile {
                 if(loginStatus.equals("login")){
                     finalAccessToken[0] = accessToken;
                 }else if (loginStatus.equals("unlink")){
-                    finalAccessToken[0] = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
+                    finalAccessToken[0] = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
                 }
                 Drive service = GoogleDrive.initializeDrive(finalAccessToken[0]);
                 String folderName = GoogleDriveFolders.profileFolderName;
@@ -769,7 +769,7 @@ public class Profile {
 
     public void validateDevices(){
         try{
-            ArrayList<DeviceHandler> currentDevices = MainActivity.dbHelper.getDevicesFromDB();
+            ArrayList<DeviceHandler> currentDevices = DBHelper.getDevicesFromDB();
 //        readProfileMapContent()
             JsonObject jsonObject = new JsonObject();
             ArrayList<DeviceHandler> jsonDevices = getDevicesFromProfileJson(jsonObject);
@@ -862,7 +862,7 @@ public class Profile {
                 if (!isBackedUp){
                     for(String[] backedUpExistingAccount: backedUpAccounts){
                         String userEmail = backedUpExistingAccount[0];
-                        String accessToken = MainActivity.googleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
+                        String accessToken = GoogleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
                         Profile.deleteProfileFile(userEmail, accessToken, false);
                     }
                     break;
@@ -875,7 +875,7 @@ public class Profile {
         if(isBackedUp) {
             for (String[] backedUpExistingAccount : existingAccounts) {
                 String userEmail = backedUpExistingAccount[0];
-                String accessToken = MainActivity.googleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
+                String accessToken = GoogleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
                 Profile.deleteProfileFile(userEmail, accessToken, true);
             }
         }

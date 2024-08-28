@@ -249,21 +249,21 @@ public class UIHandler {
 
 
     private static void handleStatistics(String deviceId){
-        int total_Assets_count = MainActivity.dbHelper.countAssets();
-        int total_android_assets = MainActivity.dbHelper.countAndroidAssetsOnThisDevice(deviceId);
-        int android_synced_assets_count = MainActivity.dbHelper.countAndroidSyncedAssetsOnThisDevice(deviceId);
+        int total_Assets_count = DBHelper.countAssets();
+        int total_android_assets = DBHelper.countAndroidAssetsOnThisDevice(deviceId);
+        int android_synced_assets_count = DBHelper.countAndroidSyncedAssetsOnThisDevice(deviceId);
         int unsynced_android_assets =  total_android_assets - android_synced_assets_count;
-//        int synced_assets = total_Assets_count -(MainActivity.dbHelper.countAndroidAssets() - MainActivity.dbHelper.countAndroidUnsyncedAssets());
+        int synced_assets = total_Assets_count -(DBHelper.countAndroidAssets() - DBHelper.countAndroidUnsyncedAssets());
 
         System.out.println("total_Assets_count : " + total_Assets_count +
                 "\ntotal_android_assets : " + total_android_assets +
                 "\nandroid_synced_assets_count : " +  android_synced_assets_count +
                 "\nunsynced_android_assets : " + unsynced_android_assets +
 //                "\nsynced_assets : " + synced_assets +
-                "\nMainActivity.dbHelper.countAndroidAssets() : " + MainActivity.dbHelper.countAndroidAssets() +
-                "\nMainActivity.dbHelper.countAndroidUnsyncedAssets() : " + MainActivity.dbHelper.countAndroidUnsyncedAssets()
+                "\nDbhelper.countAndroidAssets() : " + DBHelper.countAndroidAssets() +
+                "\nDbhelper.countAndroidUnsyncedAssets() : " + DBHelper.countAndroidUnsyncedAssets()
                 );
-        MainActivity.dbHelper.getAndroidSyncedAssetsOnThisDevice();
+        DBHelper.getAndroidSyncedAssetsOnThisDevice();
 
         ArrayList<BarEntry> syncedEntries = new ArrayList<>();
         syncedEntries.add(new BarEntry(0f, new float[]{android_synced_assets_count}));
@@ -636,7 +636,7 @@ public class UIHandler {
             StorageHandler storageHandler = new StorageHandler();
             double freeSpace = storageHandler.getFreeSpace();
             double totalStorage = storageHandler.getTotalStorage();
-            double mediaStorage = Double.parseDouble(MainActivity.dbHelper.getPhotosAndVideosStorage());
+            double mediaStorage = Double.parseDouble(DBHelper.getPhotosAndVideosStorage());
             double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
             storageData.addProperty("freeSpace",freeSpace);
             storageData.addProperty("mediaStorage", mediaStorage);
@@ -887,7 +887,7 @@ public class UIHandler {
                         MainActivity.isAnyProccessOn = true;
                         button.setText("signing in ...");
                         button.setClickable(false);
-                        MainActivity.googleCloud.signInToGoogleCloud(signInToBackUpLauncher);
+                        GoogleCloud.signInToGoogleCloud(signInToBackUpLauncher, activity);
                         button.setClickable(true);
                         MainActivity.isAnyProccessOn = false;
                     } else if (buttonText.equals("signing in ...")){

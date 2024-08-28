@@ -203,7 +203,7 @@ public class Upgrade {
         DBHelper.addColumn("profileFolderId","TEXT","ACCOUNTS");
         DBHelper.addColumn("databaseFolderId","TEXT","ACCOUNTS");
 
-        new Thread(GoogleDrive::cleanDriveFolders).start();
+//        new Thread(GoogleDrive::cleanDriveFolders).start();
     }
 }
 

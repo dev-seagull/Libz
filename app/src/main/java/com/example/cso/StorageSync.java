@@ -32,7 +32,7 @@ public class StorageSync {
         double freeSpace = storageHandler.getFreeSpace();
         double totalStorage = storageHandler.getTotalStorage();
         DBHelper dbHelper = DBHelper.getInstance(context);
-        double mediaStorage = Double.parseDouble(dbHelper.getPhotosAndVideosStorage());
+        double mediaStorage = Double.parseDouble(DBHelper.getPhotosAndVideosStorage());
         double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
 
         JsonObject jsonObject = new JsonObject();

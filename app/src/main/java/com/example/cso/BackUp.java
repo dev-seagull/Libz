@@ -70,7 +70,7 @@ public class BackUp {
                         isUploadValid[0] = true;
 //                        DBHelper.insertIntoDriveTable(Long.valueOf(assetId),String.valueOf(fileId)
 //                                ,fileName,fileHash,driveEmailAccount);
-                        MainActivity.dbHelper.insertTransactionsData(String.valueOf(fileId), fileName,
+                        DBHelper.insertTransactionsData(String.valueOf(fileId), fileName,
                                 driveEmailAccount, assetId, "sync", fileHash);
                         LogHandler.saveLog("Uploading " + fileName +
                                 " is finished with upload file id of : " + uploadFileId, false);
@@ -236,103 +236,6 @@ public class BackUp {
         }
     }
 
-//    public static void restore(Context context) {
-//        String sqlQuery = "SELECT T.id, T.source, T.fileName, T.destination, D.assetId, " +
-//                "T.operation, T.hash, T.date, D.fileId , D.userEmail " +
-//                "FROM TRANSACTIONS T " +
-//                "JOIN DRIVE D ON T.hash = D.fileHash " +
-//                "WHERE T.operation = 'deletedInDevice' and T.destination = ?" +
-//                "AND D.id = (" +
-//                "   SELECT MIN(id) " +
-//                "   FROM DRIVE " +
-//                "   WHERE fileHash = T.hash " +
-//                ");";
-//
-//        Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidDeviceName});
-//        List<String[]> resultList = new ArrayList<>();
-//        if(cursor.moveToFirst() && cursor != null){
-//            do {
-//                String[] columns = {"id", "source", "fileName", "destination", "assetId"
-//                        , "operation", "hash", "date", "fileId", "userEmail"};
-//                String[] row = new String[columns.length];
-//                for(int i =0 ; i < columns.length ; i++){
-//                    int columnIndex = cursor.getColumnIndex(columns[i]);
-//                    if (columnIndex >= 0) {
-//                        row[i] = cursor.getString(columnIndex);
-//                    }
-//                }
-//                resultList.add(row);
-//            } while (cursor.moveToNext());
-//        }
-//        if(cursor != null){
-//            cursor.close();
-//        }
-//
-//        ExecutorService executor = Executors.newSingleThreadExecutor();
-//        final boolean[] isFinished = {false};
-//        Callable<Boolean> backgroundDownloadTask = () -> {
-//            for (String[] row : resultList) {
-//                String filePath = row[1];
-//                String userEmail = row[9];
-//                String fileId = row[8];
-//                System.out.println("File path for restore test: " + filePath + " and user email is: " + userEmail  +  "  and file id" +
-//                        " is: " + fileId);
-//                String accessTokenSqlQuery = "SELECT accessToken from ACCOUNTS WHERE ACCOUNTS.userEmail = ?";
-//                Cursor accessTokenCursor = MainActivity.dbHelper.dbReadable.rawQuery(accessTokenSqlQuery, new String[]{userEmail});
-//                String accessToken = "";
-//                if(accessTokenCursor.moveToFirst() && accessTokenCursor != null) {
-//                    int accessTokenColumnIndex = accessTokenCursor.getColumnIndex("accessToken");
-//                    if (accessTokenColumnIndex >= 0) {
-//                        accessToken = accessTokenCursor.getString(accessTokenColumnIndex);
-//                    }
-//                }
-//                if(accessTokenCursor != null){
-//                    accessTokenCursor.close();
-//                }
-//                if(!accessToken.isEmpty() && accessToken != null){
-//                    Drive service = GoogleDrive.initializeDrive(accessToken);
-//
-//                    OutputStream outputStream = null;
-//                    File file = new File(filePath);
-//
-//                    try {
-//                        if(!file.exists()){
-//                            file.getParentFile().mkdirs();
-//                            file.createNewFile();
-//                            try {
-//                                outputStream = new FileOutputStream(filePath);
-//                            } catch (FileNotFoundException e) {
-//                                LogHandler.saveLog("failed to save output stream in restore method : " + e.getLocalizedMessage(), true);
-//                            }
-//                            try {
-//                                service.files().get(fileId).executeMediaAndDownloadTo(outputStream);
-//                            } catch (IOException e) {
-//                                LogHandler.saveLog("failed to download in restore method : " + e.getLocalizedMessage(), true);
-//                            }
-//                        }
-//                    } catch (Exception e) {
-//                        LogHandler.saveLog("failed to create file in restore method : " + e.getLocalizedMessage(), true);
-//                    }
-//
-//                    MediaScannerConnection.scanFile(
-//                            context,
-//                            new String[]{filePath},
-//                            new String[]{"image/jpeg", "image/"+Media.getMimeType(file).toLowerCase(), "image/jpg", "video/"+Media.getMimeType(file)},
-//                            null
-//                    );
-//                }
-//            }
-//
-//            return isFinished[0];
-//        };
-//        Future<Boolean> future = executor.submit(backgroundDownloadTask);
-//        try{
-//            isFinished[0] = future.get();
-//        }catch (Exception e){
-//            LogHandler.saveLog("Failed to get boolean finished in downloading from Photos: " + e.getLocalizedMessage());
-//        }
-//    }
-//    }
 }
 
 
