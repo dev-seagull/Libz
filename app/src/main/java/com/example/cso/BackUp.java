@@ -9,6 +9,7 @@ import com.google.api.client.googleapis.media.MediaHttpUploader;
 import com.google.api.client.googleapis.media.MediaHttpUploaderProgressListener;
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.Drive;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import org.json.JSONObject;
 
@@ -46,8 +47,7 @@ public class BackUp {
                         new com.google.api.services.drive.model.File();
                 fileMetadata.setName(fileName);
                 String mimeTypeToUpload = Media.getMimeType(new File(filePath));
-                FileContent mediaContent = handleMediaFileContent(mimeTypeToUpload,androidFile,
-                        mimeType, fileName);
+                FileContent mediaContent = handleMediaFileContent(mimeTypeToUpload,androidFile, fileName);
                 fileMetadata.setParents(Collections.singletonList(syncAssetsFolderId));
                 if (mediaContent == null) {
                     LogHandler.saveLog("media content is null in syncAndroidToDrive", true);
@@ -124,52 +124,37 @@ public class BackUp {
         }
     }
 
-    private static FileContent handleMediaFileContent(String mimeTypeToUpload, java.io.File androidFile, String mimeType, String fileName) {
+    private static FileContent handleMediaFileContent(String mimeTypeToUpload, java.io.File androidFile, String fileName) {
         FileContent mediaContent = null;
         try {
             if (androidFile.exists()) {
-                // Handle image files
-                if (Media.isImage(mimeTypeToUpload)) {
-                    switch (mimeType.toLowerCase()) {
-                        case "jpg":
-                        case "jpeg":
-                            mediaContent = new FileContent("image/jpeg", androidFile);
-                            break;
-                        case "png":
-                            mediaContent = new FileContent("image/png", androidFile);
-                            break;
-                        case "gif":
-                            mediaContent = new FileContent("image/gif", androidFile);
-                            break;
-                        case "bmp":
-                            mediaContent = new FileContent("image/bmp", androidFile);
-                            break;
-                        case "webp":
-                            mediaContent = new FileContent("image/webp", androidFile);
-                            break;
-                        default:
-                            mediaContent = new FileContent("image/" + mimeType.toLowerCase(), androidFile);
-                            break;
+                String lowerMimeType = mimeTypeToUpload.toLowerCase();
+                if (Media.isImage(lowerMimeType)) {
+                    if (lowerMimeType.equals("jpg") || lowerMimeType.equals("jpeg")) {
+                        mediaContent = new FileContent("image/jpeg", androidFile);
+                    } else if (lowerMimeType.equals("png")) {
+                        mediaContent = new FileContent("image/png", androidFile);
+                    } else if (lowerMimeType.equals("gif")) {
+                        mediaContent = new FileContent("image/gif", androidFile);
+                    } else if (lowerMimeType.equals("bmp")) {
+                        mediaContent = new FileContent("image/bmp", androidFile);
+                    } else if (lowerMimeType.equals("webp")) {
+                        mediaContent = new FileContent("image/webp", androidFile);
+                    } else {
+                        mediaContent = new FileContent("image/" + lowerMimeType, androidFile);
                     }
-                }
-                // Handle video files
-                else if (Media.isVideo(mimeTypeToUpload)) {
-                    switch (mimeType.toLowerCase()) {
-                        case "mp4":
-                            mediaContent = new FileContent("video/mp4", androidFile);
-                            break;
-                        case "mkv":
-                            mediaContent = new FileContent("video/x-matroska", androidFile);
-                            break;
-                        case "mov":
-                            mediaContent = new FileContent("video/quicktime", androidFile);
-                            break;
-                        case "avi":
-                            mediaContent = new FileContent("video/x-msvideo", androidFile);
-                            break;
-                        default:
-                            mediaContent = new FileContent("video/" + mimeType.toLowerCase(), androidFile);
-                            break;
+
+                }  else if (Media.isVideo(lowerMimeType)) {
+                    if (lowerMimeType.equals("mp4")) {
+                        mediaContent = new FileContent("video/mp4", androidFile);
+                    } else if (lowerMimeType.equals("mkv")) {
+                        mediaContent = new FileContent("video/x-matroska", androidFile);
+                    } else if (lowerMimeType.equals("mov")) {
+                        mediaContent = new FileContent("video/quicktime", androidFile);
+                    } else if (lowerMimeType.equals("avi")) {
+                        mediaContent = new FileContent("video/x-msvideo", androidFile);
+                    } else {
+                        mediaContent = new FileContent("video/" + lowerMimeType, androidFile);
                     }
                 } else {
                     LogHandler.saveLog("Unsupported MIME type for file: " + mimeTypeToUpload, true);
@@ -177,9 +162,8 @@ public class BackUp {
             } else {
                 LogHandler.saveLog("The android file " + fileName + " doesn't exist in upload method", true);
             }
-        } catch (Exception e) {
-            LogHandler.saveLog("Failed to handle media file content: " + e.getLocalizedMessage(), true);
-        }
+        } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+
         return mediaContent;
     }
 

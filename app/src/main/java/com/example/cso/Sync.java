@@ -1,9 +1,13 @@
 package com.example.cso;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
+
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,12 +15,10 @@ import java.util.List;
 public class Sync {
     public static Thread syncThread;
     private static  boolean isAllOfAccountsFull = true;
-    public static void syncAndroidFiles(Context context){
-        UIHelper uiHelper = new UIHelper();
+    public static void syncAndroidFiles(Context context, Activity activity){
         try{
             isAllOfAccountsFull = true;
-            StorageHandler.freeStorageUpdater();
-            double amountSpaceToFreeUp = StorageHandler.getAmountSpaceToFreeUp();
+            double amountSpaceToFreeUp = StorageHandler.freeStorageUpdater();
 
             String[] selected_accounts_columns = {"userEmail","type", "totalStorage","usedStorage", "refreshToken"};
             List<String[]> account_rows = DBHelper.getAccounts(selected_accounts_columns);
@@ -26,7 +28,7 @@ public class Sync {
                 String[] type = {account_row[1]};
                 accountExists = true;
                 if(type[0].equals("backup")){
-                    syncAndroidToBackupAccount(account_row,amountSpaceToFreeUp,context);
+                    syncAndroidToBackupAccount(account_row,amountSpaceToFreeUp,context, activity);
                 }
             }
             //need change
@@ -44,8 +46,9 @@ public class Sync {
                 MainActivity.activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        uiHelper.syncMessageTextView.setVisibility(View.VISIBLE);
-                        uiHelper.syncMessageTextView.setText("You're not connected to internet");
+                        TextView syncMessageTextView = MainActivity.activity.findViewById(R.id.syncMessageTextView);
+                        syncMessageTextView.setVisibility(View.VISIBLE);
+                        syncMessageTextView.setText("You're not connected to internet");
                     }
                 });
             }
@@ -53,8 +56,9 @@ public class Sync {
                 MainActivity.activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        uiHelper.syncMessageTextView.setText("You are running out of space. Add more back up accounts.");
-                        uiHelper.syncMessageTextView.setVisibility(View.VISIBLE);
+                        TextView syncMessageTextView = MainActivity.activity.findViewById(R.id.syncMessageTextView);
+                        syncMessageTextView.setText("You are running out of space. Add more back up accounts.");
+                        syncMessageTextView.setVisibility(View.VISIBLE);
                     }
                 });
             }
@@ -62,8 +66,9 @@ public class Sync {
                 MainActivity.activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        uiHelper.syncMessageTextView.setText("Add an account to sync.");
-                        uiHelper.syncMessageTextView.setVisibility(View.VISIBLE);
+                        TextView syncMessageTextView = MainActivity.activity.findViewById(R.id.syncMessageTextView);
+                        syncMessageTextView.setText("Add an account to sync.");
+                        syncMessageTextView.setVisibility(View.VISIBLE);
                     }
                 });
             }
@@ -72,13 +77,13 @@ public class Sync {
         }
     }
 
-    private static void syncAndroidToBackupAccount(String[] accountRow, double amountSpaceToFreeUp, Context context){
+    private static void syncAndroidToBackupAccount(String[] accountRow, double amountSpaceToFreeUp,
+                                                   Context context, Activity activity){
         try{
             String userEmail = accountRow[0];
             String refreshToken = accountRow[4];
-            String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
             String folderName = GoogleDriveFolders.assetsFolderName;
-            String syncedAssetsSubFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName, accessToken, true);
+            String syncedAssetsSubFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName, null, false);
             if(syncedAssetsSubFolderId == null){
                 Log.d("folders","asset folder not found");
                 return;
@@ -98,7 +103,7 @@ public class Sync {
             for (String[] androidRow : sortedAndroidFiles) {
                 StorageHandler.freeStorageUpdater();
                 syncAndroidFile(androidRow, userEmail, refreshToken, syncedAssetsSubFolderId,
-                        driveFreeSpace, amountSpaceToFreeUp, context);
+                        driveFreeSpace, amountSpaceToFreeUp, context, activity);
             }
         }catch (Exception e){
             LogHandler.saveLog("Failed to sync android to backup accounts: "  + e.getLocalizedMessage(), true);
@@ -106,9 +111,9 @@ public class Sync {
     }
 
 
-    private static void syncAndroidFile(String[] androidRow, String userEmail, String refreshToken, String syncedAssetsFolderId,
-                                        double driveFreeSpace, double amountSpaceToFreeUp, Context context){
-        UIHelper uiHelper = new UIHelper();
+    private static void syncAndroidFile(String[] androidRow, String userEmail, String refreshToken,
+                                        String syncedAssetsFolderId, double driveFreeSpace,
+                                        double amountSpaceToFreeUp, Context context, Activity activity){
         try{
             String fileName = androidRow[1];
             String fileHash = androidRow[5];
@@ -145,7 +150,7 @@ public class Sync {
                                 GoogleDrive.deleteRedundantDriveFilesFromAccount(userEmail);
                                 if (DBHelper.androidFileExistsInDrive(Long.valueOf(androidRow[8]), fileHash)) {
                                     boolean isDeleted = Android.deleteAndroidFile(filePath, String.valueOf(assetId), fileHash
-                                            , fileSize, fileName);
+                                            , fileSize, fileName, activity);
                                     if (isDeleted) {
                                         amountSpaceToFreeUp -= Double.parseDouble(fileSize);
                                         LogHandler.saveLog(fileName + " is deleted",false);
@@ -159,7 +164,8 @@ public class Sync {
                     if (amountSpaceToFreeUp > 0) {
                         GoogleDrive.deleteRedundantDriveFilesFromAccount(userEmail);
                         if (DBHelper.androidFileExistsInDrive(Long.valueOf(androidRow[8]), fileHash)) {
-                            boolean isDeleted = Android.deleteAndroidFile(filePath, androidRow[8], fileHash, fileSize, androidRow[1]);
+                            boolean isDeleted = Android.deleteAndroidFile(filePath, androidRow[8], fileHash
+                                    , fileSize, androidRow[1], activity);
                             if (isDeleted) {
                                 amountSpaceToFreeUp -= Double.parseDouble(fileSize);
                                 LogHandler.saveLog(fileName + " is deleted",false);
@@ -181,6 +187,7 @@ public class Sync {
             Thread backupThread = new Thread(() -> {
                 Long fileId = Long.valueOf(androidRow[0]);
                 String fileName = androidRow[1];
+                System.out.println("Uploading to drive : " + fileName + " " + DBHelper.countAndroidAssets());
                 String filePath = androidRow[2];
                 String fileHash = androidRow[5];
                 String mimeType = androidRow[7];
@@ -189,15 +196,14 @@ public class Sync {
                 isBackedUp[0] = backUp.backupAndroidToDrive(fileId,fileName, filePath,fileHash,mimeType,assetId,
                         accessToken,userEmail,syncedAssetsFolderId);
             });
+
             backupThread.start();
             try {
                 backupThread.join();
-            } catch (Exception e) {
-                LogHandler.saveLog("Failed to join backup thread when syncing android file.", true);
-            }
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to upload android to derive: " + e.getLocalizedMessage());
-        }
+            } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+
+        }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+
         return isBackedUp[0];
     }
 
@@ -237,12 +243,11 @@ public class Sync {
         }
     }
 
-    public static void startSyncThread(Context context){
+    public static void startSyncThread(Context context, Activity activity){
         LogHandler.saveLog("Starting the sync thread", false);
         syncThread =  new Thread(() -> {
             try{
-                System.out.println("Syncing android files");
-                Sync.syncAndroidFiles(context);
+                Sync.syncAndroidFiles(context, activity);
             }catch (Exception e){
                 LogHandler.saveLog("Failed in start sync thread : " + e.getLocalizedMessage() , true);
             }
@@ -259,8 +264,8 @@ public class Sync {
         MainActivity.activity.getApplicationContext().stopService(MainActivity.serviceIntent);
     }
 
-    public static void startSync(){
-        MainActivity.activity.getApplicationContext().startService(MainActivity.serviceIntent);
+    public static void startSync(Activity activity){
+        activity.getApplicationContext().startService(MainActivity.serviceIntent);
     }
 
 

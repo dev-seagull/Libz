@@ -1,5 +1,6 @@
 package com.example.cso;
 
+import android.app.Activity;
 import android.util.Log;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -368,7 +369,8 @@ public class GoogleDrive {
         startDeleteDuplicatedInDriveThread();
     }
 
-    public static void moveFromSourceToDestinationAccounts(String sourceUserEmail,boolean ableToMoveAllAssets,int movableSize){
+    public static void moveFromSourceToDestinationAccounts(String sourceUserEmail,boolean ableToMoveAllAssets,int movableSize,
+            Activity activity){
         boolean[] hasMovedAllAssets = {false};
         Thread moveFromSourceToDestinationAccountsThread = new Thread(() -> {
 
@@ -443,7 +445,7 @@ public class GoogleDrive {
             if(isBackedUpAndDeleted){
                 unlinkSingleAccount(sourceUserEmail,sourceDriveService,ableToMoveAllAssets);
             }
-            UIHandler.setupAccountButtons();//unlink
+            UIHandler.setupAccountButtons(activity);//unlink
         });
 
         moveFromSourceToDestinationAccountsThread.start();

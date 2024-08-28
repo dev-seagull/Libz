@@ -227,6 +227,7 @@ public class Profile {
         for (JsonElement element : deviceInfoArray) {
             JsonObject deviceInfoObject = element.getAsJsonObject();
             String deviceIdentifier = deviceInfoObject.get("deviceId").getAsString();
+            System.out.println("devId : " + MainActivity.androidUniqueDeviceIdentifier);
             if (!currentDeviceIdList.contains(deviceIdentifier) && !deviceIdentifier.equals(MainActivity.androidUniqueDeviceIdentifier)) {
                 Log.d("signInToBackUpLauncher","A new device found: " + deviceIdentifier);
                 isLinked = true;

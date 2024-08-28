@@ -1,6 +1,7 @@
 package com.example.cso;
 
 
+import android.app.Activity;
 import android.util.Log;
 
 import com.google.api.client.http.FileContent;
@@ -23,7 +24,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class Support {
-    public static String supportEmail = MainActivity.activity.getResources().getString(R.string.supportEmail);
+//    public static String supportEmail = MainActivity.activity.getResources().getString(R.string.supportEmail);
 
     public static boolean backupDBFileExists() {
         String fileName = "backupDB_" + MainActivity.androidUniqueDeviceIdentifier + ".json";
@@ -56,16 +57,16 @@ public class Support {
         return fileExists[0];
     }
 
-    public static void checkSupportBackupRequired() {
+    public static void checkSupportBackupRequired(Activity activity) {
         if (backupDBFileExists()){
-            backUpDataBaseToDrive();
+            backUpDataBaseToDrive(activity);
         }
     }
 
-    public static void backUpDataBaseToDrive() {
+    public static void backUpDataBaseToDrive(Activity activity) {
         new Thread(() -> {
             try {
-                String dataBasePath = MainActivity.activity.getDatabasePath(MainActivity.dataBaseName).getPath();
+                String dataBasePath = activity.getDatabasePath(MainActivity.dataBaseName).getPath();
 
                 String driveBackUpRefreshToken = getSupportRefreshToken();
                 String driveBackupAccessToken = GoogleCloud.updateAccessToken(driveBackUpRefreshToken).getAccessToken();

@@ -48,17 +48,13 @@
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
 
-            if(activity == null){
-                activity = this;
-            }
             Log.d("state","start of onCreate");
 
+            activity = this;
             preferences = getPreferences(Context.MODE_PRIVATE);
-//            mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+            mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+            dbHelper = new DBHelper(this);
 
-            if(TimerService.timerDbHelper == null){
-                dbHelper = new DBHelper(this);
-            }
 
             androidUniqueDeviceIdentifier = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
             serviceIntent = new Intent(this , TimerService.class);
@@ -69,7 +65,7 @@
             Log.d("androidId", androidUniqueDeviceIdentifier);
             Log.d("androidDeviceName", androidDeviceName);
 
-            UIHandler.initAppUI();
+            UIHandler.initAppUI(activity);
 
 //            boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
 //            if(isFirstTime){
@@ -134,11 +130,11 @@
                                 }finally {
                                     isAnyProccessOn = false;
                                 }
-                                UIHandler.setupAccountButtons();
+                                UIHandler.setupAccountButtons(activity);
                             });
                             signInToBackUpThread.start();
                         }else{
-                            UIHandler.setupAccountButtons();
+                            UIHandler.setupAccountButtons(activity);
                         }
                     });
 
@@ -184,6 +180,8 @@
         Log.d("permissions","isStoragePermissionGranted : " + isStoragePermissionGranted);
         Log.d("permissions","isReadAndWritePermissionGranted : " + isReadAndWritePermissionGranted);
         if(isStoragePermissionGranted && isReadAndWritePermissionGranted){
+//            dbHelper = new DBHelper(this);
+
             boolean hasCreated = LogHandler.createLogFile();
             Log.d("logFile","Log file is created :"  + hasCreated);
 
@@ -194,11 +192,11 @@
             new Thread(() -> {
                 if (Deactivation.isDeactivationFileExists()){ UIHandler.handleDeactivatedUser(); }
 
-                Support.checkSupportBackupRequired();
+                Support.checkSupportBackupRequired(activity);
 
                 if (Profile.hasJsonChanged()){
                     DBHelper.updateDatabaseBasedOnJson();
-                    UIHandler.setupAccountButtons();
+                    UIHandler.setupAccountButtons(activity);
                 }
             }).start();
 
@@ -231,10 +229,6 @@
         Log.d("state","start of onDestroyed");
         destroyAndroidTimer();
         destroyUITimer();
-        if(dbHelper != null){
-            dbHelper.close();
-        }
-        activity = null;
 //        finishAffinity();
 //        System.exit(0);
         finish();

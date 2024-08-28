@@ -153,7 +153,7 @@
         }
 
 
-        public static boolean isAccessTokenValid(String accessToken) throws IOException {
+        public static boolean isAccessTokenValid(String accessToken){
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Callable<Boolean> callableTask = () -> {
                 String tokenInfoUrl = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=" + accessToken;
@@ -179,9 +179,8 @@
             Boolean isValid = false;
             try{
                 isValid = future.get();
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to check validity from future in isAccessTokenValid: " + e.getLocalizedMessage(), true);
-            }
+
+            }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
             return isValid;
         }
 
@@ -580,10 +579,10 @@
             return isInvalidated[0];
         }
 
-        public static void startUnlinkThreads(String buttonText){
+        public static void startUnlinkThreads(String buttonText, Activity activity){
             Thread startSignOutThreads = new Thread(() -> {
                 GoogleDrive.startUpdateStorageThread();
-                boolean wantToUnlink = UIHandler.showMoveDriveFilesDialog(buttonText);
+                boolean wantToUnlink = UIHandler.showMoveDriveFilesDialog(buttonText, activity);
 
 
                 //note :  handle button text if click on wait button

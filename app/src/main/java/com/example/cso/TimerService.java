@@ -13,11 +13,13 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
+
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -25,20 +27,18 @@ public class TimerService extends Service {
     private static int NOTIFICATION_ID = 12345;
     private static String CHANNEL_ID = "TimerServiceChannel";
     private static String CHANNEL_NAME = "Syncing Channel";
+
     private Timer timer;
     private Thread androidThreads;
     private Thread driveThreads;
     private Thread syncThreads;
     private boolean isTimerRunning = false;
     private TimerTask timerTask;
-    public static DBHelper timerDbHelper;
-
     private  Notification notification;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        timerDbHelper = new DBHelper(this);
         Log.d("service", "Service onCreate Started");
         requestNotificationPermission();
         createNotificationChannel();
@@ -51,10 +51,18 @@ public class TimerService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("service", "Service onStartCommand Started");
+
         if (intent != null && intent.getAction() != null && intent.getAction().equals("STOP_SERVICE")) {
             Log.d("service", "Service stop request received");
             stopTimer();
-            stopService(MainActivity.serviceIntent);
+//            stopService(MainActivity.serviceIntent);
+            if(isAppInForeground()){
+                UIHandler.handleSyncButtonClick(MainActivity.activity);
+            }else{
+                UIHandler.toggleSyncState();
+            }
+
+            stopForeground(true);
             stopSelf();
             Log.d("service","Service stopped");
         }
@@ -112,7 +120,7 @@ public class TimerService extends Service {
                         @Override
                         public void run() {
                             try {
-                                Sync.startSyncThread(getApplicationContext());
+                                Sync.startSyncThread(getApplicationContext(), MainActivity.activity);
                             } catch (Exception e) {
                                 LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
                             } finally {
@@ -196,18 +204,6 @@ public class TimerService extends Service {
     }
 
     private void stopTimer() {
-        if (Sync.syncThread != null && Sync.syncThread.isAlive()) {
-            Sync.syncThread.interrupt();
-        }
-        if (syncThreads != null && syncThreads.isAlive()) {
-            syncThreads.interrupt();
-        }
-        if (driveThreads != null && driveThreads.isAlive()) {
-            driveThreads.interrupt();
-        }
-        if (androidThreads != null && androidThreads.isAlive()) {
-            androidThreads.interrupt();
-        }
         if (timerTask != null) {
             timerTask.cancel();
         }
@@ -242,12 +238,40 @@ public class TimerService extends Service {
     public void onDestroy() {
         Log.d("service", "Service onDestroy Started");
         stopTimer();
-        if (timerDbHelper != null) {
-            timerDbHelper.close();
+        stopThreads();
+        if (!isAppInForeground()) {
+            if (MainActivity.dbHelper != null) {
+                MainActivity.dbHelper.close();
+                Log.d("service", "Database closed as app is not in foreground.");
+                System.exit(0);
+            }
+        } else {
+            Log.d("service", "App is in foreground, not closing the database.");
         }
-
         super.onDestroy();
         Log.d("service", "Service onDestroy Finished");
+    }
+
+    private boolean isAppInForeground() {
+        ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        if (activityManager == null) {
+            return false;
+        }
+
+        List<ActivityManager.RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
+        if (appProcesses == null) {
+            return false;
+        }
+
+        final String packageName = getPackageName();
+        for (ActivityManager.RunningAppProcessInfo appProcess : appProcesses) {
+            if (appProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+                    && appProcess.processName.equals(packageName)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static String isMyServiceRunning(Context context, Class<?> serviceClass) {

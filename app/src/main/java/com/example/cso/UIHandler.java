@@ -23,10 +23,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
@@ -36,6 +36,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
@@ -50,6 +51,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.Drive;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
@@ -58,84 +60,91 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UIHandler {
-    public static UIHelper uiHelper = new UIHelper();
-    static LiquidFillButton syncButton = MainActivity.activity.findViewById(R.id.syncButton);
+    private static int buttonTextColor = Color.WHITE;
+    private static int buttonTransparentTextColor = Color.argb(128, 255, 255, 255);
 
-    public static void initAppUI(){
-        initializeDrawerLayout();
-        setupDeviceButtons();
-        initializeSyncButton();
-        initializeWifiOnlyButton();
-        setupAccountButtons();//initialize
+    public static void initAppUI(Activity activity){
+        initializeDrawerLayout(activity);
+        setupDeviceButtons(activity);
+        initializeSyncButton(activity);
+        initializeWifiOnlyButton(activity);
+        setupAccountButtons(activity);
     }
 
-    public static void initializeWifiOnlyButton(){
+    public static void initializeWifiOnlyButton(Activity activity){
+        ImageButton wifiButton = activity.findViewById(R.id.wifiButton);
+        TextView wifiButtonText = activity.findViewById(R.id.wifiButtonText);
         boolean[] wifiOnlyState = {SharedPreferencesHandler.getWifiOnlySwitchState()};
         if(wifiOnlyState[0]){
-            uiHelper.wifiButtonText.setTextColor(uiHelper.buttonTextColor);
+            wifiButtonText.setTextColor(buttonTextColor);
         }else{
-            uiHelper.wifiButtonText.setTextColor(uiHelper.buttonTransparentTextColor);
+            wifiButtonText.setTextColor(buttonTransparentTextColor);
         }
-        updateSyncAndWifiButtonBackground(uiHelper.wifiButton, wifiOnlyState[0]);
+        updateSyncAndWifiButtonBackground(wifiButton, wifiOnlyState[0], activity);
 
-        uiHelper.wifiButton.setOnClickListener(view -> {
-                handleWifiOnlyButtonClick();
+        wifiButton.setOnClickListener(view -> {
+                handleWifiOnlyButtonClick(activity);
         });
     }
 
-    private static void handleWifiOnlyButtonClick(){
+    private static void handleWifiOnlyButtonClick(Activity activity){
+        ImageButton wifiButton = activity.findViewById(R.id.wifiButton);
+        TextView wifiButtonText = activity.findViewById(R.id.wifiButtonText);
         boolean currentWifiOnlyState = toggleWifiOnlyOnState();
         if(currentWifiOnlyState){
-            uiHelper.wifiButtonText.setTextColor(uiHelper.buttonTextColor);
+            wifiButtonText.setTextColor(buttonTextColor);
         }else{
-            uiHelper.wifiButtonText.setTextColor(uiHelper.buttonTransparentTextColor);
+            wifiButtonText.setTextColor(buttonTransparentTextColor);
         }
-        updateSyncAndWifiButtonBackground(uiHelper.wifiButton,currentWifiOnlyState);
+        updateSyncAndWifiButtonBackground(wifiButton,currentWifiOnlyState, activity);
     }
 
-    public static void initializeSyncButton(){
+    public static void initializeSyncButton(Activity activity){
+        LiquidFillButton syncButton = activity.findViewById(R.id.syncButton);
         boolean[] syncState = {SharedPreferencesHandler.getSyncSwitchState()};
-        boolean isServiceRunning = TimerService.isMyServiceRunning(MainActivity.activity.getApplicationContext(), TimerService.class).equals("on");
+        boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
         if(syncState[0] && isServiceRunning){
-            startSyncButtonAnimation();
+            startSyncButtonAnimation(activity);
         }else{
             SharedPreferencesHandler.setSwitchState("syncSwitchState",false,MainActivity.preferences);
         }
-        updateSyncAndWifiButtonBackground(syncButton, syncState[0]);
+        updateSyncAndWifiButtonBackground(syncButton, syncState[0], activity);
 
         syncButton.setOnClickListener(view -> {
-            handleSyncButtonClick();
+            handleSyncButtonClick(activity);
         });
     }
 
-    private static void startSyncButtonAnimation(){
+    private static void startSyncButtonAnimation(Activity activity){
+        LiquidFillButton syncButton = activity.findViewById(R.id.syncButton);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             syncButton.startFillAnimation();
         }
     }
 
-    private static void handleSyncButtonClick(){
+    public static void handleSyncButtonClick(Activity activity){
+        LiquidFillButton syncButton = activity.findViewById(R.id.syncButton);
         boolean currentSyncState = toggleSyncState();
-        boolean isServiceRunning = TimerService.isMyServiceRunning(MainActivity.activity.getApplicationContext(), TimerService.class).equals("on");
+        boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
         if(currentSyncState){
-            startSyncIfNotRunning(isServiceRunning);
+            startSyncIfNotRunning(isServiceRunning, activity);
         }else{
-            stopSyncIfRunning(isServiceRunning);
+            stopSyncIfRunning(isServiceRunning, activity);
         }
-        updateSyncAndWifiButtonBackground(syncButton,currentSyncState);
+        updateSyncAndWifiButtonBackground(syncButton,currentSyncState, activity);
     }
 
-    private static void startSyncIfNotRunning(boolean isServiceRunning){
+    private static void startSyncIfNotRunning(boolean isServiceRunning, Activity activity){
         try{
             if(!isServiceRunning){
-                Sync.startSync();
-
+                Sync.startSync(activity);
             }
-            startSyncButtonAnimation();
+            startSyncButtonAnimation(activity);
         }catch (Exception e){}
     }
 
-    private static void stopSyncIfRunning(boolean isServiceRunning){
+    private static void stopSyncIfRunning(boolean isServiceRunning, Activity activity){
+        LiquidFillButton syncButton = activity.findViewById(R.id.syncButton);
         try{
             if(isServiceRunning){
                 Sync.stopSync();
@@ -153,15 +162,16 @@ public class UIHandler {
         return continuousRotate;
     }
 
-    private static void updateSyncButtonRotationState(RotateAnimation animation, boolean isSyncOn) {
+    private static void updateSyncButtonRotationState(RotateAnimation animation, boolean isSyncOn, Activity activity) {
+        TextView syncButtonText = activity.findViewById(R.id.syncButtonText);
         if (isSyncOn) {
-            uiHelper.syncButtonText.startAnimation(animation);
+            syncButtonText.startAnimation(animation);
         } else {
-            uiHelper.syncButtonText.clearAnimation();
+            syncButtonText.clearAnimation();
         }
     }
 
-    private static boolean toggleSyncState() {
+    public static boolean toggleSyncState() {
         try{
             boolean state = SharedPreferencesHandler.getSyncSwitchState();
             SharedPreferencesHandler.setSwitchState("syncSwitchState",!state,MainActivity.preferences);
@@ -176,57 +186,60 @@ public class UIHandler {
         return !previousState;
     }
 
-    private static void updateSyncAndWifiButtonBackground(View button, Boolean state) {
+    private static void updateSyncAndWifiButtonBackground(View button, Boolean state, Activity activity) {
         try{
+            TextView syncButtonText = activity.findViewById(R.id.syncButtonText);
+            TextView wifiButtonText = activity.findViewById(R.id.wifiButtonText);
             TextView textView;
             if (button.getId() == R.id.syncButton){
-                textView = uiHelper.syncButtonText;
+                textView = syncButtonText;
             }else{
-                textView = uiHelper.wifiButtonText;
+                textView = wifiButtonText;
             }
             int backgroundResource;
             int textColor;
             if (state){
                 backgroundResource = R.drawable.circular_button_on;
-                textColor = uiHelper.buttonTextColor;
+                textColor = buttonTextColor;
             }else{
                 backgroundResource = R.drawable.circular_button_off;
-                textColor = uiHelper.buttonTransparentTextColor;
+                textColor = buttonTransparentTextColor;
             }
             textView.setTextColor(textColor);
             button.setBackgroundResource(backgroundResource);
         }catch (Exception e){}
     }
 
-    public static void initializeDrawerLayout(){
-        System.out.println(MainActivity.activity);
-        setupDrawerToggle();
-        setMenuItems();
-        setupInfoButton();
+    public static void initializeDrawerLayout(Activity activity){
+        setupDrawerToggle(activity);
+        setMenuItems(activity);
+        setupInfoButton(activity);
     }
 
-    private static void setupDrawerToggle(){
+    private static void setupDrawerToggle(Activity activity){
+        DrawerLayout drawerLayout = activity.findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
-                MainActivity.activity, uiHelper.drawerLayout, R.string.navigation_drawer_open,
+                activity, drawerLayout, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close
         );
-        uiHelper.drawerLayout.addDrawerListener(actionBarDrawerToggle);
+        drawerLayout.addDrawerListener(actionBarDrawerToggle);
         actionBarDrawerToggle.syncState();
     }
 
-    private static void setMenuItems() {
+    private static void setMenuItems(Activity activity) {
         try{
-            PackageInfo pInfo = MainActivity.activity.getApplicationContext()
-                    .getPackageManager().getPackageInfo(MainActivity.activity.getApplicationContext()
+            PackageInfo pInfo = activity.getApplicationContext()
+                    .getPackageManager().getPackageInfo(activity.getApplicationContext()
                             .getPackageName(), 0);
-            setMenuItemTitle(R.id.navMenuItem1, "Version: " + pInfo.versionName);
-            setMenuItemTitle(R.id.navMenuItem2, "Device id: " + MainActivity.androidUniqueDeviceIdentifier);
+            setMenuItemTitle(R.id.navMenuItem1, "Version: " + pInfo.versionName, activity);
+            setMenuItemTitle(R.id.navMenuItem2, "Device id: " + MainActivity.androidUniqueDeviceIdentifier, activity);
         }catch (Exception e) {
         }
     }
 
-    private static void setMenuItemTitle(int menuItemId, String text) {
-        MenuItem menuItem = uiHelper.navigationView.getMenu().findItem(menuItemId);
+    private static void setMenuItemTitle(int menuItemId, String text, Activity activity) {
+        NavigationView navigationView = activity.findViewById(R.id.navigationView);
+        MenuItem menuItem = navigationView.getMenu().findItem(menuItemId);
         SpannableString centeredText = new SpannableString(text);
         centeredText.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER),
                 0, text.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
@@ -237,12 +250,14 @@ public class UIHandler {
         menuItem.setTitle(centeredText);
     }
 
-    private static void setupInfoButton() {
-        uiHelper.infoButton.setOnClickListener(view -> {
-            if (uiHelper.drawerLayout.isDrawerOpen(GravityCompat.END)) {
-                uiHelper.drawerLayout.closeDrawer(GravityCompat.END);
+    private static void setupInfoButton(Activity activity) {
+        DrawerLayout drawerLayout = activity.findViewById(R.id.drawer_layout);
+        Button infoButton = activity.findViewById(R.id.infoButton);
+        infoButton.setOnClickListener(view -> {
+            if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
+                drawerLayout.closeDrawer(GravityCompat.END);
             } else {
-                uiHelper.drawerLayout.openDrawer(GravityCompat.END);
+                drawerLayout.openDrawer(GravityCompat.END);
             }
         });
     }
@@ -369,7 +384,7 @@ public class UIHandler {
         });
     }
 
-    public static boolean showMoveDriveFilesDialog(String userEmail){
+    public static boolean showMoveDriveFilesDialog(String userEmail, Activity activity){
         boolean[] wantToUnlink = {false};
         try {
             List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","totalStorage","usedStorage"});
@@ -419,9 +434,10 @@ public class UIHandler {
                             String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
                             Drive service = GoogleDrive.initializeDrive(accessToken);
                             new Thread(() -> GoogleDrive.unlinkSingleAccount(userEmail,service,ableToMoveAllAssets[0])).start();
-                            UIHandler.setupAccountButtons();
+                            UIHandler.setupAccountButtons(activity);
                         }else{
-                            GoogleDrive.moveFromSourceToDestinationAccounts(userEmail,ableToMoveAllAssets[0],(assetsSize - finalTotalFreeSpace));
+                            GoogleDrive.moveFromSourceToDestinationAccounts(userEmail,ableToMoveAllAssets[0],
+                                    (assetsSize - finalTotalFreeSpace), activity);
                         }
 
                         System.out.println("finish moving files");
@@ -448,19 +464,20 @@ public class UIHandler {
 
     //---------------------------------- //---------------------------------- Device Buttons //---------------------------------- //----------------------------------
 
-    public static void setupDeviceButtons(){
+    public static void setupDeviceButtons(Activity activity){
+        LinearLayout deviceButtons = activity.findViewById(R.id.deviceButtons);
         ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromDB();
         for (DeviceHandler device : devices) {
-            if (!buttonExistsInUI(device.getDeviceId())) {
+            if (!buttonExistsInUI(device.getDeviceId(), activity)) {
                 System.out.println("creating button for device " + device.getDeviceName());
-                View newDeviceButtonView = createNewDeviceButtonView(MainActivity.activity, device);
-                uiHelper.deviceButtons.addView(newDeviceButtonView);
+                View newDeviceButtonView = createNewDeviceButtonView(activity, device);
+                deviceButtons.addView(newDeviceButtonView);
             }
         }
     }
 
-    private static boolean buttonExistsInUI(String deviceId){
-        LinearLayout deviceButtons = uiHelper.deviceButtons;
+    private static boolean buttonExistsInUI(String deviceId, Activity activity){
+        LinearLayout deviceButtons = activity.findViewById(R.id.deviceButtons);
         int deviceButtonsCount = deviceButtons.getChildCount();
         for(int i=0 ; i < deviceButtonsCount ; i++){
             LinearLayout deviceButtonView = (LinearLayout) deviceButtons.getChildAt(i);
@@ -513,24 +530,28 @@ public class UIHandler {
         Button newDeviceButton = new Button(context);
         newDeviceButton.setText(device.getDeviceName());
         newDeviceButton.setContentDescription(device.getDeviceId());
-        addEffectsToDeviceButton(newDeviceButton);
+        addEffectsToDeviceButton(newDeviceButton, context);
         setListenerToDeviceButtons(newDeviceButton, device);
         return newDeviceButton;
     }
 
-    private static void addEffectsToDeviceButton(Button androidDeviceButton){
-//        AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
+    private static void addEffectsToDeviceButton(Button androidDeviceButton, Context context){
+        int deviceBackgroundResource = R.drawable.gradient_color_bg;
+        Drawable deviceDrawable = context.getResources()
+                .getDrawable(R.drawable.android_device_icon);
+        Drawable threeDotMenuDrawable = context.getApplicationContext().getResources()
+                .getDrawable(R.drawable.three_dot_menu);
+        //        AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
 //        fadeIn.setDuration(2000);
 //        androidDeviceButton.startAnimation(fadeIn);
-        UIHelper uiHelper = new UIHelper();
-        androidDeviceButton.setBackgroundResource(uiHelper.deviceBackgroundResource);
-        Drawable deviceButtonDrawable = uiHelper.deviceDrawable;
-        Drawable deviceButtonMenu = uiHelper.threeDotMenuDrawable;
+        androidDeviceButton.setBackgroundResource(deviceBackgroundResource);
+        Drawable deviceButtonDrawable = deviceDrawable;
+        Drawable deviceButtonMenu = threeDotMenuDrawable;
         
         androidDeviceButton.setCompoundDrawablesWithIntrinsicBounds
                 (deviceButtonDrawable, null, null, null);
 
-        androidDeviceButton.setTextColor(uiHelper.buttonTextColor);
+        androidDeviceButton.setTextColor(buttonTextColor);
         androidDeviceButton.setTextSize(12);
 
         androidDeviceButton.setPadding(40,0,150,0);
@@ -798,9 +819,9 @@ public class UIHandler {
 
     //---------------------------------- //---------------------------------- Account Button //---------------------------------- //----------------------------------
 
-    public static void setupAccountButtons(){
-        MainActivity.activity.runOnUiThread(() -> {
-            LinearLayout backupAccountsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
+    public static void setupAccountButtons(Activity activity){
+        activity.runOnUiThread(() -> {
+            LinearLayout backupAccountsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
             backupAccountsLinearLayout.removeAllViews();
             String[] columnsList = {"userEmail", "type", "refreshToken"};
             List<String[]> accountRows = DBHelper.getAccounts(columnsList);
@@ -848,7 +869,8 @@ public class UIHandler {
     }
 
     public static void addEffectsToAccountButton(Button newLoginButton, Activity activity){
-        Drawable loginButtonLeftDrawable = UIHelper.driveImage;
+        Drawable loginButtonLeftDrawable = activity.getApplicationContext().getResources()
+                .getDrawable(R.drawable.googledriveimage);;
         newLoginButton.setCompoundDrawablesWithIntrinsicBounds
                 (loginButtonLeftDrawable, null, null, null);
         newLoginButton.setBackgroundResource(R.drawable.gradient_purple);
@@ -857,8 +879,7 @@ public class UIHandler {
         newLoginButton.setVisibility(View.VISIBLE);
         newLoginButton.setPadding(40,0,150,0);
         newLoginButton.setTextSize(10);
-        UIHelper uiHelper = new UIHelper();
-        newLoginButton.setTextColor(uiHelper.buttonTextColor);
+        newLoginButton.setTextColor(buttonTextColor);
         newLoginButton.setBackgroundResource(R.drawable.gradient_purple);
         newLoginButton.setId(View.generateViewId());
 
@@ -903,7 +924,7 @@ public class UIHandler {
                                     MainActivity.isAnyProccessOn = true;
                                     button.setText("signing out...");
                                     button.setClickable(false);
-                                    GoogleCloud.startUnlinkThreads(buttonText);
+                                    GoogleCloud.startUnlinkThreads(buttonText, activity);
                                     button.setClickable(true);
                                     MainActivity.isAnyProccessOn = false;
                                 }

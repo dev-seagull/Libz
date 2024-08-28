@@ -225,14 +225,15 @@ public class Android {
         }
     }
 
-    public static boolean deleteAndroidFile(String androidFilePath, String assetId, String fileHash, String fileSize, String fileName){
+    public static boolean deleteAndroidFile(String androidFilePath, String assetId, String fileHash, String fileSize,
+                                            String fileName, Activity activity){
         boolean isDeleted = false;
         try{
             File androidFile = new File(androidFilePath);
             androidFile.delete();
             if(!androidFile.exists()) {
                 isDeleted = DBHelper.deleteFromAndroidTable(assetId, fileSize, androidFilePath, fileName, fileHash);
-                MediaScannerConnection.scanFile(MainActivity.activity.getApplicationContext(),
+                MediaScannerConnection.scanFile(activity.getApplicationContext(),
                         new String[]{androidFilePath}, null, (path, uri) -> {});
             }
         }catch (Exception e){

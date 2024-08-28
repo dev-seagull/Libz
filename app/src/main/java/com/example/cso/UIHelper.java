@@ -23,8 +23,6 @@ public class UIHelper {
     NavigationView navigationView = MainActivity.activity.findViewById(R.id.navigationView);
     AppCompatButton infoButton = MainActivity.activity.findViewById(R.id.infoButton);
     DrawerLayout drawerLayout = MainActivity.activity.findViewById(R.id.drawer_layout);
-    public TextView syncButtonText = MainActivity.activity.findViewById(R.id.syncButtonText);
-    TextView wifiButtonText = MainActivity.activity.findViewById(R.id.wifiButtonText);
     ImageButton wifiButton = MainActivity.activity.findViewById(R.id.wifiButton);
     LinearLayout backupAccountsButtonsLayout= MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
     TextView syncMessageTextView = MainActivity.activity.findViewById(R.id.syncMessageTextView);
@@ -32,8 +30,6 @@ public class UIHelper {
     ColorStateList backupAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#FFC300"));
     static ColorStateList primaryAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#0D47A1"));
 //    public static ImageView waitingSyncGif = MainActivity.activity.findViewById(R.id.waitingSyncGif);
-    public int buttonTextColor = Color.WHITE;
-    public int buttonTransparentTextColor = Color.argb(128, 255, 255, 255);
     @SuppressLint("UseCompatLoadingForDrawables")
     public static Drawable driveImage = MainActivity.activity.getApplicationContext().getResources()
             .getDrawable(R.drawable.googledriveimage);
