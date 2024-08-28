@@ -20,8 +20,7 @@ import java.util.List;
 public class StorageSync {
 
     public static String getAndroidId(Context context){
-        String androidUniqueDeviceIdentifier = Settings.Secure.getString(context.getContentResolver(),Settings.Secure.ANDROID_ID);
-        return androidUniqueDeviceIdentifier;
+        return Settings.Secure.getString(context.getContentResolver(),Settings.Secure.ANDROID_ID);
     }
 
     public static JsonObject createStorageJson(Context context){
@@ -36,6 +35,7 @@ public class StorageSync {
         jsonObject.addProperty("freeSpace", freeSpace);
         jsonObject.addProperty("mediaStorage", mediaStorage);
         jsonObject.addProperty("usedSpaceExcludingMedia", usedSpaceExcludingMedia);
+        jsonObject.addProperty("updatedAt", System.currentTimeMillis());
         return jsonObject;
     }
 
@@ -177,6 +177,5 @@ public class StorageSync {
         }
         return null;
     }
-
 
 }

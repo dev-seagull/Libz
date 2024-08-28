@@ -159,6 +159,7 @@
         }catch (Exception e){
             Log.d("error","Permission error: " + e.getLocalizedMessage());
         }
+        StorageSync.uploadStorageJsonFileToAccounts(this);
         MyAlarmManager.setAlarmForStorageSync(getApplicationContext());
         Log.d("state","end of onStart");
     }
