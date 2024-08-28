@@ -58,7 +58,6 @@ public class GoogleDriveFolders {
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
     }
 
-
     private static void initializeSubFolder(Drive service, String parentFolderId, String folderName, String userEmail){
         Thread initializeSubFoldersThread = new Thread( () -> {
             String folderId = getSubFolderIdFromDrive(service,folderName,parentFolderId);

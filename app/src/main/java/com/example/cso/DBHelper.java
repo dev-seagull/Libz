@@ -38,7 +38,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public static int DATABASE_VERSION = 12;
     public static SQLiteDatabase dbReadable;
     public static SQLiteDatabase dbWritable;
-    private static String ENCRYPTION_KEY = MainActivity.activity.getResources().getString(R.string.ENCRYPTION_KEY);
+
 //    Support support = new Support();
 
 
@@ -53,6 +53,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context) {
         super(context, "StashDatabase", null, DATABASE_VERSION);
+        String ENCRYPTION_KEY = context.getResources().getString(R.string.ENCRYPTION_KEY);
         SQLiteDatabase.loadLibs(context);
         dbReadable = getReadableDatabase(ENCRYPTION_KEY);
         dbWritable = getReadableDatabase(ENCRYPTION_KEY);
@@ -180,43 +181,43 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public void copyDataFromOldToNew(DBHelper newDBHelper){
-        String[] tableNames = {"ACCOUNTS", "DEVICE", "ASSET", "BACKUPDB", "DRIVE", "ANDROID", "PHOTOS", "ERRORS", "TRANSACTIONS"};
-        SQLiteDatabase oldDatabase = getReadableDatabase(ENCRYPTION_KEY);
-        for (String tableName : tableNames) {
-            String selectQuery = "SELECT * FROM " + tableName;
-            Cursor cursor = oldDatabase.rawQuery(selectQuery, null);
-
-            newDBHelper.getWritableDatabase(ENCRYPTION_KEY).beginTransaction();
-            try {
-                while (cursor.moveToNext()) {
-                    ContentValues values = new ContentValues();
-                    for (int i = 0; i < cursor.getColumnCount(); i++) {
-                        String columnName = cursor.getColumnName(i);
-                        switch (cursor.getType(i)) {
-                            case Cursor.FIELD_TYPE_INTEGER:
-                                values.put(columnName, cursor.getInt(i));
-                                break;
-                            case Cursor.FIELD_TYPE_FLOAT:
-                                values.put(columnName, cursor.getFloat(i));
-                                break;
-                            case Cursor.FIELD_TYPE_STRING:
-                                values.put(columnName, cursor.getString(i));
-                                break;
-                            // Handle other data types if necessary
-                        }
-                    }
-                    newDBHelper.getWritableDatabase(ENCRYPTION_KEY).insert(tableName, null, values);
-                }
-                newDBHelper.getWritableDatabase(ENCRYPTION_KEY).setTransactionSuccessful();
-            } catch (Exception e) {
-                LogHandler.saveLog( "Error copying data from " + tableName + ": " + e.getMessage(), true);
-            } finally {
-                newDBHelper.getWritableDatabase(ENCRYPTION_KEY).endTransaction();
-                cursor.close();
-            }
-        }
-    }
+//    public void copyDataFromOldToNew(DBHelper newDBHelper){
+//        String[] tableNames = {"ACCOUNTS", "DEVICE", "ASSET", "BACKUPDB", "DRIVE", "ANDROID", "PHOTOS", "ERRORS", "TRANSACTIONS"};
+//        SQLiteDatabase oldDatabase = getReadableDatabase(ENCRYPTION_KEY);
+//        for (String tableName : tableNames) {
+//            String selectQuery = "SELECT * FROM " + tableName;
+//            Cursor cursor = oldDatabase.rawQuery(selectQuery, null);
+//
+//            newDBHelper.getWritableDatabase(ENCRYPTION_KEY).beginTransaction();
+//            try {
+//                while (cursor.moveToNext()) {
+//                    ContentValues values = new ContentValues();
+//                    for (int i = 0; i < cursor.getColumnCount(); i++) {
+//                        String columnName = cursor.getColumnName(i);
+//                        switch (cursor.getType(i)) {
+//                            case Cursor.FIELD_TYPE_INTEGER:
+//                                values.put(columnName, cursor.getInt(i));
+//                                break;
+//                            case Cursor.FIELD_TYPE_FLOAT:
+//                                values.put(columnName, cursor.getFloat(i));
+//                                break;
+//                            case Cursor.FIELD_TYPE_STRING:
+//                                values.put(columnName, cursor.getString(i));
+//                                break;
+//                            // Handle other data types if necessary
+//                        }
+//                    }
+//                    newDBHelper.getWritableDatabase(ENCRYPTION_KEY).insert(tableName, null, values);
+//                }
+//                newDBHelper.getWritableDatabase(ENCRYPTION_KEY).setTransactionSuccessful();
+//            } catch (Exception e) {
+//                LogHandler.saveLog( "Error copying data from " + tableName + ": " + e.getMessage(), true);
+//            } finally {
+//                newDBHelper.getWritableDatabase(ENCRYPTION_KEY).endTransaction();
+//                cursor.close();
+//            }
+//        }
+//    }
 
     public static void removeColumn(String column, String table) {
         try{
@@ -310,56 +311,56 @@ public class DBHelper extends SQLiteOpenHelper {
         return lastInsertedId;
     }
 
-    public void deleteRedundantPhotos(ArrayList<String> fileIds, String userEmail){
-        String sqlQuery = "SELECT * FROM PHOTOS where userEmail = ?";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
-        if(cursor.moveToFirst()){
-            do{
-                int fileIdColumnIndex = cursor.getColumnIndex("fileId");
-                if(fileIdColumnIndex >= 0) {
-                    String fileId = cursor.getString(fileIdColumnIndex);
-                    if (!fileIds.contains(fileId)) {
-                        dbWritable.beginTransaction();
-                        try {
-                            sqlQuery = "DELETE FROM PHOTOS WHERE fileId = ?";
-                            dbWritable.execSQL(sqlQuery, new Object[]{fileId});
-                            dbWritable.setTransactionSuccessful();
-                        } catch (Exception e) {
-                            LogHandler
-                                    .saveLog("Failed to delete the database in" +
-                                            " deleteRedundantPhotos method. " + e.getLocalizedMessage());
-                        } finally {
-                            dbWritable.endTransaction();
-                        }
-
-                        int assetIdColumnIndex = cursor.getColumnIndex("assetId");
-                        boolean existsInDatabase = false;
-                        String assetId = "";
-                        if (assetIdColumnIndex >= 0) {
-                            dbReadable = getReadableDatabase(ENCRYPTION_KEY);
-                            assetId = cursor.getString(assetIdColumnIndex);
-                            existsInDatabase = assetExistsInDatabase(assetId);
-                        }
-
-                        if (!existsInDatabase) {
-                            dbWritable.beginTransaction();
-                            try {
-                                sqlQuery = "DELETE FROM ASSET WHERE id = ? ";
-                                dbWritable.execSQL(sqlQuery, new Object[]{assetId});
-                                dbWritable.setTransactionSuccessful();
-                            } catch (Exception e) {
-                                LogHandler.saveLog("Failed to delete the database in" +
-                                        " deleteRedundantPhotos method. " + e.getLocalizedMessage());
-                            } finally {
-                                dbWritable.endTransaction();
-                            }
-                        }
-                    }
-                }
-            }while (cursor.moveToNext());
-        }
-        cursor.close();
-    }
+//    public void deleteRedundantPhotos(ArrayList<String> fileIds, String userEmail){
+//        String sqlQuery = "SELECT * FROM PHOTOS where userEmail = ?";
+//        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
+//        if(cursor.moveToFirst()){
+//            do{
+//                int fileIdColumnIndex = cursor.getColumnIndex("fileId");
+//                if(fileIdColumnIndex >= 0) {
+//                    String fileId = cursor.getString(fileIdColumnIndex);
+//                    if (!fileIds.contains(fileId)) {
+//                        dbWritable.beginTransaction();
+//                        try {
+//                            sqlQuery = "DELETE FROM PHOTOS WHERE fileId = ?";
+//                            dbWritable.execSQL(sqlQuery, new Object[]{fileId});
+//                            dbWritable.setTransactionSuccessful();
+//                        } catch (Exception e) {
+//                            LogHandler
+//                                    .saveLog("Failed to delete the database in" +
+//                                            " deleteRedundantPhotos method. " + e.getLocalizedMessage());
+//                        } finally {
+//                            dbWritable.endTransaction();
+//                        }
+//
+//                        int assetIdColumnIndex = cursor.getColumnIndex("assetId");
+//                        boolean existsInDatabase = false;
+//                        String assetId = "";
+//                        if (assetIdColumnIndex >= 0) {
+//                            dbReadable = getReadableDatabase(ENCRYPTION_KEY);
+//                            assetId = cursor.getString(assetIdColumnIndex);
+//                            existsInDatabase = assetExistsInDatabase(assetId);
+//                        }
+//
+//                        if (!existsInDatabase) {
+//                            dbWritable.beginTransaction();
+//                            try {
+//                                sqlQuery = "DELETE FROM ASSET WHERE id = ? ";
+//                                dbWritable.execSQL(sqlQuery, new Object[]{assetId});
+//                                dbWritable.setTransactionSuccessful();
+//                            } catch (Exception e) {
+//                                LogHandler.saveLog("Failed to delete the database in" +
+//                                        " deleteRedundantPhotos method. " + e.getLocalizedMessage());
+//                            } finally {
+//                                dbWritable.endTransaction();
+//                            }
+//                        }
+//                    }
+//                }
+//            }while (cursor.moveToNext());
+//        }
+//        cursor.close();
+//    }
 
     private boolean assetExistsInDatabase(String assetId){
         boolean existsInDatabase = false;
@@ -470,7 +471,7 @@ public class DBHelper extends SQLiteOpenHelper {
         try{
             String sqlQuery = "INSERT INTO TRANSACTIONS(source, fileName, destination, assetId, operation, hash, date)" +
                     " VALUES (?,?,?,?,?,?,?);";
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
             String timestamp = dateFormat.format(new Date());
             dbWritable.execSQL(sqlQuery, new Object[]{source,fileName, destination, assetId, operation, fileHash, timestamp});
             dbWritable.setTransactionSuccessful();
@@ -483,7 +484,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public void insertIntoAccounts(String userEmail,String type,String refreshToken ,String accessToken,
                                    Double totalStorage , Double usedStorage , Double usedInDriveStorage ,
-                                   Double UsedInGmailAndPhotosStorage) {
+                                   Double UsedInGmailAndPhotosStorage,String parentFolderId,
+                                   String profileFolderId, String assetsFolderId, String databaseFolderId) {
         dbWritable.beginTransaction();
         try{
             String sqlQuery = "INSERT INTO ACCOUNTS (" +
@@ -494,9 +496,14 @@ public class DBHelper extends SQLiteOpenHelper {
                     "totalStorage," +
                     "usedStorage," +
                     "usedInDriveStorage,"+
-                    "UsedInGmailAndPhotosStorage) VALUES (?,?,?,?,?,?,?,?)";
+                    "UsedInGmailAndPhotosStorage," +
+                    "parentFolderId," +
+                    "profileFolderId," +
+                    "assetsFolderId," +
+                    "databaseFolderId) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
             Object[] values = new Object[]{userEmail, type,refreshToken ,accessToken,
-                    totalStorage ,usedStorage ,usedInDriveStorage ,UsedInGmailAndPhotosStorage};
+                    totalStorage ,usedStorage ,usedInDriveStorage ,UsedInGmailAndPhotosStorage,
+                    parentFolderId, profileFolderId, assetsFolderId, databaseFolderId};
             dbWritable.execSQL(sqlQuery, values);
             dbWritable.setTransactionSuccessful();
         }catch (Exception e){
@@ -788,7 +795,6 @@ public class DBHelper extends SQLiteOpenHelper {
 
         boolean existsInDatabase = assetExistsInDatabase(assetId);
         if (existsInDatabase == false) {
-            dbWritable = getWritableDatabase(ENCRYPTION_KEY);
             dbWritable.beginTransaction();
             try {
                 sqlQuery = "DELETE FROM ASSET WHERE id = ? ";
@@ -1319,11 +1325,10 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
     public String getPhotosAndVideosStorage(){
-        createIndex();
+//        createIndex();
         double sum = 0.0;
-        SQLiteDatabase db = getReadableDatabase(ENCRYPTION_KEY);
         String query = "SELECT SUM(fileSize) FROM ANDROID";
-        Cursor cursor = db.rawQuery(query, null);
+        Cursor cursor = dbReadable.rawQuery(query, null);
 
         try {
             if (cursor.moveToFirst()) {
@@ -1339,32 +1344,33 @@ public class DBHelper extends SQLiteOpenHelper {
         return String.format("%.1f", sum);
     }
 
-    public void createIndex() {
-        SQLiteDatabase db = getWritableDatabase(ENCRYPTION_KEY);
-        try {
-            db.execSQL("CREATE INDEX IF NOT EXISTS fileSize_index ON ANDROID(fileSize)");
-        } catch (Exception e) {
-            LogHandler.saveLog("Failed to create index: " + e.getLocalizedMessage(), true);
-        }
-    }
+//    public void createIndex() {
+//        SQLiteDatabase db = getWritableDatabase(ENCRYPTION_KEY);
+//        try {
+//            db.execSQL("CREATE INDEX IF NOT EXISTS fileSize_index ON ANDROID(fileSize)");
+//        } catch (Exception e) {
+//            LogHandler.saveLog("Failed to create index: " + e.getLocalizedMessage(), true);
+//        }
+//    }
 
 
-    public void exportDecryptedDatabase(String exportPath) {
-        SQLiteDatabase encryptedDatabase = getWritableDatabase(ENCRYPTION_KEY);
-        encryptedDatabase.rawExecSQL(String.format("ATTACH DATABASE '%s' AS plaintext KEY '';", exportPath));
-        encryptedDatabase.rawExecSQL("SELECT sqlcipher_export('plaintext')");
+//    public void exportDecryptedDatabase(String exportPath) {
+//        SQLiteDatabase encryptedDatabase = getWritableDatabase(ENCRYPTION_KEY);
+//        encryptedDatabase.rawExecSQL(String.format("ATTACH DATABASE '%s' AS plaintext KEY '';", exportPath));
+//        encryptedDatabase.rawExecSQL("SELECT sqlcipher_export('plaintext')");
+//
+//        Cursor cursor = encryptedDatabase.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null);
+//        if (cursor != null) {
+//            while (cursor.moveToNext()) {
+//                String tableName = cursor.getString(0);
+//                System.out.println("Table Name: " + tableName);
+//            }
+//            cursor.close();
+//        }
+//
+//        encryptedDatabase.rawExecSQL("DETACH DATABASE plaintext");
+//    }
 
-        Cursor cursor = encryptedDatabase.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null);
-        if (cursor != null) {
-            while (cursor.moveToNext()) {
-                String tableName = cursor.getString(0);
-                System.out.println("Table Name: " + tableName);
-            }
-            cursor.close();
-        }
-
-        encryptedDatabase.rawExecSQL("DETACH DATABASE plaintext");
-    }
 
     public static void deleteTableContent(String tableName){
         try{

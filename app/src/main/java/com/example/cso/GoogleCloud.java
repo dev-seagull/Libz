@@ -1,6 +1,7 @@
     package com.example.cso;
 
     import android.app.Activity;
+    import android.content.Context;
     import android.content.Intent;
     import android.graphics.Color;
     import android.graphics.drawable.Drawable;
@@ -55,6 +56,10 @@
 
         public GoogleCloud(FragmentActivity activity){
             this.activity = activity;
+        }
+
+        public GoogleCloud(){
+
         }
 
         public void signInToGoogleCloud(ActivityResultLauncher<Intent> signInLauncher) {

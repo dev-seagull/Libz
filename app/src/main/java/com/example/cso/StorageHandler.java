@@ -114,7 +114,7 @@ public class StorageHandler {
         double divider = (Math.pow(1024,3));
         double result = storage / divider;
 
-        DecimalFormat decimalFormat = new DecimalFormat("#.###",new DecimalFormatSymbols(Locale.US));
+        DecimalFormat decimalFormat = new DecimalFormat("#.###",new DecimalFormatSymbols(Locale.getDefault()));
         Double formattedResult = Double.parseDouble(decimalFormat.format(result));
 
         return formattedResult;

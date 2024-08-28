@@ -187,7 +187,7 @@ public class BackUp {
         Collections.sort(android_items, new Comparator<String[]>() {
             @Override
             public int compare(String[] item1, String[] item2) {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.US);
+                SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.getDefault());
                 try {
                     Date date1 = dateFormat.parse(item1[6]);
                     Date date2 = dateFormat.parse(item2[6]);

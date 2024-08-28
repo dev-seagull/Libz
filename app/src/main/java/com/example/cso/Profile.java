@@ -265,7 +265,7 @@ public class Profile {
                         .execute();
 
                 Date date = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
-                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss",Locale.US);
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss",Locale.getDefault());
                 String currentDate = formatter.format(date);
                 String fileName = "profileMap_" + currentDate + ".json";
 
@@ -373,7 +373,7 @@ public class Profile {
         final String[] uploadFileId = {""};
         Thread setAndCreateProfileMapContentThread = new Thread( () -> {
             try{
-                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
                 Date date = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
                 String currentDate = formatter.format(date);
                 String fileName = "profileMap_" + currentDate + ".json";
@@ -491,7 +491,7 @@ public class Profile {
 
     public static Date convertFileNameToTimeStamp(String fileName){
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss",Locale.US);
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss",Locale.getDefault());
             String timestamp = fileName.substring(fileName.indexOf('_') + 1, fileName.lastIndexOf('.'));
             return dateFormat.parse(timestamp);
         }catch (Exception e){
@@ -560,14 +560,23 @@ public class Profile {
 
                    Profile.deleteProfileFile(userEmail, accessToken, true);
 
+                   String parentFolderId = GoogleDriveFolders.getParentFolderId(userEmail,true,accessToken);
+                   String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.profileFolderName,accessToken,true);
+                   String assetsFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.assetsFolderName,accessToken,true);
+                   String databaseFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.databaseFolderName,accessToken,true);
+
                    MainActivity.dbHelper.insertIntoAccounts(signInLinkedAccountResult.getUserEmail(),
                            "backup", signInLinkedAccountResult.getTokens().getRefreshToken(),
                            signInLinkedAccountResult.getTokens().getAccessToken(),
                            signInLinkedAccountResult.getStorage().getTotalStorage(),
                            signInLinkedAccountResult.getStorage().getUsedStorage(),
                            signInLinkedAccountResult.getStorage().getUsedInDriveStorage(),
-                           signInLinkedAccountResult.getStorage().getUsedInGmailAndPhotosStorage());
+                           signInLinkedAccountResult.getStorage().getUsedInGmailAndPhotosStorage(),
+                           parentFolderId,profileFolderId,assetsFolderId,databaseFolderId
+                   );
                }
+
+
                Log.d("Threads" ,"handleAccountInsertionThread finished");
            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e) ;}
         });
@@ -652,8 +661,16 @@ public class Profile {
                 for(String[] backedUpExistingAccount: backedUpAccounts){
                     String userEmail = backedUpExistingAccount[0];
                     String accessToken = MainActivity.googleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
-                    Profile.deleteProfileFile(userEmail, accessToken, false);
+                    Profile.deleteProfileFile(userEmail, accessToken, true);
                 }
+
+                String userEmail = signInResult.getUserEmail();
+                String accessToken = signInResult.getTokens().getAccessToken();
+
+                String parentFolderId = GoogleDriveFolders.getParentFolderId(userEmail,true,accessToken);
+                String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.profileFolderName,accessToken,true);
+                String assetsFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.assetsFolderName,accessToken,true);
+                String databaseFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.databaseFolderName,accessToken,true);
 
                 MainActivity.dbHelper.insertIntoAccounts(signInResult.getUserEmail(),
                         "backup",signInResult.getTokens().getRefreshToken(),
@@ -661,7 +678,10 @@ public class Profile {
                         signInResult.getStorage().getTotalStorage(),
                         signInResult.getStorage().getUsedStorage(),
                         signInResult.getStorage().getUsedInDriveStorage(),
-                        signInResult.getStorage().getUsedInGmailAndPhotosStorage());
+                        signInResult.getStorage().getUsedInGmailAndPhotosStorage(),
+                        parentFolderId,profileFolderId,assetsFolderId,databaseFolderId
+                );
+
                 Log.d("Threads" ,"handleLoginToSingleAccountSuccessThread finished");
             }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
         });

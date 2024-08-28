@@ -15,9 +15,13 @@ import com.google.gson.JsonParser;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 
 public class StorageSync {
+
+    public static SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
 
     public static String getAndroidId(Context context){
         return Settings.Secure.getString(context.getContentResolver(),Settings.Secure.ANDROID_ID);
@@ -35,7 +39,7 @@ public class StorageSync {
         jsonObject.addProperty("freeSpace", freeSpace);
         jsonObject.addProperty("mediaStorage", mediaStorage);
         jsonObject.addProperty("usedSpaceExcludingMedia", usedSpaceExcludingMedia);
-        jsonObject.addProperty("updatedAt", System.currentTimeMillis());
+        jsonObject.addProperty("updatedAt", formatter.format(System.currentTimeMillis()));
         return jsonObject;
     }
 
@@ -45,27 +49,35 @@ public class StorageSync {
             String fileName = "Storage_" + getAndroidId(context) + ".json";
             String folderName = GoogleDriveFolders.profileFolderName;
             String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName, accessToken, true);
+            Log.d("storageSync","profileFolderId: " + profileFolderId);
             String uploadFileId = "";
             try{
                 com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
                 fileMetadata.setName(fileName);
-                fileMetadata.setParents(java.util.Collections.singletonList(profileFolderId));
 
                 String contentString = storageJson.toString();
+                Log.d("storageSync","storageJson Content : " + contentString);
                 ByteArrayContent mediaContent = ByteArrayContent.fromString("application/json", contentString);
 
                 uploadFileId = searchForExistingFile(service,fileName,profileFolderId);
+                Log.d("storageSync","searching for older file result : " + uploadFileId);
                 if (uploadFileId == null || uploadFileId.isEmpty()) {
+                    Log.d("storageSync","upload file start");
+                    fileMetadata.setParents(java.util.Collections.singletonList(profileFolderId));
                     com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
                             .setFields("id")
                             .execute();
                     uploadFileId = uploadedFile.getId();
+                    Log.d("storageSync","upload file finished : " + uploadFileId);
                 }else{
+                    Log.d("storageSync","updating file start");
                     service.files().update(uploadFileId, fileMetadata, mediaContent).execute();
+                    Log.d("storageSync","updating file finished");
                 }
 
                 Log.d("storage json" , "Upload file is : "+ uploadFileId);
             }catch (Exception e){
+                Log.d("storageSync","failed to upload file : " + e.getLocalizedMessage());
                 FirebaseCrashlytics.getInstance().recordException(e);
             }
         });
@@ -112,8 +124,10 @@ public class StorageSync {
             String fileName = "Storage_" + device.getDeviceId() + ".json";
             String folderName = GoogleDriveFolders.profileFolderName;
             String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName, accessToken, true);
+            Log.d("storageSync","downloading -- profileFolderId: " + profileFolderId);
             try {
                 String fileId = searchForExistingFile(service, fileName,profileFolderId);
+                Log.d("storageSync","searching for file result : " + fileId);
                 if (fileId != null) {
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                     try {
@@ -122,6 +136,7 @@ public class StorageSync {
 
                         String jsonString = outputStream.toString();
                         jsonObjects[0] = JsonParser.parseString(jsonString).getAsJsonObject();
+                        Log.d("storage json", "Downloaded storage JSON file: " + jsonString);
                     }catch (Exception e){
                         FirebaseCrashlytics.getInstance().recordException(e);
                     }finally {
@@ -143,18 +158,19 @@ public class StorageSync {
     }
 
     public static void uploadStorageJsonFileToAccounts(Context context) {
+        DBHelper dbHelper = new DBHelper(context);
         String[] columnsName = new String[]{"userEmail", "refreshToken", "type"};
-        DBHelper dbHelper = DBHelper.getInstance(context);
         List<String[]> accounts = DBHelper.getAccounts(columnsName);
         JsonObject storageJson = createStorageJson(context);
+        Log.d("storageSync","created JSON storage for upload : " + storageJson);
 
         for (String[] account : accounts) {
             String userEmail = account[0];
             String refreshToken = account[1];
             String type = account[2];
             if (type.equals("backup")) {
-                GoogleCloud googleCloud = new GoogleCloud( (FragmentActivity) context);
-                String accessToken = googleCloud.updateAccessToken(refreshToken).getAccessToken();
+                String accessToken = new GoogleCloud().updateAccessToken(refreshToken).getAccessToken();
+                Log.d("storageSync","uploading to " + userEmail + "with access token : " + accessToken);
                 uploadStorageJsonFile(context, userEmail, accessToken, storageJson);
             }
         }
@@ -168,8 +184,11 @@ public class StorageSync {
             String refreshToken = account[1];
             String type = account[2];
             if (type.equals("backup")) {
-                String accessToken = MainActivity.googleCloud.updateAccessToken(refreshToken).getAccessToken();
+                Log.d("storageSync","downloading from " + userEmail);
+                String accessToken = new GoogleCloud().updateAccessToken(refreshToken).getAccessToken();
+                Log.d("storageSync","downloading from " + userEmail + "with access token : " + accessToken);
                 JsonObject result = downloadStorageJsonFile(userEmail,accessToken,device);
+                Log.d("storageSync","download result of account " + userEmail + " : " +  result);
                 if (result!= null) {
                     return result;
                 }
