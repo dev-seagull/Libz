@@ -1,10 +1,8 @@
 package com.example.cso;
 
 
-import android.app.Activity;
-import android.view.View;
+import android.util.Log;
 
-import com.bumptech.glide.Glide;
 import com.google.api.client.googleapis.media.MediaHttpUploader;
 import com.google.api.client.googleapis.media.MediaHttpUploaderProgressListener;
 import com.google.api.client.http.FileContent;
@@ -24,78 +22,65 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class BackUp {
     public boolean backupAndroidToDrive(Long fileId, String fileName, String filePath,
                                         String fileHash, String mimeType, String assetId,
                                         String driveBackupAccessToken, String driveEmailAccount, String syncAssetsFolderId){
-        ExecutorService executor = Executors.newSingleThreadExecutor();
         boolean[] isUploadValid = {false};
-        Callable<Boolean> uploadTask = () -> {
+        Thread backupAndroidToDriveThread = new Thread( () -> {
             try {
-                isUploadValid[0] = false;
+                Log.d("Threads","backupAndroidToDriveThread started");
                 File androidFile = new File(filePath);
                 Double androidFileSize = androidFile.length() / (Math.pow(10, 6));
-                System.out.println("file size for android file is: " + androidFileSize);
+                Log.d("service","file size for android file is: " + androidFileSize);
 
                 Drive service = GoogleDrive.initializeDrive(driveBackupAccessToken);
                 com.google.api.services.drive.model.File fileMetadata =
                         new com.google.api.services.drive.model.File();
                 fileMetadata.setName(fileName);
+                fileMetadata.setParents(Collections.singletonList(syncAssetsFolderId));
+
                 String mimeTypeToUpload = Media.getMimeType(new File(filePath));
                 FileContent mediaContent = handleMediaFileContent(mimeTypeToUpload,androidFile, fileName);
-                fileMetadata.setParents(Collections.singletonList(syncAssetsFolderId));
                 if (mediaContent == null) {
                     LogHandler.saveLog("media content is null in syncAndroidToDrive", true);
                 }
 
-//                            if (!isVideo(memeType)) {
-                LogHandler.saveLog("Starting to upload file : " + fileName, false );
-                com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
-                        .setFields("id")
-                        .execute();
-                String uploadFileId = uploadedFile.getId();
-                while (uploadedFile == null){
-                    wait();
-                }
-                if (uploadedFile == null | uploadFileId.isEmpty()) {
-                    LogHandler.saveLog("Failed to upload " + fileName + " from Android to backup "+
-                            driveEmailAccount, true);
-                }else {
-                    if(isUploadHashEqual(fileHash,uploadFileId,driveBackupAccessToken)){
-                        isUploadValid[0] = true;
-//                        DBHelper.insertIntoDriveTable(Long.valueOf(assetId),String.valueOf(fileId)
-//                                ,fileName,fileHash,driveEmailAccount);
-                        DBHelper.insertTransactionsData(String.valueOf(fileId), fileName,
-                                driveEmailAccount, assetId, "sync", fileHash);
-                        LogHandler.saveLog("Uploading " + fileName +
-                                " is finished with upload file id of : " + uploadFileId, false);
-                        System.out.println("Uploading " + fileName +
-                                " is finished with upload file id of : " + uploadFileId);
+//                if(!Media.isVideoBackUp(mimeTypeToUpload)) {
+                    Log.d("service", "Uploading file " + fileName + " started");
+                    com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
+                            .setFields("id")
+                            .execute();
+                    String uploadFileId = uploadedFile.getId();
+                    //                while (uploadedFile == null){
+                    //                    wait();
+                    //                }
+                    if (uploadedFile == null | uploadFileId.isEmpty()) {
+                        Log.d("service", "Failed to upload " + fileName + " from Android to backup " +
+                                driveEmailAccount);
+                    } else {
+                        if (isUploadHashEqual(fileHash, uploadFileId, driveBackupAccessToken)) {
+                            Log.d("service", "Uploading file " + fileName + " finished : " + uploadFileId);
+                            isUploadValid[0] = true;
+                            DBHelper.insertTransactionsData(String.valueOf(fileId), fileName,
+                                    driveEmailAccount, assetId, "sync", fileHash);
+                        }
                     }
-                }
-//                            }
-//                            }
-//                                  test[0]--;
+//                }
 
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to back up android file to drive: "  + e.getLocalizedMessage(), true);
-            }
-            return isUploadValid[0];
-        };
-        Boolean isUploadValidFuture = false;
-        Future<Boolean> future = executor.submit(uploadTask);
+            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        });
+
+        backupAndroidToDriveThread.start();
         try{
-            isUploadValidFuture = future.get();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to back up android file to drive (future) : "  + e.getLocalizedMessage(), true);
-        }
-        LogHandler.saveLog("Upload validation : " + isUploadValidFuture, false);
-        return isUploadValidFuture;
+            backupAndroidToDriveThread.join();
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+
+        Log.d("Threads","backupAndroidToDriveThread finished");
+        return isUploadValid[0];
     }
 
     private static class FileUploadProgressListener implements MediaHttpUploaderProgressListener {
@@ -129,7 +114,7 @@ public class BackUp {
         try {
             if (androidFile.exists()) {
                 String lowerMimeType = mimeTypeToUpload.toLowerCase();
-                if (Media.isImage(lowerMimeType)) {
+                if (Media.isImageBackUp(lowerMimeType)) {
                     if (lowerMimeType.equals("jpg") || lowerMimeType.equals("jpeg")) {
                         mediaContent = new FileContent("image/jpeg", androidFile);
                     } else if (lowerMimeType.equals("png")) {
@@ -144,7 +129,7 @@ public class BackUp {
                         mediaContent = new FileContent("image/" + lowerMimeType, androidFile);
                     }
 
-                }  else if (Media.isVideo(lowerMimeType)) {
+                }  else if (Media.isVideoBackUp(lowerMimeType)) {
                     if (lowerMimeType.equals("mp4")) {
                         mediaContent = new FileContent("video/mp4", androidFile);
                     } else if (lowerMimeType.equals("mkv")) {

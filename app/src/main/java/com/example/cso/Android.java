@@ -230,19 +230,27 @@ public class Android {
 
     public static boolean deleteAndroidFile(String androidFilePath, String assetId, String fileHash, String fileSize,
                                             String fileName, Activity activity){
-        boolean isDeleted = false;
-        try{
-            File androidFile = new File(androidFilePath);
-            androidFile.delete();
-            if(!androidFile.exists()) {
-                isDeleted = DBHelper.deleteFromAndroidTable(assetId, fileSize, androidFilePath, fileName, fileHash);
-                MediaScannerConnection.scanFile(activity.getApplicationContext(),
-                        new String[]{androidFilePath}, null, (path, uri) -> {});
+        final boolean[] isDeleted = {false};
+        Thread deleteAndroidFileThread = new Thread(() -> {
+            try{
+                File androidFile = new File(androidFilePath);
+                androidFile.delete();
+                if(!androidFile.exists()) {
+                    isDeleted[0] = DBHelper.deleteFromAndroidTable(assetId, fileSize, androidFilePath, fileName, fileHash);
+                    MediaScannerConnection.scanFile(activity.getApplicationContext(),
+                            new String[]{androidFilePath}, null, (path, uri) -> {});
+                }
+            }catch (Exception e){
+                LogHandler.saveLog("Failed to delete android file : " + e.getLocalizedMessage(), true);
             }
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to delete android file : " + e.getLocalizedMessage(), true);
-        }
-        return isDeleted;
+        });
+
+        deleteAndroidFileThread.start();
+        try{
+            deleteAndroidFileThread.join();
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e);}
+
+        return isDeleted[0];
     }
 
 

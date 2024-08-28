@@ -13,6 +13,20 @@ public class Media {
         return imageExtensions.contains(extension);
     }
 
+    public static boolean isImageBackUp(String mimeType) {
+        ArrayList<String> imageExtensions = new ArrayList<>(
+                Arrays.asList("jpeg", "jpg", "png", "gif", "bmp", "webp")
+        );
+        return imageExtensions.contains(mimeType);
+    }
+
+    public static boolean isVideoBackUp(String mimeType) {
+        ArrayList<String> videoExtensions = new ArrayList<>(
+                Arrays.asList("mkv", "mp4", "mov", "avi")
+        );
+        return videoExtensions.contains(mimeType);
+    }
+
     public static boolean isVideo(String mimeType) {
         String extension = getExtensionFromMimeType(mimeType);
         ArrayList<String> videoExtensions = new ArrayList<>(

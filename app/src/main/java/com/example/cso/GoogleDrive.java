@@ -235,8 +235,8 @@ public class GoogleDrive {
     }
 
     public static void deleteRedundantDriveFilesFromAccount(String userEmail) {
-        try {
-            Thread deleteRedundantDrive = new Thread(() -> {
+        Thread deleteRedundantDrive = new Thread(() -> {
+            try{
                 ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail, false, null);
                 ArrayList<String> driveFileIds = new ArrayList<>();
 
@@ -245,17 +245,13 @@ public class GoogleDrive {
                     driveFileIds.add(fileId);
                 }
                 DBHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
-            });
-            deleteRedundantDrive.start();
-            try {
-                deleteRedundantDrive.join();
-            } catch (Exception e) {
-                LogHandler.saveLog("Failed to join delete " +
-                        " redundant drive from accounts: " + e.getLocalizedMessage(), true);
-            }
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to run delete redundant drive files from account : " +e.getLocalizedMessage(), true);
-        }
+            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        });
+
+        deleteRedundantDrive.start();
+        try {
+            deleteRedundantDrive.join();
+        } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
     }
 
     private static void startDeleteRedundantDriveThread(){
@@ -1057,17 +1053,15 @@ public class GoogleDrive {
         }
     }
 
-    public static boolean isBackUpAccountFull(Double totalStorage, Double usedStorage){
+    public static double calculateDriveFreeSpace(String[] accountRow){
         try{
-            Double freeStorage =  totalStorage - usedStorage;
-            if(freeStorage > 50){
-                return false;
-            }else{
-                return true;
-            }
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
-
-        return true;
+            String[] totalStorage = {accountRow[2]};
+            String[] usedStorage = {accountRow[3]};
+            return Double.parseDouble(totalStorage[0]) - Double.parseDouble(usedStorage[0]);
+        }catch (Exception e) {
+            LogHandler.saveLog("Failed to calculate drive free space: " + e.getLocalizedMessage(), true);
+            return 0;
+        }
     }
 }
 
