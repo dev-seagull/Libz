@@ -55,6 +55,7 @@ public class TimerService extends Service {
             Log.d("service", "Service stop request received");
             stopTimer();
             stopService(MainActivity.serviceIntent);
+            stopSelf();
             Log.d("service","Service stopped");
         }
         Log.d("service", "Service onStartCommand Finished");

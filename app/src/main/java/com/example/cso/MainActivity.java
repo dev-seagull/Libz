@@ -38,7 +38,7 @@
         public static Timer UITimer;
         public static Intent serviceIntent;
         public static boolean androidTimerIsRunning = false;
-        private PermissionManager permissionManager = new PermissionManager();;
+        private static PermissionManager permissionManager = new PermissionManager();;
         public static FirebaseAnalytics mFirebaseAnalytics;
         public static String dataBaseName = "StashDatabase";
         public static DBHelper dbHelper;
@@ -48,11 +48,13 @@
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
 
-            activity = this;
+            if(activity == null){
+                activity = this;
+            }
             Log.d("state","start of onCreate");
 
             preferences = getPreferences(Context.MODE_PRIVATE);
-            mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+//            mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
             if(TimerService.timerDbHelper == null){
                 dbHelper = new DBHelper(this);
@@ -185,7 +187,7 @@
             boolean hasCreated = LogHandler.createLogFile();
             Log.d("logFile","Log file is created :"  + hasCreated);
 
-            Upgrade.versionHandler(preferences);
+//            Upgrade.versionHandler(preferences);
 
             setupTimers();
 
