@@ -419,7 +419,7 @@ public class UIHandler {
                             String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
                             Drive service = GoogleDrive.initializeDrive(accessToken);
                             new Thread(() -> GoogleDrive.unlinkSingleAccount(userEmail,service,ableToMoveAllAssets[0])).start();
-                            UIHandler.setupAccountButtons();//unlink
+                            UIHandler.setupAccountButtons();
                         }else{
                             GoogleDrive.moveFromSourceToDestinationAccounts(userEmail,ableToMoveAllAssets[0],(assetsSize - finalTotalFreeSpace));
                         }

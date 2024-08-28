@@ -227,7 +227,7 @@ public class Profile {
         for (JsonElement element : deviceInfoArray) {
             JsonObject deviceInfoObject = element.getAsJsonObject();
             String deviceIdentifier = deviceInfoObject.get("deviceId").getAsString();
-            if (!currentDeviceIdList.contains(deviceIdentifier)) {
+            if (!currentDeviceIdList.contains(deviceIdentifier) && !deviceIdentifier.equals(MainActivity.androidUniqueDeviceIdentifier)) {
                 Log.d("signInToBackUpLauncher","A new device found: " + deviceIdentifier);
                 isLinked = true;
             }
@@ -408,34 +408,33 @@ public class Profile {
     }
 
     private static JsonObject prepareProfileMapContent(String loginStatus, Object attachedFile){
-        JsonObject content = new JsonObject();
-        try {
-            switch (loginStatus) {
-                case "unlink":
-                    content = createProfileMapContentBasedOnDB();
+        final JsonObject[] content = {new JsonObject()};
+        Thread prepareProfileMapContentThread = new Thread( () -> {
+            try {
+                if(loginStatus.equals("unlink")) {
+                    JsonObject initialContent = createProfileMapContentBasedOnDB();
                     String unlinkedEmail = (String) attachedFile;
-                    content = Profile.removeAccountFromJson(content, unlinkedEmail);
-                    break;
+                    content[0] = Profile.removeAccountFromJson(initialContent, unlinkedEmail);
 
-                case "profile":
+                } else if(loginStatus.equals("profile")){
                     JsonObject resultJson = (JsonObject) attachedFile;
-                    content = addDeviceInfoToJson(resultJson);
-                    break;
-
-                case "login":
-                    content = createProfileMapContentBasedOnDB();
-                    resultJson = (JsonObject) attachedFile;
-                    content = addAccountToJson(content, resultJson);
-                    break;
-
-                default:
-                    Log.d("profileMapContent","Invalid login status: " + loginStatus);
-                    break;
+                    content[0] = addDeviceInfoToJson(resultJson);
+                } else if(loginStatus.equals("login")) {
+                    JsonObject initialContent = createProfileMapContentBasedOnDB();
+                    JsonObject resultJson = (JsonObject) attachedFile;
+                    content[0] = addAccountToJson(initialContent, resultJson);
+                }
+            } catch (Exception e) {
+                FirebaseCrashlytics.getInstance().recordException(e);
             }
-        } catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
-        }
-        return content;
+        });
+
+        prepareProfileMapContentThread.start();
+        try{
+            prepareProfileMapContentThread.join();
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+
+        return content[0];
     }
 
      public static JsonObject addDeviceInfoToJson(JsonObject profileJson) {
