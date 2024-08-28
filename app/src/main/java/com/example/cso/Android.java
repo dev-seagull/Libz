@@ -5,6 +5,9 @@ import android.database.Cursor;
 import android.media.MediaScannerConnection;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
+
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -70,7 +73,7 @@ public class Android {
         } catch (Exception e) {
             LogHandler.saveLog("error when downloading user profile : " + e.getLocalizedMessage(), true);
         }
-        MainActivity.androidTimerIsRunning = false;
+        MainActivity.isAndroidTimerRunning = false;
         return result;
     }
 
@@ -244,7 +247,7 @@ public class Android {
 
 
     private static void startDeleteRedundantAndroidThread(){
-        LogHandler.saveLog("Starting deleteRedundantAndroidThread", false);
+        Log.d("Threads","DeleteRedundantAndroidThread started");
         Thread deleteRedundantAndroidThread = new Thread() {
             @Override
             public void run() {
@@ -254,29 +257,24 @@ public class Android {
         deleteRedundantAndroidThread.start();
         try{
             deleteRedundantAndroidThread.join();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to join delete redundant android thread: " + e.getLocalizedMessage(), true );
-        }
-        LogHandler.saveLog("finished deleteRedundantAndroidThread", false);
+        }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+        Log.d("Threads","DeleteRedundantAndroidThread finished");
     }
 
     private static void startUpdateAndroidThread(Activity activity){
-        LogHandler.saveLog("Starting startUpdateAndroidThread", false);
-        Thread updateAndroidThread = new Thread() {
-            @Override
-            public void run() {
-                int galleryItems = Android.getGalleryMediaItems(activity);
-                LogHandler.saveLog("End of getting files from your android " +
-                        "device and found : " + galleryItems + " gallery items",false);
-            }
-        };
+        Log.d("Threads","startUpdateAndroidThread started");
+        Thread updateAndroidThread = new Thread( () -> {
+            int galleryItems = Android.getGalleryMediaItems(activity);
+            LogHandler.saveLog("End of getting files from your android " +
+                    "device and found : " + galleryItems + " gallery items",false);
+        });
         updateAndroidThread.start();
         try{
             updateAndroidThread.join();
         }catch (Exception e){
             LogHandler.saveLog("Failed to join update android thread: " + e.getLocalizedMessage(), true );
         }
-        LogHandler.saveLog("Finished startUpdateAndroidThread", false);
+        Log.d("Threads","startUpdateAndroidThread finished");
 
     }
 

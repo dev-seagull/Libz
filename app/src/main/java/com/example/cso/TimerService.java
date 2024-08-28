@@ -29,9 +29,6 @@ public class TimerService extends Service {
     private static String CHANNEL_NAME = "Syncing Channel";
 
     private Timer timer;
-    private Thread androidThreads;
-    private Thread driveThreads;
-    private Thread syncThreads;
     private boolean isTimerRunning = false;
     private TimerTask timerTask;
     private  Notification notification;
@@ -55,7 +52,7 @@ public class TimerService extends Service {
         if (intent != null && intent.getAction() != null && intent.getAction().equals("STOP_SERVICE")) {
             Log.d("service", "Service stop request received");
             stopTimer();
-//            stopService(MainActivity.serviceIntent);
+
             if(isAppInForeground()){
                 UIHandler.handleSyncButtonClick(MainActivity.activity);
             }else{
@@ -64,83 +61,63 @@ public class TimerService extends Service {
 
             stopForeground(true);
             stopSelf();
+
             Log.d("service","Service stopped");
         }
         Log.d("service", "Service onStartCommand Finished");
+
         return Service.START_STICKY;
     }
 
     private void startTimer() {
-        Log.d("service","Service Timer Started");
+        Log.d("service","Service Timer Started : " +  (timer == null) );
         if(timer == null){
             timer = new Timer();
             timerTask = new TimerTask() {
                 @Override
                 public void run() {
-//                try{
-
-                    if (isTimerRunning || MainActivity.isAnyProccessOn) {
-                        return;
-                    }
-                    isTimerRunning = true;
-
-                    if (Deactivation.isDeactivationFileExists()){
-                        isTimerRunning = false;
-                        stopForeground(true);
-                        stopSelf();
-                        UIHandler.handleDeactivatedUser();
-                        return;
-                    }
-
-                    androidThreads = new Thread(new Runnable( ) {
-                        @Override
-                        public void run() {
-                            try {
-                                Android.startThreads(MainActivity.activity);
-                            } catch (Exception e) {
-                                LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
-                            }
+                    try{
+                        if (isTimerRunning || MainActivity.isAnyProccessOn) {
+                            return;
                         }
-                    });
-                    androidThreads.start();
+                        isTimerRunning = true;
 
-                    driveThreads = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
+                        new Thread( () -> {
                             try {
+                                if (Deactivation.isDeactivationFileExists()) {
+                                    isTimerRunning = false;
+                                    stopForeground(true);
+                                    stopSelf();
+                                    UIHandler.handleDeactivatedUser();
+                                    System.exit(0);
+                                }
+
+                                if(!MainActivity.isAndroidTimerRunning){
+                                    Android.startThreads(MainActivity.activity);
+                                }
+
                                 GoogleDrive.startThreads();
-                            } catch (Exception e) {
-                                LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
-                            }
-                        }
-                    });
-                    driveThreads.start();
 
-                    syncThreads = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
                                 Sync.startSyncThread(getApplicationContext(), MainActivity.activity);
-                            } catch (Exception e) {
-                                LogHandler.saveLog("Error in Sync syncAndroidFiles : " + e.getLocalizedMessage());
-                            } finally {
+
+                            }catch (Exception e) {
+                                FirebaseCrashlytics.getInstance().recordException(e);
+                            } finally{
                                 isTimerRunning = false;
                             }
-                        }
-                    });
-                    syncThreads.start();
 
-//                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
-//                    storageUpdaterThreadTemp.start();
-//                    try{
-//                        storageUpdaterThreadTemp.join();
-//                    }catch (InterruptedException e) {
-//                        LogHandler.saveLog("Failed to join storage update temp : " +
-//                                e.getLocalizedMessage(), true);
-//                    }
-//                }catch (Exception e){
-//                    LogHandler.saveLog("Failed to run timer in service" + e.getLocalizedMessage() , true);
-//                }
+                            //                    storageUpdaterThreadTemp = new Thread(storageUpdaterThreadForService[0]);
+                            //                    storageUpdaterThreadTemp.start();
+                            //                    try{
+                            //                        storageUpdaterThreadTemp.join();
+                            //                    }catch (InterruptedException e) {
+                            //                        LogHandler.saveLog("Failed to join storage update temp : " +
+                            //                                e.getLocalizedMessage(), true);
+                            //                    }
+
+                        }).start();
+
+                    }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
                 }
             };
 
@@ -206,39 +183,21 @@ public class TimerService extends Service {
     private void stopTimer() {
         if (timerTask != null) {
             timerTask.cancel();
+            timerTask = null;
         }
         if (timer != null) {
             timer.cancel();
             timer.purge();
+            timer = null;
         }
-
-        stopThreads();
 
         Log.d("TimerForegroundService", "Timer stopped");
-    }
-
-    private void stopThreads() {
-        if (androidThreads != null) {
-            androidThreads.interrupt();
-            androidThreads = null;
-        }
-
-        if (driveThreads != null) {
-            driveThreads.interrupt();
-            driveThreads = null;
-        }
-
-        if (syncThreads != null) {
-            syncThreads.interrupt();
-            syncThreads = null;
-        }
     }
 
     @Override
     public void onDestroy() {
         Log.d("service", "Service onDestroy Started");
         stopTimer();
-        stopThreads();
         if (!isAppInForeground()) {
             if (MainActivity.dbHelper != null) {
                 MainActivity.dbHelper.close();
@@ -253,36 +212,51 @@ public class TimerService extends Service {
     }
 
     private boolean isAppInForeground() {
-        ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        if (activityManager == null) {
-            return false;
-        }
-
-        List<ActivityManager.RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
-        if (appProcesses == null) {
-            return false;
-        }
-
-        final String packageName = getPackageName();
-        for (ActivityManager.RunningAppProcessInfo appProcess : appProcesses) {
-            if (appProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
-                    && appProcess.processName.equals(packageName)) {
-                return true;
+        try{
+            ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+            if (activityManager == null) {
+                Log.d("service", "ActivityManager is null, cannot determine app foreground status");
+                return false;
             }
-        }
+
+            List<ActivityManager.RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
+            if (appProcesses == null) {
+                Log.d("service", "No running app processes found");
+                return false;
+            }
+
+            final String packageName = getPackageName();
+            for (ActivityManager.RunningAppProcessInfo appProcess : appProcesses) {
+                if (appProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+                        && appProcess.processName.equals(packageName)) {
+                    return true;
+                }
+            }
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
 
         return false;
     }
 
     public static String isMyServiceRunning(Context context, Class<?> serviceClass) {
         ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+
+        if (manager == null) {
+            Log.d("service", "ActivityManager is null, cannot determine if service is running.");
+        }
+
+        List<ActivityManager.RunningServiceInfo> runningServices = manager.getRunningServices(Integer.MAX_VALUE);
+        if (runningServices == null) {
+            Log.d("service", "No running services found.");
+        }
+
+        for (ActivityManager.RunningServiceInfo service : runningServices) {
             if (serviceClass.getName().equals(service.service.getClassName())) {
-                System.out.println("isMyServiceRunning : true");
+                Log.d("service", "Service " + serviceClass.getName() + " is running.");
                 return "on";
             }
         }
-        System.out.println("isMyServiceRunning : false");
+
+        Log.d("service", "Service " + serviceClass.getName() + " is not running.");
         return "off";
     }
 }

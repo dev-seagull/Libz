@@ -37,7 +37,7 @@
         public static Timer androidTimer;
         public static Timer UITimer;
         public static Intent serviceIntent;
-        public static boolean androidTimerIsRunning = false;
+        public static boolean isAndroidTimerRunning = false;
         private static PermissionManager permissionManager = new PermissionManager();;
         public static FirebaseAnalytics mFirebaseAnalytics;
         public static String dataBaseName = "StashDatabase";
@@ -269,10 +269,10 @@
                 MainActivity.androidTimer = new Timer();
                 MainActivity.androidTimer.schedule(new TimerTask() {
                     public void run() {
-                        if (androidTimerIsRunning){
+                        if (isAndroidTimerRunning){
                             return;
                         }
-                        androidTimerIsRunning = true;
+                        isAndroidTimerRunning = true;
                         Log.d("Threads","Android timer started");
                         if(!TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on")){
                             Thread androidUpdateThread = new Thread(() -> { Android.startThreads(activity); } );

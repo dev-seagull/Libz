@@ -244,7 +244,7 @@ public class Sync {
     }
 
     public static void startSyncThread(Context context, Activity activity){
-        LogHandler.saveLog("Starting the sync thread", false);
+        Log.d("Threads","startSyncThread started");
         syncThread =  new Thread(() -> {
             try{
                 Sync.syncAndroidFiles(context, activity);
@@ -258,6 +258,7 @@ public class Sync {
         }catch (Exception e){
             LogHandler.saveLog("Finished to join sync thread: " + e.getLocalizedMessage(), true);
         }
+        Log.d("Threads","startSyncThread started");
     }
 
     public static void stopSync(){
