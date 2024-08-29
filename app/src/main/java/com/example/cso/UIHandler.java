@@ -404,11 +404,11 @@ public class UIHandler {
                 }
             }
 
-            Log.d("Unlink", "size of assets on source " + userEmail + ":" + totalFreeSpace);
-            int assetsSize = GoogleDrive.getAssetsSizeOfDriveAccount(userEmail);
-            Log.d("Unlink", "Free storage of " + userEmail + ":" + assetsSize);
+            Log.d("Unlink", "Free storage of accounts except " + userEmail + " is " + totalFreeSpace);
+            Log.d("Unlink", "other accounts size " + otherAccountsSize);
 
-            System.out.println("other accounts size : " + otherAccountsSize[0]);
+            int assetsSize = GoogleDrive.getAssetsSizeOfDriveAccount(userEmail);
+            Log.d("Unlink", "size of assets on source " + userEmail + ":" + assetsSize);
 
             String[] text = {""};
             boolean[] ableToMoveAllAssets = {false};
@@ -434,13 +434,17 @@ public class UIHandler {
                     builder.setTitle("Unlink Drive Account");
 
                     builder.setPositiveButton("Proceed", (dialog, id) -> {
+                        Log.d("Unlink", "Proceed pressed");
+
                         dialog.dismiss();
-                        if (otherAccountsSize[0] == 0) {
+                        if (otherAccountsSize[0] == 0 || true) {
+                            Log.d("Unlink", "Just unlink from single account ");
                             String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
                             Drive service = GoogleDrive.initializeDrive(accessToken);
+                            Log.d("Unlink", "Drive and access token : " + accessToken + service);
                             new Thread(() -> GoogleDrive.unlinkSingleAccount(userEmail,service,ableToMoveAllAssets[0])).start();
-                            UIHandler.setupAccountButtons(activity);
                         }else{
+                            Log.d("Unlink", "move files and unlink");
                             GoogleDrive.moveFromSourceToDestinationAccounts(userEmail,ableToMoveAllAssets[0],
                                     (assetsSize - finalTotalFreeSpace), activity);
                         }
@@ -449,6 +453,7 @@ public class UIHandler {
                     });
 
                     builder.setNegativeButton("Cancel", (dialog, id) -> {
+                        Log.d("Unlink", "Cancel pressed");
                         dialog.dismiss();
                         UIHandler.setupAccountButtons(activity);
                     });

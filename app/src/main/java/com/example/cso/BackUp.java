@@ -50,7 +50,7 @@ public class BackUp {
                 }
 
 //                if(!Media.isVideoBackUp(mimeTypeToUpload)) {
-                    Log.d("service", "Uploading file " + fileName + " started");
+                    Log.d("service", "Uploading file " + fileName + " to " +driveEmailAccount +" started");
                     com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
                             .setFields("id")
                             .execute();
@@ -63,7 +63,7 @@ public class BackUp {
                                 driveEmailAccount);
                     } else {
                         if (isUploadHashEqual(fileHash, uploadFileId, driveBackupAccessToken)) {
-                            Log.d("service", "Uploading file " + fileName + " finished : " + uploadFileId);
+                            Log.d("service", "Uploading file " + fileName + " to " +driveEmailAccount +" finished : " + uploadFileId);
                             isUploadValid[0] = true;
                             DBHelper.insertTransactionsData(String.valueOf(fileId), fileName,
                                     driveEmailAccount, assetId, "sync", fileHash);

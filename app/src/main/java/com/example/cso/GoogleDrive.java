@@ -67,7 +67,7 @@ public class GoogleDrive {
                     List<File> files = result.getFiles();
                     if (files != null && !result.getFiles().isEmpty()) {
                         for (File file : files) {
-                            if (Media.isVideo(GoogleCloud.getMimeType(file.getName())) |
+                            if (Media.isVideo(GoogleCloud.getMimeType(file.getName())) ||
                                     Media.isImage(GoogleCloud.getMimeType(file.getName()))){
                                 DriveAccountInfo.MediaItem mediaItem = new DriveAccountInfo.MediaItem(file.getName(),
                                         file.getSha256Checksum().toLowerCase(), file.getId());
@@ -441,7 +441,6 @@ public class GoogleDrive {
             if(isBackedUpAndDeleted){
                 unlinkSingleAccount(sourceUserEmail,sourceDriveService,ableToMoveAllAssets);
             }
-            UIHandler.setupAccountButtons(activity);//unlink
         });
 
         moveFromSourceToDestinationAccountsThread.start();
@@ -449,17 +448,21 @@ public class GoogleDrive {
 
     public static void unlinkSingleAccount(String sourceUserEmail, Drive sourceDriveService, boolean ableToMoveAllAssets){
         Thread unlinkSingleAccountThread = new Thread( () -> {
-            String syncAssetsFolderId = GoogleDriveFolders.getParentFolderId(sourceUserEmail,false,null);
-            if(syncAssetsFolderId == null){
+            String parentFolderId = GoogleDriveFolders.getParentFolderId(sourceUserEmail,false,null);
+            if(parentFolderId == null){
                 return;
             }
-            recursivelyDeleteFolderThread(sourceDriveService,syncAssetsFolderId,ableToMoveAllAssets);
+            Log.d("Unlink", "parent folder Id for recursively delete : " + parentFolderId);
+            recursivelyDeleteFolderThread(sourceDriveService,parentFolderId,ableToMoveAllAssets);
             boolean isRevoked = false;
-            System.out.println("starting to revoke ");
+            Log.d("Unlink", "start to revoke " + sourceUserEmail);
             isRevoked = GoogleCloud.startInvalidateTokenThread(sourceUserEmail);
+            Log.d("Unlink", "result of revoke : " + isRevoked);
             if (isRevoked){
-                System.out.println("starting to delete account and related asset");
+                Log.d("Unlink", "start to delete account and assets from db");
                 DBHelper.deleteAccountAndRelatedAssets(sourceUserEmail);
+                Log.d("Unlink", "end of delete account and assets from db");
+                Log.d("Unlink", "starting google drive threads to update database id and ...");
                 GoogleDrive.startThreads();
             }
         });
@@ -469,6 +472,7 @@ public class GoogleDrive {
         }catch (Exception e){
             FirebaseCrashlytics.getInstance().recordException(e);
         }
+        UIHandler.setupAccountButtons(MainActivity.activity);
     }
 
 
@@ -587,6 +591,9 @@ public class GoogleDrive {
     public static void recursivelyDeleteFolder(Drive service,String folderId, boolean completeMove) {
         try {
             String query = "'" + folderId + "' in parents and trashed = false";
+            Log.d("Unlink", "deleting file and folders in : " + query + " and should complete delete is " + completeMove);
+
+
             Drive.Files.List request = service.files().list().setQ(query);
             boolean deleteThisFolder = true;
             do {
@@ -619,7 +626,9 @@ public class GoogleDrive {
 
     public static void recursivelyDeleteFolderThread(Drive service,String folderId,boolean completeMove){
         Thread recursivelyDeleteFolderThread = new Thread(() -> {
+            Log.d("Unlink", "start to delete recursively");
             recursivelyDeleteFolder(service,folderId,completeMove);
+            Log.d("Unlink", "end of delete recursively");
         });
         recursivelyDeleteFolderThread.start();
         try{
