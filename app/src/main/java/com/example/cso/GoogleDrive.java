@@ -67,8 +67,9 @@ public class GoogleDrive {
                     List<File> files = result.getFiles();
                     if (files != null && !result.getFiles().isEmpty()) {
                         for (File file : files) {
-                            if (Media.isVideo(GoogleCloud.getMimeType(file.getName())) ||
-                                    Media.isImage(GoogleCloud.getMimeType(file.getName()))){
+                            System.out.println("mimetype given to isVideo or isimage :" + Media.getMimeType(file.getName()));
+                            if (Media.isVideo(Media.getMimeType(file.getName())) ||
+                                    Media.isImage(Media.getMimeType(file.getName()))){
                                 DriveAccountInfo.MediaItem mediaItem = new DriveAccountInfo.MediaItem(file.getName(),
                                         file.getSha256Checksum().toLowerCase(), file.getId());
                                 mediaItems.add(mediaItem);

@@ -457,15 +457,6 @@
             return tokens_fromFuture;
         }
 
-        public static String getMimeType(String fileName){
-            int dotIndex = fileName.lastIndexOf(".");
-            String mimeType="";
-            if (dotIndex >= 0 && dotIndex < fileName.length() - 1) {
-                mimeType = fileName.substring(dotIndex + 1);
-            }
-            return mimeType;
-        }
-
         public static Storage getStorage(GoogleCloud.Tokens tokens){
             ExecutorService executor = Executors.newSingleThreadExecutor();
             String accessToken = tokens.getAccessToken();

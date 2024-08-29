@@ -43,7 +43,7 @@ public class BackUp {
                 fileMetadata.setName(fileName);
                 fileMetadata.setParents(Collections.singletonList(syncAssetsFolderId));
 
-                String mimeTypeToUpload = Media.getMimeType(new File(filePath));
+                String mimeTypeToUpload = Media.getMimeType(fileName);
                 FileContent mediaContent = handleMediaFileContent(mimeTypeToUpload,androidFile, fileName);
                 if (mediaContent == null) {
                     LogHandler.saveLog("media content is null in syncAndroidToDrive", true);
@@ -114,7 +114,7 @@ public class BackUp {
         try {
             if (androidFile.exists()) {
                 String lowerMimeType = mimeTypeToUpload.toLowerCase();
-                if (Media.isImageBackUp(lowerMimeType)) {
+                if (Media.isImage(lowerMimeType)) {
                     if (lowerMimeType.equals("jpg") || lowerMimeType.equals("jpeg")) {
                         mediaContent = new FileContent("image/jpeg", androidFile);
                     } else if (lowerMimeType.equals("png")) {
@@ -129,7 +129,7 @@ public class BackUp {
                         mediaContent = new FileContent("image/" + lowerMimeType, androidFile);
                     }
 
-                }  else if (Media.isVideoBackUp(lowerMimeType)) {
+                }  else if (Media.isVideo(lowerMimeType)) {
                     if (lowerMimeType.equals("mp4")) {
                         mediaContent = new FileContent("video/mp4", androidFile);
                     } else if (lowerMimeType.equals("mkv")) {

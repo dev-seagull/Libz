@@ -289,146 +289,147 @@ public class GooglePhotos {
 //        }
 //    }
 
-    public ArrayList<String> uploadPhotosToDrive(String destinationUserEmail,String accessToken){
-        System.out.println("here in photos to drive");
-        String destinationFolderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()
-                + File.separator + "stash";
-        String sqlQury = "SELECT * FROM PHOTOS";
-        Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQury, null);
-        ArrayList<String[]> destinationFiles = new ArrayList<>();
-        System.out.println("here2 in photos to drive");
-        if(cursor.moveToFirst() && cursor != null){
-            do {
-                int fileNameColumnIndex = cursor.getColumnIndex("fileName");
-                int userEmailColumnIndex = cursor.getColumnIndex("userEmail");
-                int fileHashColumnIndex = cursor.getColumnIndex("fileHash");
-                int assetIdColumnIndex = cursor.getColumnIndex("assetId");
-                if(fileNameColumnIndex >= 0 && userEmailColumnIndex >= 0 && fileHashColumnIndex >= 0
-                        && assetIdColumnIndex >= 0){
-                    String fileName = cursor.getString(fileNameColumnIndex);
-                    String userEmail = cursor.getString(userEmailColumnIndex);
-                    String fileHash = cursor.getString(fileHashColumnIndex);
-                    String assetId = cursor.getString(assetIdColumnIndex);
-                    String filePath = destinationFolderPath + File.separator + fileName;
-                    destinationFiles.add(new String[]{filePath,userEmail,fileName,assetId,fileHash});
-                    System.out.println("File name for upload photos from android to drive: " + fileName);
-                }
-            }while (cursor.moveToNext());
-        }
-        if(cursor != null){
-            cursor.close();
-        }
-
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        ArrayList<String> finalUploadFileIds = new ArrayList<>();
-        FileContent[] mediaContent = {null};
-        Callable<ArrayList<String>> backgroundTaskUpload = () -> {
-            System.out.println("here3 in photos to drive");
-            if(destinationFiles != null) {
-                System.out.println("here4 in photos to drive "+ destinationFiles.size());
-                for (String[] destinationFile : destinationFiles) {
-                    File destinationFolderFile = new File(destinationFile[0]);
-                    if (!destinationFolderFile.exists()) {
-                        LogHandler.saveLog("The destination file " + destinationFolderFile.getName() + " doesn't exists",false);
-                        continue;
-                    }
-                    NetHttpTransport HTTP_TRANSPORT = null;
-                    try {
-                        HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-                    } catch (GeneralSecurityException | IOException e) {
-                        LogHandler.saveLog("Failed to initialize http transport to upload to drive: " + e.getLocalizedMessage());
-                    }
-                    JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-                    HttpRequestInitializer requestInitializer = request -> {
-                        request.getHeaders().setAuthorization("Bearer " + accessToken);
-                        request.getHeaders().setContentType("application/json");
-                    };
-                    try {
-                        Drive service = GoogleDrive.initializeDrive(accessToken);
-
-                        com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
-                        fileMetadata.setName(destinationFolderFile.getName());
-                        String memeType = Media.getMimeType(destinationFolderFile);
-                        if(Media.isImage(memeType)){
-                            System.out.println("here6 in photos to drive");
-                            String destinationFolderFilePath = destinationFolderFile.getPath();
-                            if(memeType.toLowerCase().endsWith("jpg")){
-                                mediaContent[0] = new FileContent("image/jpeg" ,
-                                        new File(destinationFolderFilePath));
-                            }else{
-                                mediaContent[0] = new FileContent("image/" + memeType.toLowerCase() ,
-                                        new File(destinationFolderFilePath));
-                            }
-                        }else if(Media.isVideo(memeType)){
-                            String destinationFolderFilePath = destinationFolderFile.getPath();
-                            if(memeType.toLowerCase().endsWith("mkv")){
-                                mediaContent[0] = new FileContent("video/x-matroska" ,
-                                        new File(destinationFolderFilePath));
-                            }else{
-                                mediaContent[0] = new FileContent("video/" + memeType.toLowerCase() ,
-                                        new File(destinationFolderFilePath));
-                            }
-                        }else{
-                            continue;
-                        }
-                        if(mediaContent[0] == null){
-                            LogHandler.saveLog("You're trying to upload mediaContent of null for "
-                                    + destinationFolderFile.getName());
-                        }
-
-                        //final int[] test = {2};
-                        //if(test[0] > 0){
-                        com.google.api.services.drive.model.File uploadFile =
-                                null;
-                        if (service != null) {
-                            uploadFile = service.files()
-                                    .create(fileMetadata, mediaContent[0]).setFields("id").execute();
-                        }else{
-                            LogHandler.saveLog("Drive service is null");
-                        }
-                        String uploadFileId = uploadFile.getId();
-                        while(uploadFileId.isEmpty() | uploadFileId == null){
-                            wait();
-                            LogHandler.saveLog("waiting for uploadFileId to be not null",false);
-                        }
-                        if (uploadFileId == null | uploadFileId.isEmpty()){
-                            LogHandler.saveLog("UploadFileId for " + destinationFolderFile.getName() + " is null");
-                        }
-                        else {
-                            System.out.println("here7 in photos to drive");
-//                           destinationFiles.add(new String[]{filePath,userEmail,fileName,assetId,fileHash});
-                            for (String part : destinationFile){
-                                System.out.println("part for upload photos from android to drive: " + part);
-                            }
-                            DBHelper.insertTransactionsData(destinationFile[1], destinationFile[2],
-                                    destinationUserEmail, destinationFile[3], "syncPhotos" , destinationFile[4]);
-                            finalUploadFileIds.add(uploadFileId);
-                            LogHandler.saveLog("Uploading " + destinationFolderFile.getName()
-                                    + " to backup account finished with uploadFileId: " + uploadFileId,false);
-                        }
-                        //test[0]--;
-                        //}
-                    }catch (Exception e) {
-                        LogHandler.saveLog("Failed to upload to Drive backup account: " + e.getLocalizedMessage());
-                    }
-                    System.out.println("here8 in photos to drive");
-                }
-            }
-            else{
-                LogHandler.saveLog("Destination folder is null");
-            }
-            System.out.println("here9 in photos to drive " + finalUploadFileIds.toString()) ;
-            return finalUploadFileIds;
-        };
-        ArrayList<String> uploadFileIds = null;
-        Future<ArrayList<String>> futureFileIds = executor.submit(backgroundTaskUpload);
-        try{
-            uploadFileIds = futureFileIds.get();
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to get upload file id form background task upload: " + e.getLocalizedMessage());
-        }
-        return uploadFileIds;
-    }
+//    public ArrayList<String> uploadPhotosToDrive(String destinationUserEmail,String accessToken){
+//        System.out.println("here in photos to drive");
+//        String destinationFolderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()
+//                + File.separator + "stash";
+//        String sqlQury = "SELECT * FROM PHOTOS";
+//        Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQury, null);
+//        ArrayList<String[]> destinationFiles = new ArrayList<>();
+//        System.out.println("here2 in photos to drive");
+//        if(cursor.moveToFirst() && cursor != null){
+//            do {
+//                int fileNameColumnIndex = cursor.getColumnIndex("fileName");
+//                int userEmailColumnIndex = cursor.getColumnIndex("userEmail");
+//                int fileHashColumnIndex = cursor.getColumnIndex("fileHash");
+//                int assetIdColumnIndex = cursor.getColumnIndex("assetId");
+//                if(fileNameColumnIndex >= 0 && userEmailColumnIndex >= 0 && fileHashColumnIndex >= 0
+//                        && assetIdColumnIndex >= 0){
+//                    String fileName = cursor.getString(fileNameColumnIndex);
+//                    String userEmail = cursor.getString(userEmailColumnIndex);
+//                    String fileHash = cursor.getString(fileHashColumnIndex);
+//                    String assetId = cursor.getString(assetIdColumnIndex);
+//                    String filePath = destinationFolderPath + File.separator + fileName;
+//                    destinationFiles.add(new String[]{filePath,userEmail,fileName,assetId,fileHash});
+//                    System.out.println("File name for upload photos from android to drive: " + fileName);
+//                }
+//            }while (cursor.moveToNext());
+//        }
+//        if(cursor != null){
+//            cursor.close();
+//        }
+//
+//        ExecutorService executor = Executors.newSingleThreadExecutor();
+//        ArrayList<String> finalUploadFileIds = new ArrayList<>();
+//        FileContent[] mediaContent = {null};
+//        Callable<ArrayList<String>> backgroundTaskUpload = () -> {
+//            System.out.println("here3 in photos to drive");
+//            if(destinationFiles != null) {
+//                System.out.println("here4 in photos to drive "+ destinationFiles.size());
+//                for (String[] destinationFile : destinationFiles) {
+//                    File destinationFolderFile = new File(destinationFile[0]);
+//                    if (!destinationFolderFile.exists()) {
+//                        LogHandler.saveLog("The destination file " + destinationFolderFile.getName() + " doesn't exists",false);
+//                        continue;
+//                    }
+//                    NetHttpTransport HTTP_TRANSPORT = null;
+//                    try {
+//                        HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+//                    } catch (GeneralSecurityException | IOException e) {
+//                        LogHandler.saveLog("Failed to initialize http transport to upload to drive: " + e.getLocalizedMessage());
+//                    }
+//                    JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+//                    HttpRequestInitializer requestInitializer = request -> {
+//                        request.getHeaders().setAuthorization("Bearer " + accessToken);
+//                        request.getHeaders().setContentType("application/json");
+//                    };
+//                    try {
+//                        Drive service = GoogleDrive.initializeDrive(accessToken);
+//
+//                        com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+//                        fileMetadata.setName(destinationFolderFile.getName());
+//                        //fix this
+//                        String memeType = Media.getMimeType("destinationFileName");
+//                        if(Media.isImage(memeType)){
+//                            System.out.println("here6 in photos to drive");
+//                            String destinationFolderFilePath = destinationFolderFile.getPath();
+//                            if(memeType.toLowerCase().endsWith("jpg")){
+//                                mediaContent[0] = new FileContent("image/jpeg" ,
+//                                        new File(destinationFolderFilePath));
+//                            }else{
+//                                mediaContent[0] = new FileContent("image/" + memeType.toLowerCase() ,
+//                                        new File(destinationFolderFilePath));
+//                            }
+//                        }else if(Media.isVideo(memeType)){
+//                            String destinationFolderFilePath = destinationFolderFile.getPath();
+//                            if(memeType.toLowerCase().endsWith("mkv")){
+//                                mediaContent[0] = new FileContent("video/x-matroska" ,
+//                                        new File(destinationFolderFilePath));
+//                            }else{
+//                                mediaContent[0] = new FileContent("video/" + memeType.toLowerCase() ,
+//                                        new File(destinationFolderFilePath));
+//                            }
+//                        }else{
+//                            continue;
+//                        }
+//                        if(mediaContent[0] == null){
+//                            LogHandler.saveLog("You're trying to upload mediaContent of null for "
+//                                    + destinationFolderFile.getName());
+//                        }
+//
+//                        //final int[] test = {2};
+//                        //if(test[0] > 0){
+//                        com.google.api.services.drive.model.File uploadFile =
+//                                null;
+//                        if (service != null) {
+//                            uploadFile = service.files()
+//                                    .create(fileMetadata, mediaContent[0]).setFields("id").execute();
+//                        }else{
+//                            LogHandler.saveLog("Drive service is null");
+//                        }
+//                        String uploadFileId = uploadFile.getId();
+//                        while(uploadFileId.isEmpty() | uploadFileId == null){
+//                            wait();
+//                            LogHandler.saveLog("waiting for uploadFileId to be not null",false);
+//                        }
+//                        if (uploadFileId == null | uploadFileId.isEmpty()){
+//                            LogHandler.saveLog("UploadFileId for " + destinationFolderFile.getName() + " is null");
+//                        }
+//                        else {
+//                            System.out.println("here7 in photos to drive");
+////                           destinationFiles.add(new String[]{filePath,userEmail,fileName,assetId,fileHash});
+//                            for (String part : destinationFile){
+//                                System.out.println("part for upload photos from android to drive: " + part);
+//                            }
+//                            DBHelper.insertTransactionsData(destinationFile[1], destinationFile[2],
+//                                    destinationUserEmail, destinationFile[3], "syncPhotos" , destinationFile[4]);
+//                            finalUploadFileIds.add(uploadFileId);
+//                            LogHandler.saveLog("Uploading " + destinationFolderFile.getName()
+//                                    + " to backup account finished with uploadFileId: " + uploadFileId,false);
+//                        }
+//                        //test[0]--;
+//                        //}
+//                    }catch (Exception e) {
+//                        LogHandler.saveLog("Failed to upload to Drive backup account: " + e.getLocalizedMessage());
+//                    }
+//                    System.out.println("here8 in photos to drive");
+//                }
+//            }
+//            else{
+//                LogHandler.saveLog("Destination folder is null");
+//            }
+//            System.out.println("here9 in photos to drive " + finalUploadFileIds.toString()) ;
+//            return finalUploadFileIds;
+//        };
+//        ArrayList<String> uploadFileIds = null;
+//        Future<ArrayList<String>> futureFileIds = executor.submit(backgroundTaskUpload);
+//        try{
+//            uploadFileIds = futureFileIds.get();
+//        }catch (Exception e){
+//            LogHandler.saveLog("Failed to get upload file id form background task upload: " + e.getLocalizedMessage());
+//        }
+//        return uploadFileIds;
+//    }
 
 //    public static Boolean downloadFromPhotos(ArrayList<GooglePhotos.MediaItem> photosMediaItems,
 //                                             File destinationFolder, String userEmail) {

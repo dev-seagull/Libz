@@ -124,7 +124,7 @@ public class Android {
             Double mediaItemSize = currentFile.length() / (Math.pow(10, 6));
             SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.getDefault());
             String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));
-            String mediaItemMimeType = Media.getMimeType(mediaItemFile);
+            String mediaItemMimeType = Media.getMimeType(mediaItemName);
             if(mediaItemFile.exists()){
                 galleryItems[0]++;
                 if(!DBHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidUniqueDeviceIdentifier,
