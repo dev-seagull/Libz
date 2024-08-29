@@ -52,36 +52,37 @@
         }
 
         public static void signInToGoogleCloud(ActivityResultLauncher<Intent> signInLauncher, Activity activity) {
+            new Thread( () -> {
+                boolean forceCodeForRefreshToken = true;
 
-            boolean forceCodeForRefreshToken = true;
-
-            try {
+                try {
                     GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestScopes(
-                            //auth in drive :
-                            new Scope("https://www.googleapis.com/auth/drive"),
-                            // read files from photos library :
-                            new Scope("https://www.googleapis.com/auth/photoslibrary.readonly"),
-                            // read and write files in drive :
-                            new Scope("https://www.googleapis.com/auth/drive.file"),
-                            // write files in photos library :
-                            new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly"),
-                            //delete any files from drive :
-                            new Scope("https://www.googleapis.com/auth/drive.appdata")
+                            .requestScopes(
+                                    //auth in drive :
+                                    new Scope("https://www.googleapis.com/auth/drive"),
+                                    // read files from photos library :
+                                    new Scope("https://www.googleapis.com/auth/photoslibrary.readonly"),
+                                    // read and write files in drive :
+                                    new Scope("https://www.googleapis.com/auth/drive.file"),
+                                    // write files in photos library :
+                                    new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly"),
+                                    //delete any files from drive :
+                                    new Scope("https://www.googleapis.com/auth/drive.appdata")
                             )
-                    .requestServerAuthCode(activity.getResources().getString(R.string.web_client_id), forceCodeForRefreshToken)
-                    .requestEmail()
-                     .build();
+                            .requestServerAuthCode(activity.getResources().getString(R.string.web_client_id), forceCodeForRefreshToken)
+                            .requestEmail()
+                            .build();
 
-                googleSignInClient = GoogleSignIn.getClient(activity, googleSignInOptions);
+                    googleSignInClient = GoogleSignIn.getClient(activity, googleSignInOptions);
 
-                googleSignInClient.signOut().addOnCompleteListener(task -> {
-                    Intent signInIntent = googleSignInClient.getSignInIntent();
-                    signInLauncher.launch(signInIntent);
-                });
-            } catch (Exception e){
-                LogHandler.saveLog("login failed in signInGoogleCloud : "+e.getLocalizedMessage(),true);
-            }
+                    googleSignInClient.signOut().addOnCompleteListener(task -> {
+                        Intent signInIntent = googleSignInClient.getSignInIntent();
+                        signInLauncher.launch(signInIntent);
+                    });
+                } catch (Exception e){
+                    LogHandler.saveLog("login failed in signInGoogleCloud : "+e.getLocalizedMessage(),true);
+                }
+            }).start();
         }
 
         public static boolean revokeToken(String userEmail) {
