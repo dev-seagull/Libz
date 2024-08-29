@@ -559,7 +559,7 @@
         }
 
         public static boolean startInvalidateTokenThread(String buttonText){
-            LogHandler.saveLog("Starting invalidate token Thread", false);
+            Log.d("Unlink", "invalidate token thread started");
             boolean[] isInvalidated = {false};
             Thread invalidateTokenThread = new Thread(new Runnable() {
                 @Override
@@ -576,7 +576,7 @@
             }catch (Exception e){
                 LogHandler.saveLog("Failed to join invalidate token Thread: " + e.getLocalizedMessage(), true );
             }
-            LogHandler.saveLog("Finished  Invalidate token Thread : " + isInvalidated[0], false);
+            Log.d("Unlink", "invalidate token thread finished : " + isInvalidated[0]);
             return isInvalidated[0];
         }
 
