@@ -631,7 +631,6 @@
 
                         signInLinkedAccountsResult.add(signInResult);
                     }
-
                 }catch (Exception e){
                     FirebaseCrashlytics.getInstance().recordException(e);
                 }

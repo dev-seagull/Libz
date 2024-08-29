@@ -55,12 +55,6 @@ public class Profile {
                     deviceInfoJson.add(deviceInfo);
                 }
             }
-
-            JsonObject deviceInfo = new JsonObject();
-            deviceInfo.addProperty("deviceName", MainActivity.androidDeviceName);
-            deviceInfo.addProperty("deviceId", MainActivity.androidUniqueDeviceIdentifier);
-            deviceInfoJson.add(deviceInfo);
-
         }catch (Exception e){
             LogHandler.saveLog("Failed to create back up accounts json: " + e.getLocalizedMessage(), true);
         }finally {
@@ -337,7 +331,7 @@ public class Profile {
         return false;
     }
 
-    public static boolean backUpJsonFile(JsonObject resultJson, GoogleCloud.SignInResult signInResult, ActivityResultLauncher<Intent> signInToBackUpLauncher){
+    public static boolean backUpJsonFile(JsonObject resultJson, GoogleCloud.SignInResult signInResult){
         boolean[] isBackedUp = {false};
         Thread backUpJsonThread = new Thread(() -> {
             try{
@@ -346,7 +340,7 @@ public class Profile {
                     String folderName = GoogleDriveFolders.profileFolderName;
                     String profileFolderId = GoogleDriveFolders.getSubFolderId(signInResult.getUserEmail(), folderName,
                             signInResult.getTokens().getAccessToken(), true);
-
+                    System.out.println("create profile json for adding profile");
                     String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,"profile", resultJson);
                     if (uploadedFileId == null | uploadedFileId.isEmpty()) {
                         Log.d("error","Failed to upload profileMap, it's null");
@@ -438,17 +432,34 @@ public class Profile {
         return content[0];
     }
 
+
+
+
      public static JsonObject addDeviceInfoToJson(JsonObject profileJson) {
         try {
-            JsonArray deviceInfo = profileJson.get("deviceInfo").getAsJsonArray();
-            profileJson.remove("deviceInfo");
+            JsonArray existingDevicesInfo = profileJson.get("deviceInfo").getAsJsonArray();
+            ArrayList<String> existingDevicesId = new ArrayList<>();
+            JsonArray newDevicesInfo = new JsonArray();
 
             JsonObject newDeviceInfo = new JsonObject();
             newDeviceInfo.addProperty("deviceName", MainActivity.androidDeviceName);
             newDeviceInfo.addProperty("deviceId", MainActivity.androidUniqueDeviceIdentifier);
-            deviceInfo.add(newDeviceInfo);
+            newDevicesInfo.add(newDeviceInfo);
+            existingDevicesId.add(MainActivity.androidUniqueDeviceIdentifier);
 
-            profileJson.add("deviceInfo", deviceInfo);
+            for (JsonElement deviceInfo : existingDevicesInfo){
+                String deviceId = deviceInfo.getAsJsonObject().get("deviceId").getAsString();
+                String deviceName = deviceInfo.getAsJsonObject().get("deviceName").getAsString();
+                if (!existingDevicesId.contains(deviceId)){
+                    newDeviceInfo = new JsonObject();
+                    newDeviceInfo.addProperty("deviceName", deviceName);
+                    newDeviceInfo.addProperty("deviceId", deviceId);
+                    newDevicesInfo.add(newDeviceInfo);
+                    existingDevicesId.add(deviceId);
+                }
+            }
+            profileJson.remove("deviceInfo");
+            profileJson.add("deviceInfo", newDevicesInfo);
             return profileJson;
 
         } catch (Exception e) {
@@ -501,16 +512,16 @@ public class Profile {
         }
     }
 
-    public void startSignInToProfileThread(ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
-                                           JsonObject resultJson, GoogleCloud.SignInResult signInResult){
+    public static void startSignInToProfileThread(JsonObject resultJson, GoogleCloud.SignInResult signInResult){
         Log.d("signInToBackUpLauncher","Adding linked accounts started");
         Thread addingLinkedAccountsThread = new Thread(() -> {
             try {
                 boolean isDone = false;
                 ArrayList<GoogleCloud.SignInResult> linkedAccounts = GoogleCloud.signInLinkedAccounts(resultJson, signInResult.getUserEmail());
                 if(linkedAccounts != null) {
+                    linkedAccounts.add(signInResult);
                     Log.d("signInToBackUpLauncher", "Handling backups started");
-                    boolean isAllBackedUp = handleBackups(resultJson, signInToBackUpLauncher, linkedAccounts);
+                    boolean isAllBackedUp = handleBackups(resultJson, linkedAccounts);
                     Log.d("signInToBackUpLauncher", "isAllBackedUp: " + isAllBackedUp);
                     if (isAllBackedUp) {
                         Log.d("signInToBackUpLauncher", "handleDeviceInsertion started");
@@ -531,6 +542,10 @@ public class Profile {
             }
         });
         addingLinkedAccountsThread.start();
+        try{
+            addingLinkedAccountsThread.join();
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        UIHandler.setupAccountButtons(MainActivity.activity);
     }
 
     private static void handleDeviceInsertion(JsonObject resultJson){
@@ -587,13 +602,13 @@ public class Profile {
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e) ;}
     }
 
-    private boolean handleBackups(JsonObject resultJson, ActivityResultLauncher<Intent> signInToBackUpLauncher
+    private static boolean handleBackups(JsonObject resultJson
             , ArrayList<GoogleCloud.SignInResult> linkedAccounts) {
         final boolean[] isBackedUp = {false};
         ArrayList<GoogleCloud.SignInResult> backedUpSignInResults = new ArrayList<>();
         Thread handleBackupsThread =  new Thread(() -> {
             for (GoogleCloud.SignInResult signInLinkedAccountResult : linkedAccounts) {
-                isBackedUp[0] = Profile.backUpJsonFile(resultJson, signInLinkedAccountResult, signInToBackUpLauncher);
+                isBackedUp[0] = Profile.backUpJsonFile(resultJson, signInLinkedAccountResult);
                 if (!isBackedUp[0]) {
                     handleBackupFailure(backedUpSignInResults);
                     break;
@@ -627,11 +642,15 @@ public class Profile {
             JsonObject newAccountJson = createNewAccountJson(signInResult);
 
             for (String[] existingAccount : existingAccounts) {
-                if (existingAccount[1].equals("backup")) {
-                    Log.d("signInToBackUpLauncher","backupJsonFileToExistingAccount started");
-                    isBackedUp = Profile.backupJsonFileToExistingAccount(newAccountJson,existingAccount[0],
-                            existingAccount[2],"login",signInResult.getTokens().getAccessToken());
-                    Log.d("signInToBackUpLauncher","backupJsonFileToExistingAccount finished: " + isBackedUp);
+                String userEmail = existingAccount[0];
+                String refreshToken = existingAccount[2];
+                String type = existingAccount[1];
+                if (type.equals("backup")) {
+
+                    Log.d("signInToBackUpLauncher","backupJsonFileToExistingAccount to " + userEmail+ " started");
+                    isBackedUp = Profile.backupJsonFileToExistingAccount(newAccountJson,userEmail,
+                            refreshToken,"login");
+                    Log.d("signInToBackUpLauncher","backupJsonFileToExistingAccount to " + userEmail+ " finished: " + isBackedUp);
                     if (!isBackedUp){
                         handleLoginToSingleAccountFailure(backedUpAccounts);
                         break;
@@ -653,6 +672,7 @@ public class Profile {
         try {
             loginSingleAccountThread.join();
         }catch (InterruptedException e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        UIHandler.setupAccountButtons(MainActivity.activity);
     }
 
     private static void handleLoginToSingleAccountSuccess(List<String[]> backedUpAccounts,GoogleCloud.SignInResult signInResult){
@@ -709,20 +729,15 @@ public class Profile {
         return newAccountJson;
     }
 
-    public static boolean backupJsonFileToExistingAccount(Object attachedFile, String userEmail, String refreshToken, String loginStatus,
-                                                          String accessToken) {
+    public static boolean backupJsonFileToExistingAccount(Object attachedFile, String userEmail, String refreshToken, String loginStatus
+                                                   ) {
         boolean[] isBackedUp = {false};
-        final String[] finalAccessToken = {null};
         Thread backUpJsonThread = new Thread(() -> {
             try{
-                if(loginStatus.equals("login")){
-                    finalAccessToken[0] = accessToken;
-                }else if (loginStatus.equals("unlink")){
-                    finalAccessToken[0] = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
-                }
-                Drive service = GoogleDrive.initializeDrive(finalAccessToken[0]);
+                String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
+                Drive service = GoogleDrive.initializeDrive(accessToken);
                 String folderName = GoogleDriveFolders.profileFolderName;
-                String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName, finalAccessToken[0], true);
+                String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName, accessToken, true);
                 String uploadedFileId = setAndCreateProfileMapContent(service,profileFolderId,loginStatus, attachedFile);
                 if (uploadedFileId == null | uploadedFileId.isEmpty()) {
                     LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
@@ -859,7 +874,7 @@ public class Profile {
         boolean isBackedUp = false;
         for(String[] account: existingAccounts){
             if (account[1].equals("backup") && !account[0].equals(unlinkedUserEmail)){
-                isBackedUp = backupJsonFileToExistingAccount(unlinkedUserEmail, account[0], account[2],"unlink", null);
+                isBackedUp = backupJsonFileToExistingAccount(unlinkedUserEmail, account[0], account[2],"unlink");
                 if (!isBackedUp){
                     for(String[] backedUpExistingAccount: backedUpAccounts){
                         String userEmail = backedUpExistingAccount[0];

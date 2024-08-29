@@ -1,5 +1,6 @@
 package com.example.cso;
 
+import static com.example.cso.MainActivity.isAnyProccessOn;
 import static com.example.cso.MainActivity.signInToBackUpLauncher;
 
 import android.app.Activity;
@@ -369,10 +370,13 @@ public class UIHandler {
                        .setPositiveButton("Proceed", (dialog, id) -> {
                             Log.d("signInToBackUpLauncher","Proceed pressed");
                             dialog.dismiss();
-                            Profile profile = new Profile();
-                            profile.startSignInToProfileThread(signInToBackUpLauncher,child,resultJson,signInResult);
-                        }).setNegativeButton("Cancel", (dialog, id) -> {
+                            new Thread(() -> Profile.startSignInToProfileThread(resultJson,signInResult)).start();
+
+                        })
+
+                        .setNegativeButton("Cancel", (dialog, id) -> {
                             Log.d("signInToBackUpLauncher","Cancel pressed");
+                            UIHandler.setupAccountButtons(MainActivity.activity);
                             dialog.dismiss();
                         }).setCancelable(false);
 
@@ -443,7 +447,10 @@ public class UIHandler {
                         System.out.println("finish moving files");
                     });
 
-                    builder.setNegativeButton("Cancel", (dialog, id) -> dialog.dismiss());
+                    builder.setNegativeButton("Cancel", (dialog, id) -> {
+                        dialog.dismiss();
+                        UIHandler.setupAccountButtons(activity);
+                    });
 
                     builder.setCancelable(false);
 
@@ -911,9 +918,9 @@ public class UIHandler {
                         GoogleCloud.signInToGoogleCloud(signInToBackUpLauncher, activity);
                         button.setClickable(true);
                         MainActivity.isAnyProccessOn = false;
-                    } else if (buttonText.equals("signing in ...")){
+                    } else if (buttonText.equals("signing in ...") && !isAnyProccessOn){
                         button.setText("add a back up account");
-                    } else if (buttonText.equals("signing out...")){
+                    } else if (buttonText.equals("signing out...") && !isAnyProccessOn){
                         button.setText(button.getContentDescription());
                     } else {
                         button.setContentDescription(buttonText);

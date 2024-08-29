@@ -130,7 +130,6 @@
                                 }finally {
                                     isAnyProccessOn = false;
                                 }
-                                UIHandler.setupAccountButtons(activity);
                             });
                             signInToBackUpThread.start();
                         }else{
