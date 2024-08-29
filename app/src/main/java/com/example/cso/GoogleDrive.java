@@ -73,7 +73,7 @@ public class GoogleDrive {
                                         file.getSha256Checksum().toLowerCase(), file.getId());
                                 mediaItems.add(mediaItem);
                             }else{
-                                System.out.println("File " + file.getName() + " is not a media item.");
+                                Log.d("media","File " + file.getName() + " is not a media item.");
                             }
                         }
                     }    nextPageToken = result.getNextPageToken();
