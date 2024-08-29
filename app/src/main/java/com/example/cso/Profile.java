@@ -29,18 +29,24 @@ import java.util.concurrent.Future;
 
 public class Profile {
     public static JsonObject createProfileMapContentBasedOnDB(){
-        JsonObject resultJson = new JsonObject();
-        try{
-            JsonArray backupAccountsJson = createBackUpAccountsJson();
-            JsonArray deviceInfoJson = createDeviceInfoJsonBasedDB();
+        JsonObject[] resultJson = {new JsonObject()};
+        Thread createProfileMapContentBasedOnDB = new Thread( () -> {
 
-            resultJson.add("backupAccounts", backupAccountsJson);
-            resultJson.add("deviceInfo", deviceInfoJson);
-        }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
-        }finally {
-            return  resultJson;
-        }
+            try{
+                JsonArray backupAccountsJson = createBackUpAccountsJson();
+                JsonArray deviceInfoJson = createDeviceInfoJsonBasedDB();
+
+                resultJson[0].add("backupAccounts", backupAccountsJson);
+                resultJson[0].add("deviceInfo", deviceInfoJson);
+            }catch (Exception e){
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
+        });
+        createProfileMapContentBasedOnDB.start();
+        try {
+            createProfileMapContentBasedOnDB.join();
+        }catch(Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
+        return resultJson[0];
     }
 
     private static JsonArray createDeviceInfoJsonBasedDB(){

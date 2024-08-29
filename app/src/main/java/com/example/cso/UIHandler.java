@@ -404,7 +404,9 @@ public class UIHandler {
                 }
             }
 
+            Log.d("Unlink", "size of assets on source " + userEmail + ":" + totalFreeSpace);
             int assetsSize = GoogleDrive.getAssetsSizeOfDriveAccount(userEmail);
+            Log.d("Unlink", "Free storage of " + userEmail + ":" + assetsSize);
 
             System.out.println("other accounts size : " + otherAccountsSize[0]);
 
@@ -422,7 +424,6 @@ public class UIHandler {
                     ableToMoveAllAssets[0] = true;
                 }
             }
-
 
 
             int finalTotalFreeSpace = totalFreeSpace;
@@ -931,7 +932,9 @@ public class UIHandler {
                                     MainActivity.isAnyProccessOn = true;
                                     button.setText("signing out...");
                                     button.setClickable(false);
+                                    Log.d("Unlink", "start to unlink");
                                     GoogleCloud.startUnlinkThreads(buttonText, activity);
+                                    Log.d("Unlink", "end of unlink");
                                     button.setClickable(true);
                                     MainActivity.isAnyProccessOn = false;
                                 }

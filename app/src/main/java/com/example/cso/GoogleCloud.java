@@ -582,7 +582,9 @@
 
         public static void startUnlinkThreads(String buttonText, Activity activity){
             Thread startSignOutThreads = new Thread(() -> {
+                Log.d("Unlink", "start to get storage of drives");
                 GoogleDrive.startUpdateStorageThread();
+                Log.d("Unlink", "end of get storage of drives");
                 boolean wantToUnlink = UIHandler.showMoveDriveFilesDialog(buttonText, activity);
 
 
