@@ -20,6 +20,7 @@
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
 
+    import java.util.List;
     import java.util.Timer;
     import java.util.TimerTask;
 
@@ -169,6 +170,7 @@
         super.onResume();
         Log.d("state","start of onResume");
 
+
         if(isGettingReadAndWritePermission){
             try {
                 Thread.sleep(4000);
@@ -184,9 +186,11 @@
             boolean hasCreated = LogHandler.createLogFile();
             Log.d("logFile","Log file is created :"  + hasCreated);
 
-//            Upgrade.versionHandler(preferences);
+            Upgrade.versionHandler(preferences);
 
             setupTimers();
+
+            updatesDriveFolders();
 
             new Thread(() -> {
                 if (Deactivation.isDeactivationFileExists()){ UIHandler.handleDeactivatedUser(); }
@@ -301,6 +305,24 @@
             }
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e);}
     }
+
+    public static void updatesDriveFolders(){
+        new Thread(() -> {
+            List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail", "refreshToken", "type"});
+            for (String[] account : accounts){
+                String userEmail = account[0];
+                String profileFolderName = GoogleDriveFolders.profileFolderName;
+                String databaseFolderName = GoogleDriveFolders.databaseFolderName;
+                String assetsName = GoogleDriveFolders.assetsFolderName;
+                GoogleDriveFolders.getSubFolderId(userEmail,profileFolderName,null,false);
+                GoogleDriveFolders.getSubFolderId(userEmail,databaseFolderName,null,false);
+                GoogleDriveFolders.getSubFolderId(userEmail,assetsName,null,false);
+            }
+        }).start();
+
+    }
+
+
 }
 
 

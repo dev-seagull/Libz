@@ -735,8 +735,8 @@ public class Profile {
         return newAccountJson;
     }
 
-    public static boolean backupJsonFileToExistingAccount(Object attachedFile, String userEmail, String refreshToken, String loginStatus
-                                                   ) {
+    public static boolean backupJsonFileToExistingAccount(Object attachedFile, String userEmail, String refreshToken
+            , String loginStatus) {
         boolean[] isBackedUp = {false};
         Thread backUpJsonThread = new Thread(() -> {
             try{
@@ -879,18 +879,18 @@ public class Profile {
         ArrayList<String[]> backedUpAccounts = new ArrayList<>();
         boolean isBackedUp = false;
         for(String[] account: existingAccounts){
-            if (account[1].equals("backup") && !account[0].equals(unlinkedUserEmail)){
-                isBackedUp = backupJsonFileToExistingAccount(unlinkedUserEmail, account[0], account[2],"unlink");
-                if (!isBackedUp){
-                    for(String[] backedUpExistingAccount: backedUpAccounts){
-                        String userEmail = backedUpExistingAccount[0];
-                        String accessToken = GoogleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
-                        Profile.deleteProfileFile(userEmail, accessToken, false);
-                    }
-                    break;
-                }else{
-                    backedUpAccounts.add(account);
+            if (!account[1].equals("backup")){continue;}
+            if (account[0].equals(unlinkedUserEmail)){continue;}
+            isBackedUp = backupJsonFileToExistingAccount(unlinkedUserEmail, account[0], account[2],"unlink");
+            if (!isBackedUp){
+                for(String[] backedUpExistingAccount: backedUpAccounts){
+                    String userEmail = backedUpExistingAccount[0];
+                    String accessToken = GoogleCloud.updateAccessToken(backedUpExistingAccount[2]).getAccessToken();
+                    Profile.deleteProfileFile(userEmail, accessToken, false);
                 }
+                break;
+            }else{
+                backedUpAccounts.add(account);
             }
         }
 

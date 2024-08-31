@@ -86,34 +86,34 @@
         }
 
         public static boolean revokeToken(String userEmail) {
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            String type = "";
-            String refreshToken = "";
-            String[] accessTokens = new String[1];
-            List<String[]> accountRows = DBHelper.getAccounts(new String[]{"type","userEmail","refreshToken","accessToken"});
-            for (String[] row : accountRows) {
-                if (row.length > 0 && row[1] != null && row[1].equals(userEmail)) {
-                    type = row[0];
-                    refreshToken = row[2];
-                    accessTokens[0] = row[3];
-                    break;
+            boolean[] isRevoked = {false};
+            Thread revokeTokenThread = new Thread(() -> {
+                String type = "";
+                String refreshToken = "";
+                String[] accessTokens = new String[1];
+                List<String[]> accountRows = DBHelper.getAccounts(new String[]{"type","userEmail","refreshToken","accessToken"});
+                for (String[] row : accountRows) {
+                    if (row.length > 0 && row[1] != null && row[1].equals(userEmail)) {
+                        type = row[0];
+                        refreshToken = row[2];
+                        accessTokens[0] = row[3];
+                        break;
+                    }
                 }
-            }
 
-            try {
-                if (!isAccessTokenValid(accessTokens[0])) {
-                    GoogleCloud.Tokens tokens = updateAccessToken(refreshToken);
-                    Map<String, Object> updatedValues = new HashMap<String, Object>() {{
-                        put("accessToken", tokens.getAccessToken());
-                    }};
-                    DBHelper.updateAccounts(userEmail, updatedValues, type);
-                    accessTokens[0] = tokens.getAccessToken();
+                try {
+                    if (!isAccessTokenValid(accessTokens[0])) {
+                        GoogleCloud.Tokens tokens = updateAccessToken(refreshToken);
+                        Map<String, Object> updatedValues = new HashMap<String, Object>() {{
+                            put("accessToken", tokens.getAccessToken());
+                        }};
+                        DBHelper.updateAccounts(userEmail, updatedValues, type);
+                        accessTokens[0] = tokens.getAccessToken();
+                    }
+                }catch (Exception e) {
+                    LogHandler.saveLog("Failed to update the access token: " + e.getLocalizedMessage(), true);
                 }
-            }catch (Exception e) {
-                LogHandler.saveLog("Failed to update the access token: " + e.getLocalizedMessage(), true);
-            }
 
-            Callable<Boolean> callableTask = () -> {
                 try {
                     String revokeUrl = "https://accounts.google.com/o/oauth2/revoke";
                     URL url = new URL(revokeUrl);
@@ -134,33 +134,32 @@
                     boolean isAccessTokenValid = isAccessTokenValid(accessTokens[0]);
                     if (!isAccessTokenValid) {
                         LogHandler.saveLog("Tokens revoked successfully.", false);
-                        return true;
+                        isRevoked[0] = true;
                     }else{
                         LogHandler.saveLog("Tokens revoked not successfully.", false);
                     }
                 } catch (IOException e) {
                     LogHandler.saveLog("Error revoking tokens: " + e.getLocalizedMessage() ,true);
                 }
-                return false;
-            };
-            Future<Boolean> future = executor.submit(callableTask);
-            Boolean isSignedOut = false;
+            });
+            revokeTokenThread.start();
             try{
-                isSignedOut = future.get();
+                revokeTokenThread.join();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to get the sign out future: " + e.getLocalizedMessage(), true);
+                FirebaseCrashlytics.getInstance().recordException(e);
             }
-            return isSignedOut;
+            return isRevoked[0];
         }
 
 
         public static boolean isAccessTokenValid(String accessToken){
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            Callable<Boolean> callableTask = () -> {
+            boolean[] isValid = {false};
+            Thread isAccessTokenValidThread = new Thread( () -> {
                 String tokenInfoUrl = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=" + accessToken;
-                URL url = new URL(tokenInfoUrl);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                HttpURLConnection connection =null;
                 try {
+                    URL url = new URL(tokenInfoUrl);
+                    connection = (HttpURLConnection) url.openConnection();
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     StringBuilder response = new StringBuilder();
                     String line;
@@ -168,21 +167,22 @@
                     while ((line = reader.readLine()) != null) {
                         response.append(line);
                     }
-
-                    LogHandler.saveLog("access token validity " + response, false);
-                    boolean isValid = response.toString().contains("error");
-                    return !isValid;
-                    } finally {
-                    connection.disconnect();
+                    isValid[0] = !response.toString().contains("error");
+                } catch (Exception e){
+                    FirebaseCrashlytics.getInstance().recordException(e);
+                }finally{
+                    if (connection != null){
+                        connection.disconnect();
+                    }
                 }
-            };
-            Future<Boolean> future = executor.submit(callableTask);
-            Boolean isValid = false;
-            try{
-                isValid = future.get();
-
-            }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
-            return isValid;
+            });
+            isAccessTokenValidThread.start();
+            try {
+                isAccessTokenValidThread.join();
+            } catch (Exception e) {
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
+           return isValid[0];
         }
 
         public static class SignInResult {
@@ -397,11 +397,14 @@
         }
 
         public static Tokens updateAccessToken(String refreshToken){
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            Callable<GoogleCloud.Tokens> backgroundTokensTask = () -> {
+            GoogleCloud.Tokens[] tokens = {null};
+            Thread updateAccessTokenThread = new Thread( () -> {
                 String currentAccessToken = DBHelper.getAccessTokenFromDB(refreshToken);
-                if (isAccessTokenValid(currentAccessToken)){
-                    return new GoogleCloud.Tokens(currentAccessToken,refreshToken);
+                boolean isAccessTokenValid = isAccessTokenValid(currentAccessToken);
+                Log.d("token","isAccessTokenValid(currentAccessToken) : " + isAccessTokenValid);
+                if (isAccessTokenValid){
+                    tokens[0] = new Tokens(currentAccessToken,refreshToken);
+                    return;
                 }
                 String accessToken = null;
                 try {
@@ -422,8 +425,8 @@
                     outputStream.flush();
 
                     int responseCode = httpURLConnection.getResponseCode();
+                    Log.d("token", "result of update token , responseCode=" + responseCode);
                     if (responseCode == HttpURLConnection.HTTP_OK) {
-                        LogHandler.saveLog("Updating access token with response code of " + responseCode,false);
                         StringBuilder responseBuilder = new StringBuilder();
                         BufferedReader bufferedReader = new BufferedReader(
                                 new InputStreamReader(httpURLConnection.getInputStream())
@@ -435,26 +438,24 @@
                         String response = responseBuilder.toString();
                         JSONObject responseJSONObject = new JSONObject(response);
                         accessToken = responseJSONObject.getString("access_token");
-                        return new GoogleCloud.Tokens(accessToken, refreshToken);
+                        tokens[0] = new Tokens(accessToken, refreshToken);
+                        return;
                     }else {
                         LogHandler.saveLog("Getting access token failed with response code of " + responseCode, true);
                     }
                 } catch (Exception e) {
                     LogHandler.saveLog("Getting access token failed: " + e.getLocalizedMessage(), true);
                 }
-                return new GoogleCloud.Tokens(accessToken, refreshToken);
-            };
-            Future<GoogleCloud.Tokens> future = executor.submit(backgroundTokensTask);
-            GoogleCloud.Tokens tokens_fromFuture = null;
-            try {
-                tokens_fromFuture = future.get();
-                DBHelper.updateAccessTokenInDB(refreshToken,tokens_fromFuture.getAccessToken());
+                tokens[0] = new Tokens(accessToken, refreshToken);
+            });
+            updateAccessTokenThread.start();
+            try{
+                updateAccessTokenThread.join();
             }catch (Exception e){
-                LogHandler.saveLog("failed to get access token from the future: " + e.getLocalizedMessage(), true);
-            }finally {
-                executor.shutdown();
+                LogHandler.saveLog("Failed to join   updateAccessTokenThread.start(): " + e.getLocalizedMessage(), true );
             }
-            return tokens_fromFuture;
+            DBHelper.updateAccessTokenInDB(refreshToken,tokens[0].getAccessToken());
+            return tokens[0];
         }
 
         public static Storage getStorage(GoogleCloud.Tokens tokens){
@@ -552,13 +553,10 @@
         public static boolean startInvalidateTokenThread(String buttonText){
             Log.d("Unlink", "invalidate token thread started");
             boolean[] isInvalidated = {false};
-            Thread invalidateTokenThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    isInvalidated[0] = GoogleCloud.revokeToken(buttonText);
-                    if(!isInvalidated[0]){
-                        LogHandler.saveLog("token is not invalidated." , true);
-                    }
+            Thread invalidateTokenThread = new Thread(() -> {
+                isInvalidated[0] = GoogleCloud.revokeToken(buttonText);
+                if(!isInvalidated[0]){
+                    LogHandler.saveLog("token is not invalidated." , true);
                 }
             });
             invalidateTokenThread.start();
@@ -571,30 +569,12 @@
             return isInvalidated[0];
         }
 
-        public static void startUnlinkThreads(String buttonText, Activity activity){
-            Thread startSignOutThreads = new Thread(() -> {
-                Log.d("Unlink", "start to get storage of drives");
-                GoogleDrive.startUpdateStorageThread();
-                Log.d("Unlink", "end of get storage of drives");
-                boolean wantToUnlink = UIHandler.showMoveDriveFilesDialog(buttonText, activity);
-
-
-                //note :  handle button text if click on wait button
-
-
-//                boolean isProfileJsonDeleted = startDeleteProfileJsonThread(buttonText);
-//                if(isProfileJsonDeleted){
-//                    boolean isDatabaseDeleted = startDeleteDatabaseThread(buttonText);
-//                    boolean isInvalidated = startInvalidateTokenThread(buttonText);
-//                    if(isInvalidated){
-//                        boolean isBackedUp = startProfileJsonBackUpAfterSignOutThread(buttonText);
-//                        if(isBackedUp){
-//                            UIHandler.startUiThreadForSignOut(item,button,buttonText,isBackedUp);
-//                        }
-//                    }
-//                }
-            });
-            startSignOutThreads.start();
+        public static void unlink(String buttonText, Activity activity){
+            Log.d("Unlink", "start to get storage of drives");
+            GoogleDrive.startUpdateStorageThread();
+            Log.d("Unlink", "end of get storage of drives");
+            boolean wantToUnlink = UIHandler.showMoveDriveFilesDialog(buttonText, activity);
+            MainActivity.isAnyProccessOn = false;
         }
 
         public static ArrayList<SignInResult> signInLinkedAccounts(JsonObject resultJson, String userEmail){

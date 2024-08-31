@@ -393,26 +393,26 @@ public class UIHandler {
         try {
             List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","totalStorage","usedStorage"});
             int totalFreeSpace = 0;
-            int[] otherAccountsSize = {0};
+            int[] otherAccountsCount = {0};
 
             for (String[] account : accounts) {
                 if (!account[0].equals(userEmail)){
                     int totalStorage = Integer.parseInt(account[1]);
                     int usedStorage = Integer.parseInt(account[2]);
                     totalFreeSpace += totalStorage - usedStorage;
-                    otherAccountsSize[0] += 1 ;
+                    otherAccountsCount[0] += 1 ;
                 }
             }
 
             Log.d("Unlink", "Free storage of accounts except " + userEmail + " is " + totalFreeSpace);
-            Log.d("Unlink", "other accounts size " + otherAccountsSize);
+            Log.d("Unlink", "other accounts count " + otherAccountsCount[0]);
 
             int assetsSize = GoogleDrive.getAssetsSizeOfDriveAccount(userEmail);
             Log.d("Unlink", "size of assets on source " + userEmail + ":" + assetsSize);
 
             String[] text = {""};
             boolean[] ableToMoveAllAssets = {false};
-            if (otherAccountsSize[0] == 0){
+            if (otherAccountsCount[0] == 0){
                 text[0] = "Caution : All of your assets in " + userEmail + " will be out of sync.";
             }else{
                 if (totalFreeSpace < assetsSize) {
@@ -431,22 +431,20 @@ public class UIHandler {
                 try {
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
                     builder.setMessage(text[0]);
-                    builder.setTitle("Unlink Drive Account");
+                    builder.setTitle("Unlink Backup Account");
 
                     builder.setPositiveButton("Proceed", (dialog, id) -> {
                         Log.d("Unlink", "Proceed pressed");
 
                         dialog.dismiss();
-                        if (otherAccountsSize[0] == 0 || true) {
+                        if (otherAccountsCount[0] == 0 ) {
                             Log.d("Unlink", "Just unlink from single account ");
                             String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
                             Drive service = GoogleDrive.initializeDrive(accessToken);
                             Log.d("Unlink", "Drive and access token : " + accessToken + service);
                             new Thread(() -> GoogleDrive.unlinkSingleAccount(userEmail,service,ableToMoveAllAssets[0])).start();
                         }else{
-                            Log.d("Unlink", "move files and unlink");
-                            GoogleDrive.moveFromSourceToDestinationAccounts(userEmail,ableToMoveAllAssets[0],
-                                    (assetsSize - finalTotalFreeSpace), activity);
+                            GoogleDrive.moveFromSourceToDestinationAccounts(userEmail,ableToMoveAllAssets[0]);
                         }
 
                         System.out.println("finish moving files");
@@ -938,10 +936,10 @@ public class UIHandler {
                                     button.setText("signing out...");
                                     button.setClickable(false);
                                     Log.d("Unlink", "start to unlink");
-                                    GoogleCloud.startUnlinkThreads(buttonText, activity);
+                                    new Thread(() -> GoogleCloud.unlink(buttonText, activity)).start();
                                     Log.d("Unlink", "end of unlink");
                                     button.setClickable(true);
-                                    MainActivity.isAnyProccessOn = false;
+
                                 }
                                 return true;
                             });

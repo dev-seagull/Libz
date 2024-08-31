@@ -1687,7 +1687,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 String selectedUserEmail = accountRow[0];
                 String type = accountRow[1];
                 if (selectedUserEmail.equals(userEmail) && type.equals("backup")) {
-                    String driveBackupRefreshToken = accountRow[1];
+                    String driveBackupRefreshToken = accountRow[2];
                     return GoogleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
                 }
             }
