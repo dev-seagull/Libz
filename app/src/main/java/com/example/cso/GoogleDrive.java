@@ -368,7 +368,7 @@ public class GoogleDrive {
     }
 
     public static String moveFileBetweenAccounts(Drive sourceAccount, Drive destinationAccount, String sourceUserEmail, String destinationUserEmail, String fileId) {
-        String[] moveResult = {"failed"};
+        String[] moveResult = {"failure"};
         Thread moveFileBetweenAccountsThread = new Thread(() -> {
             File fileMetadata;
             String[] asset;
@@ -407,6 +407,10 @@ public class GoogleDrive {
                     Log.d("unlink","failed to delete file from source : " + sourceUserEmail);
                 }
             }catch (Exception e) {
+                String errorText = e.getLocalizedMessage();
+                if (errorText.toLowerCase().contains("storage")){
+                    moveResult[0] = "storageError";
+                }
                 Log.d("unlink", "Failed to move file from " + sourceUserEmail + " to " + destinationUserEmail + " : " + e.getLocalizedMessage());
             }
         });

@@ -4,6 +4,7 @@ import static com.example.cso.GoogleDrive.moveFileBetweenAccounts;
 
 import android.app.Activity;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.api.services.drive.Drive;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
@@ -34,13 +35,13 @@ public class Unlink {
     }
 
     public static void unlinkAccount(String sourceUserEmail,boolean ableToMoveAllAssets, Activity activity){
-        boolean[] hasMovedAllAssets = {true};
+        boolean[] allAssetsMovedSuccessfully = {true};
         Thread unlinkAccountThread = new Thread(() -> {
             Log.d("unlink","unlinkAccountThread started");
             GoogleDrive.startThreads();
 
-            String accessToken = DBHelper.getDriveBackupAccessToken(sourceUserEmail);
-            Drive service = GoogleDrive.initializeDrive(accessToken);
+            String sourceAccessToken = DBHelper.getDriveBackupAccessToken(sourceUserEmail);
+            Drive service = GoogleDrive.initializeDrive(sourceAccessToken);
 
             List<String[]> accounts_rows = DBHelper.getAccounts(new String[]{"refreshToken","userEmail","type"});
             String[] driveColumns = {"fileHash", "id","assetId", "fileId", "fileName", "userEmail"};
@@ -50,6 +51,7 @@ public class Unlink {
             for (String[] drive_row : drive_rows){
                 String fileId = drive_row[3];
                 boolean isAssetMoved = false;
+                boolean hasNetworkError = false;
                 for (String[] account : accounts_rows) {
                     String type = account[2];
                     if (!type.equals("backup")){
@@ -69,16 +71,25 @@ public class Unlink {
                         isAssetMoved = true;
                         break;
                     }else{
+                        if (moveResult.equals("failure")) {
+                            hasNetworkError = true;
+                        }
                         targetDriveService = null;
                     }
                 }
+                if (!isAssetMoved && hasNetworkError){
+                    allAssetsMovedSuccessfully[0] = false;
+                    if (InternetManager.getInternetStatus(activity).equals("noInternet")){
+                        break;
+                    }
+                }
                 if (!isAssetMoved && ableToMoveAllAssets) {
-                    hasMovedAllAssets[0] = false;
+                    allAssetsMovedSuccessfully[0] = false;
                 }
             }
-            Log.d("unlink", "all files moved with result : " + hasMovedAllAssets[0]);
+            Log.d("unlink", "all files moved with result : " + allAssetsMovedSuccessfully[0]);
             boolean isBackedUpAndDeleted = false;
-            if (hasMovedAllAssets[0]){
+            if (allAssetsMovedSuccessfully[0]){
                 Log.d("unlink", "starting to back up json to remaining accounts");
                 isBackedUpAndDeleted = Profile.backupJsonToRemainingAccounts(sourceUserEmail);
                 Log.d("unlink", "end of back up json to remaining accounts : " + isBackedUpAndDeleted);
@@ -88,8 +99,11 @@ public class Unlink {
                     Log.d("Unlink", "end of unlink from single account (every thing is ok)");
                 }
             }else{
-//                if(InternetManager.)
-                //toast make
+                if (InternetManager.getInternetStatus(activity).equals("noInternet")){
+                    activity.runOnUiThread(() -> Toast.makeText(activity, "Failed To Unlink, Check your Internet Connection !!! ", Toast.LENGTH_LONG).show());
+                }else{
+                    activity.runOnUiThread(() -> Toast.makeText(activity, "Failed To Unlink, Try Again !!! ", Toast.LENGTH_LONG).show());
+                }
             }
         });
 
