@@ -245,4 +245,25 @@ public class GoogleDriveFolders {
         return folderId[0];
     }
 
+    public static void deleteSubFolder(String subFolderName, String userEmail){
+        Thread deleteSubFolderThread = new Thread( () -> {
+            try{
+                String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
+                Drive service = GoogleDrive.initializeDrive(accessToken);
+
+                String folderId = getSubFolderId(subFolderName,userEmail,accessToken,true);
+
+                Log.d("unlink", "Deleting folder " + subFolderName + " : " + folderId);
+                service.files().delete(folderId).execute();
+
+            }catch (Exception e){
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
+        });
+
+        deleteSubFolderThread.start();
+        try{
+            deleteSubFolderThread.join();
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+    }
 }

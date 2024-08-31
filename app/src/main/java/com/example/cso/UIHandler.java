@@ -388,88 +388,78 @@ public class UIHandler {
         });
     }
 
-    public static boolean showMoveDriveFilesDialog(String userEmail, Activity activity){
-        boolean[] wantToUnlink = {false};
+    public static void showMoveDriveFilesDialog(String userEmail, Activity activity){
         try {
-            List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","totalStorage","usedStorage"});
-            int totalFreeSpace = 0;
-            int[] otherAccountsCount = {0};
-
-            for (String[] account : accounts) {
-                if (!account[0].equals(userEmail)){
-                    int totalStorage = Integer.parseInt(account[1]);
-                    int usedStorage = Integer.parseInt(account[2]);
-                    totalFreeSpace += totalStorage - usedStorage;
-                    otherAccountsCount[0] += 1 ;
-                }
-            }
+            double totalFreeSpace = Unlink.getTotalLinkedCloudsFreeSpace(userEmail);
+            boolean isSingleAccountUnlink = Unlink.isSingleUnlink(userEmail);
 
             Log.d("Unlink", "Free storage of accounts except " + userEmail + " is " + totalFreeSpace);
-            Log.d("Unlink", "other accounts count " + otherAccountsCount[0]);
+            Log.d("Unlink", "Is single account unlink: " + isSingleAccountUnlink);
 
             int assetsSize = GoogleDrive.getAssetsSizeOfDriveAccount(userEmail);
-            Log.d("Unlink", "size of assets on source " + userEmail + ":" + assetsSize);
+            Log.d("Unlink", "getAssetsSizeOfDriveAccountThread finished for " + userEmail + ":" + assetsSize);
 
-            String[] text = {""};
-            boolean[] ableToMoveAllAssets = {false};
-            if (otherAccountsCount[0] == 0){
-                text[0] = "Caution : All of your assets in " + userEmail + " will be out of sync.";
-            }else{
-                if (totalFreeSpace < assetsSize) {
-                    text[0] = "Approximately " + totalFreeSpace / 1024 + " GB out of " + assetsSize / 1024 + " GB of your assets in " + userEmail + " will be moved to other accounts." +
-                            "\nWarning: Not enough space is available to move all of it. " + (assetsSize - totalFreeSpace) / 1024 + " GB of your assets will remain in " + userEmail + ".";
-
-                } else {
-                    text[0] = "All of your assets in " + userEmail + " will be moved to other accounts.";
-                    ableToMoveAllAssets[0] = true;
-                }
-            }
-
-
-            int finalTotalFreeSpace = totalFreeSpace;
             MainActivity.activity.runOnUiThread(() -> {
                 try {
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
-                    builder.setMessage(text[0]);
-                    builder.setTitle("Unlink Backup Account");
+                    boolean isAbleToMoveAllAssets = handleUnlinkBuilderTitleAndMessage(builder,userEmail,
+                            isSingleAccountUnlink,assetsSize,totalFreeSpace);
 
                     builder.setPositiveButton("Proceed", (dialog, id) -> {
                         Log.d("Unlink", "Proceed pressed");
-
                         dialog.dismiss();
-                        if (otherAccountsCount[0] == 0 ) {
-                            Log.d("Unlink", "Just unlink from single account ");
-                            String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
-                            Drive service = GoogleDrive.initializeDrive(accessToken);
-                            Log.d("Unlink", "Drive and access token : " + accessToken + service);
-                            new Thread(() -> GoogleDrive.unlinkSingleAccount(userEmail,service,ableToMoveAllAssets[0])).start();
+                        if (isSingleAccountUnlink) {
+                            new Thread(() -> {
+                                Log.d("Unlink", "Just unlink from single account ");
+                                String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
+                                Drive service = GoogleDrive.initializeDrive(accessToken);
+                                Log.d("Unlink", "Drive and access token : " + accessToken + service);
+                                Unlink.unlinkSingleAccount(userEmail, service);
+                            }).start();
                         }else{
-                            GoogleDrive.moveFromSourceToDestinationAccounts(userEmail,ableToMoveAllAssets[0]);
+                            new Thread( () -> {
+                                Unlink.unlinkAccount(userEmail,isAbleToMoveAllAssets, activity);
+                            }).start();
                         }
-
-                        System.out.println("finish moving files");
-                    });
-
-                    builder.setNegativeButton("Cancel", (dialog, id) -> {
-                        Log.d("Unlink", "Cancel pressed");
-                        dialog.dismiss();
+                    }).setNegativeButton("Cancel", (dialog, id) -> {
+                        MainActivity.isAnyProccessOn = false;
                         UIHandler.setupAccountButtons(activity);
+                        Log.d("Unlink", "end of unlink: canceled");
+                        dialog.dismiss();
                     });
 
                     builder.setCancelable(false);
-
                     AlertDialog alertDialog = builder.create();
                     alertDialog.show();
-                } catch (Exception e) {
-                    LogHandler.saveLog("Failed to show move drive files dialog : " + e.getLocalizedMessage(), true);
-                }
+                } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
             });
 
-        }catch(Exception e){
-            LogHandler.saveLog("Failed to calculate asset size and drives free space : " + e.getLocalizedMessage(), true);
-            return false;
-        }
-        return wantToUnlink[0];
+        }catch(Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+    }
+
+    private static boolean handleUnlinkBuilderTitleAndMessage(AlertDialog.Builder builder,String userEmail,
+                                                           boolean isSingleAccountUnlink, double assetsSize,
+                                                           double totalFreeSpace){
+        boolean isAbleToMoveAllAssets = false;
+        try{
+            if (isSingleAccountUnlink){
+                builder.setTitle("No other available account");
+                builder.setMessage("Caution : All of your assets in " + userEmail + " will be out of sync.");
+            }else{
+                if (totalFreeSpace < assetsSize) {
+                    builder.setTitle("Not enough space");
+                    builder.setMessage("Approximately " + totalFreeSpace / 1024 + " GB out of " + assetsSize / 1024 + " GB of your assets in " + userEmail + " will be moved to other available accounts." +
+                            + (assetsSize - totalFreeSpace) / 1024 + " GB of your assets will be out of sync.");
+
+                } else {
+                    builder.setTitle("Unlink Backup Account");
+                    builder.setMessage("All of your assets in " + userEmail + " will be moved to your other available accounts.");
+                    isAbleToMoveAllAssets = true;
+                }
+            }
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+
+        return isAbleToMoveAllAssets;
     }
 
 
@@ -935,10 +925,7 @@ public class UIHandler {
                                     MainActivity.isAnyProccessOn = true;
                                     button.setText("signing out...");
                                     button.setClickable(false);
-                                    Log.d("Unlink", "start to unlink");
                                     new Thread(() -> GoogleCloud.unlink(buttonText, activity)).start();
-                                    Log.d("Unlink", "end of unlink");
-                                    button.setClickable(true);
 
                                 }
                                 return true;

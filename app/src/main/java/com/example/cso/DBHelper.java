@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteException;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.Drive;
@@ -585,40 +586,29 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public static boolean deleteFromAccountsTable(String userEmail, String type) {
+    public static void deleteFromAccountsTable(String userEmail, String type) {
         dbWritable.beginTransaction();
         try {
             String sqlQuery = "DELETE FROM ACCOUNTS WHERE userEmail = ? and type = ?";
             dbWritable.execSQL(sqlQuery, new Object[]{userEmail,type});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete the database in deleteAccounts method. " + e.getLocalizedMessage());
+            FirebaseCrashlytics.getInstance().recordException(e);
         } finally {
             dbWritable.endTransaction();
         }
-        if (!accountExists(userEmail,type)){
-            return true;
-        }else{
-            return false;
-        }
-
     }
 
-    public static boolean deleteAccountFromDriveTable(String userEmail) {
+    public static void deleteAccountFromDriveTable(String userEmail) {
         dbWritable.beginTransaction();
         try {
             String sqlQuery = "DELETE FROM DRIVE WHERE userEmail = ?";
             dbWritable.execSQL(sqlQuery, new Object[]{userEmail});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete from drive in deleteFromDriveTable method. " + e.getLocalizedMessage());
+            FirebaseCrashlytics.getInstance().recordException(e);
         } finally {
             dbWritable.endTransaction();
-        }
-        if(!accountExistsInDriveTable(userEmail)){
-            return true;
-        }else{
-            return false;
         }
     }
 
@@ -1147,9 +1137,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public static void deleteRedundantAsset(){
         ArrayList<String> assetIds = selectAllAssetIds();
         for (String assetId : assetIds){
-            boolean existsInDatabase = false;
-            existsInDatabase = assetExistsInDatabase(assetId);
-
+            boolean existsInDatabase = assetExistsInDatabase(assetId);
             if (existsInDatabase == false) {
                 deleteFromAssetTable(assetId);
             }
@@ -1480,16 +1468,16 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public static void deleteAccountAndRelatedAssets(String userEmail){
         Thread deleteAccountAndRelatedAssetsThread = new Thread(() -> {
+            Log.d("Unlink", "deleteAccountAndRelatedAssetsThread started");
             deleteFromAccountsTable(userEmail,"backup");
             deleteAccountFromDriveTable(userEmail);
             deleteRedundantAsset();
-            // delete button
-            System.out.println("------------------------------------- email " + userEmail + "deleted from this profile");
         });
         deleteAccountAndRelatedAssetsThread.start();
         try{
             deleteAccountAndRelatedAssetsThread.join();
         }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
+        Log.d("Unlink", "deleteAccountAndRelatedAssetsThread finished");
     }
 
     public static ArrayList<DeviceHandler> getDevicesFromDB(){

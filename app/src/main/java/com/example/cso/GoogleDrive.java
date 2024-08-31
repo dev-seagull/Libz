@@ -319,6 +319,7 @@ public class GoogleDrive {
         Log.d("Threads","startUpdateStorage thread started");
         Thread updateDriveStorage = new Thread(() -> {
             try{
+                Log.d("Threads", "startUpdateStorageThread started");
                 String[] columns = {"refreshToken","userEmail", "type"};
                 List<String[]> account_rows = DBHelper.getAccounts(columns);
 
@@ -356,7 +357,7 @@ public class GoogleDrive {
         } catch (Exception e) {
             FirebaseCrashlytics.getInstance().recordException(e);
         }
-        Log.d("Threads","startUpdateStorage thread finished");
+        Log.d("Threads", "startUpdateStorageThread finished");
     }
 
     public static void startThreads(){
@@ -364,102 +365,6 @@ public class GoogleDrive {
         startDeleteRedundantDriveThread();
         startUpdateDriveFilesThread();
         startDeleteDuplicatedInDriveThread();
-    }
-
-    public static void moveFromSourceToDestinationAccounts(String sourceUserEmail,boolean ableToMoveAllAssets){
-        boolean[] hasMovedAllAssets = {true};
-        Thread moveFromSourceToDestinationAccountsThread = new Thread(() -> {
-            Log.d("unlink","moveFromSourceToDestinationAccounts started");
-            List<String[]> accounts_rows = DBHelper.getAccounts(new String[]{"refreshToken","userEmail","type"});
-            Drive sourceDriveService = createSourceDriveService(sourceUserEmail,accounts_rows);
-
-            String[] driveColumns = {"fileHash", "id","assetId", "fileId", "fileName", "userEmail"};
-            List<String[]> drive_rows = DBHelper.getDriveTable(driveColumns, sourceUserEmail);
-
-            Drive targetDriveService = null;
-            for (int i = 0; i < drive_rows.size(); i++){
-                String[] drive_row = drive_rows.get(i);
-                String fileId = drive_row[3];
-
-                boolean isAssetMoved = false;
-                for (String[] account : accounts_rows) {
-                    if (!account[2].equals("backup")){continue;}
-                    String targetUserEmail = account[1];
-                    Log.d("unlink", "moving file " + drive_row[4] + " to " + targetUserEmail + " started");
-                    if (targetDriveService == null){
-                        String targetRefreshToken = account[0];
-                        String accessToken = GoogleCloud.updateAccessToken(targetRefreshToken).getAccessToken();
-                        targetDriveService = initializeDrive(accessToken);
-                    }
-                    String moveResult = moveFileBetweenAccounts(sourceDriveService, targetDriveService, sourceUserEmail, targetUserEmail, fileId);
-                    Log.d("unlink", "moving file " + drive_row[4] + " to " + targetUserEmail + " finished : " + moveResult);
-                    if (moveResult.equals("success")) {
-                        isAssetMoved = true;
-                        break;
-                    }else{
-                        targetDriveService = null;
-                    }
-                }
-                if (!isAssetMoved && ableToMoveAllAssets) {
-                    hasMovedAllAssets[0] = false;
-                }
-            }
-            Log.d("unlink", "all files moved with result : " + hasMovedAllAssets[0]);
-            boolean isBackedUpAndDeleted = false;
-            if (hasMovedAllAssets[0]){
-                Log.d("unlink", "starting to back up json to remaining accounts");
-                isBackedUpAndDeleted = Profile.backupJsonToRemainingAccounts(sourceUserEmail);
-                Log.d("unlink", "end of back up json to remaining accounts : " + isBackedUpAndDeleted);
-            }
-
-            if(isBackedUpAndDeleted){
-                Log.d("Unlink", "unlink from single account after moving files and backup");
-                unlinkSingleAccount(sourceUserEmail,sourceDriveService,ableToMoveAllAssets);
-                Log.d("Unlink", "end of unlink from single account (every thing is ok)");
-            }
-        });
-
-        moveFromSourceToDestinationAccountsThread.start();
-    }
-
-    public static Drive createSourceDriveService(String sourceUserEmail , List<String[]> accounts_rows) {
-        Drive sourceDriveService = null;
-        for (String[] account_row: accounts_rows){
-            if (account_row[1].equals(sourceUserEmail)){
-                String refreshToken = account_row[0];
-                String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
-                sourceDriveService = initializeDrive(accessToken);
-                break;
-            }
-        }
-        return sourceDriveService;
-    }
-
-
-
-    public static void unlinkSingleAccount(String sourceUserEmail, Drive sourceDriveService, boolean ableToMoveAllAssets){
-        Thread unlinkSingleAccountThread = new Thread( () -> {
-            Log.d("unlink", "starting to delete all folders with complete move : " + ableToMoveAllAssets);
-            deleteDriveFolders(sourceDriveService,sourceUserEmail,false);
-            boolean isRevoked = false;
-            Log.d("Unlink", "start to revoke " + sourceUserEmail);
-            isRevoked = GoogleCloud.startInvalidateTokenThread(sourceUserEmail);
-            Log.d("Unlink", "result of revoke : " + isRevoked);
-            if (isRevoked){
-                Log.d("Unlink", "start to delete account and assets from db");
-                DBHelper.deleteAccountAndRelatedAssets(sourceUserEmail);
-                Log.d("Unlink", "end of delete account and assets from db");
-                Log.d("Unlink", "starting google drive threads to update database id and ...");
-                GoogleDrive.startThreads();
-            }
-        });
-        unlinkSingleAccountThread.start();
-        try{
-            unlinkSingleAccountThread.join();
-        }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
-        }
-        UIHandler.setupAccountButtons(MainActivity.activity);
     }
 
     public static String moveFileBetweenAccounts(Drive sourceAccount, Drive destinationAccount, String sourceUserEmail, String destinationUserEmail, String fileId) {
@@ -520,6 +425,7 @@ public class GoogleDrive {
         int[] totalSize = {0};
         Thread getAssetsSizeOfDriveAccountThread = new Thread(() -> {
             try{
+                Log.d("Unlink", "getAssetsSizeOfDriveAccountThread started for" + userEmail + ".");
                 List<String[]> accounts_rows = DBHelper.getAccounts(new String[]{"refreshToken","userEmail"});
                 Drive service = null;
                 for (String[] account_row: accounts_rows){
@@ -587,6 +493,7 @@ public class GoogleDrive {
 
     public static void deleteDriveFolders(Drive service,String sourceUserEmail,boolean completeMove){
         Thread deleteDriveFoldersThread = new Thread(() -> {
+            Log.d("Threads","deleteDriveFoldersThread started");
             if (completeMove){
                 try {
                     String parentFolderId = GoogleDriveFolders.getParentFolderId(sourceUserEmail,false,null);
@@ -599,15 +506,10 @@ public class GoogleDrive {
             }else{
                 try{
                     String profileFolderName = GoogleDriveFolders.profileFolderName;
-                    String profileFolderId = GoogleDriveFolders.getSubFolderId(sourceUserEmail,profileFolderName,null,false);
-                    Log.d("unlink", "try to delete profile folder " + profileFolderId);
-                    service.files().delete(profileFolderId).execute();
-                    Log.d("Unlink", "profile folder " + profileFolderId + " deleted successfully");
+                    GoogleDriveFolders.deleteSubFolder(profileFolderName,sourceUserEmail);
+
                     String databaseFolderName = GoogleDriveFolders.databaseFolderName;
-                    String databaseFolderId = GoogleDriveFolders.getSubFolderId(sourceUserEmail,databaseFolderName,null,false);
-                    Log.d("unlink", "try to delete database folder " + databaseFolderId);
-                    service.files().delete(databaseFolderId).execute();
-                    Log.d("Unlink", "database folder " + databaseFolderId + " deleted successfully");
+                    GoogleDriveFolders.deleteSubFolder(databaseFolderName, sourceUserEmail);
                 }catch (Exception e){
                     FirebaseCrashlytics.getInstance().recordException(e);
                 }
@@ -618,6 +520,7 @@ public class GoogleDrive {
         try{
             deleteDriveFoldersThread.join();
         }catch (Exception e) {FirebaseCrashlytics.getInstance().recordException(e);}
+        Log.d("Threads","deleteDriveFoldersThread finished");
     }
 
     public static void cleanDriveFolders() {

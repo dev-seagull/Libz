@@ -110,9 +110,7 @@
                         DBHelper.updateAccounts(userEmail, updatedValues, type);
                         accessTokens[0] = tokens.getAccessToken();
                     }
-                }catch (Exception e) {
-                    LogHandler.saveLog("Failed to update the access token: " + e.getLocalizedMessage(), true);
-                }
+                }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
 
                 try {
                     String revokeUrl = "https://accounts.google.com/o/oauth2/revoke";
@@ -129,18 +127,12 @@
                         }
                     }
                     connection.getResponseCode();//don't delete this line , it is important
-                    System.out.println("responseCode of signOut " + connection.getResponseCode());
                     connection.disconnect();
                     boolean isAccessTokenValid = isAccessTokenValid(accessTokens[0]);
                     if (!isAccessTokenValid) {
-                        LogHandler.saveLog("Tokens revoked successfully.", false);
                         isRevoked[0] = true;
-                    }else{
-                        LogHandler.saveLog("Tokens revoked not successfully.", false);
                     }
-                } catch (IOException e) {
-                    LogHandler.saveLog("Error revoking tokens: " + e.getLocalizedMessage() ,true);
-                }
+                } catch (IOException e) {FirebaseCrashlytics.getInstance().recordException(e); }
             });
             revokeTokenThread.start();
             try{
@@ -550,31 +542,28 @@
             }
         }
 
-        public static boolean startInvalidateTokenThread(String buttonText){
-            Log.d("Unlink", "invalidate token thread started");
+        public static boolean invalidateToken(String buttonText){
             boolean[] isInvalidated = {false};
             Thread invalidateTokenThread = new Thread(() -> {
+                Log.d("Unlink", "invalidate token thread started");
                 isInvalidated[0] = GoogleCloud.revokeToken(buttonText);
                 if(!isInvalidated[0]){
-                    LogHandler.saveLog("token is not invalidated." , true);
+                    Log.d("unlink","Token is not invalidated." );
                 }
             });
             invalidateTokenThread.start();
             try{
                 invalidateTokenThread.join();
-            }catch (Exception e){
-                LogHandler.saveLog("Failed to join invalidate token Thread: " + e.getLocalizedMessage(), true );
-            }
+            }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+
             Log.d("Unlink", "invalidate token thread finished : " + isInvalidated[0]);
             return isInvalidated[0];
         }
 
         public static void unlink(String buttonText, Activity activity){
-            Log.d("Unlink", "start to get storage of drives");
+            Log.d("Unlink", "start to unlink");
             GoogleDrive.startUpdateStorageThread();
-            Log.d("Unlink", "end of get storage of drives");
-            boolean wantToUnlink = UIHandler.showMoveDriveFilesDialog(buttonText, activity);
-            MainActivity.isAnyProccessOn = false;
+            UIHandler.showMoveDriveFilesDialog(buttonText, activity);
         }
 
         public static ArrayList<SignInResult> signInLinkedAccounts(JsonObject resultJson, String userEmail){
