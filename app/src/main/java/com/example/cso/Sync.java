@@ -95,6 +95,7 @@ public class Sync {
             for (String[] androidRow : sortedAndroidFiles) {
                 double amountSpaceToFreeUp = StorageHandler.getAmountSpaceToFreeUp();
                 Log.d("service","amountSpaceToFreeUp : " + amountSpaceToFreeUp);
+                UIHandler.stopSyncButtonAnimation(activity);
                 syncAndroidFile(androidRow, userEmail, refreshToken, syncedAssetsSubFolderId,
                         driveFreeSpace, amountSpaceToFreeUp, context, activity);
             }
@@ -187,6 +188,7 @@ public class Sync {
                 String fileHash = androidRow[5];
                 String mimeType = androidRow[7];
                 String assetId = androidRow[8];
+                UIHandler.startSyncButtonAnimation(MainActivity.activity);
                 BackUp backUp = new BackUp();
                 isBackedUp[0] = backUp.backupAndroidToDrive(fileId,fileName, filePath,fileHash,mimeType,assetId,
                         accessToken,userEmail,syncedAssetsFolderId);

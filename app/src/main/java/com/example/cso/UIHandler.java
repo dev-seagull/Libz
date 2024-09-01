@@ -116,11 +116,14 @@ public class UIHandler {
         });
     }
 
-    private static void startSyncButtonAnimation(Activity activity){
-        LiquidFillButton syncButton = activity.findViewById(R.id.syncButton);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            syncButton.startFillAnimation();
-        }
+    public static void startSyncButtonAnimation(Activity activity){
+        activity.runOnUiThread(() -> {
+            LiquidFillButton syncButton = activity.findViewById(R.id.syncButton);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                syncButton.startFillAnimation();
+            }
+        });
+
     }
 
     public static void handleSyncButtonClick(Activity activity){
@@ -140,18 +143,25 @@ public class UIHandler {
             if(!isServiceRunning){
                 Sync.startSync(activity);
             }
-            startSyncButtonAnimation(activity);
+//            startSyncButtonAnimation(activity);
         }catch (Exception e){}
     }
 
     private static void stopSyncIfRunning(boolean isServiceRunning, Activity activity){
-        LiquidFillButton syncButton = activity.findViewById(R.id.syncButton);
         try{
             if(isServiceRunning){
                 Sync.stopSync();
             }
-            syncButton.endFillAnimation();
+            stopSyncButtonAnimation(activity);
         }catch (Exception e){}
+    }
+
+    public static void stopSyncButtonAnimation(Activity activity){
+        activity.runOnUiThread(() -> {
+            LiquidFillButton syncButton = activity.findViewById(R.id.syncButton);
+            syncButton.endFillAnimation();
+        });
+
     }
 
     private static RotateAnimation createContinuousRotateAnimation() {
@@ -317,41 +327,6 @@ public class UIHandler {
             }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
         });
         updateUIThread.start();
-    }
-
-
-    public static void startUiThreadForSignOut(MenuItem item, Button button, String buttonText, boolean isBackedUp){
-        LogHandler.saveLog("Starting Ui Thread For Sign Out Thread", false);
-        Thread uiThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                MainActivity.activity.runOnUiThread(() -> {
-                    if(isBackedUp){
-                        try {
-                            item.setEnabled(false);
-                            ViewGroup parentView = (ViewGroup) button.getParent();
-                            parentView.removeView(button);
-                        } catch (Exception e) {
-                            LogHandler.saveLog(
-                                    "Failed to handle ui after sign out : "
-                                            + e.getLocalizedMessage(), true
-                            );
-                        }
-                    } else {
-                        try {
-                            button.setText(buttonText);
-                        } catch (Exception e) {
-                            LogHandler.saveLog(
-                                    "Failed to handle ui when sign out : "
-                                            + e.getLocalizedMessage(), true
-                            );
-                        }
-                    }
-                });
-            }
-        });
-        uiThread.start();
-        LogHandler.saveLog("Finished Ui Thread For Sign Out Thread", false);
     }
 
 
@@ -583,7 +558,7 @@ public class UIHandler {
 
         ImageView pieChartArrowDown = createArrowDownImageView(context);
 
-        PieChart pieChart = createPieChart(context,device);
+        PieChart pieChart = createPieChartForDevice(context,device);
 
         TextView directoryUsages = createDirectoryUsageTextView(context);
 
@@ -597,10 +572,10 @@ public class UIHandler {
         return layout;
     }
 
-    private static PieChart createPieChart(Context context, DeviceHandler device) {
+    private static PieChart createPieChartForDevice(Context context, DeviceHandler device) {
         PieChart pieChart = new PieChart(context);
         configurePieChartDimensions(pieChart);
-        configurePieChartData(pieChart, device);
+        configurePieChartDataForDevice(pieChart, device);
         configurePieChartLegend(pieChart);
         configurePieChartInteractions(pieChart);
         pieChart.invalidate();
@@ -623,26 +598,38 @@ public class UIHandler {
         pieChart.setLayoutParams(layoutParams);
     }
 
-    private static void configurePieChartData(PieChart pieChart, DeviceHandler device) {
+    private static void configurePieChartDataForDevice(PieChart pieChart, DeviceHandler device) {
         JsonObject storageData = getDeviceStorageData(device);
-        double freeSpace = storageData.get("freeSpace").getAsDouble();
-        double mediaStorage = storageData.get("mediaStorage").getAsDouble();
-        double usedSpaceExcludingMedia = storageData.get("usedSpaceExcludingMedia").getAsDouble();
+        double freeSpace = storageData.get("freeSpace").getAsDouble() * 1000;
+        double mediaStorage = storageData.get("mediaStorage").getAsDouble() * 1000;
+        double usedSpaceExcludingMedia = storageData.get("usedSpaceExcludingMedia").getAsDouble() * 1000;
 
         ArrayList<PieEntry> entries = new ArrayList<>();
-        entries.add(new PieEntry((float) freeSpace, "Free Space(GB)"));
-        entries.add(new PieEntry((float) mediaStorage, "Media(GB)"));
-        entries.add(new PieEntry((float) usedSpaceExcludingMedia, "Others(GB)"));
+        entries.add(new PieEntry((float) freeSpace, "Free Space"));
+        entries.add(new PieEntry((float) mediaStorage, "Media"));
+        entries.add(new PieEntry((float) usedSpaceExcludingMedia, "Others"));
 
         PieDataSet dataSet = new PieDataSet(entries, null);
         int[] colors = {
                 Color.parseColor("#1E88E5"),
                 Color.parseColor("#64B5F6"),
-                Color.parseColor("#B3E5FC")
+                Color.parseColor("#304194")
         };
         dataSet.setColors(colors);
-        dataSet.setValueTextColor(Color.parseColor("#212121"));
+        dataSet.setValueTextColor(Color.WHITE);
         dataSet.setValueTextSize(14f);
+
+        dataSet.setValueFormatter(new PieChartValueFormatter());
+
+        // Enable value lines and set value positions
+        dataSet.setDrawValues(true);
+        dataSet.setValueLinePart1OffsetPercentage(80f); // Offset of the line
+        dataSet.setValueLinePart1Length(0.3f);
+        dataSet.setValueLinePart2Length(0.4f);
+        dataSet.setValueLineWidth(2f);
+        dataSet.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+        dataSet.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+
 
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
@@ -832,36 +819,121 @@ public class UIHandler {
                 if (type.equals("primary")) {
                 } else if (type.equals("backup")) {
                     if (!accountButtonExistsInUI(userEmail)){
-                        Button newGoogleLoginButton = createBackUpAccountButton(MainActivity.activity);
-                        newGoogleLoginButton.setText(userEmail);
-                        setListenerToAccountButton(newGoogleLoginButton,MainActivity.activity);
-                        backupAccountsLinearLayout.addView(newGoogleLoginButton);
+                        LinearLayout newAccountButtonView = createNewAccountButtonView(activity, userEmail);
+                        backupAccountsLinearLayout.addView(newAccountButtonView);
                     }
                 }
             }
             // add a back up account button
             if (!accountButtonExistsInUI("add a back up account")){
-                Button newGoogleLoginButton = createBackUpAccountButton(MainActivity.activity);
-                newGoogleLoginButton.setText("add a back up account");
-                setListenerToAccountButton(newGoogleLoginButton,MainActivity.activity);
-                backupAccountsLinearLayout.addView(newGoogleLoginButton);
+                LinearLayout newAccountButtonView = createNewAccountButtonView(activity,"add a back up account");
+                backupAccountsLinearLayout.addView(newAccountButtonView);
             }
         });
     }
 
-    private static boolean accountButtonExistsInUI(String userEmail){
+    private static LinearLayout createNewAccountButtonView(Activity context, String userEmail){
+        LinearLayout layout = new LinearLayout(context);
+        layout.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setGravity(Gravity.CENTER);
+        layout.setContentDescription(userEmail);
+
+        Button button = createBackUpAccountButton(MainActivity.activity);
+        button.setText(userEmail);
+        setListenerToAccountButton(button,MainActivity.activity);
+
+
+        LinearLayout chartInnerLayout = createDeviceDetailsLayout(context);
+
+        ImageView pieChartArrowDown = createArrowDownImageView(context);
+
+        PieChart pieChart = createPieChartForAccount(context,userEmail);
+
+        TextView directoryUsages = createDirectoryUsageTextView(context);
+
+        chartInnerLayout.addView(pieChartArrowDown);
+        chartInnerLayout.addView(pieChart);
+        chartInnerLayout.addView(directoryUsages);
+
+        layout.addView(button);
+        layout.addView(chartInnerLayout);
+
+        return layout;
+    }
+
+    private static boolean accountButtonExistsInUI(String userEmail){ // need change
         LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
         int backupButtonsCount = backupButtonsLinearLayout.getChildCount();
         for(int i=0 ; i < backupButtonsCount ; i++){
-            Button backupButtonChild =  (Button) backupButtonsLinearLayout.getChildAt(i);
-            if(backupButtonChild.getText().toString().equalsIgnoreCase(userEmail)){
+            View backupButtonChild = backupButtonsLinearLayout.getChildAt(i);
+            if(backupButtonChild.getContentDescription().toString().equalsIgnoreCase(userEmail)){
                 return true;
             }
         }
         return false;
     }
 
-//    private static void removeRedundant
+    private static PieChart createPieChartForAccount(Activity context,String userEmail){
+        PieChart pieChart = new PieChart(context);
+        configurePieChartDimensions(pieChart);
+        configurePieChartDataForAccount(pieChart, userEmail);
+        configurePieChartLegend(pieChart);
+        configurePieChartInteractions(pieChart);
+        pieChart.invalidate();
+        return pieChart;
+    }
+
+    private static void configurePieChartDataForAccount(PieChart pieChart, String userEmail) {
+        String[] columns = new String[] {"totalStorage","usedStorage","userEmail","type"};
+        List<String[]> account_rows = DBHelper.getAccounts(columns);
+        double freeSpace =0;
+        double usedStorage = 0;
+        for (String[] account : account_rows){
+            if (account[2].equals(userEmail) && account[3].equals("backup")){
+                double totalStorage = Double.parseDouble(account[0]);
+                usedStorage = Double.parseDouble(account[1]);
+                freeSpace = totalStorage - usedStorage;
+                break;
+            }
+        }
+//        JsonObject storageData = getDeviceStorageData(device);
+//        double freeSpace = storageData.get("freeSpace").getAsDouble();
+//        double mediaStorage = storageData.get("mediaStorage").getAsDouble();
+//        double usedSpaceExcludingMedia = storageData.get("usedSpaceExcludingMedia").getAsDouble();
+
+        ArrayList<PieEntry> entries = new ArrayList<>();
+        entries.add(new PieEntry((float) freeSpace, "Free Space"));
+        entries.add(new PieEntry((float) usedStorage, "Used Storage"));
+//        entries.add(new PieEntry((float) usedSpaceExcludingMedia, "Others(GB)"));
+
+        PieDataSet dataSet = new PieDataSet(entries, null);
+        int[] colors = {
+                Color.parseColor("#1E88E5"),
+                Color.parseColor("#304194")
+//                ,Color.parseColor("#B3E5FC")
+        };
+        dataSet.setColors(colors);
+        dataSet.setValueTextColor(Color.WHITE);
+        dataSet.setValueTextSize(14f);
+
+        dataSet.setValueFormatter(new PieChartValueFormatter());
+
+        // Enable value lines and set value positions
+        dataSet.setDrawValues(true);
+        dataSet.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+        dataSet.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+
+        PieData data = new PieData(dataSet);
+        pieChart.setData(data);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setDrawEntryLabels(true);
+        pieChart.setDrawHoleEnabled(true);
+        pieChart.setDrawHoleEnabled(false);
+    }
 
     public static Button createBackUpAccountButton(Activity activity){
         Button newLoginButton = new Button(activity);
@@ -904,6 +976,11 @@ public class UIHandler {
                     if (MainActivity.isAnyProccessOn) {
                         return;
                     }
+                    LinearLayout detailsView = getDetailsView(button);
+                    if (detailsView.getVisibility() == View.VISIBLE){
+                        detailsView.setVisibility(View.GONE);
+                        return;
+                    }
                     String buttonText = button.getText().toString().toLowerCase();
                     if (buttonText.equals("add a back up account")) {
                         MainActivity.isAnyProccessOn = true;
@@ -926,7 +1003,8 @@ public class UIHandler {
                                     button.setText("signing out...");
                                     button.setClickable(false);
                                     new Thread(() -> GoogleCloud.unlink(buttonText, activity)).start();
-
+                                }else if(item.getItemId() == R.id.details){
+                                    detailsView.setVisibility(View.VISIBLE);
                                 }
                                 return true;
                             });
@@ -965,7 +1043,5 @@ public class UIHandler {
 
         return popupMenu;
     }
-
-
 
 }
