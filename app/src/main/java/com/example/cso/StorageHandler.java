@@ -89,7 +89,7 @@ public class StorageHandler {
         StatFs statFs = new StatFs(externalStorageDirectory);
         long totalBlocks = statFs.getBlockCountLong();
         double totalSpaceGB = (totalBlocks * blockSize) / (1024.0 * 1024.0 * 1024.0);
-        return Double.valueOf(String.format(Locale.US,"%.1f", totalSpaceGB));
+        return Double.valueOf(String.format(Locale.getDefault(),"%.1f", totalSpaceGB));
     }
 
     public static double getDeviceFreeStorage(){
@@ -97,7 +97,7 @@ public class StorageHandler {
         StatFs statFs = new StatFs(externalStorageDirectory);
         long availableBlocks = statFs.getAvailableBlocksLong();;
         double freeSpaceGB = (availableBlocks * blockSize) / (1024.0 * 1024.0 * 1024.0);
-        return Double.valueOf(String.format(Locale.US,"%.1f", freeSpaceGB));
+        return Double.valueOf(String.format(Locale.getDefault(),"%.1f", freeSpaceGB));
     }
 
 
@@ -142,7 +142,7 @@ public class StorageHandler {
                 } else if (0.0 <= size && size <= 1000) {
                     directorySizes.put(directoryName,"less than one ");
                 }else {
-                    directorySizes.put(directoryName,String.format(Locale.US,"%.1f", size / 1000));
+                    directorySizes.put(directoryName,String.format(Locale.getDefault(),"%.1f", size / 1000));
                 }
             }
         }catch (Exception e){
