@@ -172,7 +172,7 @@ public class Sync {
         boolean isWifiOnlySwitchOn = SharedPreferencesHandler.getWifiOnlySwitchState();
         boolean isWifiConnected = InternetManager.getInternetStatus(context).equals("wifi");
 
-        return isWifiOnlySwitchOn && isWifiConnected || !isWifiOnlySwitchOn;
+        return !isWifiOnlySwitchOn || isWifiConnected;
     }
 
 

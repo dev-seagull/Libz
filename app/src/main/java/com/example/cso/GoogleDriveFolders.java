@@ -215,21 +215,18 @@ public class GoogleDriveFolders {
         final String[] folderId = {null};
         Thread getSubFolderIdThread = new Thread( () -> {
             try{
+                Drive service;
 
-                Drive service = null;
                 if(isLogin){
                     service = GoogleDrive.initializeDrive(accessToken);
-                }else{
-                    String finalAccessToken = DBHelper.getDriveBackupAccessToken(userEmail);
-                    service = GoogleDrive.initializeDrive(finalAccessToken);
-                }
-
-                String parentFolderId = getParentFolderIdFromDrive(service);
-                if(isLogin){
+                    String parentFolderId = getParentFolderIdFromDrive(service);
                     folderId[0] = getSubFolderIdFromDrive(service,folderName,parentFolderId);
                 }else{
                     folderId[0] = DBHelper.getSubFolderIdFromDB(userEmail,folderName);
                     if (folderId[0] == null){
+                        String finalAccessToken = DBHelper.getDriveBackupAccessToken(userEmail);
+                        service = GoogleDrive.initializeDrive(finalAccessToken);
+                        String parentFolderId = getParentFolderIdFromDrive(service);
                         initializeSubFolder(service, parentFolderId,folderName,userEmail);
                         folderId[0] = DBHelper.getSubFolderIdFromDB(userEmail,folderName);
                     }
@@ -248,12 +245,14 @@ public class GoogleDriveFolders {
     public static void deleteSubFolder(String subFolderName, String userEmail){
         Thread deleteSubFolderThread = new Thread( () -> {
             try{
-                String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
-                Drive service = GoogleDrive.initializeDrive(accessToken);
 
-                String folderId = getSubFolderId(subFolderName,userEmail,accessToken,true);
+                Log.d("unlink", "deleteSubFolder" + subFolderName + "from  :" + userEmail);
+                String folderId = getSubFolderId(userEmail,subFolderName,null,false);
 
                 Log.d("unlink", "Deleting folder " + subFolderName + " : " + folderId);
+                String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
+
+                Drive service = GoogleDrive.initializeDrive(accessToken);
                 service.files().delete(folderId).execute();
 
             }catch (Exception e){

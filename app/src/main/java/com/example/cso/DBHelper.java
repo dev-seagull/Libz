@@ -1590,18 +1590,23 @@ public class DBHelper extends SQLiteOpenHelper {
     public static String getParentFolderIdFromDB(String userEmail){
         String sqlQuery = "SELECT parentFolderId FROM ACCOUNTS WHERE userEmail =?";
         Cursor cursor = null;
+        String parentFolderId = null;
         try {
             cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
             if (cursor!= null && cursor.moveToFirst()) {
                 int folderIdColumnIndex = cursor.getColumnIndex("parentFolderId");
                 if (folderIdColumnIndex >= 0) {
-                    return cursor.getString(folderIdColumnIndex);
+                    parentFolderId = cursor.getString(folderIdColumnIndex);
                 }
             }
         }catch (Exception e){
             LogHandler.saveLog("Failed to select from ACCOUNTS in getParentFolderIdFromDB method: " + e.getLocalizedMessage());
+        }finally {
+            if(cursor!= null) {
+                cursor.close();
+            }
         }
-        return null;
+        return parentFolderId;
     }
 
     public static String getSubFolderIdFromDB(String userEmail, String folderName){
@@ -1618,71 +1623,50 @@ public class DBHelper extends SQLiteOpenHelper {
             sqlQuery = "SELECT " + columnName + " FROM ACCOUNTS WHERE userEmail =?";
         }
         Cursor cursor = null;
+        String folderId = null;
         try {
             cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
             if (cursor!= null && cursor.moveToFirst()) {
                 int folderIdColumnIndex = cursor.getColumnIndex(columnName);
                 if (folderIdColumnIndex >= 0) {
-                    return cursor.getString(folderIdColumnIndex);
+                    folderId = cursor.getString(folderIdColumnIndex);
                 }
             }
         }catch (Exception e){
             LogHandler.saveLog("Failed to select from ACCOUNTS in getParentFolderIdFromDB method: " + e.getLocalizedMessage());
-        }
-        return null;
-    }
-
-    public static String getProfileFolderIdFromDB(String userEmail){
-        String sqlQuery = "SELECT profileFolderId FROM ACCOUNTS WHERE userEmail =?";
-        Cursor cursor = null;
-        try {
-            cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
-            if (cursor!= null && cursor.moveToFirst()) {
-                int folderIdColumnIndex = cursor.getColumnIndex("profileFolderId");
-                if (folderIdColumnIndex >= 0) {
-                    return cursor.getString(folderIdColumnIndex);
-                }
+        }finally {
+            if(cursor!= null) {
+                cursor.close();
             }
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to select from ACCOUNTS in getProfileFolderIdFromDB method: " + e.getLocalizedMessage());
         }
-        return null;
+        return folderId;
     }
-
-
-    public static String getDatabaseFolderIdFromDB(String userEmail){
-        String sqlQuery = "SELECT databaseFolderId FROM ACCOUNTS WHERE userEmail =?";
-        Cursor cursor = null;
-        try {
-            cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
-            if (cursor!= null && cursor.moveToFirst()) {
-                int folderIdColumnIndex = cursor.getColumnIndex("databaseFolderId");
-                if (folderIdColumnIndex >= 0) {
-                    return cursor.getString(folderIdColumnIndex);
-                }
-            }
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to select from ACCOUNTS in getDatabaseFolderIdFromDB method: " + e.getLocalizedMessage());
-        }
-        return null;
-    }
-
 
     public static String getDriveBackupAccessToken(String userEmail){
-        try{
-            List<String[]> accountRows = DBHelper.getAccounts(new String[]{"userEmail","type", "refreshToken"});
-            for (String[] accountRow : accountRows) {
-                String selectedUserEmail = accountRow[0];
-                String type = accountRow[1];
-                if (selectedUserEmail.equals(userEmail) && type.equals("backup")) {
-                    String driveBackupRefreshToken = accountRow[2];
-                    return GoogleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
+        String[] driveBackupAccessToken = {null};
+        Thread getDriveBackupAccessTokenThread = new Thread( () -> {
+            try{
+                List<String[]> accountRows = DBHelper.getAccounts(new String[]{"userEmail","type", "refreshToken"});
+                for (String[] accountRow : accountRows) {
+                    String selectedUserEmail = accountRow[0];
+                    String type = accountRow[1];
+                    if (selectedUserEmail.equals(userEmail) && type.equals("backup")) {
+                        String driveBackupRefreshToken = accountRow[2];
+                        driveBackupAccessToken[0] =  GoogleCloud.updateAccessToken(driveBackupRefreshToken).getAccessToken();
+                        break;
+                    }
                 }
+            }catch (Exception e){
+                FirebaseCrashlytics.getInstance().recordException(e);
             }
+        });
+        getDriveBackupAccessTokenThread.start();
+        try {
+            getDriveBackupAccessTokenThread.join();
         }catch (Exception e){
             FirebaseCrashlytics.getInstance().recordException(e);
         }
-        return null;
+        return driveBackupAccessToken[0];
     }
 
     public static ArrayList<String> getBackupAccountsInDevice(String userEmail) {
