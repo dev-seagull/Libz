@@ -414,7 +414,7 @@ public class UIHandler {
                                 String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
                                 Drive service = GoogleDrive.initializeDrive(accessToken);
                                 Log.d("Unlink", "Drive and access token : " + accessToken + service);
-                                Unlink.unlinkSingleAccount(userEmail, service);
+                                Unlink.unlinkSingleAccount(userEmail, service,false);
                             }).start();
                         }else{
                             new Thread( () -> {

@@ -375,7 +375,7 @@ public class GoogleDrive {
             try {
                 fileMetadata = sourceAccount.files().get(fileId).execute();
 
-                Permission destinationUserPermission = new Permission().setType("user").setRole("owner")//maybe owner is better
+                Permission destinationUserPermission = new Permission().setType("user").setRole("writer")//maybe owner is better
                         .setEmailAddress(destinationUserEmail + "@gmail.com");
 
                 sourceAccount.permissions().create(fileMetadata.getId(), destinationUserPermission).execute();
@@ -458,41 +458,6 @@ public class GoogleDrive {
 
         return totalSize[0];
     }
-
-    public static void recursivelyDeleteFolder(Drive service,String folderId, boolean completeMove) {
-        try {
-            String query = "'" + folderId + "' in parents and trashed = false";
-            Log.d("Unlink", "deleting file and folders in : " + query + " and should complete delete is " + completeMove);
-
-
-            Drive.Files.List request = service.files().list().setQ(query);
-            boolean deleteThisFolder = true;
-            do {
-                FileList fileList = request.execute();
-
-                for (File file : fileList.getFiles()) {
-                    if (file.getMimeType().equals("application/vnd.google-apps.folder")) {
-                        if (file.getName().equals("assets") && !completeMove){
-                            deleteThisFolder = false;
-                            continue;
-                        }
-                        recursivelyDeleteFolder(service, file.getId(),completeMove);
-                    } else {
-                        service.files().delete(file.getId()).execute();
-                    }
-                }
-                request.setPageToken(fileList.getNextPageToken());
-            } while (request.getPageToken() != null && !request.getPageToken().isEmpty());
-
-            if (deleteThisFolder){
-                service.files().delete(folderId).execute();
-            }
-        } catch (Exception e) {
-            LogHandler.saveLog("failed to delete files and folders from drive : " + e.getLocalizedMessage()) ;
-        }
-    }
-
-
 
 
     public static void deleteDriveFolders(Drive service,String sourceUserEmail,boolean completeMove){

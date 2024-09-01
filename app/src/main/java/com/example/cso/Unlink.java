@@ -12,10 +12,10 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import java.util.List;
 
 public class Unlink {
-    public static void unlinkSingleAccount(String sourceUserEmail, Drive sourceDriveService){
+    public static void unlinkSingleAccount(String sourceUserEmail, Drive sourceDriveService,boolean completeMove){
         Thread unlinkSingleAccountThread = new Thread( () -> {
             Log.d("Threads","unlinkSingleAccountThread started");
-            GoogleDrive.deleteDriveFolders(sourceDriveService,sourceUserEmail,false);
+            GoogleDrive.deleteDriveFolders(sourceDriveService,sourceUserEmail,completeMove);
 
             boolean isRevoked = GoogleCloud.invalidateToken(sourceUserEmail);
             if (isRevoked){
@@ -54,10 +54,11 @@ public class Unlink {
                 boolean hasNetworkError = false;
                 for (String[] account : accounts_rows) {
                     String type = account[2];
-                    if (!type.equals("backup")){
+                    String targetUserEmail = account[1];
+                    if (!type.equals("backup") || targetUserEmail.equals(sourceUserEmail)){
                         continue;
                     }
-                    String targetUserEmail = account[1];
+
                     Log.d("unlink", "moving file " + drive_row[4] + " to " + targetUserEmail + " started");
                     if (targetDriveService == null){
                         String targetRefreshToken = account[0];
@@ -88,14 +89,15 @@ public class Unlink {
                 }
             }
             Log.d("unlink", "all files moved with result : " + allAssetsMovedSuccessfully[0]);
-            boolean isBackedUpAndDeleted = false;
+
             if (allAssetsMovedSuccessfully[0]){
+                SharedPreferencesHandler.setJsonModifiedTime(MainActivity.preferences);
                 Log.d("unlink", "starting to back up json to remaining accounts");
-                isBackedUpAndDeleted = Profile.backupJsonToRemainingAccounts(sourceUserEmail);
+                boolean isBackedUpAndDeleted = Profile.backupJsonToRemainingAccounts(sourceUserEmail);
                 Log.d("unlink", "end of back up json to remaining accounts : " + isBackedUpAndDeleted);
                 if(isBackedUpAndDeleted){
                     Log.d("Unlink", "unlink from single account after moving files and backup");
-                    Unlink.unlinkSingleAccount(sourceUserEmail,service);
+                    Unlink.unlinkSingleAccount(sourceUserEmail,service,ableToMoveAllAssets);
                     Log.d("Unlink", "end of unlink from single account (every thing is ok)");
                 }
             }else{
@@ -146,11 +148,11 @@ public class Unlink {
             for (String[] account : accounts) {
                 String type = account[1];
                 if (!account[0].equals(userEmail) && type.equals("backup")){
-                    return true;
+                    return false;
                 }
             }
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
-        return false;
+        return true;
     }
 
 }
