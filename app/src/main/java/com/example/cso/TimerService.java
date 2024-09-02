@@ -77,6 +77,8 @@ public class TimerService extends Service {
                 @Override
                 public void run() {
                     try{
+                        Log.d("service", "Android timer is running: " + MainActivity.isAndroidTimerRunning);
+                        Log.d("service", "Is any process on: " + MainActivity.isAnyProccessOn);
                         if (isTimerRunning || MainActivity.isAnyProccessOn) {
                             return;
                         }
@@ -93,7 +95,7 @@ public class TimerService extends Service {
                                 }
 
                                 //if database needed to upload do it here
-
+                                
                                 if(!MainActivity.isAndroidTimerRunning){
                                     Android.startThreads(MainActivity.activity);
                                 }
