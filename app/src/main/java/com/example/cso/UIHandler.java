@@ -1,6 +1,5 @@
 package com.example.cso;
 
-import static com.example.cso.MainActivity.isAnyProccessOn;
 import static com.example.cso.MainActivity.signInToBackUpLauncher;
 
 import android.app.Activity;
@@ -69,7 +68,7 @@ public class UIHandler {
         setupDeviceButtons(activity);
         initializeSyncButton(activity);
         initializeWifiOnlyButton(activity);
-        setupAccountButtons(activity);
+        setupAccountButtons(activity); // init
     }
 
     public static void initializeWifiOnlyButton(Activity activity){
@@ -108,6 +107,7 @@ public class UIHandler {
             startSyncButtonAnimation(activity);
         }else{
             SharedPreferencesHandler.setSwitchState("syncSwitchState",false,MainActivity.preferences);
+            syncState[0] = false;
         }
         updateSyncAndWifiButtonBackground(syncButton, syncState[0], activity);
 
@@ -330,8 +330,7 @@ public class UIHandler {
     }
 
 
-    public static void displayLinkProfileDialog(ActivityResultLauncher<Intent> signInToBackUpLauncher, View[] child,
-                                                JsonObject resultJson, GoogleCloud.SignInResult signInResult){
+    public static void displayLinkProfileDialog(JsonObject resultJson, GoogleCloud.SignInResult signInResult){
         MainActivity.activity.runOnUiThread(() -> {
             try{
                 String userEmail = signInResult.getUserEmail();
@@ -351,7 +350,8 @@ public class UIHandler {
 
                         .setNegativeButton("Cancel", (dialog, id) -> {
                             Log.d("signInToBackUpLauncher","Cancel pressed");
-                            UIHandler.setupAccountButtons(MainActivity.activity);
+
+                            UIHandler.setupAccountButtons(MainActivity.activity); // cancel login
                             dialog.dismiss();
                         }).setCancelable(false);
 
@@ -397,8 +397,7 @@ public class UIHandler {
                             }).start();
                         }
                     }).setNegativeButton("Cancel", (dialog, id) -> {
-                        MainActivity.isAnyProccessOn = false;
-                        UIHandler.setupAccountButtons(activity);
+                        UIHandler.setupAccountButtons(activity); // cancel unlink
                         Log.d("Unlink", "end of unlink: canceled");
                         dialog.dismiss();
                     });
@@ -476,6 +475,9 @@ public class UIHandler {
 
     private static void setListenerToDeviceButtons(Button button, DeviceHandler device){
         button.setOnClickListener( view -> {
+            if (MainActivity.isAnyProccessOn){// clickable false
+                return;
+            }
             LinearLayout detailsView = getDetailsView(button);
             if (detailsView.getVisibility() == View.VISIBLE){
                 detailsView.setVisibility(View.GONE);
@@ -490,9 +492,8 @@ public class UIHandler {
             popupMenu.setOnMenuItemClickListener(item -> {
                 if (item.getItemId() == R.id.unlink) {
                     button.setText("signing out...");
-                    button.setClickable(false);
+                    MainActivity.isAnyProccessOn = true; // unlink device
 //                    GoogleCloud.startUnlinkThreads(buttonText, item, button);
-                    button.setClickable(true);
                 }else if (item.getItemId() == R.id.details){
                     detailsView.setVisibility(View.VISIBLE);
                 }
@@ -641,18 +642,28 @@ public class UIHandler {
 
     private static JsonObject getDeviceStorageData(DeviceHandler device){
         JsonObject storageData = new JsonObject();
-        if (isCurrentDevice(device)){
-            StorageHandler storageHandler = new StorageHandler();
-            double freeSpace = storageHandler.getFreeSpace();
-            double totalStorage = storageHandler.getTotalStorage();
-            double mediaStorage = Double.parseDouble(DBHelper.getPhotosAndVideosStorage());
-            double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
-            storageData.addProperty("freeSpace",freeSpace);
-            storageData.addProperty("mediaStorage", mediaStorage);
-            storageData.addProperty("usedSpaceExcludingMedia", usedSpaceExcludingMedia);
-        }else{
-            storageData = StorageSync.downloadStorageJsonFileFromAccounts(device);
-        }
+        StorageHandler storageHandler = new StorageHandler();
+        double freeSpace = storageHandler.getFreeSpace();
+        double totalStorage = storageHandler.getTotalStorage();
+        double mediaStorage = Double.parseDouble(DBHelper.getPhotosAndVideosStorage());
+        double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
+        storageData.addProperty("freeSpace",freeSpace);
+        storageData.addProperty("mediaStorage", mediaStorage);
+        storageData.addProperty("usedSpaceExcludingMedia", usedSpaceExcludingMedia);
+//
+//        if (isCurrentDevice(device)){
+//            StorageHandler storageHandler = new StorageHandler();
+//            double freeSpace = storageHandler.getFreeSpace();
+//            double totalStorage = storageHandler.getTotalStorage();
+//            double mediaStorage = Double.parseDouble(DBHelper.getPhotosAndVideosStorage());
+//            double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
+//            storageData.addProperty("freeSpace",freeSpace);
+//            storageData.addProperty("mediaStorage", mediaStorage);
+//            storageData.addProperty("usedSpaceExcludingMedia", usedSpaceExcludingMedia);
+//
+//        }else{
+//            storageData = StorageSync.downloadStorageJsonFileFromAccounts(device);
+//        }
         return storageData;
     }
 
@@ -807,7 +818,7 @@ public class UIHandler {
 
     //---------------------------------- //---------------------------------- Account Button //---------------------------------- //----------------------------------
 
-    public static void setupAccountButtons(Activity activity){
+    public static void setupAccountButtons(Activity activity){ // define
         activity.runOnUiThread(() -> {
             LinearLayout backupAccountsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
             backupAccountsLinearLayout.removeAllViews();
@@ -829,6 +840,7 @@ public class UIHandler {
                 LinearLayout newAccountButtonView = createNewAccountButtonView(activity,"add a back up account");
                 backupAccountsLinearLayout.addView(newAccountButtonView);
             }
+            MainActivity.isAnyProccessOn = false; // setup account buttons
         });
     }
 
@@ -973,7 +985,7 @@ public class UIHandler {
     public static void setListenerToAccountButton(Button button, Activity activity) {
         button.setOnClickListener(
                 view -> {
-                    if (MainActivity.isAnyProccessOn) {
+                    if (MainActivity.isAnyProccessOn) { // make clickable false
                         return;
                     }
                     LinearLayout detailsView = getDetailsView(button);
@@ -983,15 +995,12 @@ public class UIHandler {
                     }
                     String buttonText = button.getText().toString().toLowerCase();
                     if (buttonText.equals("add a back up account")) {
-                        MainActivity.isAnyProccessOn = true;
+                        MainActivity.isAnyProccessOn = true; // add a backup account
                         button.setText("signing in ...");
-                        button.setClickable(false);
                         GoogleCloud.signInToGoogleCloud(signInToBackUpLauncher, activity);
-                        button.setClickable(true);
-                        MainActivity.isAnyProccessOn = false;
-                    } else if (buttonText.equals("signing in ...") && !isAnyProccessOn){
+                    } else if (buttonText.equals("signing in ...")){
                         button.setText("add a back up account");
-                    } else if (buttonText.equals("signing out...") && !isAnyProccessOn){
+                    } else if (buttonText.equals("signing out...")){
                         button.setText(button.getContentDescription());
                     } else {
                         button.setContentDescription(buttonText);
@@ -999,9 +1008,8 @@ public class UIHandler {
                             PopupMenu popupMenu = setPopUpMenuOnButton(activity, button,"account");
                             popupMenu.setOnMenuItemClickListener(item -> {
                                 if (item.getItemId() == R.id.unlink) {
-                                    MainActivity.isAnyProccessOn = true;
+                                    MainActivity.isAnyProccessOn = true;//unlink
                                     button.setText("signing out...");
-                                    button.setClickable(false);
                                     new Thread(() -> GoogleCloud.unlink(buttonText, activity)).start();
                                 }else if(item.getItemId() == R.id.details){
                                     detailsView.setVisibility(View.VISIBLE);

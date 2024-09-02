@@ -34,11 +34,11 @@
         public static String androidUniqueDeviceIdentifier;
         public static String androidDeviceName;
         public static SharedPreferences preferences;
-        public static boolean isAnyProccessOn = false;
+        public static boolean isAnyProccessOn = false; // init
         public static Timer androidTimer;
         public static Timer UITimer;
         public static Intent serviceIntent;
-        public static boolean isAndroidTimerRunning = false;
+        public static boolean isAndroidTimerRunning = false; // init
         private static PermissionManager permissionManager = new PermissionManager();;
         public static FirebaseAnalytics mFirebaseAnalytics;
         public static String dataBaseName = "StashDatabase";
@@ -80,7 +80,6 @@
                         Log.d("signInToBackUpLauncher", "result code: " + result.getResultCode());
                         Log.d("signInToBackUpLauncher", "result data: " + result.getData());
                         if(result.getResultCode() == RESULT_OK){
-                            isAnyProccessOn = true;
                             LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
                             View[] lastButton = {backupButtonsLinearLayout.getChildAt(
                                     backupButtonsLinearLayout.getChildCount() - 1)};
@@ -117,24 +116,21 @@
                                     Log.d("signInToBackUpLauncher","Checking if it's linked to accounts finished: " + isLinked);
 
                                     if (isLinked){
-                                        UIHandler.displayLinkProfileDialog(signInToBackUpLauncher, lastButton,
-                                                resultJson, signInResult);
+                                        UIHandler.displayLinkProfileDialog(resultJson, signInResult);
                                     }else{
                                         Profile profile = new Profile();
                                         Log.d("signInToBackUpLauncher","loginSingleAccount started");
                                         profile.loginSingleAccount(signInResult);
                                         Log.d("signInToBackUpLauncher","loginSingleAccount finished");
                                     }
-                                    lastButton[0].setClickable(true);
                                 }catch (Exception e){
                                     FirebaseCrashlytics.getInstance().recordException(e);
-                                }finally {
-                                    isAnyProccessOn = false;
+                                    UIHandler.setupAccountButtons(activity); // failed to login steps
                                 }
                             });
                             signInToBackUpThread.start();
                         }else{
-                            UIHandler.setupAccountButtons(activity);
+                            UIHandler.setupAccountButtons(activity); // failed login request
                         }
                     });
 
@@ -199,7 +195,7 @@
 
                 if (Profile.hasJsonChanged()){
                     DBHelper.updateDatabaseBasedOnJson();
-                    UIHandler.setupAccountButtons(activity);
+                    UIHandler.setupAccountButtons(activity); // after json has changed
                 }
             }).start();
 
@@ -245,6 +241,7 @@
             androidTimer.purge();
             androidTimer = null;
         }
+        isAndroidTimerRunning = false; // on destory
         if(androidTimer == null){
             Log.d("Timers", "stopped android timer");
         }
@@ -272,15 +269,15 @@
                 MainActivity.androidTimer = new Timer();
                 MainActivity.androidTimer.schedule(new TimerTask() {
                     public void run() {
-                        if (isAndroidTimerRunning){
+                        boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
+                        if (isAndroidTimerRunning // previous running
+                                || isServiceRunning){
                             return;
                         }
-                        isAndroidTimerRunning = true;
+                        isAndroidTimerRunning = true; // start timer
                         Log.d("Threads","Android timer started");
-                        if(!TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on")){
-                            Thread androidUpdateThread = new Thread(() -> { Android.startThreads(activity); } );
-                            androidUpdateThread.start();
-                        }
+                        new Thread(() -> Android.startThreads(activity)).start();
+
                         Log.d("Threads","Android timer finished");
                     }
                 }, 1000, 5000);
@@ -321,7 +318,6 @@
         }).start();
 
     }
-
 
 }
 

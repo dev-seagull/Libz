@@ -153,20 +153,19 @@ public class BackUp {
     }
 
     public static List<String[]> sortAndroidItems(List<String[]> android_items){
-        Collections.sort(android_items, new Comparator<String[]>() {
-            @Override
-            public int compare(String[] item1, String[] item2) {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.getDefault());
-                try {
-                    Date date1 = dateFormat.parse(item1[6]);
-                    Date date2 = dateFormat.parse(item2[6]);
-                    return date1.compareTo(date2);
-                } catch (Exception e) {
-                    LogHandler.saveLog("Failed to sort android media items: " + e.getLocalizedMessage(),true);
-                    return 0;
-                }
+        Log.d("service", "sortAndroidItems started");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.getDefault());
+        Collections.sort(android_items, (item1, item2) -> {
+            try {
+                Date date1 = dateFormat.parse(item1[6]);
+                Date date2 = dateFormat.parse(item2[6]);
+                return date1.compareTo(date2);
+            } catch (Exception e) {
+                LogHandler.saveLog("Failed to sort android media items: " + e.getLocalizedMessage(),true);
+                return 0;
             }
         });
+        Log.d("service", "sortAndroidItems finished");
         return android_items;
     }
 

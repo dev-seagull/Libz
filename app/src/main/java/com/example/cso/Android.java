@@ -73,7 +73,6 @@ public class Android {
         } catch (Exception e) {
             LogHandler.saveLog("error when downloading user profile : " + e.getLocalizedMessage(), true);
         }
-        MainActivity.isAndroidTimerRunning = false;
         return result;
     }
 
@@ -253,19 +252,13 @@ public class Android {
         return isDeleted[0];
     }
 
-
     private static void startDeleteRedundantAndroidThread(){
         Log.d("Threads","DeleteRedundantAndroidThread started");
-        Thread deleteRedundantAndroidThread = new Thread() {
-            @Override
-            public void run() {
-                DBHelper.deleteRedundantAndroidFromDB();
-            }
-        };
+        Thread deleteRedundantAndroidThread = new Thread(DBHelper::deleteRedundantAndroidFromDB);
         deleteRedundantAndroidThread.start();
-        try{
-            deleteRedundantAndroidThread.join();
-        }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+//        try{
+//            deleteRedundantAndroidThread.join();
+//        }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
         Log.d("Threads","DeleteRedundantAndroidThread finished");
     }
 
@@ -282,8 +275,8 @@ public class Android {
         }catch (Exception e){
             LogHandler.saveLog("Failed to join update android thread: " + e.getLocalizedMessage(), true );
         }
+        MainActivity.isAndroidTimerRunning = false; // end of android timer
         Log.d("Threads","startUpdateAndroidThread finished");
-
     }
 
     public static void startThreads(Activity activity){

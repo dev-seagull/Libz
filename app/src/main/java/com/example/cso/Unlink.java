@@ -29,8 +29,7 @@ public class Unlink {
         }catch (Exception e){
             FirebaseCrashlytics.getInstance().recordException(e);
         }
-        UIHandler.setupAccountButtons(MainActivity.activity);
-        MainActivity.isAnyProccessOn = false;
+        UIHandler.setupAccountButtons(MainActivity.activity); // end of unlink single account
         Log.d("Threads","unlinkSingleAccountThread finished");
     }
 
@@ -113,8 +112,7 @@ public class Unlink {
         try{
             unlinkAccountThread.join();
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
-        MainActivity.isAnyProccessOn = false;
-        UIHandler.setupAccountButtons(activity);
+        UIHandler.setupAccountButtons(activity); // end of unlink account
         Log.d("Unlink", "unlinkAccountThread finished");
     }
 

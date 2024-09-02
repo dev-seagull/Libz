@@ -551,7 +551,7 @@ public class Profile {
         try{
             addingLinkedAccountsThread.join();
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
-        UIHandler.setupAccountButtons(MainActivity.activity);
+        UIHandler.setupAccountButtons(MainActivity.activity); // end of login to linked account
     }
 
     private static void handleDeviceInsertion(JsonObject resultJson){
@@ -678,7 +678,7 @@ public class Profile {
         try {
             loginSingleAccountThread.join();
         }catch (InterruptedException e) { FirebaseCrashlytics.getInstance().recordException(e); }
-        UIHandler.setupAccountButtons(MainActivity.activity);
+        UIHandler.setupAccountButtons(MainActivity.activity); // end of login single account
     }
 
     private static void handleLoginToSingleAccountSuccess(List<String[]> backedUpAccounts,GoogleCloud.SignInResult signInResult){

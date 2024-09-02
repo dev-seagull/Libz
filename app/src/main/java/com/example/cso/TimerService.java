@@ -29,7 +29,7 @@ public class TimerService extends Service {
     private static String CHANNEL_NAME = "Syncing Channel";
 
     private Timer timer;
-    private boolean isTimerRunning = false;
+    private boolean isTimerRunning = false; // init
     private TimerTask timerTask;
     private  Notification notification;
 
@@ -78,21 +78,16 @@ public class TimerService extends Service {
                 public void run() {
                     try{
                         Log.d("service", "Android timer is running: " + MainActivity.isAndroidTimerRunning);
-                        Log.d("service", "Is any process on: " + MainActivity.isAnyProccessOn);
-                        if (isTimerRunning || MainActivity.isAnyProccessOn) {
+                        Log.d("service", "Is any process on: " + MainActivity.isAnyProccessOn);// log
+                        Log.d("service","isTimer Running : " + isTimerRunning); // log
+                        if (isTimerRunning // previous running
+                                || MainActivity.isAnyProccessOn) { // service check
                             return;
                         }
-                        isTimerRunning = true;
+                        isTimerRunning = true; // start of timer service
 
                         new Thread( () -> {
                             try {
-                                if (Deactivation.isDeactivationFileExists()) {
-                                    isTimerRunning = false;
-                                    stopForeground(true);
-                                    stopSelf();
-                                    UIHandler.handleDeactivatedUser();
-                                    System.exit(0);
-                                }
 
                                 //if database needed to upload do it here
                                 
@@ -107,7 +102,7 @@ public class TimerService extends Service {
                             }catch (Exception e) {
                                 FirebaseCrashlytics.getInstance().recordException(e);
                             } finally{
-                                isTimerRunning = false;
+                                isTimerRunning = false; // end of timer service
                             }
 
                         }).start();
@@ -192,6 +187,7 @@ public class TimerService extends Service {
     @Override
     public void onDestroy() {
         Log.d("service", "Service onDestroy Started");
+        isTimerRunning = false;
         stopTimer();
         if (!isAppInForeground()) {
             if (MainActivity.dbHelper != null) {

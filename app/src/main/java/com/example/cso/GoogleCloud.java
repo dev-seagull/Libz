@@ -223,7 +223,7 @@
                     if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
                         isInAccounts = true;
                         runOnUiThread(() -> {
-                            CharSequence text = "This Account Already Exists !";
+                            CharSequence text = "This Primary Account Already Exists !";
                             Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
                         });
                     }
@@ -265,11 +265,6 @@
                         return new SignInResult(userEmail, true, false,
                                 tokens, storage, null);
                     }
-                }else {
-                    MainActivity.activity.runOnUiThread(() -> {
-                        CharSequence text = "This Account Already Exists !";
-                        Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
-                    });
                 }
             }catch (Exception e){
                 LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
