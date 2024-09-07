@@ -845,6 +845,7 @@ public class UIHandler {
             }
             MainActivity.isAnyProccessOn = false; // setup account buttons
         });
+        setupDeviceButtons(activity);
     }
 
     private static LinearLayout createNewAccountButtonView(Activity context, String userEmail){
@@ -1061,6 +1062,8 @@ public class UIHandler {
         syncBuuonDetailstextView.setText(String.format("%d", Math.round(percentageOfSyncedAssets)));
         Typeface dseg7classic_regular = ResourcesCompat.getFont(activity,R.font.dseg7classic_regular);
         syncBuuonDetailstextView.setTypeface(dseg7classic_regular);
+        syncBuuonDetailstextView.setScaleX(1.75f);
+        syncBuuonDetailstextView.setScaleY(1.75f);
         syncBuuonDetailstextView.setGravity(View.TEXT_ALIGNMENT_CENTER);
     }
 }

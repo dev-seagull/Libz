@@ -192,8 +192,9 @@
                 if (Deactivation.isDeactivationFileExists()){ UIHandler.handleDeactivatedUser(); }
 
                 Support.checkSupportBackupRequired(activity);
-
-                if (Profile.hasJsonChanged()){
+                boolean hasJsonChanged = Profile.hasJsonChanged();
+                Log.d("onStart","hasJsonChanged : " + hasJsonChanged);
+                if (hasJsonChanged){
                     DBHelper.updateDatabaseBasedOnJson();
                     UIHandler.setupAccountButtons(activity); // after json has changed
                 }

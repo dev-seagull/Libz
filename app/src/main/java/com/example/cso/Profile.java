@@ -7,6 +7,7 @@ import android.view.View;
 import androidx.activity.result.ActivityResultLauncher;
 
 import com.google.api.client.http.ByteArrayContent;
+import com.google.api.client.json.Json;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
@@ -438,7 +439,58 @@ public class Profile {
         return content[0];
     }
 
+    public static JsonArray getNewAccountsFromJson(JsonArray profileAccounts, ArrayList<String> databaseUserEmails){
+        JsonArray newAccounts = new JsonArray();
+        for (JsonElement account : profileAccounts){
+            String accountName = account.getAsJsonObject().get("userEmail").getAsString();
+            if (!databaseUserEmails.contains(accountName)){
+                newAccounts.add(account.getAsJsonObject());
+            }
+        }
+        return newAccounts;
+    }
 
+    public static ArrayList<String> getRemovedAccountsFromJson(JsonArray profileAccounts, ArrayList<String> databaseUserEmails){
+        ArrayList<String> removedAccounts = new ArrayList<>();
+        for (String account : databaseUserEmails){
+            if (isDeletedElement(account,profileAccounts,"userEmail")){
+                removedAccounts.add(account);
+            }
+        }
+        return removedAccounts;
+    }
+
+
+    public static JsonArray getNewDevicesFromJson(JsonArray profileDevices, ArrayList<String> databaseDeviceIds){
+        JsonArray newDevices = new JsonArray();
+        for (JsonElement device : profileDevices){
+            String deviceId = device.getAsJsonObject().get("deviceId").getAsString();
+            if (!databaseDeviceIds.contains(deviceId)){
+                newDevices.add(device.getAsJsonObject());
+            }
+        }
+        return newDevices;
+    }
+
+    public static ArrayList<String> getRemovedDevicesFromJson(JsonArray profileDevices, ArrayList<String> databaseDeviceIds){
+        ArrayList<String> removedDevices = new ArrayList<>();
+        for (String deviceId : databaseDeviceIds){
+            if (isDeletedElement(deviceId,profileDevices,"deviceId")){
+                removedDevices.add(deviceId);
+            }
+        }
+        return removedDevices;
+    }
+
+    public static boolean isDeletedElement(String name, JsonArray jsonArray, String propertyName){
+        for (JsonElement jsonElement : jsonArray) {
+            String accountName = jsonElement.getAsJsonObject().get(propertyName).getAsString();
+            if (accountName.equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 
      public static JsonObject addDeviceInfoToJson(JsonObject profileJson) {
@@ -506,6 +558,27 @@ public class Profile {
         }
         return hasChanged;
     }
+
+    public static JsonObject getJsonFromAccounts(){
+        try{
+            List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
+
+            for (String[] account : accounts) {
+                if (account[1].equals("backup")) {
+                    String accessToken = GoogleCloud.updateAccessToken(account[2]).getAccessToken();
+                    JsonObject resultJsonContent = readProfileMapContent(account[0],accessToken);
+
+                    if (resultJsonContent!= null){
+                        return resultJsonContent;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            FirebaseCrashlytics.getInstance().recordException(e);
+        }
+        return null;
+    }
+
 
     public static Date convertFileNameToTimeStamp(String fileName){
         try {

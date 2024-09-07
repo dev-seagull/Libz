@@ -110,4 +110,17 @@ public class DeviceHandler {
         return resultList;
     }
 
+    public static void deleteDevice(String deviceId){
+        try{
+            String sqlQuery = "DELETE FROM DEVICE WHERE deviceId = ?";
+            dbWritable.beginTransaction();
+            dbWritable.execSQL(sqlQuery,new String[]{deviceId});
+            dbWritable.setTransactionSuccessful();
+        }catch (Exception e){
+            FirebaseCrashlytics.getInstance().recordException(e);
+        }finally {
+            dbWritable.endTransaction();
+        }
+    }
+
 }

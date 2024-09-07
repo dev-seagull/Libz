@@ -40,7 +40,7 @@ public class Sync {
                         String type = account_row[1];
                         if(type.equals("backup")){
                         syncAndroidToBackupAccount(freeSpace,account_row[0], account_row[4],
-                                context, activity);
+                                activity);
                         }
                     }
                 }
@@ -84,8 +84,7 @@ public class Sync {
     }
 
     private static void syncAndroidToBackupAccount(double driveFreeSpace, String userEmail,
-                                                   String refreshToken, Context context,
-                                                   Activity activity){
+                                                   String refreshToken, Activity activity){
         Log.d("Threads","syncAndroidToBackupAccount  method started");
         try{
             String folderName = GoogleDriveFolders.assetsFolderName;
@@ -97,10 +96,24 @@ public class Sync {
 
             List<String[]> sortedAndroidFiles = getSortedAndroidFiles();
             double amountSpaceToFreeUp = StorageHandler.getAmountSpaceToFreeUp();
+
+            int syncedFilesCount = 0 ;
+            double syncedFilesSpace = 0 ;
+
+            new Thread( () -> checkForStatusChanges(activity)).start();
+
             for (String[] androidRow : sortedAndroidFiles) {
                 Log.d("service","amountSpaceToFreeUp : " + amountSpaceToFreeUp);
                 double fileSize = Double.parseDouble(androidRow[4]);
                 amountSpaceToFreeUp  = amountSpaceToFreeUp - fileSize;
+                syncedFilesSpace += fileSize;
+                syncedFilesCount ++;
+
+                if (syncedFilesSpace >= 1000 || syncedFilesCount >= 40){
+                    syncedFilesSpace = 0;
+                    syncedFilesCount = 0;
+                    new Thread( () -> checkForStatusChanges(activity)).start();
+                }
                 syncAndroidFile(androidRow, userEmail, refreshToken, syncedAssetsSubFolderId,
                         driveFreeSpace,amountSpaceToFreeUp , activity);
             }
@@ -239,5 +252,29 @@ public class Sync {
         try{
             activity.getApplicationContext().startService(MainActivity.serviceIntent);
         }catch (Exception e) {  FirebaseCrashlytics.getInstance().recordException(e); }
+    }
+
+
+    public static void checkForStatusChanges(Activity activity){
+        Thread checkForStatusChangesThread = new Thread(() -> {
+            Log.d("service","check for status changes");
+            boolean isDeactivated = Deactivation.isDeactivationFileExists();
+            Log.d("service","is deActivated : " + isDeactivated);
+            if (isDeactivated){ UIHandler.handleDeactivatedUser(); }
+            Log.d("service","checkSupportBackupRequired");
+            Support.checkSupportBackupRequired(activity);
+            boolean isJsonHasChanged = Profile.hasJsonChanged();
+            Log.d("service","is json has changed : " + isJsonHasChanged);
+            if (isJsonHasChanged){
+                DBHelper.updateDatabaseBasedOnJson();
+                UIHandler.setupAccountButtons(activity); // after json has changed
+            }
+        });
+        checkForStatusChangesThread.start();
+        try{
+            checkForStatusChangesThread.join();
+        }catch (Exception e){
+            FirebaseCrashlytics.getInstance().recordException(e);
+        }
     }
 }

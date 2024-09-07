@@ -1418,51 +1418,78 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public static void updateDatabaseBasedOnJson(){
+        JsonObject profileContent = Profile.getJsonFromAccounts();
+        if (profileContent != null){
+            JsonArray accounts = profileContent.get("backupAccounts").getAsJsonArray();
+            JsonArray devices = profileContent.get("deviceInfo").getAsJsonArray();
+            updateAccountsBasedOnJson(accounts);
+            updateDevicesBasedOnJson(devices);
+        }
+        GoogleDrive.startThreads();
+    }
+
+    public static void updateAccountsBasedOnJson(JsonArray profileAccounts){
         try{
             List<String[]> accounts = getAccounts(new String[]{"userEmail", "type", "refreshToken"});
-            ArrayList<String> emailsInDevice = new ArrayList<>();
+            ArrayList<String> databaseUserEmails = new ArrayList<>();
             for (String[] account : accounts) {
                 if (account[1].equals("backup")){
-                    emailsInDevice.add(account[0]);
+                    databaseUserEmails.add(account[0]);
                 }
             }
 
-            for (String[] account : accounts) {
-                if (account[1].equals("backup")) {
-                    String accessToken = GoogleCloud.updateAccessToken(account[2]).getAccessToken();
-                    JsonObject resultJson = Profile.readProfileMapContent(account[0], accessToken);
-                    if (!jsonBelongsToThisDeviceProfile(resultJson)){
-                        JsonArray accountsInJson = resultJson.get("backupAccounts").getAsJsonArray();
-                        for (int i = 0; i < accountsInJson.size(); i++) {
-                            JsonObject backupAccount = accountsInJson.get(i).getAsJsonObject();
-                            String backupEmail = backupAccount.get("backupEmail").getAsString();
-                            System.out.println("backup email in json is : " + backupEmail);
-                            deleteAccountAndRelatedAssets(backupEmail);
-                        }
-//                    break;
-                    }
+            JsonArray newAccounts = Profile.getNewAccountsFromJson(profileAccounts, databaseUserEmails);
+            for (JsonElement newAccount : newAccounts){
+                String userEmail = newAccount.getAsJsonObject().get("userEmail").getAsString();
+                String refreshToken = newAccount.getAsJsonObject().get("refreshToken").getAsString();
+                GoogleCloud.SignInResult signInResult = GoogleCloud.handleSignInLinkedBackupResult(userEmail,refreshToken);
+                if (!signInResult.getHandleStatus()){
+                    continue;
                 }
+                String accessToken = signInResult.getTokens().getAccessToken();
+                String parentFolderId = GoogleDriveFolders.getParentFolderId(userEmail,true,accessToken);
+                String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.profileFolderName,accessToken,true);
+                String assetsFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.assetsFolderName,accessToken,true);
+                String databaseFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.databaseFolderName,accessToken,true);
+
+                insertIntoAccounts(userEmail, "backup", refreshToken, accessToken,
+                        signInResult.getStorage().getTotalStorage(),
+                        signInResult.getStorage().getUsedStorage(),
+                        signInResult.getStorage().getUsedInDriveStorage(),
+                        signInResult.getStorage().getUsedInGmailAndPhotosStorage(),
+                        parentFolderId,profileFolderId,assetsFolderId,databaseFolderId
+                );
+            }
+            ArrayList<String> removedAccounts = Profile.getRemovedAccountsFromJson(profileAccounts, databaseUserEmails);
+            for (String account : removedAccounts) {
+                deleteAccountAndRelatedAssets(account);
             }
         }catch (Exception e){
-            LogHandler.saveLog("update database based on json failed: " + e.getLocalizedMessage());
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
     }
 
+    public static void updateDevicesBasedOnJson(JsonArray profileDevices){
+        try{
+            ArrayList<DeviceHandler> databaseDevicesObject = getDevicesFromDB();
+            ArrayList<String> databaseDeviceIds = new ArrayList<>();
+            for (DeviceHandler deviceHandler: databaseDevicesObject){
+                databaseDeviceIds.add(deviceHandler.deviceId);
+            }
 
-    public static boolean jsonBelongsToThisDeviceProfile(JsonObject resultJson){
-        try {
-            JsonArray devicesInJson = resultJson.get("deviceInfo").getAsJsonArray();
-            for (JsonElement device : devicesInJson){
-                String deviceIdInJson = device.getAsJsonObject().get("deviceId").getAsString();
-                System.out.println("device id in json is : " + deviceIdInJson);
-                if (deviceIdInJson.equals(MainActivity.androidUniqueDeviceIdentifier)){
-                    return true;
-                }
+            JsonArray newDevices = Profile.getNewDevicesFromJson(profileDevices,databaseDeviceIds);
+            for (JsonElement jsonElement: newDevices){
+                String deviceName = jsonElement.getAsJsonObject().get("deviceName").getAsString();
+                String deviceId = jsonElement.getAsJsonObject().get("deviceId").getAsString();
+                DeviceHandler.insertIntoDeviceTable(deviceName,deviceId);
+            }
+            ArrayList<String> removedDevices = Profile.getRemovedDevicesFromJson(profileDevices, databaseDeviceIds);
+            for (String deviceId : removedDevices){
+                DeviceHandler.deleteDevice(deviceId);
             }
         }catch (Exception e){
-            LogHandler.saveLog("failed to get device id from json : " + e.getLocalizedMessage());
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
-        return false;
     }
 
 

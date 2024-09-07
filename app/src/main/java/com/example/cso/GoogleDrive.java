@@ -355,10 +355,12 @@ public class GoogleDrive {
     }
 
     public static void startThreads(){
-        startUpdateStorageThread();
-        startDeleteRedundantDriveThread();
-        startUpdateDriveFilesThread();
-        startDeleteDuplicatedInDriveThread();
+        new Thread(() -> {
+            startUpdateStorageThread();
+            startDeleteRedundantDriveThread();
+            startUpdateDriveFilesThread();
+            startDeleteDuplicatedInDriveThread();
+        }).start();
     }
 
     public static String moveFileBetweenAccounts(Drive sourceAccount, Drive destinationAccount, String sourceUserEmail, String destinationUserEmail, String fileId) {
