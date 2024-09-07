@@ -102,14 +102,14 @@ public class Upgrade {
 
 
     public static void lastVersion() {
-        MainActivity.activity.runOnUiThread(() -> {
-            try {
-                PackageInfo pInfo = MainActivity.activity.getApplicationContext()
-                        .getPackageManager().getPackageInfo(MainActivity.activity.getApplicationContext()
-                                .getPackageName(), 0);
-                Toast.makeText(MainActivity.activity, "You are Using last version : " + pInfo.versionCode, Toast.LENGTH_SHORT).show();
-            } catch (Exception e) { }
-        });
+//        MainActivity.activity.runOnUiThread(() -> {
+//            try {
+//                PackageInfo pInfo = MainActivity.activity.getApplicationContext()
+//                        .getPackageManager().getPackageInfo(MainActivity.activity.getApplicationContext()
+//                                .getPackageName(), 0);
+//                Toast.makeText(MainActivity.activity, "You are Using last version : " + pInfo.versionCode, Toast.LENGTH_SHORT).show();
+//            } catch (Exception e) { }
+//        });
         upgrade_35_to_36();
 //        MainActivity.dbHelper.deleteFromAccountsTable("stashdevteam","support");
 //        DBHelper.deleteTableContent("ACCOUNTS");
