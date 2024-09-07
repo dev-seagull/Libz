@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.text.Layout;
@@ -36,6 +37,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
@@ -69,6 +71,7 @@ public class UIHandler {
         setupDeviceButtons(activity);
         initializeSyncButton(activity);
         initializeWifiOnlyButton(activity);
+        handleSyncDetailsButton(activity);
         setupAccountButtons(activity);
     }
 
@@ -1044,4 +1047,12 @@ public class UIHandler {
         return popupMenu;
     }
 
+    private static void handleSyncDetailsButton(Activity activity){
+        double percentageOfSyncedAssets = DBHelper.getPercentageOfSyncedAssets();
+        TextView syncBuuonDetailstextView = activity.findViewById(R.id.syncDetailsButtonText);
+        syncBuuonDetailstextView.setText(String.format("%d", Math.round(percentageOfSyncedAssets)));
+        Typeface dseg7classic_regular = ResourcesCompat.getFont(activity,R.font.dseg7classic_regular);
+        syncBuuonDetailstextView.setTypeface(dseg7classic_regular);
+        syncBuuonDetailstextView.setGravity(View.TEXT_ALIGNMENT_CENTER);
+    }
 }

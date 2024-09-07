@@ -80,8 +80,6 @@
                                 android:layout_gravity="center"
                                 android:text="Sync Details"
                                 android:textColor="@color/textColor"
-                                android:textSize="12sp"
-                                android:textStyle="bold"
                                 android:padding="4dp"/>
                         </FrameLayout>
 

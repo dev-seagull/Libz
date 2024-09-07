@@ -1682,4 +1682,58 @@ public class DBHelper extends SQLiteOpenHelper {
         backupAccountsInDevice.add(userEmail);
         return backupAccountsInDevice;
     }
+
+    private static int getNumberOfAssets() {
+        int count = 0;
+        String query = "SELECT COUNT(*) FROM ASSET";
+        Cursor cursor = null;
+        try {
+            cursor = dbReadable.rawQuery(query, null);
+            if (cursor.moveToFirst()) {
+                count = cursor.getInt(0);
+            }
+        } catch (Exception e) {
+            FirebaseCrashlytics.getInstance().recordException(e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return count;
+    }
+
+    private static int getNumberOfSyncedAssets() {
+        int count = 0;
+        String query = "SELECT COUNT(DISTINCT ASSET.id) FROM ASSET " +
+                "INNER JOIN DRIVE ON ASSET.id = DRIVE.assetId";
+        Cursor cursor = null;
+
+        try {
+            cursor = dbReadable.rawQuery(query, null);
+            if (cursor.moveToFirst()) {
+                count = cursor.getInt(0);
+            }
+        } catch (Exception e) {
+            FirebaseCrashlytics.getInstance().recordException(e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        System.out.println("cou: " + count);
+        System.out.println(anyBackupAccountExists());
+        return count;
+    }
+
+    public static double getPercentageOfSyncedAssets() {
+        int totalAssets = getNumberOfAssets();
+        int syncedAssets = getNumberOfSyncedAssets();
+        Log.d("ui","total assets: " + totalAssets);
+        Log.d("ui","synced assets: " + syncedAssets);
+        if (totalAssets == 0) {
+            return 0.0;
+        }
+        double percentage = ((double) syncedAssets / totalAssets) * 100;
+        return percentage;
+    }
 }
