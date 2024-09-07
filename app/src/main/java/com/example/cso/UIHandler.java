@@ -5,7 +5,6 @@ import static com.example.cso.MainActivity.signInToBackUpLauncher;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -28,13 +27,11 @@ import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.GravityCompat;
@@ -561,13 +558,10 @@ public class UIHandler {
 
         LinearLayout chartInnerLayout = createDeviceDetailsLayout(context);
 
-        ImageView pieChartArrowDown = createArrowDownImageView(context);
-
         PieChart pieChart = createPieChartForDevice(context,device);
 
         TextView directoryUsages = createDirectoryUsageTextView(context);
 
-        chartInnerLayout.addView(pieChartArrowDown);
         chartInnerLayout.addView(pieChart);
         chartInnerLayout.addView(directoryUsages);
 
@@ -717,14 +711,6 @@ public class UIHandler {
         return chartInnerLayout;
     }
 
-    private static ImageView createArrowDownImageView(Context context){
-        ImageView pieChartArrowDown = new ImageView(context);
-        LinearLayout.LayoutParams arrowParams = new LinearLayout.LayoutParams(25, 70);
-        arrowParams.setMargins(0, 0, -5, 0);
-        pieChartArrowDown.setLayoutParams(arrowParams);
-        pieChartArrowDown.setBackgroundResource(R.drawable.arrowdown);
-        return pieChartArrowDown;
-    }
 
     private static TextView createDirectoryUsageTextView(Context context){
         TextView directoryUsages = new TextView(context);
@@ -866,13 +852,10 @@ public class UIHandler {
 
         LinearLayout chartInnerLayout = createDeviceDetailsLayout(context);
 
-        ImageView pieChartArrowDown = createArrowDownImageView(context);
-
         PieChart pieChart = createPieChartForAccount(context,userEmail);
 
         TextView directoryUsages = createDirectoryUsageTextView(context);
 
-        chartInnerLayout.addView(pieChartArrowDown);
         chartInnerLayout.addView(pieChart);
         chartInnerLayout.addView(directoryUsages);
 
