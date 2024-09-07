@@ -12,7 +12,7 @@
     <TextView
         android:id="@+id/headerTextView"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:layout_gravity="start"
         android:gravity="center"
         android:paddingStart="5dp"
@@ -24,11 +24,11 @@
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/infoButton"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_marginEnd="5dp"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
         android:layout_gravity="end"
-        android:background="@drawable/round_button"
-        android:text="i"
+        android:background="@drawable/hamburgermenu"
         android:fontFamily="sans-serif"
         android:textSize="30sp"
         android:textAllCaps="false"
