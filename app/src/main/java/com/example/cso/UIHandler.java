@@ -1059,14 +1059,13 @@ public class UIHandler {
 
     private static void handleSyncDetailsButton(Activity activity){
         double percentageOfSyncedAssets = DBHelper.getPercentageOfSyncedAssets();
-        TextView syncBuuonDetailstextView = activity.findViewById(R.id.syncDetailsButtonText);
+        TextView syncDetailsButtonTextView = activity.findViewById(R.id.syncDetailsButtonText);
         activity.runOnUiThread( () -> {
-            syncBuuonDetailstextView.setText(String.format("%d", Math.round(percentageOfSyncedAssets)));
+            syncDetailsButtonTextView.setText(String.format("%d%%", Math.round(percentageOfSyncedAssets)));
             Typeface dseg7classic_regular = ResourcesCompat.getFont(activity,R.font.dseg7classic_regular);
-            syncBuuonDetailstextView.setTypeface(dseg7classic_regular);
-            syncBuuonDetailstextView.setScaleX(1.75f);
-            syncBuuonDetailstextView.setScaleY(1.75f);
-            syncBuuonDetailstextView.setGravity(View.TEXT_ALIGNMENT_CENTER);
+            syncDetailsButtonTextView.setTypeface(dseg7classic_regular);
+            syncDetailsButtonTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+            syncDetailsButtonTextView.setGravity(Gravity.CENTER);
         });
     }
 }
