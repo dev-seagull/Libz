@@ -206,7 +206,7 @@ public class GoogleDrive {
     }
 
     public static void startUpdateDriveFilesThread(){
-        Log.d("Threads","startUpdateDriveFiles thread finished");
+        Log.d("Threads","startUpdateDriveFiles thread started");
         Thread updateDriveFilesThread = new Thread(() -> {
             List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","type"});
 
@@ -233,7 +233,7 @@ public class GoogleDrive {
         try {
             updateDriveFilesThread.join();
         } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
-        LogHandler.saveLog("Finished startUpdateDriveFilesThread", false);
+        Log.d("Threads","startUpdateDriveFiles thread finished");
     }
 
     public static void deleteRedundantDriveFilesFromAccount(String userEmail) {
@@ -258,22 +258,19 @@ public class GoogleDrive {
 
     private static void startDeleteRedundantDriveThread(){
         Log.d("Threads","startDeleteRedundantDrive thread started");
-        Thread deleteRedundantDriveThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail", "type"});
+        Thread deleteRedundantDriveThread = new Thread(() -> {
+            List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail", "type"});
 
-                for(String[] account_row : account_rows) {
-                    String type = account_row[1];
-                    if(type.equals("backup")){
-                        String userEmail = account_row[0];
-                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail, false, null);
-                        ArrayList<String> driveFileIds = new ArrayList<>();
-                        for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
-                            driveFileIds.add( driveMediaItem.getId());
-                        }
-                        DBHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
+            for(String[] account_row : account_rows) {
+                String type = account_row[1];
+                if(type.equals("backup")){
+                    String userEmail = account_row[0];
+                    ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail, false, null);
+                    ArrayList<String> driveFileIds = new ArrayList<>();
+                    for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+                        driveFileIds.add( driveMediaItem.getId());
                     }
+                    DBHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
                 }
             }
         });
@@ -288,23 +285,20 @@ public class GoogleDrive {
 
     private static void startDeleteDuplicatedInDriveThread() {
         Log.d("Threads","startDeleteDuplicatedInDrive thread started");
-        Thread deleteDuplicatedInDriveThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String[] columns = {"refreshToken","userEmail", "type"};
-                List<String[]> account_rows = DBHelper.getAccounts(columns);
+        Thread deleteDuplicatedInDriveThread = new Thread(() -> {
+            String[] columns = {"refreshToken","userEmail", "type"};
+            List<String[]> account_rows = DBHelper.getAccounts(columns);
 
-                for(String[] account_row : account_rows) {
-                    String type = account_row[2];
-                    if(type.equals("backup")){
-                        String userEmail = account_row[1];
-                        String refreshToken = account_row[0];
-                        String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
-                        GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
-                    }
+            for(String[] account_row : account_rows) {
+                String type = account_row[2];
+                if(type.equals("backup")){
+                    String userEmail = account_row[1];
+                    String refreshToken = account_row[0];
+                    String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
+                    GoogleDrive.deleteDuplicatedMediaItems(accessToken, userEmail);
                 }
-
             }
+
         });
 
         deleteDuplicatedInDriveThread.start();
@@ -920,11 +914,11 @@ public class GoogleDrive {
 
     public static double calculateDriveFreeSpace(String[] accountRow){
         try{
-            String[] totalStorage = {accountRow[2]};
-            String[] usedStorage = {accountRow[3]};
-            return Double.parseDouble(totalStorage[0]) - Double.parseDouble(usedStorage[0]);
+            String totalStorage = accountRow[2];
+            String usedStorage = accountRow[3];
+            return Double.parseDouble(totalStorage) - Double.parseDouble(usedStorage);
         }catch (Exception e) {
-            LogHandler.saveLog("Failed to calculate drive free space: " + e.getLocalizedMessage(), true);
+            FirebaseCrashlytics.getInstance().recordException(e);
             return 0;
         }
     }
