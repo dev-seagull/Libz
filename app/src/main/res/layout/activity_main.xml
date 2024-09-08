@@ -137,14 +137,22 @@
 
                     </LinearLayout>
 
+                    <TextView
+                        android:id="@+id/warningText"
+                        android:layout_marginTop="10dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:textColor="@color/text_red_color"/>
 
-                        <LinearLayout
-                            android:id="@+id/backUpAccountsButtons"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:layout_marginTop="50sp"
-                            android:orientation="vertical"></LinearLayout>
+                    <LinearLayout
+                        android:id="@+id/backUpAccountsButtons"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:layout_marginTop="50sp"
+                        android:orientation="vertical"/>
 
                         <LinearLayout
                             android:layout_width="match_parent"

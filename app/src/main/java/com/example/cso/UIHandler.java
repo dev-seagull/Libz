@@ -134,6 +134,7 @@ public class UIHandler {
         if(currentSyncState){
             startSyncIfNotRunning(isServiceRunning, activity);
         }else{
+            UIHelper.warningText.setText("");
             stopSyncIfRunning(isServiceRunning, activity);
         }
         updateSyncAndWifiButtonBackground(syncButton,currentSyncState, activity);
@@ -515,34 +516,25 @@ public class UIHandler {
     }
 
     private static void addEffectsToDeviceButton(Button androidDeviceButton, Context context){
-        int deviceBackgroundResource = R.drawable.gradient_color_bg;
         Drawable deviceDrawable = context.getResources()
                 .getDrawable(R.drawable.android_device_icon);
-        Drawable threeDotMenuDrawable = context.getApplicationContext().getResources()
-                .getDrawable(R.drawable.three_dot_menu);
-        //        AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
-//        fadeIn.setDuration(2000);
-//        androidDeviceButton.startAnimation(fadeIn);
-        androidDeviceButton.setBackgroundResource(deviceBackgroundResource);
-        Drawable deviceButtonDrawable = deviceDrawable;
-        Drawable deviceButtonMenu = threeDotMenuDrawable;
-        
         androidDeviceButton.setCompoundDrawablesWithIntrinsicBounds
-                (deviceButtonDrawable, null, null, null);
+                (deviceDrawable, null, null, null);
 
+        androidDeviceButton.setBackgroundResource(R.drawable.gradient_color_bg);
+        androidDeviceButton.setGravity(Gravity.CENTER);
+        androidDeviceButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         androidDeviceButton.setTextColor(buttonTextColor);
         androidDeviceButton.setTextSize(12);
-
         androidDeviceButton.setPadding(40,0,150,0);
+
         DisplayMetrics displayMetrics = new DisplayMetrics();
         MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                200
+                170
         );
-        if (!androidDeviceButton.getContentDescription().equals(MainActivity.androidUniqueDeviceIdentifier)) {
-            layoutParams.topMargin = 35;
-        }
+        layoutParams.setMargins(0,20,0,16);
         androidDeviceButton.setLayoutParams(layoutParams);
     }
 
@@ -700,7 +692,7 @@ public class UIHandler {
     private static LinearLayout createDeviceDetailsLayout(Context context) {
         LinearLayout chartInnerLayout = new LinearLayout(context);
         chartInnerLayout.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT - 1000,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         ));
         chartInnerLayout.setOrientation(LinearLayout.VERTICAL);
@@ -851,7 +843,6 @@ public class UIHandler {
         button.setText(userEmail);
         setListenerToAccountButton(button,MainActivity.activity);
 
-
         LinearLayout chartInnerLayout = createDeviceDetailsLayout(context);
 
         PieChart pieChart = createPieChartForAccount(context,userEmail);
@@ -948,21 +939,19 @@ public class UIHandler {
                 .getDrawable(R.drawable.googledriveimage);;
         newLoginButton.setCompoundDrawablesWithIntrinsicBounds
                 (loginButtonLeftDrawable, null, null, null);
+
         newLoginButton.setBackgroundResource(R.drawable.gradient_purple);
         newLoginButton.setGravity(Gravity.CENTER);
         newLoginButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        newLoginButton.setVisibility(View.VISIBLE);
-        newLoginButton.setPadding(40,0,150,0);
-        newLoginButton.setTextSize(10);
         newLoginButton.setTextColor(buttonTextColor);
-        newLoginButton.setBackgroundResource(R.drawable.gradient_purple);
-        newLoginButton.setId(View.generateViewId());
+        newLoginButton.setTextSize(10);
+        newLoginButton.setPadding(40,0,150,0);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                200
+                170
         );
         layoutParams.setMargins(0,20,0,16);
         newLoginButton.setLayoutParams(layoutParams);

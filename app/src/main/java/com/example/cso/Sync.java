@@ -28,50 +28,45 @@ public class Sync {
                     return;
                 }
 
-                for(String[] account_row: account_rows){
-                    double freeSpace = GoogleDrive.calculateDriveFreeSpace(account_row);
-                    Log.d("service","free space of " + account_row[0] + " : " + freeSpace);
-                    boolean isAccountFull = true;
-                    if(freeSpace > 50) {
-                        isAccountFull = false;
-                    }
-
-                    if(!isAccountFull){
-                        isAllOfAccountsFull = false;
-                        String type = account_row[1];
-                        if(type.equals("backup")){
-                        syncAndroidToBackupAccount(freeSpace,account_row[0], account_row[4],
-                                activity);
-                        }
-                    }
-                }
-
                 Log.d("service","isAllOfAccountsFull : " + isAllOfAccountsFull);
                 Log.d("service", "any backup account exists: " + accountExists);
 
-                if(!InternetManager.isInternetReachable("https://drive.google.com")){
-                    MainActivity.activity.runOnUiThread( () -> {
-                        Log.d("service","no internet connection");
-                        Toast.makeText(activity,
-                                "No internet connection!",
-                                Toast.LENGTH_LONG).show();
-                    });
-                }
-                else if(isAllOfAccountsFull && accountExists){
+                if(!accountExists){
                     MainActivity.activity.runOnUiThread(() -> {
-                        Toast.makeText(activity,
-                                "Sync failed! You are running out of space." +
-                                        " Add more back up accounts.",
-                                Toast.LENGTH_LONG).show();
+                        UIHelper.warningText.setText(
+                                "There is no backup account to sync!");
+                    });
+                }else if(!InternetManager.isInternetReachable("https://drive.google.com")){
+                    MainActivity.activity.runOnUiThread( () -> {
+                        UIHelper.warningText.setText("No Internet connection");
                     });
                 }
-//                else if(!accountExists){
-//                    MainActivity.activity.runOnUiThread(() -> {
-//                        Toast.makeText(activity,
-//                                "There is no backup account to sync!",
-//                                Toast.LENGTH_LONG).show();
-//                    });
-//                }
+                else if(isAllOfAccountsFull){
+                    MainActivity.activity.runOnUiThread(() -> {
+                        UIHelper.warningText.setText(
+                                "Sync failed! You are running out of space." +
+                                        " Add more back up accounts.");
+                    });
+                }else{
+                    UIHelper.warningText.setText("");
+                    for(String[] account_row: account_rows){
+                        double freeSpace = GoogleDrive.calculateDriveFreeSpace(account_row);
+                        Log.d("service","free space of " + account_row[0] + " : " + freeSpace);
+                        boolean isAccountFull = true;
+                        if(freeSpace > 50) {
+                            isAccountFull = false;
+                        }
+
+                        if(!isAccountFull){
+                            isAllOfAccountsFull = false;
+                            String type = account_row[1];
+                            if(type.equals("backup")){
+                                syncAndroidToBackupAccount(freeSpace,account_row[0], account_row[4],
+                                        activity);
+                            }
+                        }
+                    }
+                }
 
                 Log.d("service","end of check for account existence and capacity");
             }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e);  }

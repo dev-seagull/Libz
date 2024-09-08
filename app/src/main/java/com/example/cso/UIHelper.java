@@ -38,5 +38,6 @@ public class UIHelper {
     @SuppressLint("UseCompatLoadingForDrawables")
     public Drawable threeDotMenuDrawable = MainActivity.activity.getApplicationContext().getResources().getDrawable(R.drawable.three_dot_menu);
     public int deviceBackgroundResource = R.drawable.gradient_color_bg;
+    public static TextView warningText = MainActivity.activity.findViewById(R.id.warningText);
 
 }
