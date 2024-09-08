@@ -1751,10 +1751,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
     private static int getNumberOfSyncedAssets() {
         int count = 0;
-        String query = "SELECT COUNT(DISTINCT ASSET.id) FROM ASSET " +
-                "INNER JOIN DRIVE ON ASSET.id = DRIVE.assetId";
+        String query = "SELECT COUNT(*) FROM DRIVE";
         Cursor cursor = null;
-
         try {
             cursor = dbReadable.rawQuery(query, null);
             if (cursor.moveToFirst()) {
@@ -1767,8 +1765,6 @@ public class DBHelper extends SQLiteOpenHelper {
                 cursor.close();
             }
         }
-        System.out.println("cou: " + count);
-        System.out.println(anyBackupAccountExists());
         return count;
     }
 
@@ -1777,7 +1773,7 @@ public class DBHelper extends SQLiteOpenHelper {
         int syncedAssets = getNumberOfSyncedAssets();
         Log.d("ui","total assets: " + totalAssets);
         Log.d("ui","synced assets: " + syncedAssets);
-        if (totalAssets == 0) {
+        if (totalAssets == 0 || syncedAssets == 0) {
             return 0.0;
         }
         double percentage = ((double) syncedAssets / totalAssets) * 100;
