@@ -426,11 +426,13 @@ public class UIHandler {
                 if (totalFreeSpace < assetsSize) {
                     builder.setTitle("Not enough space");
                     builder.setMessage("Approximately " + totalFreeSpace / 1024 + " GB out of " + assetsSize / 1024 + " GB of your assets in " + userEmail + " will be moved to other available accounts." +
-                            + (assetsSize - totalFreeSpace) / 1024 + " GB of your assets will be out of sync.");
+                            + (assetsSize - totalFreeSpace) / 1024 + " GB of your assets will be out of sync.\n" +
+                            "This process may take several minutes or hours depending on the size of your assets. ");
 
                 } else {
                     builder.setTitle("Unlink Backup Account");
-                    builder.setMessage("All of your assets in " + userEmail + " will be moved to your other available accounts.");
+                    builder.setMessage("All of your assets in " + userEmail + " will be moved to your other available accounts.\n" +
+                            "This process may take several minutes or hours depending on the size of your assets. ");
                     isAbleToMoveAllAssets = true;
                 }
             }
@@ -494,8 +496,8 @@ public class UIHandler {
             PopupMenu popupMenu = setPopUpMenuOnButton(MainActivity.activity, button,type);
             popupMenu.setOnMenuItemClickListener(item -> {
                 if (item.getItemId() == R.id.unlink) {
-                    button.setText("signing out...");
-                    MainActivity.isAnyProccessOn = true; // unlink device
+                    button.setText("Unlink in progress ... (temp)");
+//                    MainActivity.isAnyProccessOn = true; // unlink device
 //                    GoogleCloud.startUnlinkThreads(buttonText, item, button);
                 }else if (item.getItemId() == R.id.details){
                     detailsView.setVisibility(View.VISIBLE);
@@ -975,12 +977,12 @@ public class UIHandler {
                     String buttonText = button.getText().toString().toLowerCase();
                     if (buttonText.equals("add a back up account")) {
                         MainActivity.isAnyProccessOn = true; // add a backup account
-                        button.setText("signing in ...");
+                        button.setText("Adding in progress ...");
                         GoogleCloud.signInToGoogleCloud(signInToBackUpLauncher, activity);
-                    } else if (buttonText.equals("signing in ...")){
-                        button.setText("add a back up account");
-                    } else if (buttonText.equals("signing out...")){
-                        button.setText(button.getContentDescription());
+                    } else if (buttonText.equals("Adding in progress ...")){
+
+                    } else if (buttonText.equals("Unlink in progress ...")){
+
                     } else {
                         button.setContentDescription(buttonText);
                         try{
@@ -988,7 +990,7 @@ public class UIHandler {
                             popupMenu.setOnMenuItemClickListener(item -> {
                                 if (item.getItemId() == R.id.unlink) {
                                     MainActivity.isAnyProccessOn = true;//unlink
-                                    button.setText("signing out...");
+                                    button.setText("Unlink in progress ...");
                                     new Thread(() -> GoogleCloud.unlink(buttonText, activity)).start();
                                 }else if(item.getItemId() == R.id.details){
                                     detailsView.setVisibility(View.VISIBLE);
