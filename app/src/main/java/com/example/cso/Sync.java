@@ -40,13 +40,13 @@ public class Sync {
                     MainActivity.activity.runOnUiThread( () -> {
                         UIHelper.warningText.setText("No Internet connection");
                     });
-                }
-                else if(isAllOfAccountsFull){
-                    MainActivity.activity.runOnUiThread(() -> {
-                        UIHelper.warningText.setText(
-                                "Sync failed! You are running out of space." +
-                                        " Add more back up accounts.");
-                    });
+//                }
+//                else if(isAllOfAccountsFull){
+//                    MainActivity.activity.runOnUiThread(() -> {
+//                        UIHelper.warningText.setText(
+//                                "Sync failed! You are running out of space." +
+//                                        " Add more back up accounts.");
+//                    });
                 }else{
                     UIHelper.warningText.setText("");
                     for(String[] account_row: account_rows){
