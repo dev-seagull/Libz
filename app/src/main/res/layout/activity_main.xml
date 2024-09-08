@@ -105,7 +105,7 @@
                                 android:layout_gravity="center"
                                 android:text="Sync"
                                 android:textColor="@color/textColor"
-                                android:textSize="12sp"
+                                android:textSize="18sp"
                                 android:textStyle="bold"
                                 android:padding="4dp"/>
                         </FrameLayout>
@@ -130,7 +130,7 @@
                                 android:layout_gravity="center"
                                 android:text="Wifi only"
                                 android:textColor="@color/textColor"
-                                android:textSize="12sp"
+                                android:textSize="18sp"
                                 android:textStyle="bold"
                                 android:padding="4dp"/>
                         </FrameLayout>
