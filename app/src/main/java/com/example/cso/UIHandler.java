@@ -79,7 +79,7 @@ public class UIHandler {
         if(wifiOnlyState[0]){
             wifiButtonText.setTextColor(buttonTextColor);
         }else{
-            wifiButtonText.setTextColor(buttonTransparentTextColor);
+            wifiButtonText.setTextColor(buttonTextColor);
         }
         updateSyncAndWifiButtonBackground(wifiButton, wifiOnlyState[0], activity);
 
@@ -95,7 +95,7 @@ public class UIHandler {
         if(currentWifiOnlyState){
             wifiButtonText.setTextColor(buttonTextColor);
         }else{
-            wifiButtonText.setTextColor(buttonTransparentTextColor);
+            wifiButtonText.setTextColor(buttonTextColor);
         }
         updateSyncAndWifiButtonBackground(wifiButton,currentWifiOnlyState, activity);
     }
@@ -216,7 +216,7 @@ public class UIHandler {
                 textColor = buttonTextColor;
             }else{
                 backgroundResource = R.drawable.circular_button_off;
-                textColor = buttonTransparentTextColor;
+                textColor = buttonTextColor;
             }
             textView.setTextColor(textColor);
             button.setBackgroundResource(backgroundResource);
@@ -605,9 +605,9 @@ public class UIHandler {
 
         PieDataSet dataSet = new PieDataSet(entries, null);
         int[] colors = {
-                Color.parseColor("#1E88E5"),
-                Color.parseColor("#64B5F6"),
-                Color.parseColor("#304194")
+                Color.parseColor("#00796B"),
+                Color.parseColor("#004D40"),
+                Color.parseColor("#80CBC4")
         };
         dataSet.setColors(colors);
         dataSet.setValueTextColor(Color.WHITE);
