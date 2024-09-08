@@ -14,6 +14,7 @@ import java.util.List;
 
 public class Sync {
 //    private static boolean isAllOfAccountsFull = true;
+    public static boolean isJsonChangeCheckRunning = false;
     public static void syncAndroidFiles(Context context, Activity activity){
         Log.d("Threads","startSyncThread started");
         Thread syncThread =  new Thread( () -> {
@@ -63,13 +64,14 @@ public class Sync {
                                         " Add more back up accounts.",
                                 Toast.LENGTH_LONG).show();
                     });
-                } else if(!accountExists){
-                    MainActivity.activity.runOnUiThread(() -> {
-                        Toast.makeText(activity,
-                                "There is no backup account to sync!",
-                                Toast.LENGTH_LONG).show();
-                    });
                 }
+//                else if(!accountExists){
+//                    MainActivity.activity.runOnUiThread(() -> {
+//                        Toast.makeText(activity,
+//                                "There is no backup account to sync!",
+//                                Toast.LENGTH_LONG).show();
+//                    });
+//                }
 
                 Log.d("service","end of check for account existence and capacity");
             }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e);  }
@@ -263,12 +265,41 @@ public class Sync {
             if (isDeactivated){ UIHandler.handleDeactivatedUser(); }
             Log.d("service","checkSupportBackupRequired");
             Support.checkSupportBackupRequired(activity);
+            if (isJsonChangeCheckRunning){
+                return;
+            }
+            isJsonChangeCheckRunning = true;
             boolean isJsonHasChanged = Profile.hasJsonChanged();
             Log.d("service","is json has changed : " + isJsonHasChanged);
             if (isJsonHasChanged){
-                DBHelper.updateDatabaseBasedOnJson();
-                UIHandler.setupAccountButtons(activity); // after json has changed
+                try {
+                    Thread t = new Thread(() -> {
+                        Log.d("jsonChange","wait for upload complete");
+                        try {
+                            Thread.sleep(10000);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                    t.start();
+                    try {
+                        t.join();
+                    }catch (Exception e){
+                        FirebaseCrashlytics.getInstance().recordException(e);
+                    }
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    Log.d("jsonChange","after upload complete");
+                    DBHelper.updateDatabaseBasedOnJson();
+                    UIHandler.setupAccountButtons(activity); // after json has changed
+                } catch (Exception e) {
+                    FirebaseCrashlytics.getInstance().recordException(e);
+                }
             }
+            Sync.isJsonChangeCheckRunning = false;
         });
         checkForStatusChangesThread.start();
         try{

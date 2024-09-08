@@ -141,6 +141,7 @@ public class Profile {
 
                 for (com.google.api.services.drive.model.File existingFile : existingFiles) {
                     resultJsonName[0] = existingFile.getName();
+                    existingFiles.hashCode();
                     Log.d("jsonChange","Map files found: " + resultJsonName[0]);
                     if (resultJsonName[0]!= null && !resultJsonName[0].isEmpty() && resultJsonName[0].contains("profileMap_")) {
                         Log.d("Threads","Map file name searching finished");
@@ -442,7 +443,7 @@ public class Profile {
     public static JsonArray getNewAccountsFromJson(JsonArray profileAccounts, ArrayList<String> databaseUserEmails){
         JsonArray newAccounts = new JsonArray();
         for (JsonElement account : profileAccounts){
-            String accountName = account.getAsJsonObject().get("userEmail").getAsString();
+            String accountName = account.getAsJsonObject().get("backupEmail").getAsString();
             if (!databaseUserEmails.contains(accountName)){
                 newAccounts.add(account.getAsJsonObject());
             }
@@ -453,7 +454,7 @@ public class Profile {
     public static ArrayList<String> getRemovedAccountsFromJson(JsonArray profileAccounts, ArrayList<String> databaseUserEmails){
         ArrayList<String> removedAccounts = new ArrayList<>();
         for (String account : databaseUserEmails){
-            if (isDeletedElement(account,profileAccounts,"userEmail")){
+            if (isDeletedElement(account,profileAccounts,"backupEmail")){
                 removedAccounts.add(account);
             }
         }
@@ -486,10 +487,10 @@ public class Profile {
         for (JsonElement jsonElement : jsonArray) {
             String accountName = jsonElement.getAsJsonObject().get(propertyName).getAsString();
             if (accountName.equals(name)) {
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
 
@@ -527,27 +528,28 @@ public class Profile {
     }
 
     public static boolean hasJsonChanged(){
-        boolean hasChanged = false;
+        boolean hasChanged = true;
         try{
             List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
-
+            Date lastModifiedDateOfPreferences =  SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
             for (String[] account : accounts) {
                 if (account[1].equals("backup")) {
                     String accessToken = GoogleCloud.updateAccessToken(account[2]).getAccessToken();
                     String resultJsonName = readProfileMapName(account[0],accessToken);
 
-                    if (resultJsonName!= null || !resultJsonName.isEmpty()){
+                    if (resultJsonName == null || resultJsonName.isEmpty()){
                         Log.d("jsonChange","Json file not found");
                         continue;
                     }
 
                     Date lastModifiedDateOfJson = convertFileNameToTimeStamp(resultJsonName);
-                    Date lastModifiedDateOfPreferences =  SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
+
                     Log.d("jsonChange","lastModifiedDateOfJson: " + lastModifiedDateOfJson.toString());
                     Log.d("jsonChange","lastModifiedDateOfPreferences: " + lastModifiedDateOfPreferences.toString());
 
                     if (lastModifiedDateOfJson!= null && lastModifiedDateOfPreferences!= null){
-                        hasChanged = lastModifiedDateOfJson.after(lastModifiedDateOfPreferences);
+                        hasChanged = !lastModifiedDateOfJson.equals(lastModifiedDateOfPreferences);
+                        break;
                     } else {
                         hasChanged = false;
                     }
@@ -562,14 +564,29 @@ public class Profile {
     public static JsonObject getJsonFromAccounts(){
         try{
             List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
-
+            Date lastModifiedDateOfPreferences =  SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
             for (String[] account : accounts) {
                 if (account[1].equals("backup")) {
                     String accessToken = GoogleCloud.updateAccessToken(account[2]).getAccessToken();
-                    JsonObject resultJsonContent = readProfileMapContent(account[0],accessToken);
+                    String resultJsonName = readProfileMapName(account[0],accessToken);
+                    if (resultJsonName == null || resultJsonName.isEmpty()){
+                        Log.d("jsonChange","Json file not found");
+                        continue;
+                    }
 
-                    if (resultJsonContent!= null){
-                        return resultJsonContent;
+                    Date lastModifiedDateOfJson = convertFileNameToTimeStamp(resultJsonName);
+
+                    Log.d("jsonChange","lastModifiedDateOfJson: " + lastModifiedDateOfJson.toString());
+                    Log.d("jsonChange","lastModifiedDateOfPreferences: " + lastModifiedDateOfPreferences.toString());
+
+                    if (lastModifiedDateOfJson!= null && lastModifiedDateOfPreferences!= null) {
+                        if (!lastModifiedDateOfJson.equals(lastModifiedDateOfPreferences)) {
+                            JsonObject resultJsonContent = readProfileMapContent(account[0], accessToken);
+                            if (resultJsonContent != null) {
+                                SharedPreferencesHandler.setJsonModifiedTime(MainActivity.preferences, lastModifiedDateOfJson);
+                                return resultJsonContent;
+                            }
+                        }
                     }
                 }
             }

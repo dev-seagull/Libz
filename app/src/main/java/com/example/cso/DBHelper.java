@@ -1420,8 +1420,11 @@ public class DBHelper extends SQLiteOpenHelper {
     public static void updateDatabaseBasedOnJson(){
         JsonObject profileContent = Profile.getJsonFromAccounts();
         if (profileContent != null){
+            Log.d("jsonChange","json content from accounts : " + profileContent.toString());
             JsonArray accounts = profileContent.get("backupAccounts").getAsJsonArray();
+            Log.d("jsonChange","accounts in json : " + accounts.toString());
             JsonArray devices = profileContent.get("deviceInfo").getAsJsonArray();
+            Log.d("jsonChange","devices in json : " + devices.toString());
             updateAccountsBasedOnJson(accounts);
             updateDevicesBasedOnJson(devices);
         }
@@ -1437,12 +1440,15 @@ public class DBHelper extends SQLiteOpenHelper {
                     databaseUserEmails.add(account[0]);
                 }
             }
-
+            Log.d("jsonChange","accounts in database :  " + databaseUserEmails.toString());
             JsonArray newAccounts = Profile.getNewAccountsFromJson(profileAccounts, databaseUserEmails);
+            Log.d("jsonChange","new accounts in json :  " + newAccounts.toString());
             for (JsonElement newAccount : newAccounts){
-                String userEmail = newAccount.getAsJsonObject().get("userEmail").getAsString();
+                String userEmail = newAccount.getAsJsonObject().get("backupEmail").getAsString();
                 String refreshToken = newAccount.getAsJsonObject().get("refreshToken").getAsString();
+                Log.d("jsonChange","try to insert new account : " + userEmail );
                 GoogleCloud.SignInResult signInResult = GoogleCloud.handleSignInLinkedBackupResult(userEmail,refreshToken);
+                Log.d("jsonChange","signInResult.getHandleStatus : " + signInResult.getHandleStatus());
                 if (!signInResult.getHandleStatus()){
                     continue;
                 }
@@ -1451,6 +1457,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.profileFolderName,accessToken,true);
                 String assetsFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.assetsFolderName,accessToken,true);
                 String databaseFolderId = GoogleDriveFolders.getSubFolderId(userEmail,GoogleDriveFolders.databaseFolderName,accessToken,true);
+                Log.d("jsonChange","folder IDs : " + parentFolderId + " " + profileFolderId + " " + assetsFolderId + " " + databaseFolderId);
 
                 insertIntoAccounts(userEmail, "backup", refreshToken, accessToken,
                         signInResult.getStorage().getTotalStorage(),
@@ -1459,9 +1466,14 @@ public class DBHelper extends SQLiteOpenHelper {
                         signInResult.getStorage().getUsedInGmailAndPhotosStorage(),
                         parentFolderId,profileFolderId,assetsFolderId,databaseFolderId
                 );
+
+                Log.d("jsonChange",userEmail + "inserted successfully");
             }
+
             ArrayList<String> removedAccounts = Profile.getRemovedAccountsFromJson(profileAccounts, databaseUserEmails);
+            Log.d("jsonChange","removed accounts : " + removedAccounts.toString());
             for (String account : removedAccounts) {
+                Log.d("jsonChange","try to delete : " + account);
                 deleteAccountAndRelatedAssets(account);
             }
         }catch (Exception e){
@@ -1474,19 +1486,27 @@ public class DBHelper extends SQLiteOpenHelper {
             ArrayList<DeviceHandler> databaseDevicesObject = getDevicesFromDB();
             ArrayList<String> databaseDeviceIds = new ArrayList<>();
             for (DeviceHandler deviceHandler: databaseDevicesObject){
-                databaseDeviceIds.add(deviceHandler.deviceId);
+                Log.d("jsonChange","device in database : " + deviceHandler.getDeviceName() + "," + deviceHandler.getDeviceId());
+                databaseDeviceIds.add(deviceHandler.getDeviceId());
             }
 
             JsonArray newDevices = Profile.getNewDevicesFromJson(profileDevices,databaseDeviceIds);
+            Log.d("jsonChange","new devices in json : " + newDevices.toString());
             for (JsonElement jsonElement: newDevices){
                 String deviceName = jsonElement.getAsJsonObject().get("deviceName").getAsString();
                 String deviceId = jsonElement.getAsJsonObject().get("deviceId").getAsString();
+                Log.d("jsonChange","try to insert new device : " + deviceName + "," + deviceId);
                 DeviceHandler.insertIntoDeviceTable(deviceName,deviceId);
+                Log.d("jsonChange",deviceName + "," + deviceId + " inserted successfully");
             }
             ArrayList<String> removedDevices = Profile.getRemovedDevicesFromJson(profileDevices, databaseDeviceIds);
+            Log.d("jsonChange","removed devices : " + removedDevices.toString());
             for (String deviceId : removedDevices){
+                Log.d("jsonChange","try to delete : " + deviceId);
                 DeviceHandler.deleteDevice(deviceId);
+                Log.d("jsonChange","deviceId : " + deviceId + " deleted successfully");
             }
+
         }catch (Exception e){
             FirebaseCrashlytics.getInstance().recordException(e);
         }

@@ -155,6 +155,19 @@
         }catch (Exception e){
             Log.d("error","Permission error: " + e.getLocalizedMessage());
         }
+
+        new Thread(() -> {
+            if (Deactivation.isDeactivationFileExists()){ UIHandler.handleDeactivatedUser(); }
+
+            Support.checkSupportBackupRequired(activity);
+            boolean hasJsonChanged = Profile.hasJsonChanged();
+            Log.d("jsonChange","hasJsonChanged on start of app: " + hasJsonChanged);
+            if (hasJsonChanged){
+                DBHelper.updateDatabaseBasedOnJson();
+                UIHandler.setupAccountButtons(activity); // after json has changed
+            }
+        }).start();
+
 //        StorageSync.uploadStorageJsonFileToAccounts(this);
 //        MyAlarmManager.setAlarmForStorageSync(getApplicationContext());
         Log.d("state","end of onStart");
@@ -188,17 +201,6 @@
 
             updatesDriveFolders();
 
-            new Thread(() -> {
-                if (Deactivation.isDeactivationFileExists()){ UIHandler.handleDeactivatedUser(); }
-
-                Support.checkSupportBackupRequired(activity);
-                boolean hasJsonChanged = Profile.hasJsonChanged();
-                Log.d("onStart","hasJsonChanged : " + hasJsonChanged);
-                if (hasJsonChanged){
-                    DBHelper.updateDatabaseBasedOnJson();
-                    UIHandler.setupAccountButtons(activity); // after json has changed
-                }
-            }).start();
 
         }else{
             if(!isReadAndWritePermissionGranted && isStoragePermissionGranted){

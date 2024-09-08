@@ -53,6 +53,7 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.Drive;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
@@ -831,8 +832,9 @@ public class UIHandler {
                 backupAccountsLinearLayout.addView(newAccountButtonView);
             }
             MainActivity.isAnyProccessOn = false; // setup account buttons
+            setupDeviceButtons(activity);
         });
-        setupDeviceButtons(activity);
+
     }
 
     private static LinearLayout createNewAccountButtonView(Activity context, String userEmail){

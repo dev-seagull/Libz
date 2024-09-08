@@ -61,6 +61,27 @@ public class SharedPreferencesHandler {
         }
     }
 
+    public static void setJsonModifiedTime(SharedPreferences sharedPreferences, Date jsonModifiedTime) {
+        Thread setJsonModifiedTimeThread = new Thread(()-> {
+            try{
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+                String newTimestamp = dateFormat.format(jsonModifiedTime);
+
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("jsonModifiedTime", newTimestamp);
+                editor.apply();
+            }catch (Exception e){
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
+        });
+        setJsonModifiedTimeThread.start();
+        try{
+            setJsonModifiedTimeThread.join();
+        }catch (Exception e){
+            FirebaseCrashlytics.getInstance().recordException(e);
+        }
+    }
+
     public static Date getJsonModifiedTime(SharedPreferences sharedPreferences) {
         String timeStamp = sharedPreferences.getString("jsonModifiedTime", "0");
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
