@@ -464,9 +464,12 @@ public class UIHandler {
         int deviceButtonsChildCount = deviceButtonsLinearLayout.getChildCount();
         for(int i=0 ; i < deviceButtonsChildCount ; i++){
             View deviceButtonsChildView = deviceButtonsLinearLayout.getChildAt(i);
-            if(deviceButtonsChildView.getContentDescription().equals(deviceId)) {
-                Log.d("ui", deviceId+ " exists.");
-                return true;
+            CharSequence contentDescription = deviceButtonsChildView.getContentDescription();
+            if(contentDescription != null){
+                if(contentDescription.toString().equals(deviceId)) {
+                    Log.d("ui", deviceId+ " exists.");
+                    return true;
+                }
             }
         }
         Log.d("ui", deviceId+ " doesn't exists.");
@@ -526,12 +529,12 @@ public class UIHandler {
         newDeviceButton.setContentDescription(device.getDeviceId());
         addEffectsToDeviceButton(newDeviceButton, context);
         setListenerToDeviceButtons(newDeviceButton, device);
+        layout.addView(newDeviceButton);
 
         Button newThreeDotButton = new Button(context);
-        addEffectsToThreeDotButton(newThreeDotButton,context);
+        addEffectsToThreeDotButton(newThreeDotButton);
         setListenerToThreeDotButtons(newThreeDotButton,device);
 
-        layout.addView(newDeviceButton);
         layout.addView(newThreeDotButton);
 
         return layout;
@@ -560,15 +563,15 @@ public class UIHandler {
         androidDeviceButton.setLayoutParams(layoutParams);
     }
 
-    private static void addEffectsToThreeDotButton(Button threeDotButton, Context context){
-        threeDotButton.setBackgroundResource(R.drawable.three_dot_menu);
-        threeDotButton.setGravity(Gravity.END);
-        threeDotButton.setPadding(0,0,20,0);
+    private static void addEffectsToThreeDotButton(Button threeDotButton){
+        threeDotButton.setBackgroundResource(R.drawable.three_dot_white);
 
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                20,
-                ViewGroup.LayoutParams.MATCH_PARENT
+        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
+                112,
+                112
         );
+        layoutParams.gravity = Gravity.END;
+        layoutParams.setMargins(0,48,0,0);
         threeDotButton.setLayoutParams(layoutParams);
     }
     public static LinearLayout createNewDeviceButtonView(Context context, DeviceHandler device) {
@@ -758,7 +761,7 @@ public class UIHandler {
         int deviceViewChildrenCount = parentLayout.getChildCount();
         for (int j = 0; j < deviceViewChildrenCount; j++) {
             View view = parentLayout.getChildAt(j);
-            if (!(view instanceof Button)) {
+            if (!(view instanceof FrameLayout)) {
                 return (LinearLayout) view;
             }
         }
