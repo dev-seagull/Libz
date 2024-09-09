@@ -49,7 +49,26 @@
                         android:gravity="center"
                         android:paddingTop="16dp"
                         android:orientation="vertical"
-                        />
+                        >
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+                            <ImageButton
+                                android:layout_width="20dp"
+                                android:layout_height="30dp"
+                                android:background="@drawable/three_dot_menu"
+                                android:layout_gravity="end">
+                            </ImageButton>
+
+                            <Button
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+                            </Button>
+
+                        </FrameLayout>
+
+                    </LinearLayout>
 
                     <LinearLayout
                         android:id="@+id/syncButtonsLayout"

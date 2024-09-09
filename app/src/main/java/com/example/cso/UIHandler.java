@@ -1,5 +1,6 @@
 package com.example.cso;
 
+import static com.example.cso.MainActivity.activity;
 import static com.example.cso.MainActivity.signInToBackUpLauncher;
 
 import android.app.Activity;
@@ -26,6 +27,7 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
@@ -37,6 +39,7 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
+import com.anychart.scales.Linear;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.BarData;
@@ -53,7 +56,6 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.material.navigation.NavigationView;
 import com.google.api.services.drive.Drive;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
@@ -448,29 +450,26 @@ public class UIHandler {
         LinearLayout deviceButtons = activity.findViewById(R.id.deviceButtons);
         ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromDB();
         for (DeviceHandler device : devices) {
-            if (!buttonExistsInUI(device.getDeviceId(), activity)) {
-                System.out.println("creating button for device " + device.getDeviceName());
+            if (!deviceButtonExistsInUI(device.getDeviceId(), activity)) {
+                Log.d("ui","creating button for device " + device.getDeviceName());
                 View newDeviceButtonView = createNewDeviceButtonView(activity, device);
+                newDeviceButtonView.setContentDescription(device.deviceId);
                 deviceButtons.addView(newDeviceButtonView);
             }
         }
     }
 
-    private static boolean buttonExistsInUI(String deviceId, Activity activity){
-        LinearLayout deviceButtons = activity.findViewById(R.id.deviceButtons);
-        int deviceButtonsCount = deviceButtons.getChildCount();
-        for(int i=0 ; i < deviceButtonsCount ; i++){
-            LinearLayout deviceButtonView = (LinearLayout) deviceButtons.getChildAt(i);
-            int deviceViewChildrenCount = deviceButtonView.getChildCount();
-            for (int j = 0; j <= deviceViewChildrenCount; j++) {
-                View deviceButtonChild = deviceButtonView.getChildAt(j);
-                if (deviceButtonChild instanceof Button){
-                    if(deviceButtonChild.getContentDescription().equals(deviceId)){
-                        return true;
-                    }
-                }
+    private static boolean deviceButtonExistsInUI(String deviceId, Activity activity){
+        LinearLayout deviceButtonsLinearLayout = activity.findViewById(R.id.deviceButtons);
+        int deviceButtonsChildCount = deviceButtonsLinearLayout.getChildCount();
+        for(int i=0 ; i < deviceButtonsChildCount ; i++){
+            View deviceButtonsChildView = deviceButtonsLinearLayout.getChildAt(i);
+            if(deviceButtonsChildView.getContentDescription().equals(deviceId)) {
+                Log.d("ui", deviceId+ " exists.");
+                return true;
             }
         }
+        Log.d("ui", deviceId+ " doesn't exists.");
         return false;
     }
 
@@ -478,12 +477,20 @@ public class UIHandler {
         return device.getDeviceId().equals(MainActivity.androidUniqueDeviceIdentifier);
     } // for more data
 
+    private static void setListenerToThreeDotButtons(Button button, DeviceHandler device){
+        button.setOnClickListener(view -> {
+            MainActivity.activity.runOnUiThread(() -> {
+                Toast.makeText(activity.getApplicationContext(),"Clicked",Toast.LENGTH_SHORT).show();
+            });
+        });
+    }
+
     private static void setListenerToDeviceButtons(Button button, DeviceHandler device){
         button.setOnClickListener( view -> {
             if (MainActivity.isAnyProccessOn){// clickable false
                 return;
             }
-            LinearLayout detailsView = getDetailsView(button);
+            LinearLayout detailsView = getDeviceButtonDetailsView(button);
             if (detailsView.getVisibility() == View.VISIBLE){
                 detailsView.setVisibility(View.GONE);
                 return;
@@ -508,13 +515,26 @@ public class UIHandler {
             });
     }
 
-    private static Button createNewDeviceButton(Context context, DeviceHandler device) {
+    private static FrameLayout createNewDeviceButtonFrame(Context context, DeviceHandler device) {
+        FrameLayout layout = new FrameLayout(context);
+        layout.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
         Button newDeviceButton = new Button(context);
         newDeviceButton.setText(device.getDeviceName());
         newDeviceButton.setContentDescription(device.getDeviceId());
         addEffectsToDeviceButton(newDeviceButton, context);
         setListenerToDeviceButtons(newDeviceButton, device);
-        return newDeviceButton;
+
+        Button newThreeDotButton = new Button(context);
+        addEffectsToThreeDotButton(newThreeDotButton,context);
+        setListenerToThreeDotButtons(newThreeDotButton,device);
+
+        layout.addView(newDeviceButton);
+        layout.addView(newThreeDotButton);
+
+        return layout;
     }
 
     private static void addEffectsToDeviceButton(Button androidDeviceButton, Context context){
@@ -540,6 +560,17 @@ public class UIHandler {
         androidDeviceButton.setLayoutParams(layoutParams);
     }
 
+    private static void addEffectsToThreeDotButton(Button threeDotButton, Context context){
+        threeDotButton.setBackgroundResource(R.drawable.three_dot_menu);
+        threeDotButton.setGravity(Gravity.END);
+        threeDotButton.setPadding(0,0,20,0);
+
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                20,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        );
+        threeDotButton.setLayoutParams(layoutParams);
+    }
     public static LinearLayout createNewDeviceButtonView(Context context, DeviceHandler device) {
         LinearLayout layout = new LinearLayout(context);
         layout.setLayoutParams(new LinearLayout.LayoutParams(
@@ -549,7 +580,7 @@ public class UIHandler {
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
 
-        Button button = createNewDeviceButton(context, device);
+        FrameLayout buttonFrame = createNewDeviceButtonFrame(context, device);
 
         LinearLayout chartInnerLayout = createDeviceDetailsLayout(context);
 
@@ -560,7 +591,7 @@ public class UIHandler {
         chartInnerLayout.addView(pieChart);
         chartInnerLayout.addView(directoryUsages);
 
-        layout.addView(button);
+        layout.addView(buttonFrame);
         layout.addView(chartInnerLayout);
 
         return layout;
@@ -721,7 +752,20 @@ public class UIHandler {
         return directoryUsages;
     }
 
-    private static LinearLayout getDetailsView(Button button){
+    private static LinearLayout getDeviceButtonDetailsView(Button button){
+        FrameLayout deviceButtonView = (FrameLayout) button.getParent();
+        LinearLayout parentLayout = (LinearLayout) deviceButtonView.getParent();
+        int deviceViewChildrenCount = parentLayout.getChildCount();
+        for (int j = 0; j < deviceViewChildrenCount; j++) {
+            View view = parentLayout.getChildAt(j);
+            if (!(view instanceof Button)) {
+                return (LinearLayout) view;
+            }
+        }
+        return null;
+    }
+
+    private static LinearLayout getAccountButtonDetailsView(Button button){
         LinearLayout deviceButtonView = (LinearLayout) button.getParent();
         int deviceViewChildrenCount = deviceButtonView.getChildCount();
         for (int j = 0; j < deviceViewChildrenCount; j++) {
@@ -969,7 +1013,7 @@ public class UIHandler {
                     if (MainActivity.isAnyProccessOn) { // make clickable false
                         return;
                     }
-                    LinearLayout detailsView = getDetailsView(button);
+                    LinearLayout detailsView = getAccountButtonDetailsView(button);
                     if (detailsView.getVisibility() == View.VISIBLE){
                         detailsView.setVisibility(View.GONE);
                         return;
