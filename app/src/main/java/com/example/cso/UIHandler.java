@@ -3,6 +3,7 @@ package com.example.cso;
 import static com.example.cso.MainActivity.activity;
 import static com.example.cso.MainActivity.signInToBackUpLauncher;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -22,6 +23,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -31,6 +33,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -459,6 +462,32 @@ public class UIHandler {
         }
     }
 
+    public static LinearLayout createNewDeviceButtonView(Context context, DeviceHandler device) {
+        LinearLayout layout = new LinearLayout(context);
+        layout.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setGravity(Gravity.CENTER);
+
+        RelativeLayout buttonFrame = createNewDeviceButtonLayout(context, device);
+
+        LinearLayout chartInnerLayout = createDeviceDetailsLayout(context);
+
+        PieChart pieChart = createPieChartForDevice(context,device);
+
+        TextView directoryUsages = createDirectoryUsageTextView(context);
+
+        chartInnerLayout.addView(pieChart);
+        chartInnerLayout.addView(directoryUsages);
+
+        layout.addView(buttonFrame);
+        layout.addView(chartInnerLayout);
+
+        return layout;
+    }
+
     private static boolean deviceButtonExistsInUI(String deviceId, Activity activity){
         LinearLayout deviceButtonsLinearLayout = activity.findViewById(R.id.deviceButtons);
         int deviceButtonsChildCount = deviceButtonsLinearLayout.getChildCount();
@@ -480,61 +509,51 @@ public class UIHandler {
         return device.getDeviceId().equals(MainActivity.androidUniqueDeviceIdentifier);
     } // for more data
 
-    private static void setListenerToThreeDotButtons(Button button, DeviceHandler device){
-        button.setOnClickListener(view -> {
-            MainActivity.activity.runOnUiThread(() -> {
-                Toast.makeText(activity.getApplicationContext(),"Clicked",Toast.LENGTH_SHORT).show();
-            });
-        });
-    }
-
-    private static void setListenerToDeviceButtons(Button button, DeviceHandler device){
-        button.setOnClickListener( view -> {
-            if (MainActivity.isAnyProccessOn){// clickable false
-                return;
-            }
-            LinearLayout detailsView = getDeviceButtonDetailsView(button);
-            if (detailsView.getVisibility() == View.VISIBLE){
-                detailsView.setVisibility(View.GONE);
-                return;
-            }
-            String type = "device";
-            if (isCurrentDevice(device)){
-                System.out.println("" +button.getContentDescription());
-                type = "ownDevice";
-            }
-            PopupMenu popupMenu = setPopUpMenuOnButton(MainActivity.activity, button,type);
-            popupMenu.setOnMenuItemClickListener(item -> {
-                if (item.getItemId() == R.id.unlink) {
-                    button.setText("Unlink in progress ... (temp)");
-//                    MainActivity.isAnyProccessOn = true; // unlink device
-//                    GoogleCloud.startUnlinkThreads(buttonText, item, button);
-                }else if (item.getItemId() == R.id.details){
-                    detailsView.setVisibility(View.VISIBLE);
-                }
-                return true;
-            });
-            popupMenu.show();
-            });
-    }
-
-    private static FrameLayout createNewDeviceButtonFrame(Context context, DeviceHandler device) {
-        FrameLayout layout = new FrameLayout(context);
+    private static RelativeLayout createNewDeviceButtonLayout(Context context, DeviceHandler device) {
+        // Create a new RelativeLayout
+        RelativeLayout layout = new RelativeLayout(context);
         layout.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         ));
+
+        // Create the main device button
         Button newDeviceButton = new Button(context);
         newDeviceButton.setText(device.getDeviceName());
         newDeviceButton.setContentDescription(device.getDeviceId());
         addEffectsToDeviceButton(newDeviceButton, context);
-        setListenerToDeviceButtons(newDeviceButton, device);
+        newDeviceButton.setId(View.generateViewId());
+
+
+        // Set layout parameters for the main device button
+        RelativeLayout.LayoutParams deviceButtonParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.MATCH_PARENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+        );
+        deviceButtonParams.addRule(RelativeLayout.ALIGN_PARENT_START);
+        newDeviceButton.setLayoutParams(deviceButtonParams);
+
+        // Add the main device button to the layout
         layout.addView(newDeviceButton);
 
+        // Create the three-dot menu button
         Button newThreeDotButton = new Button(context);
+        newThreeDotButton.setContentDescription(device.getDeviceId() + "threeDot");
         addEffectsToThreeDotButton(newThreeDotButton);
-        setListenerToThreeDotButtons(newThreeDotButton,device);
-
+        setListenerToThreeDotButtons(newThreeDotButton, device);
+        setListenerToDeviceButtons(newDeviceButton,newThreeDotButton);
+        // Set layout parameters for the three-dot menu button
+        RelativeLayout.LayoutParams threeDotButtonParams = new RelativeLayout.LayoutParams(
+                112,
+                112
+        );
+        threeDotButtonParams.addRule(RelativeLayout.ALIGN_TOP, newDeviceButton.getId());
+        threeDotButtonParams.addRule(RelativeLayout.ALIGN_PARENT_END);
+        newThreeDotButton.setLayoutParams(threeDotButtonParams);
+        newThreeDotButton.setFocusable(false);
+        newThreeDotButton.setFocusableInTouchMode(false);
+        newThreeDotButton.setVisibility(View.VISIBLE);
+        // Add the three-dot menu button to the layout
         layout.addView(newThreeDotButton);
 
         return layout;
@@ -547,7 +566,7 @@ public class UIHandler {
                 (deviceDrawable, null, null, null);
 
         androidDeviceButton.setBackgroundResource(R.drawable.gradient_color_bg);
-        androidDeviceButton.setGravity(Gravity.CENTER);
+//        androidDeviceButton.setGravity(Gravity.CENTER);
         androidDeviceButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         androidDeviceButton.setTextColor(buttonTextColor);
         androidDeviceButton.setTextSize(12);
@@ -559,6 +578,7 @@ public class UIHandler {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 170
         );
+        layoutParams.gravity = Gravity.START;
         layoutParams.setMargins(0,20,0,16);
         androidDeviceButton.setLayoutParams(layoutParams);
     }
@@ -566,38 +586,55 @@ public class UIHandler {
     private static void addEffectsToThreeDotButton(Button threeDotButton){
         threeDotButton.setBackgroundResource(R.drawable.three_dot_white);
 
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
                 112,
                 112
         );
-        layoutParams.gravity = Gravity.END;
+
         layoutParams.setMargins(0,48,0,0);
         threeDotButton.setLayoutParams(layoutParams);
     }
-    public static LinearLayout createNewDeviceButtonView(Context context, DeviceHandler device) {
-        LinearLayout layout = new LinearLayout(context);
-        layout.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setGravity(Gravity.CENTER);
 
-        FrameLayout buttonFrame = createNewDeviceButtonFrame(context, device);
+    private static void setListenerToThreeDotButtons(Button button, DeviceHandler device){
+        button.setOnClickListener(view -> {
+            MainActivity.activity.runOnUiThread(() -> {
+                Toast.makeText(activity.getApplicationContext(),"Clicked",Toast.LENGTH_SHORT).show();
+            });
+        });
+    }
 
-        LinearLayout chartInnerLayout = createDeviceDetailsLayout(context);
-
-        PieChart pieChart = createPieChartForDevice(context,device);
-
-        TextView directoryUsages = createDirectoryUsageTextView(context);
-
-        chartInnerLayout.addView(pieChart);
-        chartInnerLayout.addView(directoryUsages);
-
-        layout.addView(buttonFrame);
-        layout.addView(chartInnerLayout);
-
-        return layout;
+    private static void setListenerToDeviceButtons(Button button, Button threeDotButton){
+        button.setOnClickListener( view -> {
+            if (MainActivity.isAnyProccessOn) {// clickable false
+                return;
+            }
+            LinearLayout detailsView = getDeviceButtonDetailsView(button);
+            if (detailsView.getVisibility() == View.VISIBLE) {
+                detailsView.setVisibility(View.GONE);
+            } else {
+                detailsView.setVisibility(View.VISIBLE);
+            }
+            threeDotButton.bringToFront();
+            threeDotButton.setFocusable(true);
+            threeDotButton.setFocusableInTouchMode(true);
+            threeDotButton.setVisibility(View.VISIBLE);
+        });
+//        button.setOnTouchListener(
+//                (view, motionEvent) -> {
+//                    if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+//                        threeDotButton.bringToFront();
+//                        threeDotButton.setFocusable(true);
+//                        threeDotButton.setFocusableInTouchMode(true);
+//                        threeDotButton.setVisibility(View.VISIBLE);
+//                    } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+//                        threeDotButton.bringToFront();
+//                        threeDotButton.setFocusable(true);
+//                        threeDotButton.setFocusableInTouchMode(true);
+//                        threeDotButton.setVisibility(View.VISIBLE);
+//                    }
+//                    return false;
+//                }
+//        );
     }
 
     private static PieChart createPieChartForDevice(Context context, DeviceHandler device) {
@@ -756,12 +793,12 @@ public class UIHandler {
     }
 
     private static LinearLayout getDeviceButtonDetailsView(Button button){
-        FrameLayout deviceButtonView = (FrameLayout) button.getParent();
+        RelativeLayout deviceButtonView = (RelativeLayout) button.getParent();
         LinearLayout parentLayout = (LinearLayout) deviceButtonView.getParent();
         int deviceViewChildrenCount = parentLayout.getChildCount();
         for (int j = 0; j < deviceViewChildrenCount; j++) {
             View view = parentLayout.getChildAt(j);
-            if (!(view instanceof FrameLayout)) {
+            if (!(view instanceof RelativeLayout)) {
                 return (LinearLayout) view;
             }
         }
