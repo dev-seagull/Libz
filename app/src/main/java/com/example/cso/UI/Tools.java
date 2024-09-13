@@ -23,7 +23,6 @@ public class Tools {
     DrawerLayout drawerLayout = MainActivity.activity.findViewById(R.id.drawer_layout);
     ImageButton wifiButton = MainActivity.activity.findViewById(R.id.wifiButton);
     LinearLayout backupAccountsButtonsLayout= MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
-    TextView syncMessageTextView = MainActivity.activity.findViewById(R.id.syncMessageTextView);
     LinearLayout deviceButtons = MainActivity.activity.findViewById(R.id.deviceButtons);
     ColorStateList backupAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#FFC300"));
     static ColorStateList primaryAccountButtonColor = ColorStateList.valueOf(Color.parseColor("#0D47A1"));

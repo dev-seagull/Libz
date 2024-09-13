@@ -57,20 +57,23 @@ public class Accounts {
 
     public static LinearLayout createNewAccountButtonView(Activity context, String userEmail){
         LinearLayout layout = new LinearLayout(context);
-        layout.setLayoutParams(new LinearLayout.LayoutParams(
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
+        );
+        params.setMargins(48,0,48,32);
+        layout.setLayoutParams(params);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
 
         RelativeLayout buttonFrame = createNewAccountButtonLayout(context, userEmail);
 
-        LinearLayout chartInnerLayout = Charts.createDeviceDetailsLayout(context);
+        LinearLayout chartInnerLayout = Details.createDetailsLayout(context);
 
-        PieChart pieChart = Charts.createPieChartForAccount(context,userEmail);
+        PieChart pieChart = Details.createPieChartForAccount(context,userEmail);
 
-        TextView directoryUsages = Charts.createDirectoryUsageTextView(context);
+        TextView directoryUsages = Details.createDirectoryUsageTextView(context);
 
         chartInnerLayout.addView(pieChart);
         chartInnerLayout.addView(directoryUsages);
@@ -152,7 +155,6 @@ public class Accounts {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 170
         );
-        layoutParams.setMargins(0,20,0,16);
         newLoginButton.setLayoutParams(layoutParams);
     }
 
@@ -168,7 +170,7 @@ public class Accounts {
                         button.setText("Adding in progress ...");
                         GoogleCloud.signInToGoogleCloud(signInToBackUpLauncher, activity);
                     }else{
-                        LinearLayout detailsView = Charts.getAccountButtonDetailsView(button);
+                        LinearLayout detailsView = Details.getDetailsView(button);
                         if (detailsView.getVisibility() == View.VISIBLE){
                             detailsView.setVisibility(View.GONE);
                         } else {
@@ -227,7 +229,6 @@ public class Accounts {
                 112
         );
 
-        layoutParams.setMargins(0,48,0,0);
         threeDotButton.setLayoutParams(layoutParams);
     }
 

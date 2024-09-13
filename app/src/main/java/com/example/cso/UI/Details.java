@@ -29,24 +29,28 @@ import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Charts {
+public class Details {
 
-    public static LinearLayout createDeviceDetailsLayout(Context context) {
-        LinearLayout chartInnerLayout = new LinearLayout(context);
-        chartInnerLayout.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT - 1000,
+    public static LinearLayout createDetailsLayout(Context context) {
+        LinearLayout layout = new LinearLayout(context);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
-        chartInnerLayout.setOrientation(LinearLayout.VERTICAL);
-        chartInnerLayout.setGravity(Gravity.CENTER);
-        chartInnerLayout.setPadding(8, 8, 8, 8);
-        chartInnerLayout.setElevation(4f);
-        chartInnerLayout.setBackgroundResource(R.drawable.border_background);
-        chartInnerLayout.setVisibility(View.GONE);
-        return chartInnerLayout;
+        );
+        params.setMargins(40,16,40,0);
+        layout.setLayoutParams(params);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setGravity(Gravity.CENTER);
+
+        layout.setPadding(8, 8, 8, 8);
+        layout.setElevation(4f);
+        layout.setBackgroundResource(R.drawable.border_background);
+        layout.setVisibility(View.GONE);
+        return layout;
     }
 
-    public static LinearLayout getDeviceButtonDetailsView(Button button){
+    public static LinearLayout getDetailsView(Button button){
         RelativeLayout deviceButtonView = (RelativeLayout) button.getParent();
         LinearLayout parentLayout = (LinearLayout) deviceButtonView.getParent();
         int deviceViewChildrenCount = parentLayout.getChildCount();
@@ -144,7 +148,7 @@ public class Charts {
     }
 
     public static void configurePieChartDataForDevice(PieChart pieChart, DeviceHandler device) {
-        JsonObject storageData = getDeviceStorageData(device);
+        JsonObject storageData = Devices.getDeviceStorageData(device);
         double freeSpace = storageData.get("freeSpace").getAsDouble() * 1000;
         double mediaStorage = storageData.get("mediaStorage").getAsDouble() * 1000;
         double usedSpaceExcludingMedia = storageData.get("usedSpaceExcludingMedia").getAsDouble() * 1000;
@@ -184,33 +188,6 @@ public class Charts {
         pieChart.setDrawHoleEnabled(false);
     }
 
-    public static JsonObject getDeviceStorageData(DeviceHandler device){
-        JsonObject storageData = new JsonObject();
-        StorageHandler storageHandler = new StorageHandler();
-        double freeSpace = storageHandler.getFreeSpace();
-        double totalStorage = storageHandler.getTotalStorage();
-        double mediaStorage = Double.parseDouble(DBHelper.getPhotosAndVideosStorage());
-        double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
-        storageData.addProperty("freeSpace",freeSpace);
-        storageData.addProperty("mediaStorage", mediaStorage);
-        storageData.addProperty("usedSpaceExcludingMedia", usedSpaceExcludingMedia);
-//
-//        if (isCurrentDevice(device)){
-//            StorageHandler storageHandler = new StorageHandler();
-//            double freeSpace = storageHandler.getFreeSpace();
-//            double totalStorage = storageHandler.getTotalStorage();
-//            double mediaStorage = Double.parseDouble(DBHelper.getPhotosAndVideosStorage());
-//            double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
-//            storageData.addProperty("freeSpace",freeSpace);
-//            storageData.addProperty("mediaStorage", mediaStorage);
-//            storageData.addProperty("usedSpaceExcludingMedia", usedSpaceExcludingMedia);
-//
-//        }else{
-//            storageData = StorageSync.downloadStorageJsonFileFromAccounts(device);
-//        }
-        return storageData;
-    }
-
     public static void configurePieChartLegend(PieChart pieChart) {
         Legend legend = pieChart.getLegend();
         legend.setEnabled(false);
@@ -248,25 +225,11 @@ public class Charts {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        textParams.setMargins(3, 25, 3, 0);
         directoryUsages.setLayoutParams(textParams);
 //        directoryUsages.setFontFamily(ResourcesCompat.getFont(context, R.font.sans_serif));
         directoryUsages.setGravity(Gravity.CENTER);
         directoryUsages.setTextSize(12);
         return directoryUsages;
-    }
-
-    public static LinearLayout getAccountButtonDetailsView(Button button){
-        RelativeLayout accountButtonView = (RelativeLayout) button.getParent();
-        LinearLayout parentLayout = (LinearLayout) accountButtonView.getParent();
-        int deviceViewChildrenCount = parentLayout.getChildCount();
-        for (int j = 0; j < deviceViewChildrenCount; j++) {
-            View view = parentLayout.getChildAt(j);
-            if (!(view instanceof RelativeLayout)) {
-                return (LinearLayout) view;
-            }
-        }
-        return null;
     }
 
 }

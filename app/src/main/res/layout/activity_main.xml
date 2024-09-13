@@ -29,17 +29,15 @@
             <ScrollView
                 android:id="@+id/scrollView"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_above="@+id/actionButtonsLayout">
-
+                android:layout_height="match_parent">
 
                 <LinearLayout
+                    android:id="@+id/mainLayout"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_gravity="fill"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="16dp"
                     tools:context=".MainActivity">
 
                     <LinearLayout
@@ -47,16 +45,14 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:paddingTop="16dp"
-                        android:orientation="vertical"
-                        >
-                    </LinearLayout>
+                        android:layout_marginTop="32dp"
+                        android:orientation="vertical"/>
 
                     <LinearLayout
                         android:id="@+id/syncButtonsLayout"
                         android:layout_width="match_parent"
-                        android:layout_height="100dp"
-                        android:layout_marginTop="50sp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
                         android:orientation="horizontal"
                         android:gravity="center">
 
@@ -111,7 +107,6 @@
                                 android:padding="4dp"/>
                         </FrameLayout>
 
-
                         <FrameLayout
                             android:id="@+id/circularWifiButtonContainer"
                             android:layout_width="100dp"
@@ -140,11 +135,12 @@
 
                     <TextView
                         android:id="@+id/warningText"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="20dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:gravity="center"
+                        android:visibility="gone"
                         android:textColor="@color/text_red_color"/>
 
                     <LinearLayout
@@ -152,108 +148,11 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:layout_marginTop="50sp"
+                        android:layout_marginTop="26dp"
                         android:orientation="vertical"/>
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:id="@+id/syncMessageTextView"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:gravity="center"
-                                android:fontFamily="sans-serif-condensed"
-                                android:shadowColor="@color/black"
-                                android:shadowDx="2"
-                                android:paddingRight="0dp"
-                                android:paddingLeft="32dp"
-                                android:shadowDy="2"
-                                android:shadowRadius="5"
-                                android:text=""
-                                android:textSize="20sp"
-                                android:visibility="gone"
-                                android:textColor="@color/white" />
-                            <ImageView
-                                android:layout_width="wrap_content"
-                                android:id="@+id/waitingSyncGif"
-                                android:layout_height="40dp"
-                                android:visibility="gone"
-                                android:paddingLeft="0dp"
-                                />
-                        </LinearLayout>
-
-                    </LinearLayout>
-
-
+                </LinearLayout>
             </ScrollView>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/actionButtonsLayout"
-                android:layout_alignParentBottom="true"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:foregroundGravity="center"
-                >
-
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/syncSwitchMaterial"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false"
-                    android:visibility="gone"
-                    android:fontFamily="sans-serif-condensed"
-                    android:scaleX="1.5"
-                    android:scaleY="1.5"
-                    android:shadowColor="@color/black"
-                    android:shadowDx="2"
-                    android:shadowDy="2"
-                    android:shadowRadius="5"
-                    android:text="Sync"
-                    android:textColor="@color/white"
-                    android:textSize="20sp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:thumbTint="#BF2C2C"
-                    app:trackTint="#850808" />
-
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/wifiOnlySwitchMaterial"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="false"
-                    android:fontFamily="sans-serif-condensed"
-                    android:scaleX="1.5"
-                    android:scaleY="1.5"
-                    android:shadowColor="@color/black"
-                    android:shadowDx="2"
-                    android:shadowDy="2"
-                    android:shadowRadius="5"
-                    android:text="WIFI ONLY"
-                    android:textColor="@color/white"
-                    android:textSize="20sp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:thumbTint="#BF2C2C"
-                    android:visibility="gone"
-                    app:trackTint="#850808" />
-
-
-            </LinearLayout>
-
-
-
         </RelativeLayout>
-
-
     </androidx.drawerlayout.widget.DrawerLayout>
-
-
-
 </LinearLayout>

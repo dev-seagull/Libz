@@ -18,11 +18,14 @@ import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.example.cso.DBHelper;
 import com.example.cso.DeviceHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
+import com.example.cso.StorageHandler;
 import com.github.mikephil.charting.charts.PieChart;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
+import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 
@@ -42,20 +45,23 @@ public class Devices {
 
     public static LinearLayout createNewDeviceButtonView(Context context, DeviceHandler device) {
         LinearLayout layout = new LinearLayout(context);
-        layout.setLayoutParams(new LinearLayout.LayoutParams(
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
+        );
+        params.setMargins(48,0,48,32);
+        layout.setLayoutParams(params);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
 
         RelativeLayout buttonFrame = createNewDeviceButtonLayout(context, device);
 
-        LinearLayout chartInnerLayout = Charts.createDeviceDetailsLayout(context);
+        LinearLayout chartInnerLayout = Details.createDetailsLayout(context);
 
-        PieChart pieChart = Charts.createPieChartForDevice(context,device);
+        PieChart pieChart = Details.createPieChartForDevice(context,device);
 
-        TextView directoryUsages = Charts.createDirectoryUsageTextView(context);
+        TextView directoryUsages = Details.createDirectoryUsageTextView(context);
 
         chartInnerLayout.addView(pieChart);
         chartInnerLayout.addView(directoryUsages);
@@ -161,7 +167,6 @@ public class Devices {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 170
         );
-        layoutParams.setMargins(0,20,0,16);
         androidDeviceButton.setLayoutParams(layoutParams);
     }
 
@@ -173,7 +178,6 @@ public class Devices {
                 112
         );
 
-        layoutParams.setMargins(0,48,0,0);
         threeDotButton.setLayoutParams(layoutParams);
     }
 
@@ -203,7 +207,7 @@ public class Devices {
             if (MainActivity.isAnyProccessOn) {// clickable false
                 return;
             }
-            LinearLayout detailsView = Charts.getDeviceButtonDetailsView(button);
+            LinearLayout detailsView = Details.getDetailsView(button);
             if (detailsView.getVisibility() == View.VISIBLE) {
                 detailsView.setVisibility(View.GONE);
             } else {
@@ -241,4 +245,30 @@ public class Devices {
         return popupMenu;
     }
 
+    public static JsonObject getDeviceStorageData(DeviceHandler device){
+        JsonObject storageData = new JsonObject();
+        StorageHandler storageHandler = new StorageHandler();
+        double freeSpace = storageHandler.getFreeSpace();
+        double totalStorage = storageHandler.getTotalStorage();
+        double mediaStorage = Double.parseDouble(DBHelper.getPhotosAndVideosStorage());
+        double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
+        storageData.addProperty("freeSpace",freeSpace);
+        storageData.addProperty("mediaStorage", mediaStorage);
+        storageData.addProperty("usedSpaceExcludingMedia", usedSpaceExcludingMedia);
+//
+//        if (isCurrentDevice(device)){
+//            StorageHandler storageHandler = new StorageHandler();
+//            double freeSpace = storageHandler.getFreeSpace();
+//            double totalStorage = storageHandler.getTotalStorage();
+//            double mediaStorage = Double.parseDouble(DBHelper.getPhotosAndVideosStorage());
+//            double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
+//            storageData.addProperty("freeSpace",freeSpace);
+//            storageData.addProperty("mediaStorage", mediaStorage);
+//            storageData.addProperty("usedSpaceExcludingMedia", usedSpaceExcludingMedia);
+//
+//        }else{
+//            storageData = StorageSync.downloadStorageJsonFileFromAccounts(device);
+//        }
+        return storageData;
+    }
 }
