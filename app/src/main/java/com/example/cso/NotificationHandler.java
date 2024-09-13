@@ -33,7 +33,7 @@ public class NotificationHandler {
         }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(activity, channelId)
-                .setSmallIcon(R.drawable.googlephotosimage)
+//                .setSmallIcon(R.drawable.googlephotosimage)
                 .setContentTitle(contentTitle)
                 .setContentText(contentText)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
