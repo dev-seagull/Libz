@@ -18,6 +18,8 @@ import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.viewpager2.widget.ViewPager2;
+
 import com.example.cso.DBHelper;
 import com.example.cso.GoogleCloud;
 import com.example.cso.MainActivity;
@@ -41,21 +43,21 @@ public class Accounts {
                 if (type.equals("primary")) {
                 } else if (type.equals("backup")) {
                     if (accountButtonDoesNotExistsInUI(userEmail)){
-                        LinearLayout newAccountButtonView = createNewAccountButtonView(activity, userEmail);
+                        LinearLayout newAccountButtonView = createNewAccountMainView(activity, userEmail);
                         backupAccountsLinearLayout.addView(newAccountButtonView);
                     }
                 }
             }
             // add a back up account button
             if (accountButtonDoesNotExistsInUI("add a back up account")){
-                LinearLayout addABackupAccountButtonView = createNewAccountButtonView(activity, "add a backup account");
+                LinearLayout addABackupAccountButtonView = createNewAccountMainView(activity, "add a backup account");
                 backupAccountsLinearLayout.addView(addABackupAccountButtonView);
             }
         });
 
     }
 
-    public static LinearLayout createNewAccountButtonView(Activity context, String userEmail){
+    public static LinearLayout createNewAccountMainView(Activity context, String userEmail){
         LinearLayout layout = new LinearLayout(context);
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -68,21 +70,30 @@ public class Accounts {
         layout.setGravity(Gravity.CENTER);
 
         RelativeLayout buttonFrame = createNewAccountButtonLayout(context, userEmail);
+        LinearLayout detailsLayout = Details.createDetailsLayout(context);
 
-        LinearLayout chartInnerLayout = Details.createDetailsLayout(context);
+        ViewPager2 pager = DetailsViewPager.createViewerPage(context, userEmail, "account");
+        detailsLayout.addView(pager);
+
+        layout.addView(buttonFrame);
+        layout.addView(detailsLayout);
+        layout.setContentDescription(userEmail);
+        return layout;
+    }
+
+    public static LinearLayout createChartForStorage(Context context, String userEmail){
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
 
         PieChart pieChart = Details.createPieChartForAccount(context,userEmail);
 
         TextView directoryUsages = Details.createDirectoryUsageTextView(context);
 
-        chartInnerLayout.addView(pieChart);
-        chartInnerLayout.addView(directoryUsages);
+        layout.addView(pieChart);
+        layout.addView(directoryUsages);
 
-        layout.addView(buttonFrame);
-        layout.addView(chartInnerLayout);
-        layout.setContentDescription(userEmail);
         return layout;
     }
+
 
     public static boolean accountButtonDoesNotExistsInUI(String userEmail){ // need change
         LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);

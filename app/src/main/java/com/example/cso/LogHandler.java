@@ -2,6 +2,9 @@ package com.example.cso;
 
 import android.app.Application;
 import android.os.Environment;
+import android.util.Log;
+
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -15,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 
 public class LogHandler extends Application {
@@ -190,6 +194,13 @@ public class LogHandler extends Application {
             }
         }catch (Exception e){
             System.out.println("Failed to write log: " + e.getLocalizedMessage());
+        }
+    }
+
+    public static void crashLog(Throwable message,String tag){
+        if (message != null && tag != null){
+            Log.d(tag, Objects.requireNonNull(message.getLocalizedMessage()));
+            FirebaseCrashlytics.getInstance().recordException(message);
         }
     }
 }

@@ -18,6 +18,8 @@ import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.viewpager2.widget.ViewPager2;
+
 import com.example.cso.DBHelper;
 import com.example.cso.DeviceHandler;
 import com.example.cso.MainActivity;
@@ -36,14 +38,14 @@ public class Devices {
         for (DeviceHandler device : devices) {
             if (!deviceButtonExistsInUI(device.getDeviceId(), activity)) {
                 Log.d("ui","creating button for device " + device.getDeviceName());
-                View newDeviceButtonView = createNewDeviceButtonView(activity, device);
+                View newDeviceButtonView = createNewDeviceMainView(activity, device);
 
                 deviceButtons.addView(newDeviceButtonView);
             }
         }
     }
 
-    public static LinearLayout createNewDeviceButtonView(Context context, DeviceHandler device) {
+    public static LinearLayout createNewDeviceMainView(Context context, DeviceHandler device) {
         LinearLayout layout = new LinearLayout(context);
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -57,18 +59,24 @@ public class Devices {
 
         RelativeLayout buttonFrame = createNewDeviceButtonLayout(context, device);
 
-        LinearLayout chartInnerLayout = Details.createDetailsLayout(context);
+        LinearLayout detailsLayout = Details.createDetailsLayout(context);
+        ViewPager2 pager = DetailsViewPager.createViewerPage(context,device.getDeviceId(),"device");
+        detailsLayout.addView(pager);
 
-        PieChart pieChart = Details.createPieChartForDevice(context,device);
+        layout.addView(buttonFrame);
+        layout.addView(detailsLayout);
+        layout.setContentDescription(device.getDeviceId());
+        return layout;
+    }
+
+    public static LinearLayout createChartForStorage(Context context, String deviceId) {
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
+        PieChart pieChart = Details.createPieChartForDevice(context,deviceId);
 
         TextView directoryUsages = Details.createDirectoryUsageTextView(context);
 
-        chartInnerLayout.addView(pieChart);
-        chartInnerLayout.addView(directoryUsages);
-
-        layout.addView(buttonFrame);
-        layout.addView(chartInnerLayout);
-        layout.setContentDescription(device.getDeviceId());
+        layout.addView(pieChart);
+        layout.addView(directoryUsages);
         return layout;
     }
 
@@ -245,7 +253,7 @@ public class Devices {
         return popupMenu;
     }
 
-    public static JsonObject getDeviceStorageData(DeviceHandler device){
+    public static JsonObject getDeviceStorageData(String deviceId){
         JsonObject storageData = new JsonObject();
         StorageHandler storageHandler = new StorageHandler();
         double freeSpace = storageHandler.getFreeSpace();

@@ -3,9 +3,6 @@ package com.example.cso;
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
-import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.cso.UI.SyncButton;
 import com.example.cso.UI.Tools;

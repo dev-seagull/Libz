@@ -36,9 +36,27 @@ public class Details {
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
+                LinearLayout.LayoutParams.MATCH_PARENT
         );
         params.setMargins(40,16,40,0);
+        layout.setLayoutParams(params);
+        layout.setOrientation(LinearLayout.HORIZONTAL);
+        layout.setGravity(Gravity.CENTER);
+
+        layout.setPadding(8, 8, 8, 8);
+        layout.setElevation(4f);
+        layout.setBackgroundResource(R.drawable.border_background);
+        layout.setVisibility(View.GONE);
+        return layout;
+    }
+
+    public static LinearLayout createInnerDetailsLayout(Context context) {
+        LinearLayout layout = new LinearLayout(context);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+        );
         layout.setLayoutParams(params);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
@@ -46,7 +64,6 @@ public class Details {
         layout.setPadding(8, 8, 8, 8);
         layout.setElevation(4f);
         layout.setBackgroundResource(R.drawable.border_background);
-        layout.setVisibility(View.GONE);
         return layout;
     }
 
@@ -63,7 +80,7 @@ public class Details {
         return null;
     }
 
-    public static PieChart createPieChartForAccount(Activity context, String userEmail){
+    public static PieChart createPieChartForAccount(Context context, String userEmail){
         PieChart pieChart = new PieChart(context);
         configurePieChartDimensions(pieChart);
         configurePieChartDataForAccount(pieChart, userEmail);
@@ -121,10 +138,10 @@ public class Details {
         pieChart.setDrawHoleEnabled(false);
     }
 
-    public static PieChart createPieChartForDevice(Context context, DeviceHandler device) {
+    public static PieChart createPieChartForDevice(Context context, String deviceId) {
         PieChart pieChart = new PieChart(context);
         configurePieChartDimensions(pieChart);
-        configurePieChartDataForDevice(pieChart, device);
+        configurePieChartDataForDevice(pieChart, deviceId);
         configurePieChartLegend(pieChart);
         configurePieChartInteractions(pieChart);
         pieChart.invalidate();
@@ -147,8 +164,8 @@ public class Details {
         pieChart.setLayoutParams(layoutParams);
     }
 
-    public static void configurePieChartDataForDevice(PieChart pieChart, DeviceHandler device) {
-        JsonObject storageData = Devices.getDeviceStorageData(device);
+    public static void configurePieChartDataForDevice(PieChart pieChart, String deviceId) {
+        JsonObject storageData = Devices.getDeviceStorageData(deviceId);
         double freeSpace = storageData.get("freeSpace").getAsDouble() * 1000;
         double mediaStorage = storageData.get("mediaStorage").getAsDouble() * 1000;
         double usedSpaceExcludingMedia = storageData.get("usedSpaceExcludingMedia").getAsDouble() * 1000;
