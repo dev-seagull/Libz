@@ -453,7 +453,7 @@ public class UIHandler {
             if (!deviceButtonExistsInUI(device.getDeviceId(), activity)) {
                 Log.d("ui","creating button for device " + device.getDeviceName());
                 View newDeviceButtonView = createNewDeviceButtonView(activity, device);
-                newDeviceButtonView.setContentDescription(device.deviceId);
+
                 deviceButtons.addView(newDeviceButtonView);
             }
         }
@@ -481,7 +481,7 @@ public class UIHandler {
 
         layout.addView(buttonFrame);
         layout.addView(chartInnerLayout);
-
+        layout.setContentDescription(device.getDeviceId());
         return layout;
     }
 
@@ -492,7 +492,7 @@ public class UIHandler {
             View deviceButtonsChildView = deviceButtonsLinearLayout.getChildAt(i);
             CharSequence contentDescription = deviceButtonsChildView.getContentDescription();
             if(contentDescription != null){
-                if(contentDescription.toString().equals(deviceId)) {
+                if(contentDescription.toString().equalsIgnoreCase(deviceId)) {
                     Log.d("ui", deviceId+ " exists.");
                     return true;
                 }
@@ -513,18 +513,17 @@ public class UIHandler {
                 LinearLayout.LayoutParams.WRAP_CONTENT
         ));
 
-        reInitializeButtonsLayout(layout,context,device);
+        reInitializeDeviceButtonsLayout(layout,context,device);
         return layout;
     }
 
-    public static void reInitializeButtonsLayout(RelativeLayout layout,Context context, DeviceHandler device){
+    public static void reInitializeDeviceButtonsLayout(RelativeLayout layout,Context context, DeviceHandler device){
         layout.removeAllViews();
         Button newDeviceButton = createNewDeviceButton(context,device);
-        Button ThreeDotButton = createNewThreeDotsButton(context,device,newDeviceButton);
+        Button threeDotButton = createNewDeviceThreeDotsButton(context,device,newDeviceButton);
 
         layout.addView(newDeviceButton);
-        layout.addView(ThreeDotButton);
-
+        layout.addView(threeDotButton);
     }
 
     public static Button createNewDeviceButton(Context context,DeviceHandler device) {
@@ -540,16 +539,17 @@ public class UIHandler {
         );
         deviceButtonParams.addRule(RelativeLayout.ALIGN_PARENT_START);
         newDeviceButton.setLayoutParams(deviceButtonParams);
+
         setListenerToDeviceButtons(newDeviceButton,device);
         return newDeviceButton;
     }
 
 
-    public static Button createNewThreeDotsButton(Context context,DeviceHandler device, Button deviceButton){
+    public static Button createNewDeviceThreeDotsButton(Context context,DeviceHandler device, Button deviceButton){
         Button newThreeDotButton = new Button(context);
         newThreeDotButton.setContentDescription(device.getDeviceId() + "threeDot");
         addEffectsToThreeDotButton(newThreeDotButton);
-        setListenerToThreeDotButtons(newThreeDotButton, device);
+        setListenerToDeviceThreeDotButtons(newThreeDotButton, device);
 
         RelativeLayout.LayoutParams threeDotButtonParams = new RelativeLayout.LayoutParams(
                 112,
@@ -565,13 +565,11 @@ public class UIHandler {
     }
 
     private static void addEffectsToDeviceButton(Button androidDeviceButton, Context context){
-        Drawable deviceDrawable = context.getResources()
-                .getDrawable(R.drawable.android_device_icon);
+        Drawable deviceDrawable = context.getResources().getDrawable(R.drawable.android_device_icon);
         androidDeviceButton.setCompoundDrawablesWithIntrinsicBounds
                 (deviceDrawable, null, null, null);
 
         androidDeviceButton.setBackgroundResource(R.drawable.gradient_color_bg);
-//        androidDeviceButton.setGravity(Gravity.CENTER);
         androidDeviceButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         androidDeviceButton.setTextColor(buttonTextColor);
         androidDeviceButton.setTextSize(12);
@@ -599,11 +597,24 @@ public class UIHandler {
         threeDotButton.setLayoutParams(layoutParams);
     }
 
-    private static void setListenerToThreeDotButtons(Button button, DeviceHandler device){
+    private static void setListenerToDeviceThreeDotButtons(Button button, DeviceHandler device){
         button.setOnClickListener(view -> {
-            MainActivity.activity.runOnUiThread(() -> {
-                Toast.makeText(activity.getApplicationContext(),"Clicked",Toast.LENGTH_SHORT).show();
-            });
+            String type = "device";
+            if (isCurrentDevice(device)){
+                type = "ownDevice";
+            }
+            try{
+                PopupMenu popupMenu = setPopUpMenuOnButton(activity, button,type);
+                popupMenu.setOnMenuItemClickListener(item -> {
+                    if (item.getItemId() == R.id.unlink) {
+
+                    }
+                    return true;
+                });
+                popupMenu.show();
+            }catch (Exception e){
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
         });
     }
 
@@ -620,7 +631,7 @@ public class UIHandler {
             }
 
             RelativeLayout parent = (RelativeLayout) view.getParent();
-            reInitializeButtonsLayout(parent,activity,device);
+            reInitializeDeviceButtonsLayout(parent,activity,device);
         });
     }
 
@@ -793,11 +804,12 @@ public class UIHandler {
     }
 
     private static LinearLayout getAccountButtonDetailsView(Button button){
-        LinearLayout deviceButtonView = (LinearLayout) button.getParent();
-        int deviceViewChildrenCount = deviceButtonView.getChildCount();
+        RelativeLayout accountButtonView = (RelativeLayout) button.getParent();
+        LinearLayout parentLayout = (LinearLayout) accountButtonView.getParent();
+        int deviceViewChildrenCount = parentLayout.getChildCount();
         for (int j = 0; j < deviceViewChildrenCount; j++) {
-            View view = deviceButtonView.getChildAt(j);
-            if (!(view instanceof Button)) {
+            View view = parentLayout.getChildAt(j);
+            if (!(view instanceof RelativeLayout)) {
                 return (LinearLayout) view;
             }
         }
@@ -813,54 +825,51 @@ public class UIHandler {
 //            }
 //        }
 //    }
+//
+//    private static void displayDirectoryUsage() {
+//        directoryUsages.setVisibility(View.VISIBLE);
+//        HashMap<String, String> dirHashMap = StorageHandler.directoryUIDisplay();
+//        StringBuilder usageText = new StringBuilder();
+//
+//        for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
+//            usageText.append(String.format("%-10s: %s GB\n", entry.getKey(), entry.getValue()));
+//        }
+//        directoryUsages.setText(usageText.toString());
+//        directoryUsages.setTextColor(Color.parseColor("#212121"));
+//    }
+//
+//
+//    private static void configurePieChartData(PieChart pieChart) {
+//        StorageHandler storageHandler = new StorageHandler();
+//
+//        double freeSpace = storageHandler.getFreeSpace();
+//        double totalStorage = storageHandler.getTotalStorage();
+//        double mediaStorage = Double.parseDouble(MainActivity.dbHelper.getPhotosAndVideosStorage());
+//        double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
+//
+//        ArrayList<PieEntry> entries = new ArrayList<>();
+//        entries.add(new PieEntry((float) freeSpace, "Free Space(GB)"));
+//        entries.add(new PieEntry((float) mediaStorage, "Media(GB)"));
+//        entries.add(new PieEntry((float) usedSpaceExcludingMedia, "Others(GB)"));
+//
+//        PieDataSet dataSet = new PieDataSet(entries, null);
+//        int[] colors = {
+//                Color.parseColor("#1E88E5"),
+//                Color.parseColor("#64B5F6"),
+//                Color.parseColor("#B3E5FC")
+//        };
+//        dataSet.setColors(colors);
+//        dataSet.setValueTextColor(Color.parseColor("#212121"));
+//        dataSet.setValueTextSize(14f);
+//
+//        PieData data = new PieData(dataSet);
+//        pieChart.setData(data);
+//        pieChart.getDescription().setEnabled(false);
+//        pieChart.setDrawEntryLabels(true);
+//        pieChart.setDrawHoleEnabled(true);
+//        pieChart.setDrawHoleEnabled(false);
+//    }
 
-/*
-    private static void displayDirectoryUsage() {
-        directoryUsages.setVisibility(View.VISIBLE);
-        HashMap<String, String> dirHashMap = StorageHandler.directoryUIDisplay();
-        StringBuilder usageText = new StringBuilder();
-
-        for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
-            usageText.append(String.format("%-10s: %s GB\n", entry.getKey(), entry.getValue()));
-        }
-        directoryUsages.setText(usageText.toString());
-        directoryUsages.setTextColor(Color.parseColor("#212121"));
-    }
-*/
-
-
- /*
-    private static void configurePieChartData(PieChart pieChart) {
-        StorageHandler storageHandler = new StorageHandler();
-
-        double freeSpace = storageHandler.getFreeSpace();
-        double totalStorage = storageHandler.getTotalStorage();
-        double mediaStorage = Double.parseDouble(MainActivity.dbHelper.getPhotosAndVideosStorage());
-        double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
-
-        ArrayList<PieEntry> entries = new ArrayList<>();
-        entries.add(new PieEntry((float) freeSpace, "Free Space(GB)"));
-        entries.add(new PieEntry((float) mediaStorage, "Media(GB)"));
-        entries.add(new PieEntry((float) usedSpaceExcludingMedia, "Others(GB)"));
-
-        PieDataSet dataSet = new PieDataSet(entries, null);
-        int[] colors = {
-                Color.parseColor("#1E88E5"),
-                Color.parseColor("#64B5F6"),
-                Color.parseColor("#B3E5FC")
-        };
-        dataSet.setColors(colors);
-        dataSet.setValueTextColor(Color.parseColor("#212121"));
-        dataSet.setValueTextSize(14f);
-
-        PieData data = new PieData(dataSet);
-        pieChart.setData(data);
-        pieChart.getDescription().setEnabled(false);
-        pieChart.setDrawEntryLabels(true);
-        pieChart.setDrawHoleEnabled(true);
-        pieChart.setDrawHoleEnabled(false);
-    }
-*/
 
     //---------------------------------- //---------------------------------- //---------------------------------- //----------------------------------
 
@@ -885,16 +894,16 @@ public class UIHandler {
                 String type = accountRow[1];
                 if (type.equals("primary")) {
                 } else if (type.equals("backup")) {
-                    if (!accountButtonExistsInUI(userEmail)){
+                    if (accountButtonDoesNotExistsInUI(userEmail)){
                         LinearLayout newAccountButtonView = createNewAccountButtonView(activity, userEmail);
                         backupAccountsLinearLayout.addView(newAccountButtonView);
                     }
                 }
             }
             // add a back up account button
-            if (!accountButtonExistsInUI("add a back up account")){
-                LinearLayout newAccountButtonView = createNewAccountButtonView(activity,"add a back up account");
-                backupAccountsLinearLayout.addView(newAccountButtonView);
+            if (accountButtonDoesNotExistsInUI("add a back up account")){
+                LinearLayout addABackupAccountButtonView = createNewAccountButtonView(activity, "add a backup account");
+                backupAccountsLinearLayout.addView(addABackupAccountButtonView);
             }
             MainActivity.isAnyProccessOn = false; // setup account buttons
             setupDeviceButtons(activity);
@@ -910,11 +919,8 @@ public class UIHandler {
         ));
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
-        layout.setContentDescription(userEmail);
 
-        Button button = createBackUpAccountButton(MainActivity.activity);
-        button.setText(userEmail);
-        setListenerToAccountButton(button,MainActivity.activity);
+        RelativeLayout buttonFrame = createNewAccountButtonLayout(context, userEmail);
 
         LinearLayout chartInnerLayout = createDeviceDetailsLayout(context);
 
@@ -925,22 +931,148 @@ public class UIHandler {
         chartInnerLayout.addView(pieChart);
         chartInnerLayout.addView(directoryUsages);
 
-        layout.addView(button);
+        layout.addView(buttonFrame);
         layout.addView(chartInnerLayout);
-
+        layout.setContentDescription(userEmail);
         return layout;
     }
 
-    private static boolean accountButtonExistsInUI(String userEmail){ // need change
+    private static boolean accountButtonDoesNotExistsInUI(String userEmail){ // need change
         LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
         int backupButtonsCount = backupButtonsLinearLayout.getChildCount();
         for(int i=0 ; i < backupButtonsCount ; i++){
             View backupButtonChild = backupButtonsLinearLayout.getChildAt(i);
-            if(backupButtonChild.getContentDescription().toString().equalsIgnoreCase(userEmail)){
-                return true;
+            CharSequence contentDescription = backupButtonChild.getContentDescription();
+            if(contentDescription.toString().equalsIgnoreCase(userEmail)){
+                return false;
             }
         }
-        return false;
+        return true;
+    }
+
+    private static RelativeLayout createNewAccountButtonLayout(Activity context, String userEmail){
+        RelativeLayout layout = new RelativeLayout(context);
+        layout.setLayoutParams(new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.MATCH_PARENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+        ));
+
+        reInitializeAccountButtonsLayout(layout,context,userEmail);
+        return layout;
+    }
+
+    public static void reInitializeAccountButtonsLayout(RelativeLayout layout, Context context, String userEmail){
+        layout.removeAllViews();
+
+        Button newAccountButton = createNewAccountButton(context,userEmail);
+        Button threeDotButton = createNewAccountThreeDotsButton(context,userEmail,newAccountButton);
+
+        layout.addView(newAccountButton);
+        if (!userEmail.equalsIgnoreCase("add a backup account")){
+            layout.addView(threeDotButton);
+        }
+    }
+
+    public static Button createNewAccountButton(Context context, String userEmail){
+        Button newLoginButton = new Button(context);
+        newLoginButton.setText(userEmail);
+        newLoginButton.setContentDescription(userEmail);
+        addEffectsToAccountButton(newLoginButton, context);
+        newLoginButton.setId(View.generateViewId());
+
+        RelativeLayout.LayoutParams accountButtonParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.MATCH_PARENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+        );
+        accountButtonParams.addRule(RelativeLayout.ALIGN_PARENT_START);
+        newLoginButton.setLayoutParams(accountButtonParams);
+
+        setListenerToAccountButton(newLoginButton,MainActivity.activity);
+        return newLoginButton;
+    }
+
+    public static void addEffectsToAccountButton(Button newLoginButton, Context context){
+        Drawable loginButtonLeftDrawable = context.getResources().getDrawable(R.drawable.googledriveimage);
+        newLoginButton.setCompoundDrawablesWithIntrinsicBounds
+                (loginButtonLeftDrawable, null, null, null);
+
+        newLoginButton.setBackgroundResource(R.drawable.gradient_purple);
+        newLoginButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        newLoginButton.setTextColor(buttonTextColor);
+        newLoginButton.setTextSize(12);
+        newLoginButton.setPadding(40,0,150,0);
+
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                170
+        );
+        layoutParams.setMargins(0,20,0,16);
+        newLoginButton.setLayoutParams(layoutParams);
+    }
+
+    public static void setListenerToAccountButton(Button button, Activity activity) {
+        button.setOnClickListener(
+            view -> {
+                if (MainActivity.isAnyProccessOn) { // make clickable false
+                    return;
+                }
+                String buttonText = button.getText().toString().toLowerCase();
+                if (buttonText.equals("add a backup account")) {
+                    MainActivity.isAnyProccessOn = true; // add a backup account
+                    button.setText("Adding in progress ...");
+                    GoogleCloud.signInToGoogleCloud(signInToBackUpLauncher, activity);
+                }else{
+                    LinearLayout detailsView = getAccountButtonDetailsView(button);
+                    if (detailsView.getVisibility() == View.VISIBLE){
+                        detailsView.setVisibility(View.GONE);
+                    } else {
+                        detailsView.setVisibility(View.VISIBLE);
+                    }
+                    RelativeLayout parent = (RelativeLayout) view.getParent();
+                    reInitializeAccountButtonsLayout(parent,activity,buttonText);
+                }
+            }
+        );
+    }
+
+    public static Button createNewAccountThreeDotsButton(Context context,String userEmail, Button accountButton){
+        Button newThreeDotButton = new Button(context);
+        newThreeDotButton.setContentDescription(userEmail + "threeDot");
+        addEffectsToThreeDotButton(newThreeDotButton);
+        setListenerToAccountThreeDotButtons(newThreeDotButton, userEmail);
+
+        RelativeLayout.LayoutParams threeDotButtonParams = new RelativeLayout.LayoutParams(
+                112,
+                112
+        );
+        threeDotButtonParams.addRule(RelativeLayout.ALIGN_TOP, accountButton.getId());
+        threeDotButtonParams.addRule(RelativeLayout.ALIGN_PARENT_END);
+        newThreeDotButton.setLayoutParams(threeDotButtonParams);
+        newThreeDotButton.setVisibility(View.VISIBLE);
+        newThreeDotButton.bringToFront();
+
+        return newThreeDotButton;
+    }
+
+    private static void setListenerToAccountThreeDotButtons(Button button, String userEmail) {
+        button.setOnClickListener(view -> {
+            try {
+                PopupMenu popupMenu = setPopUpMenuOnButton(activity, (Button) view, "account");
+                popupMenu.setOnMenuItemClickListener(item -> {
+                    if (item.getItemId() == R.id.unlink) {
+                        MainActivity.isAnyProccessOn = true;//unlink
+                        button.setText("Unlink in progress ...");
+                        new Thread(() -> GoogleCloud.unlink(userEmail, activity)).start();
+                    }
+                    return true;
+                });
+                popupMenu.show();
+            } catch (Exception e) {
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
+        });
     }
 
     private static PieChart createPieChartForAccount(Activity context,String userEmail){
@@ -1001,82 +1133,6 @@ public class UIHandler {
         pieChart.setDrawHoleEnabled(false);
     }
 
-    public static Button createBackUpAccountButton(Activity activity){
-        Button newLoginButton = new Button(activity);
-        addEffectsToAccountButton(newLoginButton, activity);
-        return newLoginButton;
-    }
-
-    public static void addEffectsToAccountButton(Button newLoginButton, Activity activity){
-        Drawable loginButtonLeftDrawable = activity.getApplicationContext().getResources()
-                .getDrawable(R.drawable.googledriveimage);;
-        newLoginButton.setCompoundDrawablesWithIntrinsicBounds
-                (loginButtonLeftDrawable, null, null, null);
-
-        newLoginButton.setBackgroundResource(R.drawable.gradient_purple);
-        newLoginButton.setGravity(Gravity.CENTER);
-        newLoginButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        newLoginButton.setTextColor(buttonTextColor);
-        newLoginButton.setTextSize(10);
-        newLoginButton.setPadding(40,0,150,0);
-
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                170
-        );
-        layoutParams.setMargins(0,20,0,16);
-        newLoginButton.setLayoutParams(layoutParams);
-
-//        AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
-//        fadeIn.setDuration(1000);
-//        newLoginButton.startAnimation(fadeIn);
-    }
-
-    public static void setListenerToAccountButton(Button button, Activity activity) {
-        button.setOnClickListener(
-                view -> {
-                    if (MainActivity.isAnyProccessOn) { // make clickable false
-                        return;
-                    }
-                    LinearLayout detailsView = getAccountButtonDetailsView(button);
-                    if (detailsView.getVisibility() == View.VISIBLE){
-                        detailsView.setVisibility(View.GONE);
-                        return;
-                    }
-                    String buttonText = button.getText().toString().toLowerCase();
-                    if (buttonText.equals("add a back up account")) {
-                        MainActivity.isAnyProccessOn = true; // add a backup account
-                        button.setText("Adding in progress ...");
-                        GoogleCloud.signInToGoogleCloud(signInToBackUpLauncher, activity);
-                    } else if (buttonText.equals("Adding in progress ...")){
-
-                    } else if (buttonText.equals("Unlink in progress ...")){
-
-                    } else {
-                        button.setContentDescription(buttonText);
-                        try{
-                            PopupMenu popupMenu = setPopUpMenuOnButton(activity, button,"account");
-                            popupMenu.setOnMenuItemClickListener(item -> {
-                                if (item.getItemId() == R.id.unlink) {
-                                    MainActivity.isAnyProccessOn = true;//unlink
-                                    button.setText("Unlink in progress ...");
-                                    new Thread(() -> GoogleCloud.unlink(buttonText, activity)).start();
-                                }else if(item.getItemId() == R.id.details){
-                                    detailsView.setVisibility(View.VISIBLE);
-                                }
-                                return true;
-                            });
-                            popupMenu.show();
-                        }catch (Exception e){
-                            button.setText(button.getContentDescription());
-                        }
-
-                    }
-                }
-        );
-    }
 
     private static PopupMenu setPopUpMenuOnButton(Activity activity, Button button, String type) {
         PopupMenu popupMenu = new PopupMenu(activity.getApplicationContext(), button, Gravity.CENTER);
