@@ -3,7 +3,6 @@ package com.example.cso;
 import static com.example.cso.MainActivity.activity;
 import static com.example.cso.MainActivity.signInToBackUpLauncher;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -23,13 +22,11 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
@@ -42,7 +39,6 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.anychart.scales.Linear;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.BarData;
@@ -151,7 +147,7 @@ public class UIHandler {
                 Sync.startSync(activity);
             }
 //            startSyncButtonAnimation(activity);
-        }catch (Exception e){}
+        }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e);}
     }
 
     private static void stopSyncIfRunning(boolean isServiceRunning, Activity activity){
@@ -160,7 +156,7 @@ public class UIHandler {
                 Sync.stopSync();
             }
             stopSyncButtonAnimation(activity);
-        }catch (Exception e){}
+        }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
     }
 
     public static void stopSyncButtonAnimation(Activity activity){
@@ -194,7 +190,7 @@ public class UIHandler {
             boolean state = SharedPreferencesHandler.getSyncSwitchState();
             SharedPreferencesHandler.setSwitchState("syncSwitchState",!state,MainActivity.preferences);
             return !state;
-        }catch (Exception e){}
+        }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
         return false;
     }
 
@@ -225,7 +221,7 @@ public class UIHandler {
             }
             textView.setTextColor(textColor);
             button.setBackgroundResource(backgroundResource);
-        }catch (Exception e){}
+        }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
     }
 
     public static void initializeDrawerLayout(Activity activity){
@@ -252,6 +248,7 @@ public class UIHandler {
             setMenuItemTitle(R.id.navMenuItem1, "Version: " + pInfo.versionName, activity);
             setMenuItemTitle(R.id.navMenuItem2, "Device id: " + MainActivity.androidUniqueDeviceIdentifier, activity);
         }catch (Exception e) {
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
     }
 
@@ -431,7 +428,7 @@ public class UIHandler {
                 if (totalFreeSpace < assetsSize) {
                     builder.setTitle("Not enough space");
                     builder.setMessage("Approximately " + totalFreeSpace / 1024 + " GB out of " + assetsSize / 1024 + " GB of your assets in " + userEmail + " will be moved to other available accounts." +
-                            + (assetsSize - totalFreeSpace) / 1024 + " GB of your assets will be out of sync.\n" +
+                            (assetsSize - totalFreeSpace) / 1024 + " GB of your assets will be out of sync.\n" +
                             "This process may take several minutes or hours depending on the size of your assets. ");
 
                 } else {
@@ -510,53 +507,61 @@ public class UIHandler {
     } // for more data
 
     private static RelativeLayout createNewDeviceButtonLayout(Context context, DeviceHandler device) {
-        // Create a new RelativeLayout
         RelativeLayout layout = new RelativeLayout(context);
         layout.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         ));
 
-        // Create the main device button
+        reInitializeButtonsLayout(layout,context,device);
+        return layout;
+    }
+
+    public static void reInitializeButtonsLayout(RelativeLayout layout,Context context, DeviceHandler device){
+        layout.removeAllViews();
+        Button newDeviceButton = createNewDeviceButton(context,device);
+        Button ThreeDotButton = createNewThreeDotsButton(context,device,newDeviceButton);
+
+        layout.addView(newDeviceButton);
+        layout.addView(ThreeDotButton);
+
+    }
+
+    public static Button createNewDeviceButton(Context context,DeviceHandler device) {
         Button newDeviceButton = new Button(context);
         newDeviceButton.setText(device.getDeviceName());
         newDeviceButton.setContentDescription(device.getDeviceId());
         addEffectsToDeviceButton(newDeviceButton, context);
         newDeviceButton.setId(View.generateViewId());
 
-
-        // Set layout parameters for the main device button
         RelativeLayout.LayoutParams deviceButtonParams = new RelativeLayout.LayoutParams(
                 RelativeLayout.LayoutParams.MATCH_PARENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT
         );
         deviceButtonParams.addRule(RelativeLayout.ALIGN_PARENT_START);
         newDeviceButton.setLayoutParams(deviceButtonParams);
+        setListenerToDeviceButtons(newDeviceButton,device);
+        return newDeviceButton;
+    }
 
-        // Add the main device button to the layout
-        layout.addView(newDeviceButton);
 
-        // Create the three-dot menu button
+    public static Button createNewThreeDotsButton(Context context,DeviceHandler device, Button deviceButton){
         Button newThreeDotButton = new Button(context);
         newThreeDotButton.setContentDescription(device.getDeviceId() + "threeDot");
         addEffectsToThreeDotButton(newThreeDotButton);
         setListenerToThreeDotButtons(newThreeDotButton, device);
-        setListenerToDeviceButtons(newDeviceButton,newThreeDotButton);
-        // Set layout parameters for the three-dot menu button
+
         RelativeLayout.LayoutParams threeDotButtonParams = new RelativeLayout.LayoutParams(
                 112,
                 112
         );
-        threeDotButtonParams.addRule(RelativeLayout.ALIGN_TOP, newDeviceButton.getId());
+        threeDotButtonParams.addRule(RelativeLayout.ALIGN_TOP, deviceButton.getId());
         threeDotButtonParams.addRule(RelativeLayout.ALIGN_PARENT_END);
         newThreeDotButton.setLayoutParams(threeDotButtonParams);
-        newThreeDotButton.setFocusable(false);
-        newThreeDotButton.setFocusableInTouchMode(false);
         newThreeDotButton.setVisibility(View.VISIBLE);
-        // Add the three-dot menu button to the layout
-        layout.addView(newThreeDotButton);
+        newThreeDotButton.bringToFront();
 
-        return layout;
+        return newThreeDotButton;
     }
 
     private static void addEffectsToDeviceButton(Button androidDeviceButton, Context context){
@@ -578,7 +583,6 @@ public class UIHandler {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 170
         );
-        layoutParams.gravity = Gravity.START;
         layoutParams.setMargins(0,20,0,16);
         androidDeviceButton.setLayoutParams(layoutParams);
     }
@@ -603,7 +607,7 @@ public class UIHandler {
         });
     }
 
-    private static void setListenerToDeviceButtons(Button button, Button threeDotButton){
+    private static void setListenerToDeviceButtons(Button button, DeviceHandler device){
         button.setOnClickListener( view -> {
             if (MainActivity.isAnyProccessOn) {// clickable false
                 return;
@@ -614,27 +618,10 @@ public class UIHandler {
             } else {
                 detailsView.setVisibility(View.VISIBLE);
             }
-            threeDotButton.bringToFront();
-            threeDotButton.setFocusable(true);
-            threeDotButton.setFocusableInTouchMode(true);
-            threeDotButton.setVisibility(View.VISIBLE);
+
+            RelativeLayout parent = (RelativeLayout) view.getParent();
+            reInitializeButtonsLayout(parent,activity,device);
         });
-//        button.setOnTouchListener(
-//                (view, motionEvent) -> {
-//                    if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-//                        threeDotButton.bringToFront();
-//                        threeDotButton.setFocusable(true);
-//                        threeDotButton.setFocusableInTouchMode(true);
-//                        threeDotButton.setVisibility(View.VISIBLE);
-//                    } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
-//                        threeDotButton.bringToFront();
-//                        threeDotButton.setFocusable(true);
-//                        threeDotButton.setFocusableInTouchMode(true);
-//                        threeDotButton.setVisibility(View.VISIBLE);
-//                    }
-//                    return false;
-//                }
-//        );
     }
 
     private static PieChart createPieChartForDevice(Context context, DeviceHandler device) {
