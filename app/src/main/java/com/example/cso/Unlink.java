@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.example.cso.UI.UI;
 import com.google.api.services.drive.Drive;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
@@ -29,7 +30,7 @@ public class Unlink {
         }catch (Exception e){
             FirebaseCrashlytics.getInstance().recordException(e);
         }
-        UIHandler.setupAccountButtons(MainActivity.activity); // end of unlink single account
+        UI.update(); // end of unlink single account
         Log.d("Threads","unlinkSingleAccountThread finished");
     }
 
@@ -112,7 +113,7 @@ public class Unlink {
         try{
             unlinkAccountThread.join();
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
-        UIHandler.setupAccountButtons(activity); // end of unlink account
+        UI.update(); // end of unlink account
         Log.d("Unlink", "unlinkAccountThread finished");
     }
 

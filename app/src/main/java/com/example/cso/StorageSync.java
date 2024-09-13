@@ -4,8 +4,6 @@ import android.content.Context;
 import android.provider.Settings;
 import android.util.Log;
 
-import androidx.fragment.app.FragmentActivity;
-
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;

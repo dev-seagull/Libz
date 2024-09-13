@@ -6,6 +6,7 @@ import android.view.View;
 
 import androidx.activity.result.ActivityResultLauncher;
 
+import com.example.cso.UI.UI;
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.json.Json;
 import com.google.api.services.drive.Drive;
@@ -641,7 +642,7 @@ public class Profile {
         try{
             addingLinkedAccountsThread.join();
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
-        UIHandler.setupAccountButtons(MainActivity.activity); // end of login to linked account
+        UI.update(); // end of login to linked account
     }
 
     private static void handleDeviceInsertion(JsonObject resultJson){
@@ -768,7 +769,7 @@ public class Profile {
         try {
             loginSingleAccountThread.join();
         }catch (InterruptedException e) { FirebaseCrashlytics.getInstance().recordException(e); }
-        UIHandler.setupAccountButtons(MainActivity.activity); // end of login single account
+        UI.update(); // end of login single account
     }
 
     private static void handleLoginToSingleAccountSuccess(List<String[]> backedUpAccounts,GoogleCloud.SignInResult signInResult){

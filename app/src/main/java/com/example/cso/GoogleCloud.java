@@ -9,6 +9,7 @@
     import androidx.appcompat.app.AppCompatActivity;
     import androidx.fragment.app.FragmentActivity;
 
+    import com.example.cso.UI.Dialogs;
     import com.google.android.gms.auth.api.signin.GoogleSignIn;
     import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
     import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -558,7 +559,7 @@
         public static void unlink(String buttonText, Activity activity){
             Log.d("Unlink", "start to unlink");
             GoogleDrive.startUpdateStorageThread();
-            UIHandler.showMoveDriveFilesDialog(buttonText, activity);
+            Dialogs.showMoveDriveFilesDialog(buttonText, activity);
         }
 
         public static ArrayList<SignInResult> signInLinkedAccounts(JsonObject resultJson, String userEmail){

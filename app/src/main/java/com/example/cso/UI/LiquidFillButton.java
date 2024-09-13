@@ -1,4 +1,4 @@
-package com.example.cso;
+package com.example.cso.UI;
 
 import android.animation.ObjectAnimator;
 import android.content.Context;
@@ -42,7 +42,7 @@ public class LiquidFillButton extends FrameLayout {
         super.onDraw(canvas);
 
         float radius = Math.min(getWidth(), getHeight()) / 2f;
-        if(circularPath != null){
+        if (circularPath != null) {
             circularPath.reset();
             circularPath.addCircle(getWidth() / 2f, getHeight() / 2f, radius, Path.Direction.CW);
             canvas.clipPath(circularPath);

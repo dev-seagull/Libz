@@ -91,7 +91,7 @@
                             android:layout_height="100dp"
                             android:layout_margin="8dp">
 
-                            <com.example.cso.LiquidFillButton
+                            <com.example.cso.UI.LiquidFillButton
                                 android:id="@+id/syncButton"
                                 android:layout_width="100dp"
                                 android:layout_height="100dp"

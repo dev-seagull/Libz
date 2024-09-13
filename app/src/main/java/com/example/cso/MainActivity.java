@@ -15,6 +15,8 @@
     import androidx.activity.result.contract.ActivityResultContracts;
     import androidx.appcompat.app.AppCompatActivity;
 
+    import com.example.cso.UI.Dialogs;
+    import com.example.cso.UI.UI;
     import com.google.firebase.analytics.FirebaseAnalytics;
     import com.google.firebase.crashlytics.FirebaseCrashlytics;
     import com.google.gson.JsonObject;
@@ -66,7 +68,7 @@
             Log.d("androidId", androidUniqueDeviceIdentifier);
             Log.d("androidDeviceName", androidDeviceName);
 
-            UIHandler.initAppUI(activity);
+            UI.initAppUI(activity);
 
 //            boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
 //            if(isFirstTime){
@@ -116,7 +118,7 @@
                                     Log.d("signInToBackUpLauncher","Checking if it's linked to accounts finished: " + isLinked);
 
                                     if (isLinked){
-                                        UIHandler.displayLinkProfileDialog(resultJson, signInResult);
+                                        Dialogs.displayLinkProfileDialog(resultJson, signInResult);
                                     }else{
                                         Profile profile = new Profile();
                                         Log.d("signInToBackUpLauncher","loginSingleAccount started");
@@ -125,12 +127,12 @@
                                     }
                                 }catch (Exception e){
                                     FirebaseCrashlytics.getInstance().recordException(e);
-                                    UIHandler.setupAccountButtons(activity); // failed to login steps
+                                    UI.update(); // failed to login steps
                                 }
                             });
                             signInToBackUpThread.start();
                         }else{
-                            UIHandler.setupAccountButtons(activity); // failed login request
+                            UI.update(); // failed login request
                         }
                     });
 
@@ -157,14 +159,14 @@
         }
 
         new Thread(() -> {
-            if (Deactivation.isDeactivationFileExists()){ UIHandler.handleDeactivatedUser(); }
+            if (Deactivation.isDeactivationFileExists()){ UI.handleDeactivatedUser(); }
 
             Support.checkSupportBackupRequired(activity);
             boolean hasJsonChanged = Profile.hasJsonChanged();
             Log.d("jsonChange","hasJsonChanged on start of app: " + hasJsonChanged);
             if (hasJsonChanged){
                 DBHelper.updateDatabaseBasedOnJson();
-                UIHandler.setupAccountButtons(activity); // after json has changed
+                UI.update(); // after json has changed
             }
         }).start();
 
@@ -296,7 +298,7 @@
                     @Override
                     public void run() {
                         try{
-                            UIHandler.startUpdateUIThread(activity);
+                            UI.startUpdateUIThread(activity);
                         }catch (Exception e){
                             LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
                         }

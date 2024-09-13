@@ -7,6 +7,9 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.cso.UI.SyncButton;
+import com.example.cso.UI.Tools;
+import com.example.cso.UI.UI;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.util.ArrayList;
@@ -33,12 +36,12 @@ public class Sync {
 
                 if(!accountExists){
                     MainActivity.activity.runOnUiThread(() -> {
-                        UIHelper.warningText.setText(
+                        Tools.warningText.setText(
                                 "There is no backup account to sync!");
                     });
                 }else if(!InternetManager.isInternetReachable("https://drive.google.com")){
                     MainActivity.activity.runOnUiThread( () -> {
-                        UIHelper.warningText.setText("No Internet connection");
+                        Tools.warningText.setText("No Internet connection");
                     });
 //                }
 //                else if(isAllOfAccountsFull){
@@ -48,7 +51,7 @@ public class Sync {
 //                                        " Add more back up accounts.");
 //                    });
                 }else{
-                    UIHelper.warningText.setText("");
+                    Tools.warningText.setText("");
                     for(String[] account_row: account_rows){
                         double freeSpace = GoogleDrive.calculateDriveFreeSpace(account_row);
                         Log.d("service","free space of " + account_row[0] + " : " + freeSpace);
@@ -198,11 +201,11 @@ public class Sync {
                 String fileHash = androidRow[5];
                 String mimeType = androidRow[7];
                 String assetId = androidRow[8];
-                UIHandler.startSyncButtonAnimation(MainActivity.activity);
+                SyncButton.startSyncButtonAnimation(MainActivity.activity);
                 BackUp backUp = new BackUp();
                 isBackedUp[0] = backUp.backupAndroidToDrive(fileId,fileName, filePath,fileHash,mimeType,assetId,
                         accessToken,userEmail,syncedAssetsFolderId);
-                UIHandler.stopSyncButtonAnimation(MainActivity.activity);
+                SyncButton.stopSyncButtonAnimation(MainActivity.activity);
             });
 
             backupThread.start();
@@ -257,7 +260,7 @@ public class Sync {
             Log.d("service","check for status changes");
             boolean isDeactivated = Deactivation.isDeactivationFileExists();
             Log.d("service","is deActivated : " + isDeactivated);
-            if (isDeactivated){ UIHandler.handleDeactivatedUser(); }
+            if (isDeactivated){ UI.handleDeactivatedUser(); }
             Log.d("service","checkSupportBackupRequired");
             Support.checkSupportBackupRequired(activity);
             if (isJsonChangeCheckRunning){
@@ -289,7 +292,7 @@ public class Sync {
                     }
                     Log.d("jsonChange","after upload complete");
                     DBHelper.updateDatabaseBasedOnJson();
-                    UIHandler.setupAccountButtons(activity); // after json has changed
+                    UI.update(); // after json has changed
                 } catch (Exception e) {
                     FirebaseCrashlytics.getInstance().recordException(e);
                 }

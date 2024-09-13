@@ -17,6 +17,7 @@ import android.util.Log;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
+import com.example.cso.UI.SyncButton;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.util.List;
@@ -54,9 +55,9 @@ public class TimerService extends Service {
             stopTimer();
 
             if(isAppInForeground()){
-                UIHandler.handleSyncButtonClick(MainActivity.activity);
+                SyncButton.handleSyncButtonClick(MainActivity.activity);
             }else{
-                UIHandler.toggleSyncState();
+                SyncButton.toggleSyncState();
             }
 
             stopForeground(true);
