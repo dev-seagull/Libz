@@ -2,15 +2,14 @@ package com.example.cso.UI;
 
 import android.content.Context;
 import android.util.Log;
-import android.view.View;
+import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.cso.MainActivity;
+import com.example.cso.R;
 
 public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHolder> {
 
@@ -18,7 +17,8 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
     public int pageNumber;
     public String buttonType;
     public String buttonId;
-    public static int totalPagesForAccount = 5 ;
+    public static int totalPagesForAccount = 2 ;
+    public static int totalPagesForDevice = 3 ;
 
     public PagerAdapter(Context context, int pageNumber, String buttonType, String buttonId) {
         this.context = context;
@@ -30,35 +30,48 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
     @NonNull
     @Override
     public PageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        LinearLayout pageLayout = Accounts.createChartForStorage(context, buttonId);
+        LinearLayout pageLayout = new LinearLayout(context);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+        );
+        pageLayout.setLayoutParams(params);
+        pageLayout.setOrientation(LinearLayout.VERTICAL);
+        pageLayout.setGravity(Gravity.CENTER);
+
+        pageLayout.setElevation(4f);
+        pageLayout.setBackgroundResource(R.drawable.border_background);
         return new PageViewHolder(pageLayout);
     }
 
     @Override
     public void onBindViewHolder(@NonNull PageViewHolder holder, int position) {
         Log.d("viewPager", "onBindViewHolder");
+        holder.currentPage.removeAllViews();
+        LinearLayout newPage = null;
         if (buttonType.equals("account")){
             position = position % totalPagesForAccount ;
             if (position == 0){
-                holder.currentPage = Accounts.createChartForStorage(context, buttonId);
+                newPage = Accounts.createChartForStorageStatus(context, buttonId);
                 Log.d("viewPager", "page number : " + position + " type : " + buttonType + " buttonId : " + buttonId);
             } else if (position == 1){
-                holder.currentPage = Devices.createChartForStorage(context, MainActivity.androidUniqueDeviceIdentifier);
+                newPage = Accounts.createChartForSyncAndSourceStatus(context, buttonId);
                 Log.d("viewPager", "page number : " + position + " type : " + buttonType + " buttonId : " + buttonId);
+            }
+        }else if (buttonType.equals("device")){
+            position = position % totalPagesForDevice ;
+            if (position == 0){
+                newPage = Devices.createChartForStorageStatus(context, buttonId);
+                Log.d("viewPager", "StorageStatus = page number : " + position + " type : " + buttonType + " buttonId : " + buttonId);
+            } else if (position == 1) {
+                newPage = Devices.createChartForSyncedAssetsLocationStatus(context, buttonId);
+                Log.d("viewPager", "SyncedAssetsLocationStatus = page number : " + position + " type : " + buttonType + " buttonId : " + buttonId);
             } else if (position == 2) {
-                holder.currentPage = Accounts.createChartForStorage(context, buttonId);
-                Log.d("viewPager", "page number : " + position + " type : " + buttonType + " buttonId : " + buttonId);
-            } else if (position == 3) {
-                holder.currentPage = Devices.createChartForStorage(context, MainActivity.androidUniqueDeviceIdentifier);
-                Log.d("viewPager", "page number : " + position + " type : " + buttonType + " buttonId : " + buttonId);
-            }else if (position == 4) {
-                holder.currentPage = Accounts.createChartForStorage(context, buttonId);
-                Log.d("viewPager", "page number : " + position + " type : " + buttonType + " buttonId : " + buttonId);
-            }else{
-                holder.currentPage = Devices.createChartForStorage(context, MainActivity.androidUniqueDeviceIdentifier);
-                Log.d("viewPager", " this is else : page number : " + position + " type : " + buttonType + " buttonId : " + buttonId);
+                newPage = Devices.createChartForSourceStatus(context, buttonId);
+                Log.d("viewPager", "SourceStatus = page number : " + position + " type : " + buttonType + " buttonId : " + buttonId);
             }
         }
+        holder.currentPage.addView(newPage);
     }
 
     @Override

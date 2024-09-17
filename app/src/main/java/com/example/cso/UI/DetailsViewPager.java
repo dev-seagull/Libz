@@ -18,10 +18,7 @@ public class DetailsViewPager {
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.MATCH_PARENT
             );
-            params.setMargins(30,30,30, 30);
             viewPager.setLayoutParams(params);
-            viewPager.setBackgroundColor(Color.WHITE);
-            viewPager.setContentDescription("account");
             setupViewPager(context, viewPager, buttonId,type);
         }catch (Exception e){
             LogHandler.crashLog(e,"ui");

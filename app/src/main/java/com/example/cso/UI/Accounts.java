@@ -5,6 +5,7 @@ import static com.example.cso.MainActivity.signInToBackUpLauncher;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.DisplayMetrics;
@@ -57,6 +58,19 @@ public class Accounts {
 
     }
 
+    public static boolean accountButtonDoesNotExistsInUI(String userEmail){ // need change
+        LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
+        int backupButtonsCount = backupButtonsLinearLayout.getChildCount();
+        for(int i=0 ; i < backupButtonsCount ; i++){
+            View backupButtonChild = backupButtonsLinearLayout.getChildAt(i);
+            CharSequence contentDescription = backupButtonChild.getContentDescription();
+            if(contentDescription.toString().equalsIgnoreCase(userEmail)){
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static LinearLayout createNewAccountMainView(Activity context, String userEmail){
         LinearLayout layout = new LinearLayout(context);
 
@@ -79,33 +93,6 @@ public class Accounts {
         layout.addView(detailsLayout);
         layout.setContentDescription(userEmail);
         return layout;
-    }
-
-    public static LinearLayout createChartForStorage(Context context, String userEmail){
-        LinearLayout layout = Details.createInnerDetailsLayout(context);
-
-        PieChart pieChart = Details.createPieChartForAccount(context,userEmail);
-
-        TextView directoryUsages = Details.createDirectoryUsageTextView(context);
-
-        layout.addView(pieChart);
-        layout.addView(directoryUsages);
-
-        return layout;
-    }
-
-
-    public static boolean accountButtonDoesNotExistsInUI(String userEmail){ // need change
-        LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
-        int backupButtonsCount = backupButtonsLinearLayout.getChildCount();
-        for(int i=0 ; i < backupButtonsCount ; i++){
-            View backupButtonChild = backupButtonsLinearLayout.getChildAt(i);
-            CharSequence contentDescription = backupButtonChild.getContentDescription();
-            if(contentDescription.toString().equalsIgnoreCase(userEmail)){
-                return false;
-            }
-        }
-        return true;
     }
 
     public static RelativeLayout createNewAccountButtonLayout(Activity context, String userEmail){
@@ -267,6 +254,20 @@ public class Accounts {
         }
 
         return popupMenu;
+    }
+
+    public static LinearLayout createChartForStorageStatus(Context context, String userEmail){
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
+        PieChart pieChart = Details.createPieChartForAccount(context,userEmail);
+
+        layout.addView(pieChart);
+        return layout;
+    }
+
+    public static LinearLayout createChartForSyncAndSourceStatus(Context context, String userEmail){
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
+        layout.setBackgroundColor(Color.WHITE);
+        return layout;
     }
 
 }

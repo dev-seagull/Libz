@@ -34,15 +34,10 @@ import java.util.concurrent.Future;
 
 
 public class DBHelper extends SQLiteOpenHelper {
-    //    private static final String OLD_DATABASE_NAME = "CSODatabase";
 
     public static int DATABASE_VERSION = 12;
     public static SQLiteDatabase dbReadable;
     public static SQLiteDatabase dbWritable;
-
-//    Support support = new Support();
-
-
     private static DBHelper instance;
 
     public static synchronized DBHelper getInstance(Context context) {
@@ -381,7 +376,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return existsInDatabase;
     }
 
-    public void insertIntoPhotosTable(Long assetId, String fileId,String fileName, String fileHash,
+    public static void insertIntoPhotosTable(Long assetId, String fileId,String fileName, String fileHash,
                                       String userEmail, String creationTime, String baseUrl){
         boolean existsInPhotos = false;
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM PHOTOS WHERE assetId = ?" +
@@ -515,7 +510,6 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-
     public static void dropTable(String tableName){
         try{
             dbWritable.beginTransaction();
@@ -612,7 +606,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public boolean deleteAccountFromPhotosTable(String userEmail) {
+    public static boolean deleteAccountFromPhotosTable(String userEmail) {
         dbWritable.beginTransaction();
         try {
             String sqlQuery = "DELETE FROM PHOTOS WHERE userEmail = ?";

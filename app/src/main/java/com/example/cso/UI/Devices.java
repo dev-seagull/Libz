@@ -4,6 +4,7 @@ import static com.example.cso.MainActivity.activity;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.DisplayMetrics;
@@ -30,6 +31,9 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
 public class Devices {
     public static void setupDeviceButtons(Activity activity){
@@ -43,6 +47,23 @@ public class Devices {
                 deviceButtons.addView(newDeviceButtonView);
             }
         }
+    }
+
+    public static boolean deviceButtonExistsInUI(String deviceId, Activity activity){
+        LinearLayout deviceButtonsLinearLayout = activity.findViewById(R.id.deviceButtons);
+        int deviceButtonsChildCount = deviceButtonsLinearLayout.getChildCount();
+        for(int i=0 ; i < deviceButtonsChildCount ; i++){
+            View deviceButtonsChildView = deviceButtonsLinearLayout.getChildAt(i);
+            CharSequence contentDescription = deviceButtonsChildView.getContentDescription();
+            if(contentDescription != null){
+                if(contentDescription.toString().equalsIgnoreCase(deviceId)) {
+                    Log.d("ui", deviceId+ " exists.");
+                    return true;
+                }
+            }
+        }
+        Log.d("ui", deviceId+ " doesn't exists.");
+        return false;
     }
 
     public static LinearLayout createNewDeviceMainView(Context context, DeviceHandler device) {
@@ -68,38 +89,6 @@ public class Devices {
         layout.setContentDescription(device.getDeviceId());
         return layout;
     }
-
-    public static LinearLayout createChartForStorage(Context context, String deviceId) {
-        LinearLayout layout = Details.createInnerDetailsLayout(context);
-        PieChart pieChart = Details.createPieChartForDevice(context,deviceId);
-
-        TextView directoryUsages = Details.createDirectoryUsageTextView(context);
-
-        layout.addView(pieChart);
-        layout.addView(directoryUsages);
-        return layout;
-    }
-
-    public static boolean deviceButtonExistsInUI(String deviceId, Activity activity){
-        LinearLayout deviceButtonsLinearLayout = activity.findViewById(R.id.deviceButtons);
-        int deviceButtonsChildCount = deviceButtonsLinearLayout.getChildCount();
-        for(int i=0 ; i < deviceButtonsChildCount ; i++){
-            View deviceButtonsChildView = deviceButtonsLinearLayout.getChildAt(i);
-            CharSequence contentDescription = deviceButtonsChildView.getContentDescription();
-            if(contentDescription != null){
-                if(contentDescription.toString().equalsIgnoreCase(deviceId)) {
-                    Log.d("ui", deviceId+ " exists.");
-                    return true;
-                }
-            }
-        }
-        Log.d("ui", deviceId+ " doesn't exists.");
-        return false;
-    }
-
-    public static boolean isCurrentDevice(DeviceHandler device) {
-        return device.getDeviceId().equals(MainActivity.androidUniqueDeviceIdentifier);
-    } // for more data
 
     public static RelativeLayout createNewDeviceButtonLayout(Context context, DeviceHandler device) {
         RelativeLayout layout = new RelativeLayout(context);
@@ -253,6 +242,17 @@ public class Devices {
         return popupMenu;
     }
 
+    public static boolean isCurrentDevice(DeviceHandler device) {
+        return device.getDeviceId().equals(MainActivity.androidUniqueDeviceIdentifier);
+    } // for more data
+
+    public static LinearLayout createChartForStorageStatus(Context context, String deviceId) {
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
+        PieChart pieChart = Details.createPieChartForDeviceStorageStatus(context,deviceId);
+        layout.addView(pieChart);
+        return layout;
+    }
+
     public static JsonObject getDeviceStorageData(String deviceId){
         JsonObject storageData = new JsonObject();
         StorageHandler storageHandler = new StorageHandler();
@@ -278,5 +278,80 @@ public class Devices {
 //            storageData = StorageSync.downloadStorageJsonFileFromAccounts(device);
 //        }
         return storageData;
+    }
+
+    public static LinearLayout createChartForSyncedAssetsLocationStatus(Context context, String deviceId){
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
+        PieChart pieChart = Details.createPieChartForDeviceSyncedAssetsLocationStatus(context, deviceId);
+        layout.addView(pieChart);
+        return layout;
+    }
+
+    public static HashMap<String, Double> getListOfSyncedAssetsLocation(){
+        ArrayList<String[]> files = (ArrayList<String[]>) DBHelper.getAndroidTable(new String[]{"assetId","fileSize"});
+        HashMap<String, Double> locationSizes = new HashMap<>();
+        List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","type"});
+        for (String[] account : accounts){
+            String userEmail = account[0];
+            String type = account[1];
+            if (type.equals("backup")){
+                locationSizes.put(userEmail,0.0);
+                List<String[]> driveFiles = DBHelper.getDriveTable(new String[]{"assetId"},userEmail);
+                for (String[] driveFile : driveFiles){
+                    String driveFileAssetId = driveFile[0];
+                    for (String[] androidFile : files){
+                        String androidFileAssetId = androidFile[0];
+                        if (androidFileAssetId.equals(driveFileAssetId)){
+                            Double fileSize = Double.parseDouble(androidFile[1]);
+                            locationSizes.put(userEmail,locationSizes.get(userEmail) + fileSize);
+                            files.remove(androidFile);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return locationSizes;
+    }
+
+    public static LinearLayout createChartForSourceStatus(Context context, String deviceId){
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
+        PieChart pieChart = Details.createPieChartForDeviceSourceStatus(context, deviceId);
+        layout.addView(pieChart);
+        return layout;
+    }
+
+    public static HashMap<String, Double> getListOfSourcesForAssets() {
+        List<String[]> files = DBHelper.getAndroidTable(new String[]{"filePath", "fileSize"});
+        HashMap<String, Double> sourceSizeMap = new HashMap<>();
+
+        String[][] sources = {
+                {"Telegram", "Telegram"},
+                {"Photos", "Photos"},
+                {"Downloads", "Downloads"},
+                {"Camera", "Camera"},
+                {"Screenshots", "Screenshots"},
+                {"Screen Recorder", "Screen Recorder"}
+        };
+
+        for (String[] file : files) {
+            String filePath = file[0].toLowerCase();
+            Double fileSize = Double.parseDouble(file[1]);
+
+            String sourceName = "Others";
+            for (String[] source : sources) {
+                String label = source[0];
+                String keyword = "/" + source[1].toLowerCase() + "/";;
+                if (filePath.contains(keyword)) {
+                    sourceName = label;
+                    break;
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                sourceSizeMap.put(sourceName, sourceSizeMap.getOrDefault(sourceName, 0.0) + fileSize);
+            }
+        }
+        return sourceSizeMap;
     }
 }

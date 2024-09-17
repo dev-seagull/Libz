@@ -27,6 +27,7 @@ import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Details {
@@ -43,7 +44,6 @@ public class Details {
         layout.setOrientation(LinearLayout.HORIZONTAL);
         layout.setGravity(Gravity.CENTER);
 
-        layout.setPadding(8, 8, 8, 8);
         layout.setElevation(4f);
         layout.setBackgroundResource(R.drawable.border_background);
         layout.setVisibility(View.GONE);
@@ -80,12 +80,230 @@ public class Details {
         return null;
     }
 
+    public static PieChart createPieChartForDeviceStorageStatus(Context context, String deviceId) {
+        PieChart pieChart = new PieChart(context);
+        configurePieChartDimensions(pieChart);
+        configurePieChartDataForDeviceStorageStatus(pieChart, deviceId);
+        configurePieChartLegend(pieChart);
+//        configurePieChartInteractions(pieChart);
+        pieChart.invalidate();
+        return pieChart;
+    }
+
+    public static void configurePieChartDataForDeviceStorageStatus(PieChart pieChart, String deviceId) {
+        JsonObject storageData = Devices.getDeviceStorageData(deviceId);
+        double freeSpace = storageData.get("freeSpace").getAsDouble() * 1000;
+        double mediaStorage = storageData.get("mediaStorage").getAsDouble() * 1000;
+        double usedSpaceExcludingMedia = storageData.get("usedSpaceExcludingMedia").getAsDouble() * 1000;
+
+        ArrayList<PieEntry> entries = new ArrayList<>();
+        entries.add(new PieEntry((float) freeSpace, "Free Space"));
+        entries.add(new PieEntry((float) mediaStorage, "Media"));
+        entries.add(new PieEntry((float) usedSpaceExcludingMedia, "Others"));
+
+       configurePieChartDataFormatForDeviceStorageStatus(pieChart, entries);
+    }
+
+    public static void configurePieChartDataFormatForDeviceStorageStatus(PieChart pieChart, ArrayList<PieEntry> entries) {
+        PieDataSet dataSet = new PieDataSet(entries, null);
+
+        int[] colors = {
+                Color.parseColor("#00796B"),
+                Color.parseColor("#004D40"),
+                Color.parseColor("#80CBC4")
+        };
+        dataSet.setColors(colors);
+        dataSet.setValueTextColor(Color.WHITE);
+        dataSet.setValueTextSize(14f);
+
+        dataSet.setValueFormatter(new PieChartValueFormatter());
+
+        // Enable value lines and set value positions
+        dataSet.setDrawValues(true);
+        dataSet.setValueLinePart1OffsetPercentage(80f); // Offset of the line
+        dataSet.setValueLinePart1Length(0.3f);
+        dataSet.setValueLinePart2Length(0.4f);
+        dataSet.setValueLineWidth(2f);
+        dataSet.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+        dataSet.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+
+
+        PieData data = new PieData(dataSet);
+        pieChart.setData(data);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setDrawEntryLabels(true);
+        pieChart.setDrawHoleEnabled(true);
+        pieChart.setDrawHoleEnabled(false);
+    }
+
+//    public static void configurePieChartInteractions(PieChart pieChart) {
+//        pieChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
+//            @Override
+//            public void onValueSelected(Entry e, Highlight h) {
+//                handlePieChartSelection(pieChart,(int) h.getX());
+//            }
+//
+//            @Override
+//            public void onNothingSelected() {
+//
+//            }
+//        });
+//    }
+
+//    public static void handlePieChartSelection(PieChart pieChart, int index) {
+//        PieData pieData = pieChart.getData();
+//        PieDataSet pieDataSet = (PieDataSet) pieData.getDataSet();
+//        String label = pieDataSet.getEntryForIndex(index).getLabel();
+//
+//        if ("Media(GB)".equals(label)) {
+////            displayDirectoryUsage();
+//        } else {
+//
+//        }
+//    }
+
+//    public static TextView createDirectoryUsageTextView(Context context){
+//        TextView directoryUsages = new TextView(context);
+//        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
+//                LinearLayout.LayoutParams.WRAP_CONTENT,
+//                LinearLayout.LayoutParams.WRAP_CONTENT
+//        );
+//        directoryUsages.setLayoutParams(textParams);
+////        directoryUsages.setFontFamily(ResourcesCompat.getFont(context, R.font.sans_serif));
+//        directoryUsages.setGravity(Gravity.CENTER);
+//        directoryUsages.setTextSize(12);
+//        return directoryUsages;
+//    }
+
+    public static PieChart createPieChartForDeviceSourceStatus(Context context, String deviceId) {
+        PieChart pieChart = new PieChart(context);
+        configurePieChartDimensions(pieChart);
+        configurePieChartDataForDeviceSourceStatus(pieChart, deviceId);
+        configurePieChartLegend(pieChart);
+        pieChart.invalidate();
+        return pieChart;
+    }
+
+    public static void configurePieChartDataForDeviceSourceStatus(PieChart pieChart, String deviceId) {
+        HashMap<String, Double> sourcesData = Devices.getListOfSourcesForAssets();
+        ArrayList<PieEntry> entries = new ArrayList<>();
+        for (String source : sourcesData.keySet()){
+            double sourceSize = sourcesData.get(source);
+            entries.add(new PieEntry((float) sourceSize, source));
+        }
+        configurePieChartDataFormatForDeviceSourceStatus(pieChart, entries);
+    }
+
+    public static void configurePieChartDataFormatForDeviceSourceStatus(PieChart pieChart, ArrayList<PieEntry> entries) {
+        PieDataSet dataSet = new PieDataSet(entries, null);
+
+        int[] colors = {
+                Color.parseColor("#00796B"),
+                Color.parseColor("#004D40"),
+                Color.parseColor("#80CBC4")
+        };
+        dataSet.setColors(colors);
+        dataSet.setValueTextColor(Color.WHITE);
+        dataSet.setValueTextSize(14f);
+
+        dataSet.setValueFormatter(new PieChartValueFormatter());
+
+        // Enable value lines and set value positions
+        dataSet.setDrawValues(true);
+        dataSet.setValueLinePart1OffsetPercentage(80f); // Offset of the line
+        dataSet.setValueLinePart1Length(0.3f);
+        dataSet.setValueLinePart2Length(0.4f);
+        dataSet.setValueLineWidth(2f);
+        dataSet.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+        dataSet.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+
+
+        PieData data = new PieData(dataSet);
+        pieChart.setData(data);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setDrawEntryLabels(true);
+        pieChart.setDrawHoleEnabled(true);
+        pieChart.setDrawHoleEnabled(false);
+    }
+
+    public static PieChart createPieChartForDeviceSyncedAssetsLocationStatus(Context context, String deviceId){
+        PieChart pieChart = new PieChart(context);
+        configurePieChartDimensions(pieChart);
+        configurePieChartDataForDeviceSyncedAssetsLocationStatus(pieChart, deviceId);
+        configurePieChartLegend(pieChart);
+        pieChart.invalidate();
+        return pieChart;
+    }
+
+    public static void configurePieChartDataForDeviceSyncedAssetsLocationStatus(PieChart pieChart, String deviceId) {
+        HashMap<String, Double> locationsData = Devices.getListOfSyncedAssetsLocation();
+        ArrayList<PieEntry> entries = new ArrayList<>();
+        for (String location : locationsData.keySet()){
+            double locationSize = locationsData.get(location);
+            entries.add(new PieEntry((float) locationSize, location));
+        }
+        configurePieChartDataFormatForDeviceSyncedAssetsLocationStatus(pieChart, entries);
+    }
+
+    public static void configurePieChartDataFormatForDeviceSyncedAssetsLocationStatus(PieChart pieChart, ArrayList<PieEntry> entries) {
+        PieDataSet dataSet = new PieDataSet(entries, null);
+
+        int[] colors = {
+                Color.parseColor("#00796B"),
+                Color.parseColor("#004D40"),
+                Color.parseColor("#80CBC4")
+        };
+        dataSet.setColors(colors);
+        dataSet.setValueTextColor(Color.WHITE);
+        dataSet.setValueTextSize(14f);
+
+        dataSet.setValueFormatter(new PieChartValueFormatter());
+
+        // Enable value lines and set value positions
+        dataSet.setDrawValues(true);
+        dataSet.setValueLinePart1OffsetPercentage(80f); // Offset of the line
+        dataSet.setValueLinePart1Length(0.3f);
+        dataSet.setValueLinePart2Length(0.4f);
+        dataSet.setValueLineWidth(2f);
+        dataSet.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+        dataSet.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+
+
+        PieData data = new PieData(dataSet);
+        pieChart.setData(data);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setDrawEntryLabels(true);
+        pieChart.setDrawHoleEnabled(true);
+        pieChart.setDrawHoleEnabled(false);
+    }
+
+    public static void configurePieChartDimensions(PieChart pieChart) {
+        pieChart.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+
+        int chartHeight = (int) (displayMetrics.heightPixels * 0.25);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                displayMetrics.widthPixels, chartHeight
+        );
+
+        pieChart.setLayoutParams(layoutParams);
+    }
+
+    public static void configurePieChartLegend(PieChart pieChart) {
+        Legend legend = pieChart.getLegend();
+        legend.setEnabled(false);
+    }
+
     public static PieChart createPieChartForAccount(Context context, String userEmail){
         PieChart pieChart = new PieChart(context);
         configurePieChartDimensions(pieChart);
         configurePieChartDataForAccount(pieChart, userEmail);
         configurePieChartLegend(pieChart);
-        configurePieChartInteractions(pieChart);
+//        configurePieChartInteractions(pieChart);
         pieChart.invalidate();
         return pieChart;
     }
@@ -138,115 +356,14 @@ public class Details {
         pieChart.setDrawHoleEnabled(false);
     }
 
-    public static PieChart createPieChartForDevice(Context context, String deviceId) {
-        PieChart pieChart = new PieChart(context);
-        configurePieChartDimensions(pieChart);
-        configurePieChartDataForDevice(pieChart, deviceId);
-        configurePieChartLegend(pieChart);
-        configurePieChartInteractions(pieChart);
-        pieChart.invalidate();
-        return pieChart;
-    }
-
-    public static void configurePieChartDimensions(PieChart pieChart) {
-        pieChart.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-
-        int chartHeight = (int) (displayMetrics.heightPixels * 0.25);
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                displayMetrics.widthPixels, chartHeight
-        );
-
-        pieChart.setLayoutParams(layoutParams);
-    }
-
-    public static void configurePieChartDataForDevice(PieChart pieChart, String deviceId) {
-        JsonObject storageData = Devices.getDeviceStorageData(deviceId);
-        double freeSpace = storageData.get("freeSpace").getAsDouble() * 1000;
-        double mediaStorage = storageData.get("mediaStorage").getAsDouble() * 1000;
-        double usedSpaceExcludingMedia = storageData.get("usedSpaceExcludingMedia").getAsDouble() * 1000;
-
-        ArrayList<PieEntry> entries = new ArrayList<>();
-        entries.add(new PieEntry((float) freeSpace, "Free Space"));
-        entries.add(new PieEntry((float) mediaStorage, "Media"));
-        entries.add(new PieEntry((float) usedSpaceExcludingMedia, "Others"));
-
-        PieDataSet dataSet = new PieDataSet(entries, null);
-        int[] colors = {
-                Color.parseColor("#00796B"),
-                Color.parseColor("#004D40"),
-                Color.parseColor("#80CBC4")
-        };
-        dataSet.setColors(colors);
-        dataSet.setValueTextColor(Color.WHITE);
-        dataSet.setValueTextSize(14f);
-
-        dataSet.setValueFormatter(new PieChartValueFormatter());
-
-        // Enable value lines and set value positions
-        dataSet.setDrawValues(true);
-        dataSet.setValueLinePart1OffsetPercentage(80f); // Offset of the line
-        dataSet.setValueLinePart1Length(0.3f);
-        dataSet.setValueLinePart2Length(0.4f);
-        dataSet.setValueLineWidth(2f);
-        dataSet.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
-        dataSet.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
-
-
-        PieData data = new PieData(dataSet);
-        pieChart.setData(data);
-        pieChart.getDescription().setEnabled(false);
-        pieChart.setDrawEntryLabels(true);
-        pieChart.setDrawHoleEnabled(true);
-        pieChart.setDrawHoleEnabled(false);
-    }
-
-    public static void configurePieChartLegend(PieChart pieChart) {
-        Legend legend = pieChart.getLegend();
-        legend.setEnabled(false);
-    }
-
-    public static void configurePieChartInteractions(PieChart pieChart) {
-        pieChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
-            @Override
-            public void onValueSelected(Entry e, Highlight h) {
-                handlePieChartSelection(pieChart,(int) h.getX());
-            }
-
-            @Override
-            public void onNothingSelected() {
-
-            }
-        });
-    }
-
-    public static void handlePieChartSelection(PieChart pieChart, int index) {
-        PieData pieData = pieChart.getData();
-        PieDataSet pieDataSet = (PieDataSet) pieData.getDataSet();
-        String label = pieDataSet.getEntryForIndex(index).getLabel();
-
-        if ("Media(GB)".equals(label)) {
-//            displayDirectoryUsage();
-        } else {
-
-        }
-    }
-
-    public static TextView createDirectoryUsageTextView(Context context){
-        TextView directoryUsages = new TextView(context);
-        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        directoryUsages.setLayoutParams(textParams);
-//        directoryUsages.setFontFamily(ResourcesCompat.getFont(context, R.font.sans_serif));
-        directoryUsages.setGravity(Gravity.CENTER);
-        directoryUsages.setTextSize(12);
-        return directoryUsages;
-    }
 
 }
+
+
+
+
+
+
+
+
+
