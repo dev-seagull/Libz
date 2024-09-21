@@ -15,8 +15,8 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
     public static long timeInterval = 2 * 60 * 1000;
     @Override
     public void onReceive(Context context, Intent intent){
-        Log.d("storageSync","upload alarm recieved at : " + new Date().getTime());
-        StorageSync.uploadStorageJsonFileToAccounts(context);
+        Log.d("DeviceStatusSync","upload alarm recieved at : " + new Date().getTime());
+        DeviceStatusSync.uploadDeviceStatusJsonFileToAccounts(context);
         int requestCode = intent.getIntExtra("requestCode", 0);
         long timeInMillis = new Date().getTime() + timeInterval;
         setAlarm(context,timeInMillis, requestCode);
@@ -31,7 +31,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_MUTABLE);
             alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
             SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
-            Log.d("storageSync","new storageSync alarm set at " + formatter.format(timeInMillis));
+            Log.d("DeviceStatusSync","new DeviceStatusSync alarm set at " + formatter.format(timeInMillis));
         } catch (Exception e) {
             LogHandler.saveLog("Failed to set alarm: " + e.getLocalizedMessage(), true);
         }

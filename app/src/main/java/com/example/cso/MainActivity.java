@@ -22,6 +22,7 @@
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
 
+    import java.util.Date;
     import java.util.List;
     import java.util.Timer;
     import java.util.TimerTask;
@@ -170,8 +171,7 @@
             }
         }).start();
 
-//        StorageSync.uploadStorageJsonFileToAccounts(this);
-//        MyAlarmManager.setAlarmForStorageSync(getApplicationContext());
+        MyAlarmManager.setAlarmForDeviceStatusSync(getApplicationContext(), 172839,new Date().getTime() + 5000);
         Log.d("state","end of onStart");
     }
 

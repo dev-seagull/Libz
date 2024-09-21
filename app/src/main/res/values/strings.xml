@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="app_name">Libz</string>
+    <string name="salt">salt</string>
+    <string name="web_client_id">1085207979818-polvdn5ng8t7j6agbqg477p5mpmdcpf7.apps.googleusercontent.com</string>
+    <string name="client_id">1085207979818-polvdn5ng8t7j6agbqg477p5mpmdcpf7.apps.googleusercontent.com</string>
+    <string name="client_secret">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</string>
+
+    <string name="ENCRYPTION_KEY">stash</string>
+    <string name="prompt_email">Email</string>
+    <string name="supportEmail">sofatest40@gmail.com</string>
+    <string name="supportRefreshToken">1//09c9CZ1y9_pq3CgYIARAAGAkSNgF-L9IrzzMQ_X4vuWT-ZyRwktyNV0Wgp8c-hDY1JcydZiXmJfBDrZtYRh9NgRP0LelJPD6G3g</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="welcome">"Welcome!"</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="login_failed">"Login failed"</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+</resources>

@@ -4,7 +4,6 @@ import static com.example.cso.MainActivity.activity;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.DisplayMetrics;
@@ -17,23 +16,18 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.example.cso.DBHelper;
 import com.example.cso.DeviceHandler;
+import com.example.cso.DeviceStatusSync;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
-import com.example.cso.StorageHandler;
 import com.github.mikephil.charting.charts.PieChart;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
 
 public class Devices {
     public static void setupDeviceButtons(Activity activity){
@@ -104,7 +98,7 @@ public class Devices {
     public static void reInitializeDeviceButtonsLayout(RelativeLayout layout,Context context, DeviceHandler device){
         layout.removeAllViews();
         Button newDeviceButton = createNewDeviceButton(context,device);
-        Button threeDotButton = createNewDeviceThreeDotsButton(context,device,newDeviceButton);
+        Button threeDotButton = createNewDeviceThreeDotsButton(context,device.getDeviceId(),newDeviceButton);
 
         layout.addView(newDeviceButton);
         layout.addView(threeDotButton);
@@ -128,11 +122,11 @@ public class Devices {
         return newDeviceButton;
     }
 
-    public static Button createNewDeviceThreeDotsButton(Context context,DeviceHandler device, Button deviceButton){
+    public static Button createNewDeviceThreeDotsButton(Context context,String deviceId, Button deviceButton){
         Button newThreeDotButton = new Button(context);
-        newThreeDotButton.setContentDescription(device.getDeviceId() + "threeDot");
+        newThreeDotButton.setContentDescription(deviceId + "threeDot");
         addEffectsToThreeDotButton(newThreeDotButton);
-        setListenerToDeviceThreeDotButtons(newThreeDotButton, device);
+        setListenerToDeviceThreeDotButtons(newThreeDotButton, deviceId);
 
         RelativeLayout.LayoutParams threeDotButtonParams = new RelativeLayout.LayoutParams(
                 112,
@@ -178,10 +172,10 @@ public class Devices {
         threeDotButton.setLayoutParams(layoutParams);
     }
 
-    public static void setListenerToDeviceThreeDotButtons(Button button, DeviceHandler device){
+    public static void setListenerToDeviceThreeDotButtons(Button button, String deviceId){
         button.setOnClickListener(view -> {
             String type = "device";
-            if (isCurrentDevice(device)){
+            if (isCurrentDevice(deviceId)){
                 type = "ownDevice";
             }
             try{
@@ -242,8 +236,8 @@ public class Devices {
         return popupMenu;
     }
 
-    public static boolean isCurrentDevice(DeviceHandler device) {
-        return device.getDeviceId().equals(MainActivity.androidUniqueDeviceIdentifier);
+    public static boolean isCurrentDevice(String deviceId) {
+        return deviceId.equals(MainActivity.androidUniqueDeviceIdentifier);
     } // for more data
 
     public static LinearLayout createChartForStorageStatus(Context context, String deviceId) {
@@ -253,31 +247,12 @@ public class Devices {
         return layout;
     }
 
-    public static JsonObject getDeviceStorageData(String deviceId){
-        JsonObject storageData = new JsonObject();
-        StorageHandler storageHandler = new StorageHandler();
-        double freeSpace = storageHandler.getFreeSpace();
-        double totalStorage = storageHandler.getTotalStorage();
-        double mediaStorage = Double.parseDouble(DBHelper.getPhotosAndVideosStorage());
-        double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
-        storageData.addProperty("freeSpace",freeSpace);
-        storageData.addProperty("mediaStorage", mediaStorage);
-        storageData.addProperty("usedSpaceExcludingMedia", usedSpaceExcludingMedia);
-//
-//        if (isCurrentDevice(device)){
-//            StorageHandler storageHandler = new StorageHandler();
-//            double freeSpace = storageHandler.getFreeSpace();
-//            double totalStorage = storageHandler.getTotalStorage();
-//            double mediaStorage = Double.parseDouble(DBHelper.getPhotosAndVideosStorage());
-//            double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
-//            storageData.addProperty("freeSpace",freeSpace);
-//            storageData.addProperty("mediaStorage", mediaStorage);
-//            storageData.addProperty("usedSpaceExcludingMedia", usedSpaceExcludingMedia);
-//
-//        }else{
-//            storageData = StorageSync.downloadStorageJsonFileFromAccounts(device);
-//        }
-        return storageData;
+    public static JsonObject getStorageStatus(String deviceId){
+        if (isCurrentDevice(deviceId)) {
+            return DeviceStatusSync.createStorageStatusJson();
+        }else{
+            return DeviceStatusSync.downloadDeviceStatusJsonFileFromAccounts(deviceId).getAsJsonObject("storageStatus");
+        }
     }
 
     public static LinearLayout createChartForSyncedAssetsLocationStatus(Context context, String deviceId){
@@ -287,31 +262,12 @@ public class Devices {
         return layout;
     }
 
-    public static HashMap<String, Double> getListOfSyncedAssetsLocation(){
-        ArrayList<String[]> files = (ArrayList<String[]>) DBHelper.getAndroidTable(new String[]{"assetId","fileSize"});
-        HashMap<String, Double> locationSizes = new HashMap<>();
-        List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","type"});
-        for (String[] account : accounts){
-            String userEmail = account[0];
-            String type = account[1];
-            if (type.equals("backup")){
-                locationSizes.put(userEmail,0.0);
-                List<String[]> driveFiles = DBHelper.getDriveTable(new String[]{"assetId"},userEmail);
-                for (String[] driveFile : driveFiles){
-                    String driveFileAssetId = driveFile[0];
-                    for (String[] androidFile : files){
-                        String androidFileAssetId = androidFile[0];
-                        if (androidFileAssetId.equals(driveFileAssetId)){
-                            Double fileSize = Double.parseDouble(androidFile[1]);
-                            locationSizes.put(userEmail,locationSizes.get(userEmail) + fileSize);
-                            files.remove(androidFile);
-                            break;
-                        }
-                    }
-                }
-            }
+    public static JsonObject getSyncedAssetsLocationStatus(String deviceId){
+        if (isCurrentDevice(deviceId)){
+            return DeviceStatusSync.createAssetsLocationStatusJson();
+        }else {
+            return DeviceStatusSync.downloadDeviceStatusJsonFileFromAccounts(deviceId).getAsJsonObject("assetsLocationStatus");
         }
-        return locationSizes;
     }
 
     public static LinearLayout createChartForSourceStatus(Context context, String deviceId){
@@ -321,37 +277,11 @@ public class Devices {
         return layout;
     }
 
-    public static HashMap<String, Double> getListOfSourcesForAssets() {
-        List<String[]> files = DBHelper.getAndroidTable(new String[]{"filePath", "fileSize"});
-        HashMap<String, Double> sourceSizeMap = new HashMap<>();
-
-        String[][] sources = {
-                {"Telegram", "Telegram"},
-                {"Photos", "Photos"},
-                {"Downloads", "Downloads"},
-                {"Camera", "Camera"},
-                {"Screenshots", "Screenshots"},
-                {"Screen Recorder", "Screen Recorder"}
-        };
-
-        for (String[] file : files) {
-            String filePath = file[0].toLowerCase();
-            Double fileSize = Double.parseDouble(file[1]);
-
-            String sourceName = "Others";
-            for (String[] source : sources) {
-                String label = source[0];
-                String keyword = "/" + source[1].toLowerCase() + "/";;
-                if (filePath.contains(keyword)) {
-                    sourceName = label;
-                    break;
-                }
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                sourceSizeMap.put(sourceName, sourceSizeMap.getOrDefault(sourceName, 0.0) + fileSize);
-            }
+    public static JsonObject getAssetsSourceStatus(String deviceId){
+        if (isCurrentDevice(deviceId)){
+            return DeviceStatusSync.createAssetsSourceStatusJson();
+        } else {
+            return DeviceStatusSync.downloadDeviceStatusJsonFileFromAccounts(deviceId).getAsJsonObject("assetsSourceStatus");
         }
-        return sourceSizeMap;
     }
 }

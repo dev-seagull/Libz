@@ -24,6 +24,7 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
@@ -91,7 +92,7 @@ public class Details {
     }
 
     public static void configurePieChartDataForDeviceStorageStatus(PieChart pieChart, String deviceId) {
-        JsonObject storageData = Devices.getDeviceStorageData(deviceId);
+        JsonObject storageData = Devices.getStorageStatus(deviceId);
         double freeSpace = storageData.get("freeSpace").getAsDouble() * 1000;
         double mediaStorage = storageData.get("mediaStorage").getAsDouble() * 1000;
         double usedSpaceExcludingMedia = storageData.get("usedSpaceExcludingMedia").getAsDouble() * 1000;
@@ -185,11 +186,11 @@ public class Details {
     }
 
     public static void configurePieChartDataForDeviceSourceStatus(PieChart pieChart, String deviceId) {
-        HashMap<String, Double> sourcesData = Devices.getListOfSourcesForAssets();
+        JsonObject sourcesData = Devices.getAssetsSourceStatus(deviceId);
         ArrayList<PieEntry> entries = new ArrayList<>();
         for (String source : sourcesData.keySet()){
-            double sourceSize = sourcesData.get(source);
-            entries.add(new PieEntry((float) sourceSize, source));
+            double size = sourcesData.get(source).getAsDouble() * 1000;
+            entries.add(new PieEntry((float) size, source));
         }
         configurePieChartDataFormatForDeviceSourceStatus(pieChart, entries);
     }
@@ -236,10 +237,10 @@ public class Details {
     }
 
     public static void configurePieChartDataForDeviceSyncedAssetsLocationStatus(PieChart pieChart, String deviceId) {
-        HashMap<String, Double> locationsData = Devices.getListOfSyncedAssetsLocation();
+        JsonObject locationsData = Devices.getSyncedAssetsLocationStatus(deviceId);
         ArrayList<PieEntry> entries = new ArrayList<>();
         for (String location : locationsData.keySet()){
-            double locationSize = locationsData.get(location);
+            double locationSize = locationsData.get(location).getAsDouble();
             entries.add(new PieEntry((float) locationSize, location));
         }
         configurePieChartDataFormatForDeviceSyncedAssetsLocationStatus(pieChart, entries);
