@@ -355,7 +355,7 @@ public class Details {
         pieChart.setDrawHoleEnabled(true);
         pieChart.setDrawHoleEnabled(false);
     }
-    
+
     public static void createSyncDetailsLayout(Context context, Activity activity){
         LinearLayout syncButtonsLayout = activity.findViewById(R.id.syncButtonsLayout);
         LinearLayout syncDetailsLayout = createInnerDetailsLayout(context);
