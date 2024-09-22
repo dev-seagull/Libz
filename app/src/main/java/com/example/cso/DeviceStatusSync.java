@@ -158,6 +158,9 @@ public class DeviceStatusSync {
         JsonObject[] jsonObjects = {null};
         Thread createAssetsLocationStatusJsonThread = new Thread(() -> {
             ArrayList<String[]> files = (ArrayList<String[]>) DBHelper.getAndroidTable(new String[]{"assetId","fileSize"});
+            if (files.isEmpty()){
+                return;
+            }
             HashMap<String, Double> locationSizes = new HashMap<>();
             List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","type"});
             for (String[] account : accounts){
@@ -172,12 +175,20 @@ public class DeviceStatusSync {
                             String androidFileAssetId = androidFile[0];
                             if (androidFileAssetId.equals(driveFileAssetId)){
                                 Double fileSize = Double.parseDouble(androidFile[1]);
-                                locationSizes.put(userEmail,locationSizes.get(userEmail) + fileSize);
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                    locationSizes.put(userEmail,locationSizes.getOrDefault(userEmail,0.0) + fileSize);
+                                }
                                 files.remove(androidFile);
                                 break;
                             }
                         }
                     }
+                }
+            }
+            for (String[] file : files){
+                Double fileSize = Double.parseDouble(file[1]);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    locationSizes.put("UnSynced",locationSizes.getOrDefault("UnSynced", 0.0) + fileSize);
                 }
             }
             JsonObject assetsLocationSize = new JsonObject();

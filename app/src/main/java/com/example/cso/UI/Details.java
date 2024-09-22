@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.media.Image;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -86,9 +87,11 @@ public class Details {
     public static PieChart createPieChartForDeviceStorageStatus(Context context, JsonObject data) {
         PieChart pieChart = new PieChart(context);
         configurePieChartDimensions(pieChart);
-        configurePieChartDataForDeviceStorageStatus(pieChart, data);
-        configurePieChartLegend(pieChart);
-//        configurePieChartInteractions(pieChart);
+        if (data != null && data.size() >= 0){
+            configurePieChartDataForDeviceStorageStatus(pieChart, data);
+            configurePieChartLegend(pieChart);
+//            configurePieChartInteractions(pieChart);
+        }
         pieChart.invalidate();
         return pieChart;
     }
@@ -99,6 +102,7 @@ public class Details {
         double usedSpaceExcludingMedia = storageData.get("usedSpaceExcludingMedia").getAsDouble() * 1000;
 
         ArrayList<PieEntry> entries = new ArrayList<>();
+
         entries.add(new PieEntry((float) freeSpace, "Free Space"));
         entries.add(new PieEntry((float) mediaStorage, "Media"));
         entries.add(new PieEntry((float) usedSpaceExcludingMedia, "Others"));
@@ -180,8 +184,10 @@ public class Details {
     public static PieChart createPieChartForDeviceSourceStatus(Context context, JsonObject data) {
         PieChart pieChart = new PieChart(context);
         configurePieChartDimensions(pieChart);
-        configurePieChartDataForDeviceSourceStatus(pieChart, data);
-        configurePieChartLegend(pieChart);
+        if (data != null && data.size() >= 0){
+            configurePieChartDataForDeviceSourceStatus(pieChart, data);
+            configurePieChartLegend(pieChart);
+        }
         pieChart.invalidate();
         return pieChart;
     }
@@ -230,8 +236,10 @@ public class Details {
     public static PieChart createPieChartForDeviceSyncedAssetsLocationStatus(Context context, JsonObject data){
         PieChart pieChart = new PieChart(context);
         configurePieChartDimensions(pieChart);
-        configurePieChartDataForDeviceSyncedAssetsLocationStatus(pieChart, data);
-        configurePieChartLegend(pieChart);
+        if (data != null && data.size() >= 0){
+            configurePieChartDataForDeviceSyncedAssetsLocationStatus(pieChart, data);
+            configurePieChartLegend(pieChart);
+        }
         pieChart.invalidate();
         return pieChart;
     }
@@ -240,7 +248,8 @@ public class Details {
         ArrayList<PieEntry> entries = new ArrayList<>();
         for (String location : locationsData.keySet()){
             double locationSize = locationsData.get(location).getAsDouble();
-            entries.add(new PieEntry((float) locationSize, location));
+            Log.d("DeviceStatusSync","location size for " + location + " is " + locationSize );
+            entries.add(new PieEntry((float) locationSize , location));
         }
         configurePieChartDataFormatForDeviceSyncedAssetsLocationStatus(pieChart, entries);
     }
@@ -356,34 +365,6 @@ public class Details {
         pieChart.setDrawHoleEnabled(false);
     }
 
-    public static void createSyncDetailsLayout(Context context, Activity activity){
-        LinearLayout syncButtonsLayout = activity.findViewById(R.id.syncButtonsLayout);
-        LinearLayout syncDetailsLayout = createInnerDetailsLayout(context);
-        ImageButton syncDetailsButton = activity.findViewById(R.id.syncDetailsButton);
-
-        syncDetailsLayout.setVisibility(View.GONE);
-        syncButtonsLayout.addView(syncDetailsLayout);
-
-        TextView textView = new TextView(activity);
-        textView.setText("Sync assets count: "+ DBHelper.countAndroidSyncedAssetsOnThisDevice(MainActivity.androidUniqueDeviceIdentifier));
-        syncDetailsLayout.addView(textView);
-
-        syncDetailsButton.setOnClickListener(view -> {
-            if(syncDetailsLayout.getVisibility() == View.GONE){
-                syncDetailsLayout.setVisibility(View.VISIBLE);
-            }else{
-                syncButtonsLayout.setVisibility(View.GONE);
-            }
-        });
-    }
-
-    public static TextView createTextViewForEmptyDataSet(String text){
-        TextView textView = new TextView(MainActivity.activity);
-        textView.setText(text);
-        textView.setTextSize(24f);
-        textView.setGravity(Gravity.CENTER);
-        return textView;
-    }
 }
 
 

@@ -30,6 +30,8 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
+import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
 
 public class Devices {
     public static void setupDeviceButtons(Activity activity){
@@ -245,85 +247,104 @@ public class Devices {
     public static LinearLayout createChartForStorageStatus(Context context, String deviceId) {
         LinearLayout layout = Details.createInnerDetailsLayout(context);
         JsonObject data = getStorageStatus(deviceId);
-        if (data == null || data.size() == 0){
-            TextView textView = Details.createTextViewForEmptyDataSet("No storage status data found");
-            layout.addView(textView);
-        }else{
-            PieChart pieChart = Details.createPieChartForDeviceStorageStatus(context, data);
-            layout.addView(pieChart);
-        }
+        Log.d("DeviceStatusSync", "storage data : " + data);
+        PieChart pieChart = Details.createPieChartForDeviceStorageStatus(context, data);
+        layout.addView(pieChart);
         return layout;
     }
 
-    public static JsonObject getStorageStatus(String deviceId){
-        JsonObject[] jsonObjects = {null};
-        new Thread(() -> {
+    public static JsonObject getStorageStatus(String deviceId) {
+        FutureTask<JsonObject> futureTask = new FutureTask<>(() -> {
             if (isCurrentDevice(deviceId)) {
-                jsonObjects[0] = DeviceStatusSync.createStorageStatusJson();
-            }else{
-                jsonObjects[0] = DeviceStatusSync.getDeviceStatusJsonFile(deviceId);
-                if (jsonObjects[0] != null){
-                    jsonObjects[0] = jsonObjects[0].getAsJsonObject("storageStatus");
+                return DeviceStatusSync.createStorageStatusJson();
+            } else {
+                JsonObject json = DeviceStatusSync.getDeviceStatusJsonFile(deviceId);
+                if (json != null) {
+                    return json.getAsJsonObject("storageStatus");
                 }
+                return null;
             }
-        }).start();
-        return jsonObjects[0];
+        });
+
+        // Run the task in a new thread
+        new Thread(futureTask).start();
+
+        try {
+            // Wait for the task to complete and return the result
+            return futureTask.get(); // This will block until the result is available
+        } catch (Exception e) {
+            Log.e("DeviceStatusSync", "Error retrieving storage status: " + e.getMessage());
+            return null;
+        }
     }
+
 
     public static LinearLayout createChartForSyncedAssetsLocationStatus(Context context, String deviceId){
         LinearLayout layout = Details.createInnerDetailsLayout(context);
         JsonObject data = getSyncedAssetsLocationStatus(deviceId);
-        if (data == null || data.size() == 0){
-            TextView textView = Details.createTextViewForEmptyDataSet("No synced assets Found");
-            layout.addView(textView);
-        }else{
-            PieChart pieChart = Details.createPieChartForDeviceSyncedAssetsLocationStatus(context, data);
-            layout.addView(pieChart);
-        }
+        Log.d("DeviceStatusSync", "assets location data : " + data);
+        PieChart pieChart = Details.createPieChartForDeviceSyncedAssetsLocationStatus(context, data);
+        layout.addView(pieChart);
         return layout;
     }
 
-    public static JsonObject getSyncedAssetsLocationStatus(String deviceId){
-        JsonObject[] jsonObjects = {null};
-        new Thread(() -> {
+    public static JsonObject getSyncedAssetsLocationStatus(String deviceId) {
+        FutureTask<JsonObject> futureTask = new FutureTask<>(() -> {
             if (isCurrentDevice(deviceId)) {
-                jsonObjects[0] = DeviceStatusSync.createAssetsLocationStatusJson();
-            }else{
-                jsonObjects[0] = DeviceStatusSync.getDeviceStatusJsonFile(deviceId);
-                if (jsonObjects[0]!= null){
-                    jsonObjects[0] = jsonObjects[0].getAsJsonObject("assetsLocationStatus");
+                return DeviceStatusSync.createAssetsLocationStatusJson();
+            } else {
+                JsonObject json = DeviceStatusSync.getDeviceStatusJsonFile(deviceId);
+                if (json != null) {
+                    return json.getAsJsonObject("assetsLocationStatus");
                 }
+                return null;
             }
-        }).start();
-        return jsonObjects[0];
+        });
+
+        // Run the task in a new thread
+        new Thread(futureTask).start();
+
+        try {
+            // Wait for the task to complete and return the result
+            return futureTask.get(); // This will block until the result is available
+        } catch (Exception e) {
+            Log.e("DeviceStatusSync", "Error retrieving assets location status: " + e.getMessage());
+            return null;
+        }
     }
 
     public static LinearLayout createChartForSourceStatus(Context context, String deviceId){
         LinearLayout layout = Details.createInnerDetailsLayout(context);
         JsonObject data = getAssetsSourceStatus(deviceId);
-        if (data == null || data.size() == 0){
-            TextView textView = Details.createTextViewForEmptyDataSet("No assets Found");
-            layout.addView(textView);
-        }else{
-            PieChart pieChart = Details.createPieChartForDeviceSourceStatus(context, data);
-            layout.addView(pieChart);
-        }
+        Log.d("DeviceStatusSync", "assets source data : " + data);
+        PieChart pieChart = Details.createPieChartForDeviceSourceStatus(context, data);
+        layout.addView(pieChart);
         return layout;
     }
 
-    public static JsonObject getAssetsSourceStatus(String deviceId){
-        JsonObject[] jsonObjects = {null};
-        new Thread(() -> {
+    public static JsonObject getAssetsSourceStatus(String deviceId) {
+        FutureTask<JsonObject> futureTask = new FutureTask<>(() -> {
             if (isCurrentDevice(deviceId)) {
-                jsonObjects[0] = DeviceStatusSync.createAssetsSourceStatusJson();
-            }else{
-                jsonObjects[0] = DeviceStatusSync.getDeviceStatusJsonFile(deviceId);
-                if (jsonObjects[0]!= null){
-                    jsonObjects[0] = jsonObjects[0].getAsJsonObject("assetsSourceStatus");
+                return DeviceStatusSync.createAssetsSourceStatusJson();
+            } else {
+                JsonObject json = DeviceStatusSync.getDeviceStatusJsonFile(deviceId);
+                if (json != null) {
+                    return json.getAsJsonObject("assetsSourceStatus");
                 }
+                return null;
             }
-        }).start();
-        return jsonObjects[0];
+        });
+
+        // Run the task in a new thread
+        new Thread(futureTask).start();
+
+        try {
+            // Wait for the task to complete and return the result
+            return futureTask.get(); // This will block until the result is available
+        } catch (Exception e) {
+            Log.e("DeviceStatusSync", "Error retrieving assets source status: " + e.getMessage());
+            return null;
+        }
     }
 
 
