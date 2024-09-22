@@ -3,10 +3,12 @@ package com.example.cso.UI;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
+import android.media.Image;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -357,6 +359,27 @@ public class Details {
         pieChart.setDrawHoleEnabled(false);
     }
 
+
+    public static void createSyncDetailsLayout(Context context, Activity activity){
+        LinearLayout syncButtonsLayout = activity.findViewById(R.id.syncButtonsLayout);
+        LinearLayout syncDetailsLayout = createInnerDetailsLayout(context);
+        ImageButton syncDetailsButton = activity.findViewById(R.id.syncDetailsButton);
+
+        syncDetailsLayout.setVisibility(View.GONE);
+        syncButtonsLayout.addView(syncDetailsLayout);
+
+        TextView textView = new TextView(activity);
+        textView.setText("Sync assets count: "+ DBHelper.countAndroidSyncedAssetsOnThisDevice(MainActivity.androidUniqueDeviceIdentifier));
+        syncDetailsLayout.addView(textView);
+
+        syncDetailsButton.setOnClickListener(view -> {
+            if(syncDetailsLayout.getVisibility() == View.GONE){
+                syncDetailsLayout.setVisibility(View.VISIBLE);
+            }else{
+                syncButtonsLayout.setVisibility(View.GONE);
+            }
+        });
+    }
 
 }
 

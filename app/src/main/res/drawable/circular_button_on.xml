@@ -31,8 +31,8 @@
         <shape android:shape="oval">
             <gradient
                 android:angle="270"
-                android:startColor="#80CBC4"
-            android:endColor="#004D40"
+                android:startColor="#004D40"
+            android:endColor="#80CBC4"
             android:type="linear"
             android:gradientRadius="90dp"/>
             <corners android:radius="50dp"/>

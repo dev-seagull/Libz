@@ -15,6 +15,7 @@
     import androidx.activity.result.contract.ActivityResultContracts;
     import androidx.appcompat.app.AppCompatActivity;
 
+    import com.example.cso.UI.Details;
     import com.example.cso.UI.Dialogs;
     import com.example.cso.UI.UI;
     import com.google.firebase.analytics.FirebaseAnalytics;
@@ -70,6 +71,7 @@
             Log.d("androidDeviceName", androidDeviceName);
 
             UI.initAppUI(activity);
+            Details.createSyncDetailsLayout(getApplicationContext(), this);
 
 //            boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
 //            if(isFirstTime){

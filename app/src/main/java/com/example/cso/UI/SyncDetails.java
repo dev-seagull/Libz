@@ -22,6 +22,7 @@ public class SyncDetails {
             syncDetailsButtonTextView.setTypeface(dseg7classic_regular);
             syncDetailsButtonTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             syncDetailsButtonTextView.setGravity(Gravity.CENTER);
+            syncDetailsButtonTextView.setLetterSpacing(0.1f);
         });
     }
 
