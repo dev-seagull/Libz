@@ -224,14 +224,17 @@ public class DeviceStatusSync {
                 for (String source : sources){
                     String keyword = "/" + source.toLowerCase() + "/";
                     if (filePath.contains(keyword)){
-                        sourceName = source;
+                        sourceName = source.toUpperCase();
                         break;
                     }
                 }
 
                 if (sourceName.equals("Others")){
                     String[] splitPath = filePath.split("/");
-                    sourceName = "Others/" + splitPath[splitPath.length-1];
+                    sourceName = splitPath[splitPath.length-2].toUpperCase();
+                    if(sourceName.equals("0")){
+                        sourceName = "ROOT";
+                    }
                 }
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -246,6 +249,11 @@ public class DeviceStatusSync {
             Log.d("DeviceStatusSync","assetsSourceSize : " + assetsSourceSize);
             jsonObjects[0] = assetsSourceSize;
         });
+        createAssetsSourceStatusJsonThread.start();
+        try{
+            createAssetsSourceStatusJsonThread.join();
+        }catch (Exception e) { LogHandler.crashLog(e,"devicestatussync");}
+
         return jsonObjects[0];
     }
 

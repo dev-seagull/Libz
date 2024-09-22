@@ -31,6 +31,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -195,13 +197,37 @@ public class Details {
     public static void configurePieChartDataForDeviceSourceStatus(PieChart pieChart, JsonObject sourcesData) {
         ArrayList<PieEntry> entries = new ArrayList<>();
         for (String source : sourcesData.keySet()){
-            double size = sourcesData.get(source).getAsDouble() * 1000;
+            double size = sourcesData.get(source).getAsDouble();
             entries.add(new PieEntry((float) size, source));
         }
         configurePieChartDataFormatForDeviceSourceStatus(pieChart, entries);
     }
 
     public static void configurePieChartDataFormatForDeviceSourceStatus(PieChart pieChart, ArrayList<PieEntry> entries) {
+        if (entries.size() > 5) {
+            Collections.sort(entries, new Comparator<PieEntry>() {
+                @Override
+                public int compare(PieEntry e1, PieEntry e2) {
+                    return Float.compare(e2.getValue(), e1.getValue());
+                }
+            });
+
+            float othersValue = 0;
+            ArrayList<PieEntry> limitedEntries = new ArrayList<>();
+            for (int i = 0; i < entries.size(); i++) {
+                if (i < 4) {
+                    limitedEntries.add(entries.get(i));
+                } else {
+                    othersValue += entries.get(i).getValue();
+                }
+            }
+
+            if (othersValue > 0) {
+                limitedEntries.add(new PieEntry(othersValue, "Others"));
+            }
+            entries = limitedEntries;
+        }
+
         PieDataSet dataSet = new PieDataSet(entries, null);
 
         int[] colors = {
@@ -211,13 +237,12 @@ public class Details {
         };
         dataSet.setColors(colors);
         dataSet.setValueTextColor(Color.WHITE);
-        dataSet.setValueTextSize(14f);
+        dataSet.setValueTextSize(12f);
 
         dataSet.setValueFormatter(new PieChartValueFormatter());
 
-        // Enable value lines and set value positions
         dataSet.setDrawValues(true);
-        dataSet.setValueLinePart1OffsetPercentage(80f); // Offset of the line
+        dataSet.setValueLinePart1OffsetPercentage(80f);
         dataSet.setValueLinePart1Length(0.3f);
         dataSet.setValueLinePart2Length(0.4f);
         dataSet.setValueLineWidth(2f);
@@ -229,7 +254,6 @@ public class Details {
         pieChart.setData(data);
         pieChart.getDescription().setEnabled(false);
         pieChart.setDrawEntryLabels(true);
-        pieChart.setDrawHoleEnabled(true);
         pieChart.setDrawHoleEnabled(false);
     }
 
