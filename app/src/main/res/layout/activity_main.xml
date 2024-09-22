@@ -80,10 +80,12 @@
                                 <TextView
                                     android:id="@+id/syncDetailsButtonText"
                                     android:layout_width="wrap_content"
+                                    android:fontFamily="@font/ptsansnarrowwebregular"
                                     android:layout_height="wrap_content"
                                     android:layout_gravity="center"
                                     android:text="Sync Details"
-                                    android:textSize="25sp"
+                                    android:scaleX="0.9"
+                                    android:textSize="28sp"
                                     android:textColor="@color/textColor"
                                     android:padding="4dp"/>
                             </FrameLayout>
@@ -107,9 +109,12 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_gravity="center"
+                                    android:fontFamily="@font/ptsansnarrowwebregular"
                                     android:text="Sync"
+                                    android:scaleX="0.9"
                                     android:textColor="@color/textColor"
-                                    android:textSize="18sp"
+                                    android:textSize="22sp"
+                                    android:letterSpacing="0.1"
                                     android:textStyle="bold"
                                     android:padding="4dp"/>
                             </FrameLayout>
@@ -131,9 +136,12 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_gravity="center"
+                                    android:fontFamily="@font/ptsansnarrowwebregular"
+                                    android:letterSpacing="0.1"
                                     android:text="Wifi only"
                                     android:textColor="@color/textColor"
-                                    android:textSize="16sp"
+                                    android:textSize="20sp"
+                                    android:scaleX="0.9"
                                     android:textStyle="bold"
                                     android:padding="4dp"/>
                             </FrameLayout>

@@ -18,11 +18,10 @@ public class SyncDetails {
         TextView syncDetailsButtonTextView = activity.findViewById(R.id.syncDetailsButtonText);
         activity.runOnUiThread( () -> {
             syncDetailsButtonTextView.setText(String.format("%d%%", Math.round(percentageOfSyncedAssets)));
-            Typeface dseg7classic_regular = ResourcesCompat.getFont(activity,R.font.dseg7classic_regular);
+            Typeface dseg7classic_regular = ResourcesCompat.getFont(activity,R.font.ptsansnarrowwebregular);
             syncDetailsButtonTextView.setTypeface(dseg7classic_regular);
             syncDetailsButtonTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             syncDetailsButtonTextView.setGravity(Gravity.CENTER);
-            syncDetailsButtonTextView.setLetterSpacing(0.1f);
         });
     }
 
