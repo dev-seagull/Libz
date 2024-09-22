@@ -83,18 +83,17 @@ public class Details {
         return null;
     }
 
-    public static PieChart createPieChartForDeviceStorageStatus(Context context, String deviceId) {
+    public static PieChart createPieChartForDeviceStorageStatus(Context context, JsonObject data) {
         PieChart pieChart = new PieChart(context);
         configurePieChartDimensions(pieChart);
-        configurePieChartDataForDeviceStorageStatus(pieChart, deviceId);
+        configurePieChartDataForDeviceStorageStatus(pieChart, data);
         configurePieChartLegend(pieChart);
 //        configurePieChartInteractions(pieChart);
         pieChart.invalidate();
         return pieChart;
     }
 
-    public static void configurePieChartDataForDeviceStorageStatus(PieChart pieChart, String deviceId) {
-        JsonObject storageData = Devices.getStorageStatus(deviceId);
+    public static void configurePieChartDataForDeviceStorageStatus(PieChart pieChart, JsonObject storageData) {
         double freeSpace = storageData.get("freeSpace").getAsDouble() * 1000;
         double mediaStorage = storageData.get("mediaStorage").getAsDouble() * 1000;
         double usedSpaceExcludingMedia = storageData.get("usedSpaceExcludingMedia").getAsDouble() * 1000;
@@ -178,17 +177,16 @@ public class Details {
 //        return directoryUsages;
 //    }
 
-    public static PieChart createPieChartForDeviceSourceStatus(Context context, String deviceId) {
+    public static PieChart createPieChartForDeviceSourceStatus(Context context, JsonObject data) {
         PieChart pieChart = new PieChart(context);
         configurePieChartDimensions(pieChart);
-        configurePieChartDataForDeviceSourceStatus(pieChart, deviceId);
+        configurePieChartDataForDeviceSourceStatus(pieChart, data);
         configurePieChartLegend(pieChart);
         pieChart.invalidate();
         return pieChart;
     }
 
-    public static void configurePieChartDataForDeviceSourceStatus(PieChart pieChart, String deviceId) {
-        JsonObject sourcesData = Devices.getAssetsSourceStatus(deviceId);
+    public static void configurePieChartDataForDeviceSourceStatus(PieChart pieChart, JsonObject sourcesData) {
         ArrayList<PieEntry> entries = new ArrayList<>();
         for (String source : sourcesData.keySet()){
             double size = sourcesData.get(source).getAsDouble() * 1000;
@@ -229,17 +227,16 @@ public class Details {
         pieChart.setDrawHoleEnabled(false);
     }
 
-    public static PieChart createPieChartForDeviceSyncedAssetsLocationStatus(Context context, String deviceId){
+    public static PieChart createPieChartForDeviceSyncedAssetsLocationStatus(Context context, JsonObject data){
         PieChart pieChart = new PieChart(context);
         configurePieChartDimensions(pieChart);
-        configurePieChartDataForDeviceSyncedAssetsLocationStatus(pieChart, deviceId);
+        configurePieChartDataForDeviceSyncedAssetsLocationStatus(pieChart, data);
         configurePieChartLegend(pieChart);
         pieChart.invalidate();
         return pieChart;
     }
 
-    public static void configurePieChartDataForDeviceSyncedAssetsLocationStatus(PieChart pieChart, String deviceId) {
-        JsonObject locationsData = Devices.getSyncedAssetsLocationStatus(deviceId);
+    public static void configurePieChartDataForDeviceSyncedAssetsLocationStatus(PieChart pieChart, JsonObject locationsData) {
         ArrayList<PieEntry> entries = new ArrayList<>();
         for (String location : locationsData.keySet()){
             double locationSize = locationsData.get(location).getAsDouble();
@@ -359,6 +356,7 @@ public class Details {
         pieChart.setDrawHoleEnabled(false);
     }
 
+<<<<<<< HEAD
 
     public static void createSyncDetailsLayout(Context context, Activity activity){
         LinearLayout syncButtonsLayout = activity.findViewById(R.id.syncButtonsLayout);
@@ -381,6 +379,15 @@ public class Details {
         });
     }
 
+=======
+    public static TextView createTextViewForEmptyDataSet(String text){
+        TextView textView = new TextView(MainActivity.activity);
+        textView.setText(text);
+        textView.setTextSize(24f);
+        textView.setGravity(Gravity.CENTER);
+        return textView;
+    }
+>>>>>>> b506bc9519d21a1860c44dbee9821db44b3387bd
 }
 
 
