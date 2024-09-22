@@ -356,8 +356,6 @@ public class Details {
         pieChart.setDrawHoleEnabled(false);
     }
 
-<<<<<<< HEAD
-
     public static void createSyncDetailsLayout(Context context, Activity activity){
         LinearLayout syncButtonsLayout = activity.findViewById(R.id.syncButtonsLayout);
         LinearLayout syncDetailsLayout = createInnerDetailsLayout(context);
@@ -379,7 +377,6 @@ public class Details {
         });
     }
 
-=======
     public static TextView createTextViewForEmptyDataSet(String text){
         TextView textView = new TextView(MainActivity.activity);
         textView.setText(text);
@@ -387,7 +384,6 @@ public class Details {
         textView.setGravity(Gravity.CENTER);
         return textView;
     }
->>>>>>> b506bc9519d21a1860c44dbee9821db44b3387bd
 }
 
 
