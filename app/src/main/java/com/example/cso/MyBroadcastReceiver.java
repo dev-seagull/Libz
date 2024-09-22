@@ -12,13 +12,13 @@ import java.util.Date;
 import java.util.Locale;
 
 public class MyBroadcastReceiver extends BroadcastReceiver {
-    public static long timeInterval = 2 * 60 * 1000;
+
     @Override
     public void onReceive(Context context, Intent intent){
         Log.d("DeviceStatusSync","upload alarm recieved at : " + new Date().getTime());
         DeviceStatusSync.uploadDeviceStatusJsonFileToAccounts(context);
         int requestCode = intent.getIntExtra("requestCode", 0);
-        long timeInMillis = new Date().getTime() + timeInterval;
+        long timeInMillis = new Date().getTime() + DeviceStatusSync.timeInterval;
         setAlarm(context,timeInMillis, requestCode);
     }
 

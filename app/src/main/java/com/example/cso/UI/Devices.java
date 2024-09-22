@@ -1,6 +1,7 @@
 package com.example.cso.UI;
 
 import static com.example.cso.MainActivity.activity;
+import static com.example.cso.MainActivity.dataBaseName;
 
 import android.app.Activity;
 import android.content.Context;
@@ -16,6 +17,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -242,46 +244,87 @@ public class Devices {
 
     public static LinearLayout createChartForStorageStatus(Context context, String deviceId) {
         LinearLayout layout = Details.createInnerDetailsLayout(context);
-        PieChart pieChart = Details.createPieChartForDeviceStorageStatus(context,deviceId);
-        layout.addView(pieChart);
+        JsonObject data = getStorageStatus(deviceId);
+        if (data == null || data.size() == 0){
+            TextView textView = Details.createTextViewForEmptyDataSet("No storage status data found");
+            layout.addView(textView);
+        }else{
+            PieChart pieChart = Details.createPieChartForDeviceStorageStatus(context, data);
+            layout.addView(pieChart);
+        }
         return layout;
     }
 
     public static JsonObject getStorageStatus(String deviceId){
-        if (isCurrentDevice(deviceId)) {
-            return DeviceStatusSync.createStorageStatusJson();
-        }else{
-            return DeviceStatusSync.downloadDeviceStatusJsonFileFromAccounts(deviceId).getAsJsonObject("storageStatus");
-        }
+        JsonObject[] jsonObjects = {null};
+        new Thread(() -> {
+            if (isCurrentDevice(deviceId)) {
+                jsonObjects[0] = DeviceStatusSync.createStorageStatusJson();
+            }else{
+                jsonObjects[0] = DeviceStatusSync.getDeviceStatusJsonFile(deviceId);
+                if (jsonObjects[0] != null){
+                    jsonObjects[0] = jsonObjects[0].getAsJsonObject("storageStatus");
+                }
+            }
+        }).start();
+        return jsonObjects[0];
     }
 
     public static LinearLayout createChartForSyncedAssetsLocationStatus(Context context, String deviceId){
         LinearLayout layout = Details.createInnerDetailsLayout(context);
-        PieChart pieChart = Details.createPieChartForDeviceSyncedAssetsLocationStatus(context, deviceId);
-        layout.addView(pieChart);
+        JsonObject data = getSyncedAssetsLocationStatus(deviceId);
+        if (data == null || data.size() == 0){
+            TextView textView = Details.createTextViewForEmptyDataSet("No synced assets Found");
+            layout.addView(textView);
+        }else{
+            PieChart pieChart = Details.createPieChartForDeviceSyncedAssetsLocationStatus(context, data);
+            layout.addView(pieChart);
+        }
         return layout;
     }
 
     public static JsonObject getSyncedAssetsLocationStatus(String deviceId){
-        if (isCurrentDevice(deviceId)){
-            return DeviceStatusSync.createAssetsLocationStatusJson();
-        }else {
-            return DeviceStatusSync.downloadDeviceStatusJsonFileFromAccounts(deviceId).getAsJsonObject("assetsLocationStatus");
-        }
+        JsonObject[] jsonObjects = {null};
+        new Thread(() -> {
+            if (isCurrentDevice(deviceId)) {
+                jsonObjects[0] = DeviceStatusSync.createAssetsLocationStatusJson();
+            }else{
+                jsonObjects[0] = DeviceStatusSync.getDeviceStatusJsonFile(deviceId);
+                if (jsonObjects[0]!= null){
+                    jsonObjects[0] = jsonObjects[0].getAsJsonObject("assetsLocationStatus");
+                }
+            }
+        }).start();
+        return jsonObjects[0];
     }
 
     public static LinearLayout createChartForSourceStatus(Context context, String deviceId){
         LinearLayout layout = Details.createInnerDetailsLayout(context);
-        PieChart pieChart = Details.createPieChartForDeviceSourceStatus(context, deviceId);
-        layout.addView(pieChart);
+        JsonObject data = getAssetsSourceStatus(deviceId);
+        if (data == null || data.size() == 0){
+            TextView textView = Details.createTextViewForEmptyDataSet("No assets Found");
+            layout.addView(textView);
+        }else{
+            PieChart pieChart = Details.createPieChartForDeviceSourceStatus(context, data);
+            layout.addView(pieChart);
+        }
         return layout;
     }
 
     public static JsonObject getAssetsSourceStatus(String deviceId){
-        if (isCurrentDevice(deviceId)){
-            return DeviceStatusSync.createAssetsSourceStatusJson();
-        } else {
-            return DeviceStatusSync.downloadDeviceStatusJsonFileFromAccounts(deviceId).getAsJsonObject("assetsSourceStatus");
-        }
+        JsonObject[] jsonObjects = {null};
+        new Thread(() -> {
+            if (isCurrentDevice(deviceId)) {
+                jsonObjects[0] = DeviceStatusSync.createAssetsSourceStatusJson();
+            }else{
+                jsonObjects[0] = DeviceStatusSync.getDeviceStatusJsonFile(deviceId);
+                if (jsonObjects[0]!= null){
+                    jsonObjects[0] = jsonObjects[0].getAsJsonObject("assetsSourceStatus");
+                }
+            }
+        }).start();
+        return jsonObjects[0];
     }
+
+
 }
