@@ -41,8 +41,7 @@ public class Devices {
             if (!deviceButtonExistsInUI(device.getDeviceId(), activity)) {
                 Log.d("ui","creating button for device " + device.getDeviceName());
                 View newDeviceButtonView = createNewDeviceMainView(activity, device);
-
-                deviceButtons.addView(newDeviceButtonView);
+                MainActivity.activity.runOnUiThread(() -> deviceButtons.addView(newDeviceButtonView));
             }
         }
     }
@@ -80,11 +79,13 @@ public class Devices {
 
         LinearLayout detailsLayout = Details.createDetailsLayout(context);
         ViewPager2 pager = DetailsViewPager.createViewerPage(context,device.getDeviceId(),"device");
-        detailsLayout.addView(pager);
+        activity.runOnUiThread(() -> {
+            detailsLayout.addView(pager);
 
-        layout.addView(buttonFrame);
-        layout.addView(detailsLayout);
-        layout.setContentDescription(device.getDeviceId());
+            layout.addView(buttonFrame);
+            layout.addView(detailsLayout);
+            layout.setContentDescription(device.getDeviceId());
+        });
         return layout;
     }
 

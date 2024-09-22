@@ -217,21 +217,21 @@ public class DeviceStatusSync {
                     "Screenshots", "Screen Recorded"};
 
             for (String[] file : files){
-                String filePath = file[0].toLowerCase();
+                String filePath = file[0];
                 Double fileSize = Double.parseDouble(file[1]);
                 String sourceName = "Others";
 
                 for (String source : sources){
-                    String keyword = "/" + source.toLowerCase() + "/";
-                    if (filePath.contains(keyword)){
-                        sourceName = source.toUpperCase();
+                    String keyword = "/" + source + "/";
+                    if (filePath.toLowerCase().contains(keyword.toLowerCase())){
+                        sourceName = source;
                         break;
                     }
                 }
 
                 if (sourceName.equals("Others")){
-                    String[] splitPath = filePath.split("/");
-                    sourceName = splitPath[splitPath.length-2].toUpperCase();
+                    String[] splitPath = file[0].split("/");
+                    sourceName = splitPath[splitPath.length-2];
                     if(sourceName.equals("0")){
                         sourceName = "ROOT";
                     }
@@ -252,7 +252,7 @@ public class DeviceStatusSync {
         createAssetsSourceStatusJsonThread.start();
         try{
             createAssetsSourceStatusJsonThread.join();
-        }catch (Exception e) { LogHandler.crashLog(e,"devicestatussync");}
+        }catch (Exception e) { LogHandler.crashLog(e,"deviceStatusSync");}
 
         return jsonObjects[0];
     }
@@ -544,5 +544,6 @@ public class DeviceStatusSync {
         }
         return shouldDownload[0];
     }
+
 
 }

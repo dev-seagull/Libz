@@ -198,9 +198,13 @@ public class LogHandler extends Application {
     }
 
     public static void crashLog(Throwable message,String tag){
-        if (message != null && tag != null){
-            Log.d(tag, Objects.requireNonNull(message.getLocalizedMessage()));
-            FirebaseCrashlytics.getInstance().recordException(message);
+        try{
+            if (message != null && tag != null){
+                Log.d(tag, message.getLocalizedMessage());
+                FirebaseCrashlytics.getInstance().recordException(message);
+            }
+        }catch (Exception e1){
+            System.out.println("Failed to crash log: " + e1.getLocalizedMessage());
         }
     }
 }
