@@ -48,8 +48,6 @@
                         android:layout_marginTop="24dp"
                         android:orientation="vertical"/>
 
-
-
                     <LinearLayout
                         android:id="@+id/syncButtonsLayout"
                         android:layout_width="match_parent"

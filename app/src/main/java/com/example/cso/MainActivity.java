@@ -71,7 +71,6 @@
             Log.d("androidDeviceName", androidDeviceName);
 
             UI.initAppUI(activity);
-            Details.createSyncDetailsLayout(getApplicationContext(), this);
 
 //            boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
 //            if(isFirstTime){
