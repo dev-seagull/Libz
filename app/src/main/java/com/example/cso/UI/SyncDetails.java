@@ -28,7 +28,6 @@ public class SyncDetails {
             syncDetailsButtonTextView.setGravity(Gravity.CENTER);
         });
 
-        createSyncDetailsLayout(activity);
     }
 
     public static void createSyncDetailsLayout(Activity activity){
@@ -48,7 +47,7 @@ public class SyncDetails {
             if(syncDetailsLayout.getVisibility() == View.GONE){
                 syncDetailsLayout.setVisibility(View.VISIBLE);
             }else{
-                syncButtonsLayout.setVisibility(View.GONE);
+                syncDetailsLayout.setVisibility(View.GONE);
             }
         });
     }

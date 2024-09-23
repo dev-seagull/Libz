@@ -43,6 +43,7 @@ public class UI {
         initializeDrawerLayout(activity);
         SyncButton.initializeSyncButton(activity);
         WifiOnlyButton.initializeWifiOnlyButton(activity);
+        SyncDetails.createSyncDetailsLayout(activity);
         SyncDetails.handleSyncDetailsButton(activity);
         update();
     }
