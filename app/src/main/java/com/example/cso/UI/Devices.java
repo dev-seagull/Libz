@@ -14,6 +14,7 @@ import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
@@ -78,9 +79,29 @@ public class Devices {
         RelativeLayout buttonFrame = createNewDeviceButtonLayout(context, device);
 
         LinearLayout detailsLayout = Details.createDetailsLayout(context);
+        ImageButton rightImageButton = new ImageButton(context);
+        rightImageButton.setImageResource(R.drawable.right);
+        LinearLayout.LayoutParams rightButtonParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        rightButtonParams.setMargins(10, 0, 0, 0);
+        rightImageButton.setLayoutParams(rightButtonParams);
+
+        ImageButton leftImageButton = new ImageButton(context);
+        leftImageButton.setImageResource(R.drawable.left);
+        LinearLayout.LayoutParams leftButtonParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        leftButtonParams.setMargins(0, 0, 10, 0);
+        leftImageButton.setLayoutParams(leftButtonParams);
+
         ViewPager2 pager = DetailsViewPager.createViewerPage(context,device.getDeviceId(),"device");
         activity.runOnUiThread(() -> {
+            detailsLayout.addView(leftImageButton);
             detailsLayout.addView(pager);
+            detailsLayout.addView(rightImageButton);
 
             layout.addView(buttonFrame);
             layout.addView(detailsLayout);
