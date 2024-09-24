@@ -40,13 +40,6 @@
                     android:orientation="vertical"
                     tools:context=".MainActivity">
 
-                    <LinearLayout
-                        android:id="@+id/deviceButtons"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:layout_marginTop="24dp"
-                        android:orientation="vertical"/>
 
                     <LinearLayout
                         android:id="@+id/syncButtonsLayout"
@@ -144,32 +137,6 @@
                         </LinearLayout>
 
                     </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/warningText"
-                        android:layout_marginTop="20dp"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:gravity="center"
-                        android:visibility="gone"
-                        android:textColor="@color/text_red_color"/>
-
-                    <LinearLayout
-                        android:id="@+id/backUpAccountsButtons"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:layout_marginTop="26dp"
-                        android:orientation="vertical"/>
-
-                    <LinearLayout
-                        android:id="@+id/tempLayout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:layout_marginTop="26dp"
-                        android:orientation="vertical"/>
 
                 </LinearLayout>
             </ScrollView>

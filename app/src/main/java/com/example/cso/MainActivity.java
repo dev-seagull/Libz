@@ -15,6 +15,7 @@
     import androidx.activity.result.contract.ActivityResultContracts;
     import androidx.appcompat.app.AppCompatActivity;
 
+    import com.example.cso.UI.Accounts;
     import com.example.cso.UI.Details;
     import com.example.cso.UI.Dialogs;
     import com.example.cso.UI.Theme;
@@ -89,7 +90,7 @@
                         Log.d("signInToBackUpLauncher", "result code: " + result.getResultCode());
                         Log.d("signInToBackUpLauncher", "result data: " + result.getData());
                         if(result.getResultCode() == RESULT_OK){
-                            LinearLayout backupButtonsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+                            LinearLayout backupButtonsLinearLayout = activity.findViewById(Accounts.accountButtonsId);
                             View[] lastButton = {backupButtonsLinearLayout.getChildAt(
                                     backupButtonsLinearLayout.getChildCount() - 1)};
                             Thread signInToBackUpThread = new Thread(() -> {

@@ -8,11 +8,14 @@ import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.os.Build;
 import android.provider.ContactsContract;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.cso.BackUp;
@@ -26,6 +29,7 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics;
 public class SyncButton {
 
     public static LiquidFillButton syncButton = MainActivity.activity.findViewById(R.id.syncButton);
+    public static int warningTextViewId;
     public static void initializeSyncButton(Activity activity){
 
         boolean[] syncState = {SharedPreferencesHandler.getSyncSwitchState()};
@@ -200,4 +204,27 @@ public class SyncButton {
 
         actionButton.setBackground(firstLayer);
     }
+
+//                       <TextView
+//    android:id="@+id/warningText"
+//    android:layout_marginTop="20dp"
+//    android:layout_width="match_parent"
+//    android:layout_height="wrap_content"
+//    android:layout_gravity="center"
+//    android:gravity="center"
+//    android:visibility="gone"
+//    android:textColor="@color/text_red_color"/>
+
+    public static TextView createWarningTextView(Activity activity){
+        TextView warningText = new TextView(activity);
+        warningTextViewId = View.generateViewId();
+        warningText.setId(warningTextViewId);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, (int) UI.dpToPx(20), 0, 0);
+        warningText.setGravity(Gravity.CENTER);
+        warningText.setVisibility(View.GONE);
+        warningText.setTextColor(MainActivity.currentTheme.warningTextColor);
+        return warningText;
+    }
+
 }

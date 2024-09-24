@@ -33,9 +33,27 @@ import java.util.List;
 
 public class Accounts {
 
+    public static int accountButtonsId;
+
+    public static LinearLayout createParentLayoutForAccountsButtons(Activity activity){
+        LinearLayout parentLayout = new LinearLayout(activity);
+        parentLayout.setOrientation(LinearLayout.VERTICAL);
+        parentLayout.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0,(int) UI.dpToPx(26),0,0);
+        parentLayout.setLayoutParams(params);
+        accountButtonsId = View.generateViewId();
+        parentLayout.setId(accountButtonsId);
+        return parentLayout;
+    }
+
+
     public static void setupAccountButtons(Activity activity){ // define
         activity.runOnUiThread(() -> {
-            LinearLayout backupAccountsLinearLayout = activity.findViewById(R.id.backUpAccountsButtons);
+            LinearLayout backupAccountsLinearLayout = activity.findViewById(accountButtonsId);
             backupAccountsLinearLayout.removeAllViews();
             String[] columnsList = {"userEmail", "type", "refreshToken"};
             List<String[]> accountRows = DBHelper.getAccounts(columnsList);
@@ -60,7 +78,7 @@ public class Accounts {
     }
 
     public static boolean accountButtonDoesNotExistsInUI(String userEmail){ // need change
-        LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(R.id.backUpAccountsButtons);
+        LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(accountButtonsId);
         int backupButtonsCount = backupButtonsLinearLayout.getChildCount();
         for(int i=0 ; i < backupButtonsCount ; i++){
             View backupButtonChild = backupButtonsLinearLayout.getChildAt(i);

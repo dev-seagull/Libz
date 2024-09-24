@@ -13,6 +13,7 @@ import android.text.style.TypefaceSpan;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -42,12 +43,20 @@ public class UI {
     }
 
     public static void initAppUI(Activity activity){
+        initializeMainLayouts(activity);
         initializeDrawerLayout(activity);
         SyncButton.initializeSyncButton(activity);
         WifiOnlyButton.initializeWifiOnlyButton(activity);
         SyncDetails.createSyncDetailsLayout(activity);
         SyncDetails.handleSyncDetailsButton(activity);
         update();
+    }
+
+    public static void initializeMainLayouts(Activity activity){
+        LinearLayout mainLayout = activity.findViewById(R.id.mainLayout);
+        mainLayout.addView(Devices.createParentLayoutForDeviceButtons(activity),0);
+        mainLayout.addView(SyncButton.createWarningTextView(activity));
+        mainLayout.addView(Accounts.createParentLayoutForAccountsButtons(activity));
     }
 
     public static void handleStatistics(String deviceId){

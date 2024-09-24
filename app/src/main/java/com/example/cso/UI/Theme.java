@@ -22,13 +22,14 @@ public class Theme {
     public int OnSyncButtonGradientEnd;
     public int OffSyncButtonGradientStart;
     public int OffSyncButtonGradientEnd;
+    public int warningTextColor;
 
     public Theme(int primaryBackgroundColor, int[] deviceButtonColors, int[] accountButtonColors,
                  int[] addBackupAccountButtonColors, int[] deviceStorageChartColors,
                  int[] deviceAppStorageChartColors, int[] deviceAssetsSyncedStatusChartColors,
                  int[] accountStorageDataChartColors, int menuTextColor, int primaryTextColor,
                  int onSyncButtonGradientStart, int onSyncButtonGradientEnd,
-                 int offSyncButtonGradientStart, int offSyncButtonGradientEnd) {
+                 int offSyncButtonGradientStart, int offSyncButtonGradientEnd, int warningTextColor) {
         this.primaryBackgroundColor = primaryBackgroundColor;
         this.deviceButtonColors = deviceButtonColors;
         this.accountButtonColors = accountButtonColors;
@@ -43,6 +44,7 @@ public class Theme {
         this.OnSyncButtonGradientEnd = onSyncButtonGradientEnd;
         this.OffSyncButtonGradientStart = offSyncButtonGradientStart;
         this.OffSyncButtonGradientEnd = offSyncButtonGradientEnd;
+        this.warningTextColor = warningTextColor;
     }
 
     public static Theme purpleTheme(Context context) {
@@ -84,7 +86,8 @@ public class Theme {
                 Color.parseColor("#004D40"),
                 Color.parseColor("#80CBC4"),
                 Color.parseColor("#90A4AE"),
-                Color.parseColor("#B0BEC5")
+                Color.parseColor("#B0BEC5"),
+                Color.parseColor("#FF5722")
         );
     }
 

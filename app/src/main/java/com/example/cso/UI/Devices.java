@@ -35,8 +35,26 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
 public class Devices {
+
+    public static int deviceButtonsId;
+
+    public static LinearLayout createParentLayoutForDeviceButtons(Activity activity){
+        LinearLayout parentLayout = new LinearLayout(activity);
+        parentLayout.setOrientation(LinearLayout.VERTICAL);
+        parentLayout.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0,(int) UI.dpToPx(24),0,0);
+        parentLayout.setLayoutParams(params);
+        deviceButtonsId = View.generateViewId();
+        parentLayout.setId(deviceButtonsId);
+        return parentLayout;
+    }
+
     public static void setupDeviceButtons(Activity activity){
-        LinearLayout deviceButtons = activity.findViewById(R.id.deviceButtons);
+        LinearLayout deviceButtons = activity.findViewById(deviceButtonsId);
         ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromDB();
         for (DeviceHandler device : devices) {
             if (!deviceButtonExistsInUI(device.getDeviceId(), activity)) {
@@ -48,7 +66,7 @@ public class Devices {
     }
 
     public static boolean deviceButtonExistsInUI(String deviceId, Activity activity){
-        LinearLayout deviceButtonsLinearLayout = activity.findViewById(R.id.deviceButtons);
+        LinearLayout deviceButtonsLinearLayout = activity.findViewById(deviceButtonsId);
         int deviceButtonsChildCount = deviceButtonsLinearLayout.getChildCount();
         for(int i=0 ; i < deviceButtonsChildCount ; i++){
             View deviceButtonsChildView = deviceButtonsLinearLayout.getChildAt(i);
