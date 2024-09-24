@@ -7,6 +7,7 @@ import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.os.Build;
+import android.provider.ContactsContract;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
@@ -128,20 +129,51 @@ public class SyncButton {
             }
             int backgroundResource;
             if (state){
-                backgroundResource = R.drawable.circular_button_on;
-                button.setBackgroundResource(backgroundResource);
+                addGradientOnToSyncButton((LiquidFillButton) button);
             }else{
-                SyncButton.addGradientOffToButton((ImageButton) button);
+                addGradientOffToSyncButton((LiquidFillButton) button);
             }
             textView.setTextColor( MainActivity.currentTheme.primaryTextColor);
         }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
     }
 
-    public static void addGradientOffToButton(ImageButton actionButton){
+    public static void addGradientOffToSyncButton(LiquidFillButton actionButton){
         GradientDrawable firstLayer = new GradientDrawable(
-                GradientDrawable.Orientation.BOTTOM_TOP,
-                new int[]{android.graphics.Color.parseColor("#90A4AE"),
-                        android.graphics.Color.parseColor("#B0BEC5")}
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {MainActivity.currentTheme.OffSyncButtonGradientStart,
+                MainActivity.currentTheme.OffSyncButtonGradientEnd}
+        );
+        firstLayer.setShape(GradientDrawable.OVAL);
+        firstLayer.setSize((int) UI.dpToPx(104), (int) UI.dpToPx(104));
+        firstLayer.setCornerRadius(UI.dpToPx(52));
+
+//        ShapeDrawable secondLayer = new ShapeDrawable(new OvalShape());
+//        secondLayer.getPaint().setColor(android.graphics.Color.parseColor("#B0BEC5"));
+//        secondLayer.setPadding((int) UI.dpToPx(4), (int) UI.dpToPx(4), (int) UI.dpToPx(4), (int) UI.dpToPx(4));
+//
+//        GradientDrawable secondLayerStroke = new GradientDrawable();
+//        secondLayerStroke.setShape(GradientDrawable.OVAL);
+//        secondLayerStroke.setStroke((int) UI.dpToPx(2), android.graphics.Color.parseColor("#90A4AE"));
+//        secondLayerStroke.setCornerRadius(UI.dpToPx(50));
+//
+//        GradientDrawable thirdLayer = new GradientDrawable(
+//                GradientDrawable.Orientation.BOTTOM_TOP,
+//                new int[]{android.graphics.Color.parseColor("#B0BEC5"), android.graphics.Color.parseColor("#90A4AE")}
+//        );
+//        thirdLayer.setShape(GradientDrawable.OVAL);
+//        thirdLayer.setCornerRadius(UI.dpToPx(50));
+
+//        Drawable[] layers = {firstLayer, secondLayerStroke, thirdLayer};
+//        LayerDrawable layerDrawable = new LayerDrawable(layers);
+
+        actionButton.setBackground(firstLayer);
+    }
+
+    public static void addGradientOnToSyncButton(LiquidFillButton actionButton){
+        GradientDrawable firstLayer = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {MainActivity.currentTheme.OnSyncButtonGradientStart,
+                        MainActivity.currentTheme.OnSyncButtonGradientEnd}
         );
         firstLayer.setShape(GradientDrawable.OVAL);
         firstLayer.setSize((int) UI.dpToPx(104), (int) UI.dpToPx(104));

@@ -18,13 +18,17 @@ public class Theme {
     public int[] accountStorageDataChartColors;
     public int menuTextColor;
     public int primaryTextColor;
+    public int OnSyncButtonGradientStart;
+    public int OnSyncButtonGradientEnd;
+    public int OffSyncButtonGradientStart;
+    public int OffSyncButtonGradientEnd;
 
-
-    public Theme(int primaryBackgroundColor, int[] deviceButtonColors,
-                 int[] accountButtonColors, int[] addBackupAccountButtonColors,
-                 int[] deviceStorageChartColors, int[] deviceAppStorageChartColors,
-                 int[] deviceAssetsSyncedStatusChartColors, int[] accountStorageDataChartColors,
-                 int menuTextColor, int primaryTextColor) {
+    public Theme(int primaryBackgroundColor, int[] deviceButtonColors, int[] accountButtonColors,
+                 int[] addBackupAccountButtonColors, int[] deviceStorageChartColors,
+                 int[] deviceAppStorageChartColors, int[] deviceAssetsSyncedStatusChartColors,
+                 int[] accountStorageDataChartColors, int menuTextColor, int primaryTextColor,
+                 int onSyncButtonGradientStart, int onSyncButtonGradientEnd,
+                 int offSyncButtonGradientStart, int offSyncButtonGradientEnd) {
         this.primaryBackgroundColor = primaryBackgroundColor;
         this.deviceButtonColors = deviceButtonColors;
         this.accountButtonColors = accountButtonColors;
@@ -35,8 +39,11 @@ public class Theme {
         this.accountStorageDataChartColors = accountStorageDataChartColors;
         this.menuTextColor = menuTextColor;
         this.primaryTextColor = primaryTextColor;
+        this.OnSyncButtonGradientStart = onSyncButtonGradientStart;
+        this.OnSyncButtonGradientEnd = onSyncButtonGradientEnd;
+        this.OffSyncButtonGradientStart = offSyncButtonGradientStart;
+        this.OffSyncButtonGradientEnd = offSyncButtonGradientEnd;
     }
-
 
     public static Theme purpleTheme(Context context) {
         return new Theme(
@@ -73,7 +80,11 @@ public class Theme {
                         Color.parseColor("#304194")
                 },
                 Color.parseColor("#202124"),
-                Color.WHITE
+                Color.WHITE,
+                Color.parseColor("#004D40"),
+                Color.parseColor("#80CBC4"),
+                Color.parseColor("#90A4AE"),
+                Color.parseColor("#B0BEC5")
         );
     }
 
