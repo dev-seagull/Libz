@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#2C2A4A"
+    android:id="@+id/primaryBackground"
         android:orientation="vertical">
 
     <include layout="@layout/header"/>

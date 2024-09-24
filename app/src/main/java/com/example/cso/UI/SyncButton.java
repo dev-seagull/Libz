@@ -1,12 +1,20 @@
 package com.example.cso.UI;
 
 import android.app.Activity;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.OvalShape;
 import android.os.Build;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.example.cso.BackUp;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.example.cso.SharedPreferencesHandler;
@@ -49,7 +57,8 @@ public class SyncButton {
         if(currentSyncState){
             startSyncIfNotRunning(isServiceRunning, activity);
         }else{
-            Tools.warningText.setText("");
+            TextView warningText = MainActivity.activity.findViewById(R.id.warningText);
+            warningText.setText("");
             stopSyncIfRunning(isServiceRunning, activity);
         }
         updateSyncAndWifiButtonBackground(syncButton,currentSyncState, activity);
@@ -118,18 +127,45 @@ public class SyncButton {
                 textView = wifiButtonText;
             }
             int backgroundResource;
-            int textColor;
             if (state){
                 backgroundResource = R.drawable.circular_button_on;
-                textColor = Tools.buttonTextColor;
+                button.setBackgroundResource(backgroundResource);
             }else{
-                backgroundResource = R.drawable.circular_button_off;
-                textColor = Tools.buttonTextColor;
+                SyncButton.addGradientOffToButton((ImageButton) button);
             }
-            textView.setTextColor(textColor);
-            button.setBackgroundResource(backgroundResource);
+            textView.setTextColor( MainActivity.currentTheme.primaryTextColor);
         }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
     }
 
+    public static void addGradientOffToButton(ImageButton actionButton){
+        GradientDrawable firstLayer = new GradientDrawable(
+                GradientDrawable.Orientation.BOTTOM_TOP,
+                new int[]{android.graphics.Color.parseColor("#90A4AE"),
+                        android.graphics.Color.parseColor("#B0BEC5")}
+        );
+        firstLayer.setShape(GradientDrawable.OVAL);
+        firstLayer.setSize((int) UI.dpToPx(104), (int) UI.dpToPx(104));
+        firstLayer.setCornerRadius(UI.dpToPx(52));
 
+//        ShapeDrawable secondLayer = new ShapeDrawable(new OvalShape());
+//        secondLayer.getPaint().setColor(android.graphics.Color.parseColor("#B0BEC5"));
+//        secondLayer.setPadding((int) UI.dpToPx(4), (int) UI.dpToPx(4), (int) UI.dpToPx(4), (int) UI.dpToPx(4));
+//
+//        GradientDrawable secondLayerStroke = new GradientDrawable();
+//        secondLayerStroke.setShape(GradientDrawable.OVAL);
+//        secondLayerStroke.setStroke((int) UI.dpToPx(2), android.graphics.Color.parseColor("#90A4AE"));
+//        secondLayerStroke.setCornerRadius(UI.dpToPx(50));
+//
+//        GradientDrawable thirdLayer = new GradientDrawable(
+//                GradientDrawable.Orientation.BOTTOM_TOP,
+//                new int[]{android.graphics.Color.parseColor("#B0BEC5"), android.graphics.Color.parseColor("#90A4AE")}
+//        );
+//        thirdLayer.setShape(GradientDrawable.OVAL);
+//        thirdLayer.setCornerRadius(UI.dpToPx(50));
+
+//        Drawable[] layers = {firstLayer, secondLayerStroke, thirdLayer};
+//        LayerDrawable layerDrawable = new LayerDrawable(layers);
+
+        actionButton.setBackground(firstLayer);
+    }
 }

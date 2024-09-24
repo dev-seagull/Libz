@@ -3,9 +3,9 @@ package com.example.cso;
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
+import android.widget.TextView;
 
 import com.example.cso.UI.SyncButton;
-import com.example.cso.UI.Tools;
 import com.example.cso.UI.UI;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
@@ -30,15 +30,15 @@ public class Sync {
 
                 Log.d("service","isAllOfAccountsFull : " + isAllOfAccountsFull);
                 Log.d("service", "any backup account exists: " + accountExists);
-
+                TextView warningText = MainActivity.activity.findViewById(R.id.warningText);
                 if(!accountExists){
                     MainActivity.activity.runOnUiThread(() -> {
-                        Tools.warningText.setText(
+                        warningText.setText(
                                 "There is no backup account to sync!");
                     });
                 }else if(!InternetManager.isInternetReachable("https://drive.google.com")){
                     MainActivity.activity.runOnUiThread( () -> {
-                        Tools.warningText.setText("No Internet connection");
+                        warningText.setText("No Internet connection");
                     });
 //                }
 //                else if(isAllOfAccountsFull){
@@ -48,7 +48,7 @@ public class Sync {
 //                                        " Add more back up accounts.");
 //                    });
                 }else{
-                    Tools.warningText.setText("");
+                    warningText.setText("");
                     for(String[] account_row: account_rows){
                         double freeSpace = GoogleDrive.calculateDriveFreeSpace(account_row);
                         Log.d("service","free space of " + account_row[0] + " : " + freeSpace);

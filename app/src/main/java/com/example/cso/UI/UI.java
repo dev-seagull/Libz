@@ -3,6 +3,7 @@ package com.example.cso.UI;
 import android.app.Activity;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -19,6 +20,7 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.example.cso.DBHelper;
+import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.github.mikephil.charting.data.BarData;
@@ -138,7 +140,7 @@ public class UI {
         SpannableString centeredText = new SpannableString(text);
         centeredText.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER),
                 0, text.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
-        centeredText.setSpan(new ForegroundColorSpan(Color.parseColor("#202124")),
+        centeredText.setSpan(new ForegroundColorSpan(MainActivity.currentTheme.menuTextColor),
                 0, text.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
         centeredText.setSpan(new TypefaceSpan("sans-serif-light"),
                 0, text.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
@@ -223,5 +225,21 @@ public class UI {
 
     //---------------------------------- //---------------------------------- //---------------------------------- //----------------------------------
 
+    public static float dpToPx(float dp) {
+        try{
+            return dp * MainActivity.activity.getResources().getDisplayMetrics().density;
+        }catch (Exception e) {
+            LogHandler.crashLog(e,"ui");
+        }
+        return 0.0f;
+    }
 
+    public static void addGradientEffectToButton(Button button, int[] colors){
+        GradientDrawable gradientDrawable = new GradientDrawable();
+        gradientDrawable.setOrientation(GradientDrawable.Orientation.BOTTOM_TOP);
+        gradientDrawable.setShape(GradientDrawable.RECTANGLE);
+        gradientDrawable.setCornerRadius(UI.dpToPx(25));
+        gradientDrawable.setColors(colors);
+        button.setBackground(gradientDrawable);
+    }
 }

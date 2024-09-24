@@ -172,9 +172,10 @@ public class Devices {
         androidDeviceButton.setCompoundDrawablesWithIntrinsicBounds
                 (deviceDrawable, null, null, null);
 
-        androidDeviceButton.setBackgroundResource(R.drawable.gradient_color_bg);
+        UI.addGradientEffectToButton(androidDeviceButton,MainActivity.currentTheme.deviceButtonColors);
+
         androidDeviceButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        androidDeviceButton.setTextColor(Tools.buttonTextColor);
+        androidDeviceButton.setTextColor(MainActivity.currentTheme.primaryTextColor);
         androidDeviceButton.setTextSize(12);
         androidDeviceButton.setPadding(40,0,150,0);
 

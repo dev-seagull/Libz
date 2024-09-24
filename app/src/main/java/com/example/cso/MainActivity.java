@@ -17,6 +17,7 @@
 
     import com.example.cso.UI.Details;
     import com.example.cso.UI.Dialogs;
+    import com.example.cso.UI.Theme;
     import com.example.cso.UI.UI;
     import com.google.firebase.analytics.FirebaseAnalytics;
     import com.google.firebase.crashlytics.FirebaseCrashlytics;
@@ -30,6 +31,7 @@
 
 
     public class MainActivity extends AppCompatActivity {
+        public static Theme currentTheme;
         public static boolean isStoragePermissionGranted = false;
         public static boolean isReadAndWritePermissionGranted = false;
         public static boolean isGettingReadAndWritePermission = false;
@@ -70,7 +72,10 @@
             Log.d("androidId", androidUniqueDeviceIdentifier);
             Log.d("androidDeviceName", androidDeviceName);
 
+            currentTheme = Theme.purpleTheme(getApplicationContext());
             UI.initAppUI(activity);
+            Theme.applyTheme(currentTheme, this);
+
 
 //            boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
 //            if(isFirstTime){

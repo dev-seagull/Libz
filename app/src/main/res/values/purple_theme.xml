@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_background">#2C2A4A</color>
+    <color name="device_button">#E0E0E0</color>
+    <color name="account_button">#FFFFFF</color>
+    <color name="add_backup_account_button">#FF5722</color>
+    <!-- Add other colors here -->
+</resources>

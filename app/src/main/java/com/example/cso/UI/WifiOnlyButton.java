@@ -8,6 +8,7 @@ import android.widget.TextView;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.example.cso.SharedPreferencesHandler;
+import com.example.cso.Sync;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 public class WifiOnlyButton {
@@ -17,9 +18,9 @@ public class WifiOnlyButton {
         TextView wifiButtonText = activity.findViewById(R.id.wifiButtonText);
         boolean[] wifiOnlyState = {SharedPreferencesHandler.getWifiOnlySwitchState()};
         if(wifiOnlyState[0]){
-            wifiButtonText.setTextColor(Tools.buttonTextColor);
+            wifiButtonText.setTextColor(MainActivity.currentTheme.primaryTextColor);
         }else{
-            wifiButtonText.setTextColor(Tools.buttonTextColor);
+            wifiButtonText.setTextColor(MainActivity.currentTheme.primaryTextColor);
         }
         updateSyncAndWifiButtonBackground(wifiButton, wifiOnlyState[0], activity);
 
@@ -33,9 +34,9 @@ public class WifiOnlyButton {
         TextView wifiButtonText = activity.findViewById(R.id.wifiButtonText);
         boolean currentWifiOnlyState = toggleWifiOnlyOnState();
         if(currentWifiOnlyState){
-            wifiButtonText.setTextColor(Tools.buttonTextColor);
+            wifiButtonText.setTextColor(MainActivity.currentTheme.primaryTextColor);
         }else{
-            wifiButtonText.setTextColor(Tools.buttonTextColor);
+            wifiButtonText.setTextColor(MainActivity.currentTheme.primaryTextColor);
         }
         updateSyncAndWifiButtonBackground(wifiButton,currentWifiOnlyState, activity);
     }
@@ -57,16 +58,13 @@ public class WifiOnlyButton {
                 textView = wifiButtonText;
             }
             int backgroundResource;
-            int textColor;
             if (state){
                 backgroundResource = R.drawable.circular_button_on;
-                textColor = Tools.buttonTextColor;
+                button.setBackgroundResource(backgroundResource);
             }else{
-                backgroundResource = R.drawable.circular_button_off;
-                textColor = Tools.buttonTextColor;
+                SyncButton.addGradientOffToButton((ImageButton) button);
             }
-            textView.setTextColor(textColor);
-            button.setBackgroundResource(backgroundResource);
+            textView.setTextColor(MainActivity.currentTheme.primaryTextColor);
         }catch (Exception e){
             FirebaseCrashlytics.getInstance().recordException(e);}
     }

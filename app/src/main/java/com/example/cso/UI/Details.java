@@ -114,12 +114,8 @@ public class Details {
 
     public static void configurePieChartDataFormatForDeviceStorageStatus(PieChart pieChart, ArrayList<PieEntry> entries) {
         PieDataSet dataSet = new PieDataSet(entries, null);
+        int[] colors = MainActivity.currentTheme.deviceStorageChartColors;
 
-        int[] colors = {
-                Color.parseColor("#00796B"),
-                Color.parseColor("#004D40"),
-                Color.parseColor("#80CBC4")
-        };
         dataSet.setColors(colors);
         dataSet.setValueTextColor(Color.WHITE);
         dataSet.setValueTextSize(14f);
@@ -230,11 +226,7 @@ public class Details {
 
         PieDataSet dataSet = new PieDataSet(entries, null);
 
-        int[] colors = {
-                Color.parseColor("#00796B"),
-                Color.parseColor("#004D40"),
-                Color.parseColor("#80CBC4")
-        };
+        int[] colors = MainActivity.currentTheme.deviceAppStorageChartColors;
         dataSet.setColors(colors);
         dataSet.setValueTextColor(Color.WHITE);
         dataSet.setValueTextSize(12f);
@@ -281,11 +273,7 @@ public class Details {
     public static void configurePieChartDataFormatForDeviceSyncedAssetsLocationStatus(PieChart pieChart, ArrayList<PieEntry> entries) {
         PieDataSet dataSet = new PieDataSet(entries, null);
 
-        int[] colors = {
-                Color.parseColor("#00796B"),
-                Color.parseColor("#004D40"),
-                Color.parseColor("#80CBC4")
-        };
+        int[] colors = MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors;
         dataSet.setColors(colors);
         dataSet.setValueTextColor(Color.WHITE);
         dataSet.setValueTextSize(14f);
@@ -365,11 +353,7 @@ public class Details {
 //        entries.add(new PieEntry((float) usedSpaceExcludingMedia, "Others(GB)"));
 
         PieDataSet dataSet = new PieDataSet(entries, null);
-        int[] colors = {
-                Color.parseColor("#1E88E5"),
-                Color.parseColor("#304194")
-//                ,Color.parseColor("#B3E5FC")
-        };
+        int[] colors = MainActivity.currentTheme.accountStorageDataChartColors;
         dataSet.setColors(colors);
         dataSet.setValueTextColor(Color.WHITE);
         dataSet.setValueTextSize(14f);

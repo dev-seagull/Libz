@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -141,9 +142,10 @@ public class Accounts {
         newLoginButton.setCompoundDrawablesWithIntrinsicBounds
                 (loginButtonLeftDrawable, null, null, null);
 
-        newLoginButton.setBackgroundResource(R.drawable.gradient_purple);
+        UI.addGradientEffectToButton(newLoginButton,MainActivity.currentTheme.accountButtonColors);
+
         newLoginButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        newLoginButton.setTextColor(Tools.buttonTextColor);
+        newLoginButton.setTextColor(MainActivity.currentTheme.primaryTextColor);
         newLoginButton.setTextSize(12);
         newLoginButton.setPadding(40,0,150,0);
 
