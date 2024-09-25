@@ -200,7 +200,7 @@ public class LogHandler extends Application {
     public static void crashLog(Throwable message,String tag){
         try{
             if (message != null && tag != null){
-                Log.d(tag, message.getLocalizedMessage());
+                Log.e(tag, message.getLocalizedMessage() + message.getMessage());
                 FirebaseCrashlytics.getInstance().recordException(message);
             }
         }catch (Exception e1){

@@ -14,6 +14,7 @@ import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
@@ -24,6 +25,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.cso.DeviceHandler;
 import com.example.cso.DeviceStatusSync;
+import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.github.mikephil.charting.charts.PieChart;
@@ -95,34 +97,10 @@ public class Devices {
         layout.setGravity(Gravity.CENTER);
 
         RelativeLayout buttonFrame = createNewDeviceButtonLayout(context, device);
-
-        LinearLayout detailsLayout = Details.createDetailsLayout(context);
-        ImageButton rightImageButton = new ImageButton(context);
-        rightImageButton.setImageResource(R.drawable.right);
-        LinearLayout.LayoutParams rightButtonParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        rightButtonParams.setMargins(10, 0, 0, 0);
-        rightImageButton.setLayoutParams(rightButtonParams);
-
-        ImageButton leftImageButton = new ImageButton(context);
-        leftImageButton.setImageResource(R.drawable.left);
-        LinearLayout.LayoutParams leftButtonParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        leftButtonParams.setMargins(0, 0, 10, 0);
-        leftImageButton.setLayoutParams(leftButtonParams);
-
-        ViewPager2 pager = DetailsViewPager.createViewerPage(context,device.getDeviceId(),"device");
+        FrameLayout frameLayout = Details.createFrameLayoutForButtonDetails(context,"device",device.getDeviceId());
         activity.runOnUiThread(() -> {
-            detailsLayout.addView(leftImageButton);
-            detailsLayout.addView(pager);
-            detailsLayout.addView(rightImageButton);
-
             layout.addView(buttonFrame);
-            layout.addView(detailsLayout);
+            layout.addView(frameLayout);
             layout.setContentDescription(device.getDeviceId());
         });
         return layout;
@@ -243,7 +221,7 @@ public class Devices {
             if (MainActivity.isAnyProccessOn) {// clickable false
                 return;
             }
-            LinearLayout detailsView = Details.getDetailsView(button);
+            FrameLayout detailsView = Details.getDetailsView(button);
             if (detailsView.getVisibility() == View.VISIBLE) {
                 detailsView.setVisibility(View.GONE);
             } else {
@@ -300,21 +278,17 @@ public class Devices {
                 return DeviceStatusSync.createStorageStatusJson();
             } else {
                 JsonObject json = DeviceStatusSync.getDeviceStatusJsonFile(deviceId);
-                if (json != null) {
+                if (json != null && !json.isJsonNull()) {
                     return json.getAsJsonObject("storageStatus");
                 }
                 return null;
             }
         });
-
-        // Run the task in a new thread
         new Thread(futureTask).start();
-
         try {
-            // Wait for the task to complete and return the result
-            return futureTask.get(); // This will block until the result is available
+            return futureTask.get();
         } catch (Exception e) {
-            Log.e("DeviceStatusSync", "Error retrieving storage status: " + e.getMessage());
+            LogHandler.crashLog(e,"DeviceStatusSync");
             return null;
         }
     }
@@ -335,21 +309,17 @@ public class Devices {
                 return DeviceStatusSync.createAssetsLocationStatusJson();
             } else {
                 JsonObject json = DeviceStatusSync.getDeviceStatusJsonFile(deviceId);
-                if (json != null) {
+                if (json != null && !json.isJsonNull()) {
                     return json.getAsJsonObject("assetsLocationStatus");
                 }
                 return null;
             }
         });
-
-        // Run the task in a new thread
         new Thread(futureTask).start();
-
         try {
-            // Wait for the task to complete and return the result
-            return futureTask.get(); // This will block until the result is available
+            return futureTask.get();
         } catch (Exception e) {
-            Log.e("DeviceStatusSync", "Error retrieving assets location status: " + e.getMessage());
+            LogHandler.crashLog(e,"DeviceStatusSync");
             return null;
         }
     }
@@ -369,21 +339,17 @@ public class Devices {
                 return DeviceStatusSync.createAssetsSourceStatusJson();
             } else {
                 JsonObject json = DeviceStatusSync.getDeviceStatusJsonFile(deviceId);
-                if (json != null) {
+                if (json != null && !json.isJsonNull()) {
                     return json.getAsJsonObject("assetsSourceStatus");
                 }
                 return null;
             }
         });
-
-        // Run the task in a new thread
         new Thread(futureTask).start();
-
         try {
-            // Wait for the task to complete and return the result
-            return futureTask.get(); // This will block until the result is available
+            return futureTask.get();
         } catch (Exception e) {
-            Log.e("DeviceStatusSync", "Error retrieving assets source status: " + e.getMessage());
+            LogHandler.crashLog(e,"DeviceStatusSync");
             return null;
         }
     }

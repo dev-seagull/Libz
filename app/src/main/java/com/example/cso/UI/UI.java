@@ -47,14 +47,14 @@ public class UI {
         initializeDrawerLayout(activity);
         SyncButton.initializeSyncButton(activity);
         WifiOnlyButton.initializeWifiOnlyButton(activity);
-        SyncDetails.createSyncDetailsLayout(activity);
         SyncDetails.handleSyncDetailsButton(activity);
         update();
     }
 
     public static void initializeMainLayouts(Activity activity){
         LinearLayout mainLayout = activity.findViewById(R.id.mainLayout);
-        mainLayout.addView(Devices.createParentLayoutForDeviceButtons(activity),0);
+        mainLayout.addView(Devices.createParentLayoutForDeviceButtons(activity));
+        mainLayout.addView(SyncButton.createVerticalLayoutForSyncButtonsAndStatistics(activity));
         mainLayout.addView(SyncButton.createWarningTextView(activity));
         mainLayout.addView(Accounts.createParentLayoutForAccountsButtons(activity));
     }
@@ -176,7 +176,6 @@ public class UI {
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
     }
 
-
 //    public static void pieChartHandler(){
 //        if(uiHelper.pieChart.getVisibility() == View.VISIBLE){
 //            UIHandler.configurePieChartData();
@@ -234,13 +233,13 @@ public class UI {
 
     //---------------------------------- //---------------------------------- //---------------------------------- //----------------------------------
 
-    public static float dpToPx(float dp) {
+    public static int dpToPx(float dp) {
         try{
-            return dp * MainActivity.activity.getResources().getDisplayMetrics().density;
+            return (int) (dp * MainActivity.activity.getResources().getDisplayMetrics().density);
         }catch (Exception e) {
             LogHandler.crashLog(e,"ui");
         }
-        return 0.0f;
+        return 0;
     }
 
     public static void addGradientEffectToButton(Button button, int[] colors){

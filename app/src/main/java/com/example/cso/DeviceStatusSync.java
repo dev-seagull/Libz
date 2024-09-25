@@ -12,14 +12,8 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -29,11 +23,8 @@ import java.util.Locale;
 import java.util.Map;
 
 public class DeviceStatusSync {
-
-    public static String rootPath = MainActivity.activity.getPackageResourcePath();
-    public static java.io.File rootDirectory = new java.io.File(rootPath);
     public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-    public static long timeInterval = 1 * 2 * 60 * 1000;
+    public static long timeInterval = 8 * 60 * 60 * 1000;
 
     public static void uploadDeviceStatusJsonFileToAccounts(Context context) {
         DBHelper.getInstance(context);
@@ -108,7 +99,7 @@ public class DeviceStatusSync {
     }
 
     public static JsonObject createDeviceStatusJson(){
-        JsonObject[] jsonObjects = {null};
+        JsonObject[] jsonObjects = {new JsonObject()};
         Thread createDeviceStatusJsonThread = new Thread(() -> {
             Date currentTime = new Date();
             String dateString = sdf.format(currentTime);
@@ -130,7 +121,7 @@ public class DeviceStatusSync {
     }
 
     public static JsonObject createStorageStatusJson(){
-        JsonObject[] jsonObjects = {null};
+        JsonObject[] jsonObjects = {new JsonObject()};
         Thread createStorageStatusJsonThread = new Thread(() -> {
             StorageHandler storageHandler = new StorageHandler();
             double freeSpace = storageHandler.getFreeSpace();
@@ -155,7 +146,7 @@ public class DeviceStatusSync {
     }
 
     public static JsonObject createAssetsLocationStatusJson(){
-        JsonObject[] jsonObjects = {null};
+        JsonObject[] jsonObjects = {new JsonObject()};
         Thread createAssetsLocationStatusJsonThread = new Thread(() -> {
             ArrayList<String[]> files = (ArrayList<String[]>) DBHelper.getAndroidTable(new String[]{"assetId","fileSize"});
             if (files.isEmpty()){
@@ -208,7 +199,7 @@ public class DeviceStatusSync {
     }
 
     public static JsonObject createAssetsSourceStatusJson(){
-        JsonObject[] jsonObjects = {null};
+        JsonObject[] jsonObjects = {new JsonObject()};
         Thread createAssetsSourceStatusJsonThread = new Thread(() -> {
             List<String[]> files = DBHelper.getAndroidTable(new String[]{"filePath","fileSize"});
             HashMap<String, Double> sourceSizeMap = new HashMap<>();
@@ -258,21 +249,19 @@ public class DeviceStatusSync {
     }
 
     public static JsonObject getDeviceStatusJsonFile(String deviceId) {
-        JsonObject[] jsonObjects = {null};
+        JsonObject[] jsonObjects = {new JsonObject()};
         Thread getDeviceStatusJsonFileThread = new Thread(() -> {
             String fileName = "DeviceStatus_" + deviceId + ".json";
-
-            if (doesFileExist(fileName)) {
-                Log.d("DeviceStatusSync", "File already exists. Reading content from " + fileName);
+            jsonObjects[0] = SharedPreferencesHandler.getDeviceStatus(fileName);
+            if (jsonObjects[0] != null) {
+                Log.d("DeviceStatusSync", "data already have saved ;Reading content from " + fileName);
                 if (shouldDownloadBasedOnUpdateTime(fileName)) {
                     Log.d("DeviceStatusSync", "File needs to be updated");
-                    jsonObjects[0] = downloadDeviceStatusJsonFromAccounts(fileName,"update");
-                } else {
-                    jsonObjects[0] = readFileContentAsJson(fileName);
+                    jsonObjects[0] = downloadDeviceStatusJsonFromAccounts(fileName);
                 }
             }else{
                 Log.d("DeviceStatusSync", "File does not exist. Downloading from accounts");
-                jsonObjects[0] = downloadDeviceStatusJsonFromAccounts(fileName,"create");
+                jsonObjects[0] = downloadDeviceStatusJsonFromAccounts(fileName);
             }
         });
         getDeviceStatusJsonFileThread.start();
@@ -284,8 +273,8 @@ public class DeviceStatusSync {
         return jsonObjects[0];
     }
 
-    public static JsonObject downloadDeviceStatusJsonFromAccounts(String fileName, String status){
-        JsonObject[] jsonObjects = {null};
+    public static JsonObject downloadDeviceStatusJsonFromAccounts(String fileName){
+        JsonObject[] jsonObjects = {new JsonObject()};
         Thread downloadDeviceStatusJsonFromAccountsThread = new Thread(() -> {
             String[] columnsName = new String[]{"userEmail", "refreshToken", "type"};
             List<String[]> accounts = DBHelper.getAccounts(columnsName);
@@ -300,11 +289,7 @@ public class DeviceStatusSync {
                     jsonObjects[0] = downloadDeviceStatusJson(userEmail,accessToken,fileName);
                     Log.d("DeviceStatusSync","download result of account " + userEmail + " : " +  jsonObjects[0]);
                     if (jsonObjects[0] != null) {
-                        if (status.equals("create")){
-                            createFileWithJson(fileName, jsonObjects[0]);
-                        }else if(status.equals("update")){
-                            updateFileWithJson(fileName, jsonObjects[0]);
-                        }
+                        SharedPreferencesHandler.setDeviceStatus(fileName, jsonObjects[0]);
                         break;
                     }
                 }
@@ -320,7 +305,7 @@ public class DeviceStatusSync {
     }
 
     public static JsonObject downloadDeviceStatusJson(String userEmail, String accessToken, String fileName) {
-        JsonObject[] jsonObjects = {null};
+        JsonObject[] jsonObjects = {new JsonObject()};
         Thread downloadDeviceStatusJsonThread = new Thread(() -> {
             Drive service = GoogleDrive.initializeDrive(accessToken);
 
@@ -388,142 +373,11 @@ public class DeviceStatusSync {
         return fileId[0];
     }
 
-    public static boolean doesFileExist(String fileName) {
-        java.io.File file = new java.io.File(rootDirectory, fileName);
-        return file.exists();
-    }
-
-    public static void createFileWithJson(String fileName, JsonObject jsonObject) {
-        Thread createFileWithJsonThread = new Thread(() -> {
-            java.io.File file = createNewDeviceStatusFile(fileName);
-            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)))) {
-                String[] lines = jsonObject.toString().split(System.lineSeparator());
-                for (String existingLine : lines) {
-                    writer.write(existingLine);
-                    writer.newLine();
-                }
-                Log.d("DeviceStatusSync", "File " + fileName + " created with content.");
-            }catch (Exception e){
-                LogHandler.crashLog(e,"DeviceStatusSync");
-            }
-        });
-        createFileWithJsonThread.start();
-        try{
-            createFileWithJsonThread.join();
-        }catch (Exception e){
-            LogHandler.crashLog(e,"DeviceStatusSync");
-        }
-    }
-
-    public static JsonObject readFileContentAsJson(String fileName) {
-        JsonObject[] jsonObjects = {null};
-        Thread readFileContentAsJsonThread = new Thread(() -> {
-            java.io.File file = new java.io.File(rootDirectory, fileName);
-            String content = "";
-            if (!file.exists()) {
-                Log.d("DeviceStatusSync", "File " + fileName + " does not exist.");
-                return ;
-            }
-
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    content += line;
-                }
-            } catch (Exception e) {
-                LogHandler.crashLog(e,"DeviceStatusJson");
-                return ;
-            }
-
-            jsonObjects[0] = JsonParser.parseString(content).getAsJsonObject();
-        });
-        readFileContentAsJsonThread.start();
-        try{
-            readFileContentAsJsonThread.join();
-        }catch (Exception e){
-            LogHandler.crashLog(e,"DeviceStatusSync");
-        }
-        return jsonObjects[0];
-
-
-    }
-
-    public static java.io.File createNewDeviceStatusFile(String fileName){
-        java.io.File[] files = {null};
-        Thread createNewDeviceStatusFileThread = new Thread(() -> {
-            java.io.File file = new java.io.File(rootDirectory, fileName);
-            if (!file.exists()){
-                try{
-                    boolean resultOfCreation = file.createNewFile();
-                    if (resultOfCreation) {
-                        if (file.exists()){
-                            files[0] = file;
-                        }
-                    }else {
-                        boolean resultOfDeletion = file.delete();
-                        files[0] = createNewDeviceStatusFile(fileName);
-                    }
-                }catch (Exception e){
-                    LogHandler.crashLog(e,"DeviceStatusSync");
-                }
-            }else{
-                try{
-                    boolean resultOfCreation = file.createNewFile();
-                    if (resultOfCreation) {
-                        if (file.exists()){
-                            files[0] = file;
-                        }
-                    }else {
-                        boolean resultOfDeletion = file.delete();
-                        files[0] = createNewDeviceStatusFile(fileName);
-                    }
-                }catch (Exception e){
-                    LogHandler.crashLog(e,"DeviceStatusSync");
-                }
-            }
-        });
-        createNewDeviceStatusFileThread.start();
-        try{
-            createNewDeviceStatusFileThread.join();
-        }catch (Exception e){
-            LogHandler.crashLog(e,"DeviceStatusSync");
-        }
-        return files[0];
-    }
-
-    public static void updateFileWithJson(String fileName, JsonObject jsonObject) {
-        Thread updateFileWithJsonThread = new Thread( () -> {
-            java.io.File file = new java.io.File(rootDirectory, fileName);
-            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file,false)))) { // `false` overwrites existing content
-                String[] lines = jsonObject.toString().split(System.lineSeparator());
-                for (String existingLine : lines) {
-                    writer.write(existingLine);
-                    writer.newLine();
-                }
-                Log.d("DeviceStatusSync", "File " + fileName + " updated with new content.");
-            } catch (Exception e) {
-                Log.d("DeviceStatusSync", "Error while updating file: " + e.getMessage());
-            }
-        });
-        updateFileWithJsonThread.start();
-        try{
-            updateFileWithJsonThread.join();
-        }catch (Exception e){
-            LogHandler.crashLog(e,"DeviceStatusSync");
-        }
-    }
-
     public static boolean shouldDownloadBasedOnUpdateTime(String fileName) {
         boolean[] shouldDownload = {true};
         Thread shouldDownloadBasedOnUpdateTimeThread = new Thread(() -> {
-            java.io.File file = new java.io.File(rootDirectory, fileName);
-            String content = "";
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    content += line;
-                }
-                JsonObject jsonObject = JsonParser.parseString(content).getAsJsonObject();
+            try{
+                JsonObject jsonObject = SharedPreferencesHandler.getDeviceStatus(fileName);
                 String updateTime = jsonObject.get("updateTime").getAsString();
 
                 Date updateTimeDate = sdf.parse(updateTime);
@@ -544,6 +398,5 @@ public class DeviceStatusSync {
         }
         return shouldDownload[0];
     }
-
 
 }

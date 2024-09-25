@@ -17,9 +17,9 @@ public class MyAlarmManager {
     public static void setAlarmForDeviceStatusSync(Context context, int requestCode , long timeInMillis) {
         Log.d("DeviceStatusSync","starting to set alarm for storage upload");
         try {
-            if (hasAlarmSet(context,requestCode)){
-                cancelAlarmForDeviceStatusSync(context,requestCode);
-            }
+//            if (hasAlarmSet(context,requestCode)){
+//                cancelAlarmForDeviceStatusSync(context,requestCode);
+//            }
             if (hasAlarmSet(context,requestCode)){
                 return;
             }

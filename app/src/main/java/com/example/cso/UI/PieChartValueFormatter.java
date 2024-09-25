@@ -6,11 +6,9 @@ public class PieChartValueFormatter  extends ValueFormatter {
 
     @Override
     public String getFormattedValue(float value) {
-        if (value >= 1000){
+        if (value >= 100){
             return String.format("%.1f GB", value / 1000);
         }
         return String.format("%.1f MB", value);
     }
-
-
 }

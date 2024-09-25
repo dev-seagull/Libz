@@ -1,8 +1,11 @@
 package com.example.cso;
 
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -90,6 +93,33 @@ public class SharedPreferencesHandler {
         } catch (ParseException e) {
             LogHandler.saveLog("failed to parse stored date to timestamp");
             return null;
+        }
+    }
+
+    public static JsonObject getDeviceStatus(String filename){
+        String jsonString = MainActivity.preferences.getString(filename, null);
+        Log.d("DeviceStatusSync","get device status for : " + filename + " with content : " + jsonString);
+        if(jsonString == null) return null;
+
+        return JsonParser.parseString(jsonString).getAsJsonObject();
+    }
+
+    public static void setDeviceStatus(String filename, JsonObject jsonObject){
+        Thread setDeviceStatusThread = new Thread(()-> {
+            try{
+                android.content.SharedPreferences.Editor editor = MainActivity.preferences.edit();
+                editor.putString(filename, jsonObject.toString());
+                editor.apply();
+                Log.d("DeviceStatusSync", "Device status saved for " + filename + " with content : " + jsonObject);
+            }catch (Exception e){
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
+        });
+        setDeviceStatusThread.start();
+        try{
+            setDeviceStatusThread.join();
+        }catch (Exception e){
+            FirebaseCrashlytics.getInstance().recordException(e);
         }
     }
 

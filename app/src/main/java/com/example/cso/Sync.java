@@ -30,7 +30,7 @@ public class Sync {
 
                 Log.d("service","isAllOfAccountsFull : " + isAllOfAccountsFull);
                 Log.d("service", "any backup account exists: " + accountExists);
-                TextView warningText = MainActivity.activity.findViewById(R.id.warningText);
+                TextView warningText = MainActivity.activity.findViewById(SyncButton.warningTextViewId);
                 if(!accountExists){
                     MainActivity.activity.runOnUiThread(() -> {
                         warningText.setText(

@@ -1,6 +1,8 @@
 package com.example.cso.UI;
 
 import android.app.Activity;
+import android.content.Context;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
@@ -14,9 +16,13 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 
 import com.example.cso.BackUp;
 import com.example.cso.MainActivity;
@@ -28,9 +34,11 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 public class SyncButton {
 
-    public static LiquidFillButton syncButton = MainActivity.activity.findViewById(R.id.syncButton);
+    public static int syncButtonId;
     public static int warningTextViewId;
+    public static int syncButtonsParentLayoutId;
     public static void initializeSyncButton(Activity activity){
+        LiquidFillButton syncButton = activity.findViewById(syncButtonId);
 
         boolean[] syncState = {SharedPreferencesHandler.getSyncSwitchState()};
         boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
@@ -40,7 +48,7 @@ public class SyncButton {
             SharedPreferencesHandler.setSwitchState("syncSwitchState",false, MainActivity.preferences);
             syncState[0] = false;
         }
-        updateSyncAndWifiButtonBackground(syncButton, syncState[0], activity);
+        updateSyncAndWifiButtonBackground(syncButton, syncState[0]);
 
         syncButton.setOnClickListener(view -> {
             handleSyncButtonClick(activity);
@@ -48,6 +56,7 @@ public class SyncButton {
     }
 
     public static void startSyncButtonAnimation(Activity activity){
+        LiquidFillButton syncButton = activity.findViewById(syncButtonId);
         activity.runOnUiThread(() -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 syncButton.startFillAnimation();
@@ -57,16 +66,17 @@ public class SyncButton {
     }
 
     public static void handleSyncButtonClick(Activity activity){
+        LiquidFillButton syncButton = activity.findViewById(syncButtonId);
         boolean currentSyncState = toggleSyncState();
         boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
         if(currentSyncState){
             startSyncIfNotRunning(isServiceRunning, activity);
         }else{
-            TextView warningText = MainActivity.activity.findViewById(R.id.warningText);
+            TextView warningText = MainActivity.activity.findViewById(warningTextViewId);
             warningText.setText("");
             stopSyncIfRunning(isServiceRunning, activity);
         }
-        updateSyncAndWifiButtonBackground(syncButton,currentSyncState, activity);
+        updateSyncAndWifiButtonBackground(syncButton,currentSyncState);
     }
 
     public static void startSyncIfNotRunning(boolean isServiceRunning, Activity activity){
@@ -88,9 +98,8 @@ public class SyncButton {
     }
 
     public static void stopSyncButtonAnimation(Activity activity){
-        activity.runOnUiThread(() -> {
-            syncButton.endFillAnimation();
-        });
+        LiquidFillButton syncButton = activity.findViewById(syncButtonId);
+        activity.runOnUiThread(syncButton::endFillAnimation);
     }
 
     public static RotateAnimation createContinuousRotateAnimation() {
@@ -102,16 +111,6 @@ public class SyncButton {
         return continuousRotate;
     }
 
-    public static void updateSyncButtonRotationState(RotateAnimation animation,
-                                                      boolean isSyncOn, Activity activity) {
-        TextView syncButtonText = activity.findViewById(R.id.syncButtonText);
-        if (isSyncOn) {
-            syncButtonText.startAnimation(animation);
-        } else {
-            syncButtonText.clearAnimation();
-        }
-    }
-
     public static boolean toggleSyncState() {
         try{
             boolean state = SharedPreferencesHandler.getSyncSwitchState();
@@ -121,23 +120,13 @@ public class SyncButton {
         return false;
     }
 
-    public static void updateSyncAndWifiButtonBackground(View button, Boolean state, Activity activity) {
+    public static void updateSyncAndWifiButtonBackground(View button, Boolean state) {
         try{
-            TextView syncButtonText = activity.findViewById(R.id.syncButtonText);
-            TextView wifiButtonText = activity.findViewById(R.id.wifiButtonText);
-            TextView textView;
-            if (button.getId() == R.id.syncButton){
-                textView = syncButtonText;
-            }else{
-                textView = wifiButtonText;
-            }
-            int backgroundResource;
             if (state){
                 addGradientOnToSyncButton((LiquidFillButton) button);
             }else{
                 addGradientOffToSyncButton((LiquidFillButton) button);
             }
-            textView.setTextColor( MainActivity.currentTheme.primaryTextColor);
         }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
     }
 
@@ -148,7 +137,7 @@ public class SyncButton {
                 MainActivity.currentTheme.OffSyncButtonGradientEnd}
         );
         firstLayer.setShape(GradientDrawable.OVAL);
-        firstLayer.setSize((int) UI.dpToPx(104), (int) UI.dpToPx(104));
+        firstLayer.setSize(UI.dpToPx(104), UI.dpToPx(104));
         firstLayer.setCornerRadius(UI.dpToPx(52));
 
 //        ShapeDrawable secondLayer = new ShapeDrawable(new OvalShape());
@@ -180,7 +169,7 @@ public class SyncButton {
                         MainActivity.currentTheme.OnSyncButtonGradientEnd}
         );
         firstLayer.setShape(GradientDrawable.OVAL);
-        firstLayer.setSize((int) UI.dpToPx(104), (int) UI.dpToPx(104));
+        firstLayer.setSize(UI.dpToPx(104), UI.dpToPx(104));
         firstLayer.setCornerRadius(UI.dpToPx(52));
 
 //        ShapeDrawable secondLayer = new ShapeDrawable(new OvalShape());
@@ -220,11 +209,89 @@ public class SyncButton {
         warningTextViewId = View.generateViewId();
         warningText.setId(warningTextViewId);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, (int) UI.dpToPx(20), 0, 0);
+        params.setMargins(0, UI.dpToPx(20), 0, 0);
         warningText.setGravity(Gravity.CENTER);
         warningText.setVisibility(View.GONE);
         warningText.setTextColor(MainActivity.currentTheme.warningTextColor);
         return warningText;
     }
+
+    public static FrameLayout createCircularButtonContainer(Context context) {
+        FrameLayout frameLayout = new FrameLayout(context);
+        FrameLayout.LayoutParams frameParams = new FrameLayout.LayoutParams(
+                UI.dpToPx(100),
+                UI.dpToPx(100)
+        );
+        frameParams.setMargins(UI.dpToPx(8), UI.dpToPx(8), UI.dpToPx(8), UI.dpToPx(8));
+        frameLayout.setLayoutParams(frameParams);
+
+        LiquidFillButton syncButton = new LiquidFillButton(context,null);
+        syncButtonId = View.generateViewId();
+        syncButton.setId(syncButtonId);
+        FrameLayout.LayoutParams buttonParams = new FrameLayout.LayoutParams(
+                UI.dpToPx(100),
+                UI.dpToPx(100),
+                Gravity.CENTER
+        );
+        syncButton.setPadding(UI.dpToPx(16), UI.dpToPx(16), UI.dpToPx(16), UI.dpToPx(16));
+        syncButton.setLayoutParams(buttonParams);
+
+        TextView syncText = new TextView(context);
+        syncText.setId(View.generateViewId());
+        syncText.setText("Sync");
+        syncText.setTextSize(22);
+        syncText.setTextColor(ContextCompat.getColor(context, R.color.textColor));
+        syncText.setScaleX(0.9f);
+        syncText.setLetterSpacing(0.1f);
+        syncText.setPadding(UI.dpToPx(4), UI.dpToPx(4), UI.dpToPx(4), UI.dpToPx(4));
+        syncText.setTypeface(ResourcesCompat.getFont(context, R.font.ptsansnarrowwebregular), Typeface.BOLD);
+        FrameLayout.LayoutParams textParams = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER
+        );
+        syncText.setLayoutParams(textParams);
+
+        frameLayout.addView(syncButton);
+        frameLayout.addView(syncText);
+
+        return frameLayout;
+    }
+
+    public static LinearLayout createSyncButtonsParentLayout(Activity activity){
+        LinearLayout syncButtonsParentLayout = new LinearLayout(activity);
+        syncButtonsParentLayout.setOrientation(LinearLayout.HORIZONTAL);
+        syncButtonsParentLayout.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        syncButtonsParentLayout.setLayoutParams(params);
+        syncButtonsParentLayout.addView(SyncDetails.createCircularSyncDetailsButtonContainer(activity));
+        syncButtonsParentLayout.addView(createCircularButtonContainer(activity));
+        syncButtonsParentLayout.addView(WifiOnlyButton.createCircularWifiButtonContainer(activity));
+
+        return syncButtonsParentLayout;
+    }
+
+    public static LinearLayout createVerticalLayoutForSyncButtonsAndStatistics(Activity activity){
+        LinearLayout syncDetailsVerticalLayout = new LinearLayout(activity);
+        syncDetailsVerticalLayout.setOrientation(LinearLayout.VERTICAL);
+        syncDetailsVerticalLayout.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0, 10, 0, 0);
+        syncButtonsParentLayoutId = View.generateViewId();
+        syncDetailsVerticalLayout.setId(syncButtonsParentLayoutId);
+        syncDetailsVerticalLayout.setLayoutParams(params);
+        LinearLayout syncDetailsStatisticsLayout = SyncDetails.createSyncDetailsStatisticsLayout(activity);
+        syncDetailsVerticalLayout.addView(createSyncButtonsParentLayout(activity));
+        syncDetailsVerticalLayout.addView(syncDetailsStatisticsLayout);
+
+        return syncDetailsVerticalLayout;
+    }
+
 
 }

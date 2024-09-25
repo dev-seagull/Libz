@@ -8,11 +8,15 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.cso.DBHelper;
 import com.example.cso.DeviceHandler;
@@ -73,14 +77,14 @@ public class Details {
         return layout;
     }
 
-    public static LinearLayout getDetailsView(Button button){
+    public static FrameLayout getDetailsView(Button button){
         RelativeLayout deviceButtonView = (RelativeLayout) button.getParent();
         LinearLayout parentLayout = (LinearLayout) deviceButtonView.getParent();
         int deviceViewChildrenCount = parentLayout.getChildCount();
         for (int j = 0; j < deviceViewChildrenCount; j++) {
             View view = parentLayout.getChildAt(j);
             if (!(view instanceof RelativeLayout)) {
-                return (LinearLayout) view;
+                return (FrameLayout) view;
             }
         }
         return null;
@@ -89,7 +93,7 @@ public class Details {
     public static PieChart createPieChartForDeviceStorageStatus(Context context, JsonObject data) {
         PieChart pieChart = new PieChart(context);
         configurePieChartDimensions(pieChart);
-        if (data != null && data.size() >= 0){
+        if (data != null && data.size() > 0){
             configurePieChartDataForDeviceStorageStatus(pieChart, data);
             configurePieChartLegend(pieChart);
 //            configurePieChartInteractions(pieChart);
@@ -182,7 +186,7 @@ public class Details {
     public static PieChart createPieChartForDeviceSourceStatus(Context context, JsonObject data) {
         PieChart pieChart = new PieChart(context);
         configurePieChartDimensions(pieChart);
-        if (data != null && data.size() >= 0){
+        if (data != null && data.size() > 0){
             configurePieChartDataForDeviceSourceStatus(pieChart, data);
             configurePieChartLegend(pieChart);
         }
@@ -252,7 +256,7 @@ public class Details {
     public static PieChart createPieChartForDeviceSyncedAssetsLocationStatus(Context context, JsonObject data){
         PieChart pieChart = new PieChart(context);
         configurePieChartDimensions(pieChart);
-        if (data != null && data.size() >= 0){
+        if (data != null && data.size() > 0){
             configurePieChartDataForDeviceSyncedAssetsLocationStatus(pieChart, data);
             configurePieChartLegend(pieChart);
         }
@@ -371,6 +375,81 @@ public class Details {
         pieChart.setDrawEntryLabels(true);
         pieChart.setDrawHoleEnabled(true);
         pieChart.setDrawHoleEnabled(false);
+    }
+
+    public static ImageButton createRightArrowButton(Context context){
+        ImageButton rightImageButton = new ImageButton(context);
+        rightImageButton.setImageResource(R.drawable.right);
+        rightImageButton.setBackgroundColor(Color.TRANSPARENT);
+        LinearLayout.LayoutParams rightButtonParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        rightImageButton.setPadding(0,0,30,0);
+        rightImageButton.setScaleX(1.75f);
+        rightImageButton.setScaleY(1.75f);
+        rightImageButton.setLayoutParams(rightButtonParams);
+        FrameLayout.LayoutParams rightButtonLayoutParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        rightButtonLayoutParams.gravity = Gravity.END | Gravity.CENTER_VERTICAL;
+        rightImageButton.setLayoutParams(rightButtonLayoutParams);
+        return rightImageButton;
+    }
+
+    public static ImageButton createLeftArrowButton(Context context){
+        ImageButton leftImageButton = new ImageButton(context);
+        leftImageButton.setImageResource(R.drawable.left);
+        leftImageButton.setBackgroundColor(Color.TRANSPARENT);
+        LinearLayout.LayoutParams leftButtonParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        leftImageButton.setPadding(30,0,0,0);
+        leftImageButton.setScaleX(1.75f);
+        leftImageButton.setScaleY(1.75f);
+        leftImageButton.setLayoutParams(leftButtonParams);
+        FrameLayout.LayoutParams leftButtonLayoutParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        leftButtonLayoutParams.gravity = Gravity.START | Gravity.CENTER_VERTICAL;
+        leftImageButton.setLayoutParams(leftButtonLayoutParams);
+        return leftImageButton;
+    }
+
+    public static FrameLayout createFrameLayoutForButtonDetails(Context context, String type, String buttonId){
+        FrameLayout frameLayout = new FrameLayout(context);
+        FrameLayout.LayoutParams frameParams = new FrameLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        );
+        frameParams.setMargins(40,16,40,0);
+        frameLayout.setLayoutParams(frameParams);
+        frameLayout.setElevation(4f);
+        frameLayout.setVisibility(View.GONE);
+
+        ViewPager2 viewPager = DetailsViewPager.createViewerPage(context, buttonId, type);
+        frameLayout.addView(viewPager);
+
+        ImageButton leftArrowButton = createLeftArrowButton(context);
+        leftArrowButton.setOnClickListener(v -> {
+            int previousPage = viewPager.getCurrentItem() - 1;
+            viewPager.setCurrentItem(previousPage, true);
+        });
+        frameLayout.addView(leftArrowButton);
+
+        ImageButton rightArrowButton = createRightArrowButton(context);
+        rightArrowButton.setOnClickListener(v -> {
+            int nextPage = viewPager.getCurrentItem() + 1;
+            viewPager.setCurrentItem(nextPage, true);
+        });
+        frameLayout.addView(rightArrowButton);
+
+        return frameLayout;
+
+
     }
 
 }

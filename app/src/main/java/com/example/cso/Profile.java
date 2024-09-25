@@ -462,7 +462,6 @@ public class Profile {
         return removedAccounts;
     }
 
-
     public static JsonArray getNewDevicesFromJson(JsonArray profileDevices, ArrayList<String> databaseDeviceIds){
         JsonArray newDevices = new JsonArray();
         for (JsonElement device : profileDevices){
@@ -493,7 +492,6 @@ public class Profile {
         }
         return true;
     }
-
 
      public static JsonObject addDeviceInfoToJson(JsonObject profileJson) {
         try {
@@ -596,7 +594,6 @@ public class Profile {
         }
         return null;
     }
-
 
     public static Date convertFileNameToTimeStamp(String fileName){
         try {

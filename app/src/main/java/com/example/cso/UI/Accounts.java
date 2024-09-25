@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
@@ -188,7 +189,7 @@ public class Accounts {
                         button.setText("Adding in progress ...");
                         GoogleCloud.signInToGoogleCloud(signInToBackUpLauncher, activity);
                     }else{
-                        LinearLayout detailsView = Details.getDetailsView(button);
+                        FrameLayout detailsView = Details.getDetailsView(button);
                         if (detailsView.getVisibility() == View.VISIBLE){
                             detailsView.setVisibility(View.GONE);
                         } else {
