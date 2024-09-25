@@ -3,6 +3,7 @@ package com.example.cso.UI;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -51,6 +52,39 @@ public class SyncDetails {
         return syncDetailsStatisticsLayout;
     }
 
+    public static void addGradientOnToSyncDetailsButton(ImageButton actionButton){
+        GradientDrawable firstLayer = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {MainActivity.currentTheme.OnSyncButtonGradientStart,
+                        MainActivity.currentTheme.OnSyncButtonGradientEnd}
+        );
+        firstLayer.setShape(GradientDrawable.OVAL);
+        firstLayer.setSize(UI.dpToPx(104), UI.dpToPx(104));
+        firstLayer.setCornerRadius(UI.dpToPx(52));
+
+//        ShapeDrawable secondLayer = new ShapeDrawable(new OvalShape());
+//        secondLayer.getPaint().setColor(android.graphics.Color.parseColor("#B0BEC5"));
+//        secondLayer.setPadding((int) UI.dpToPx(4), (int) UI.dpToPx(4), (int) UI.dpToPx(4), (int) UI.dpToPx(4));
+//
+//        GradientDrawable secondLayerStroke = new GradientDrawable();
+//        secondLayerStroke.setShape(GradientDrawable.OVAL);
+//        secondLayerStroke.setStroke((int) UI.dpToPx(2), android.graphics.Color.parseColor("#90A4AE"));
+//        secondLayerStroke.setCornerRadius(UI.dpToPx(50));
+//
+//        GradientDrawable thirdLayer = new GradientDrawable(
+//                GradientDrawable.Orientation.BOTTOM_TOP,
+//                new int[]{android.graphics.Color.parseColor("#B0BEC5"), android.graphics.Color.parseColor("#90A4AE")}
+//        );
+//        thirdLayer.setShape(GradientDrawable.OVAL);
+//        thirdLayer.setCornerRadius(UI.dpToPx(50));
+
+//        Drawable[] layers = {firstLayer, secondLayerStroke, thirdLayer};
+//        LayerDrawable layerDrawable = new LayerDrawable(layers);
+
+        actionButton.setBackground(firstLayer);
+    }
+
+
     public static FrameLayout createCircularSyncDetailsButtonContainer(Activity activity) {
         FrameLayout frameLayout = new FrameLayout(activity);
         FrameLayout.LayoutParams frameParams = new FrameLayout.LayoutParams(
@@ -63,7 +97,6 @@ public class SyncDetails {
         ImageButton syncDetailsButton = new ImageButton(activity);
         syncDetailsButtonId = View.generateViewId();
         syncDetailsButton.setId(syncDetailsButtonId);
-        syncDetailsButton.setBackgroundResource(R.drawable.circular_button_on);
         syncDetailsButton.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         FrameLayout.LayoutParams imageParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
@@ -88,6 +121,7 @@ public class SyncDetails {
         );
         syncDetailsText.setLayoutParams(textParams);
 
+        addGradientOnToSyncDetailsButton(syncDetailsButton);
         frameLayout.addView(syncDetailsButton);
         frameLayout.addView(syncDetailsText);
 

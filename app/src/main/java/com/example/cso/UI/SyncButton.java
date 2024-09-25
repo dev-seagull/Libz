@@ -194,16 +194,6 @@ public class SyncButton {
         actionButton.setBackground(firstLayer);
     }
 
-//                       <TextView
-//    android:id="@+id/warningText"
-//    android:layout_marginTop="20dp"
-//    android:layout_width="match_parent"
-//    android:layout_height="wrap_content"
-//    android:layout_gravity="center"
-//    android:gravity="center"
-//    android:visibility="gone"
-//    android:textColor="@color/text_red_color"/>
-
     public static TextView createWarningTextView(Activity activity){
         TextView warningText = new TextView(activity);
         warningTextViewId = View.generateViewId();
