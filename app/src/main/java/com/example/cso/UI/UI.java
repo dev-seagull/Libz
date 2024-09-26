@@ -16,6 +16,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -34,7 +35,7 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.util.ArrayList;
 
-public class UI {
+public class UI{
 
     public static void update(){
         Accounts.setupAccountButtons(MainActivity.activity);
@@ -43,12 +44,18 @@ public class UI {
     }
 
     public static void initAppUI(Activity activity){
+        initPrimaryBackground(activity);
         initializeMainLayouts(activity);
         initializeDrawerLayout(activity);
         SyncButton.initializeSyncButton(activity);
         WifiOnlyButton.initializeWifiOnlyButton(activity);
         SyncDetails.handleSyncDetailsButton(activity);
         update();
+    }
+
+    public static void initPrimaryBackground(Activity activity){
+        LinearLayout primaryBackgroundLinearLayout = activity.findViewById(R.id.primaryBackground);
+        primaryBackgroundLinearLayout.setBackgroundColor(MainActivity.currentTheme.primaryBackgroundColor);
     }
 
     public static void initializeMainLayouts(Activity activity){
@@ -138,12 +145,13 @@ public class UI {
                             .getPackageName(), 0);
             setMenuItemTitle(R.id.navMenuItem1, "Version: " + pInfo.versionName, activity);
             setMenuItemTitle(R.id.navMenuItem2, "Device id: " + MainActivity.androidUniqueDeviceIdentifier, activity);
+            setMenuItemTitle(R.id.navMenuItemTheme,"Change Theme", activity);
         }catch (Exception e) {
             FirebaseCrashlytics.getInstance().recordException(e);
         }
     }
 
-    public static void setMenuItemTitle(int menuItemId, String text, Activity activity) {
+        public static void setMenuItemTitle(int menuItemId, String text, Activity activity) {
         NavigationView navigationView = activity.findViewById(R.id.navigationView);
         MenuItem menuItem = navigationView.getMenu().findItem(menuItemId);
         SpannableString centeredText = new SpannableString(text);
@@ -250,4 +258,11 @@ public class UI {
         gradientDrawable.setColors(colors);
         button.setBackground(gradientDrawable);
     }
+
+
+//    private void openThemeSelection() {
+//        // Your method to handle theme selection, e.g., opening a dialog or activity
+//        ThemeSelectionDialog dialog = new ThemeSelectionDialog();
+//        dialog.show(getSupportFragmentManager(), "themeDialog");
+//    }
 }

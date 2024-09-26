@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.widget.LinearLayout;
 
 import com.example.cso.R;
+import com.google.android.material.navigation.NavigationView;
 
 public class Theme {
     public int primaryBackgroundColor;
@@ -91,12 +92,7 @@ public class Theme {
         );
     }
 
-    public static void applyTheme(Theme currentTheme, Activity activity){
-        applyThemeToPrimaryBackground(currentTheme, activity);
-    }
-
-    public static void applyThemeToPrimaryBackground(Theme currentTheme, Activity activity){
-        LinearLayout primaryBackgroundLinearLayout = activity.findViewById(R.id.primaryBackground);
-        primaryBackgroundLinearLayout.setBackgroundColor(currentTheme.primaryBackgroundColor);
+    public static void applyTheme(){
+        System.out.println("Clicked theme");
     }
 }

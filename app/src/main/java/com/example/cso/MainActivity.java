@@ -7,19 +7,24 @@
     import android.os.Bundle;
     import android.provider.Settings;
     import android.util.Log;
+    import android.view.MenuItem;
     import android.view.View;
     import android.widget.LinearLayout;
     import android.widget.Toast;
 
     import androidx.activity.result.ActivityResultLauncher;
     import androidx.activity.result.contract.ActivityResultContracts;
+    import androidx.annotation.NonNull;
     import androidx.appcompat.app.AppCompatActivity;
+    import androidx.core.view.GravityCompat;
+    import androidx.drawerlayout.widget.DrawerLayout;
 
     import com.example.cso.UI.Accounts;
-    import com.example.cso.UI.Details;
+    import com.example.cso.UI.ColorSelectionDialogFragment;
     import com.example.cso.UI.Dialogs;
     import com.example.cso.UI.Theme;
     import com.example.cso.UI.UI;
+    import com.google.android.material.navigation.NavigationView;
     import com.google.firebase.analytics.FirebaseAnalytics;
     import com.google.firebase.crashlytics.FirebaseCrashlytics;
     import com.google.gson.JsonObject;
@@ -31,7 +36,7 @@
     import java.util.TimerTask;
 
 
-    public class MainActivity extends AppCompatActivity {
+    public class MainActivity extends AppCompatActivity  implements NavigationView.OnNavigationItemSelectedListener{
         public static Theme currentTheme;
         public static boolean isStoragePermissionGranted = false;
         public static boolean isReadAndWritePermissionGranted = false;
@@ -75,8 +80,8 @@
 
             currentTheme = Theme.purpleTheme(getApplicationContext());
             UI.initAppUI(activity);
-            Theme.applyTheme(currentTheme, this);
-
+            NavigationView navigationView = findViewById(R.id.navigationView);
+            navigationView.setNavigationItemSelectedListener(this);
 
 //            boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
 //            if(isFirstTime){
@@ -147,7 +152,19 @@
             Log.d("state","end of onCreate");
         }
 
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
 
+        if (id == R.id.navMenuItemTheme) {
+            openThemeSelection();
+        }else{
+            DrawerLayout drawer = findViewById(R.id.drawer_layout);
+            drawer.closeDrawer(GravityCompat.END);
+        }
+
+        return true;
+    }
 
     @Override
     protected void onStart(){
@@ -181,7 +198,6 @@
         MyAlarmManager.setAlarmForDeviceStatusSync(getApplicationContext(), 172839,new Date().getTime() + 5000);
         Log.d("state","end of onStart");
     }
-
 
     @Override
     public void onResume(){
@@ -245,7 +261,6 @@
         finish();
         Log.d("state","end of onDestroyed");
     }
-
 
     private void destroyAndroidTimer(){
         if(androidTimer != null){
@@ -331,7 +346,12 @@
 
     }
 
-}
+        private void openThemeSelection() {
+            ColorSelectionDialogFragment dialog = new ColorSelectionDialogFragment();
+            dialog.show(getSupportFragmentManager(), "ColorSelectionDialog");
+        }
+
+    }
 
 
 

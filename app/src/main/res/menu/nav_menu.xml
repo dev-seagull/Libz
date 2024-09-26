@@ -8,4 +8,9 @@
         android:id="@+id/navMenuItem2"
         android:title=""
         />
+    <item
+        android:id="@+id/navMenuItemTheme"
+        android:title="Change Theme"/>
+<!--        android:icon="@drawable/ic_theme" />  -->
+
 </menu>
