@@ -7,8 +7,6 @@
     android:id="@+id/primaryBackground"
     android:orientation="vertical">
 
-    <include layout="@layout/header"/>
-
     <androidx.drawerlayout.widget.DrawerLayout
         android:id="@+id/drawer_layout"
         android:layout_width="match_parent"

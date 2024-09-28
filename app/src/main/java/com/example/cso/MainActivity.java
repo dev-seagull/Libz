@@ -68,13 +68,12 @@
             mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
             dbHelper = new DBHelper(this);
 
-
             androidUniqueDeviceIdentifier = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
             serviceIntent = new Intent(this , TimerService.class);
             androidDeviceName = DeviceName.getDeviceName();
             DeviceHandler.insertIntoDeviceTable(MainActivity.androidDeviceName,
                     MainActivity.androidUniqueDeviceIdentifier);
-            StorageHandler storageHandler = new StorageHandler();
+            new StorageHandler();
             Log.d("androidId", androidUniqueDeviceIdentifier);
             Log.d("androidDeviceName", androidDeviceName);
 

@@ -80,7 +80,6 @@ public class Devices {
                 }
             }
         }
-        Log.d("ui", deviceId+ " doesn't exists.");
         return false;
     }
 

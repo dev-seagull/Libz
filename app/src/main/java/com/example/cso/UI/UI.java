@@ -1,6 +1,7 @@
 package com.example.cso.UI;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 
 public class UI{
 
+
     public static void update(){
         Accounts.setupAccountButtons(MainActivity.activity);
         Devices.setupDeviceButtons(MainActivity.activity);
@@ -55,6 +57,8 @@ public class UI{
 
     public static void initPrimaryBackground(Activity activity){
         LinearLayout primaryBackgroundLinearLayout = activity.findViewById(R.id.primaryBackground);
+        primaryBackgroundLinearLayout.removeView(activity.findViewById(ToolBar.toolbarButtonId));
+        primaryBackgroundLinearLayout.addView(ToolBar.createCustomToolbar(activity),0);
         primaryBackgroundLinearLayout.setBackgroundColor(MainActivity.currentTheme.primaryBackgroundColor);
     }
 
@@ -64,6 +68,7 @@ public class UI{
         mainLayout.addView(SyncButton.createVerticalLayoutForSyncButtonsAndStatistics(activity));
         mainLayout.addView(SyncButton.createWarningTextView(activity));
         mainLayout.addView(Accounts.createParentLayoutForAccountsButtons(activity));
+        mainLayout.addView(ChartHelper.createChartView(activity));
     }
 
     public static void handleStatistics(String deviceId){
@@ -166,7 +171,7 @@ public class UI{
 
     public static void setupInfoButton(Activity activity) {
         DrawerLayout drawerLayout = activity.findViewById(R.id.drawer_layout);
-        Button infoButton = activity.findViewById(R.id.infoButton);
+        Button infoButton = activity.findViewById(ToolBar.menuButtonId);
         infoButton.setOnClickListener(view -> {
             if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
                 drawerLayout.closeDrawer(GravityCompat.END);
@@ -248,6 +253,14 @@ public class UI{
             LogHandler.crashLog(e,"ui");
         }
         return 0;
+    }
+
+    public static int getDeviceHeight(Context context){
+        return context.getResources().getDisplayMetrics().heightPixels;
+    }
+
+    public static int getDeviceWidth(Context context){
+        return context.getResources().getDisplayMetrics().widthPixels;
     }
 
     public static void addGradientEffectToButton(Button button, int[] colors){

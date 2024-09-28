@@ -28,16 +28,18 @@ public class Theme {
     public int OffSyncButtonGradientStart;
     public int OffSyncButtonGradientEnd;
     public int warningTextColor;
+    public int toolbarBackgroundColor;
+    public int toolbarElementsColor;
     public String name;
     public static ArrayList<Theme> themes = new ArrayList<>();
 
     public static void initializeThemes(){
-        MainActivity.currentTheme = purpleTheme();
-        whitePurpleTheme();
+        MainActivity.currentTheme = whiteTheme();
+        whiteTheme();
+        purpleTheme();
         blueTheme();
         grayTheme();
         blackTheme();
-        grayTheme();
         greenTealTheme();
         Log.d("ui","theme size : "+ themes.size());
     }
@@ -47,7 +49,8 @@ public class Theme {
                  int[] deviceAppStorageChartColors, int[] deviceAssetsSyncedStatusChartColors,
                  int[] accountStorageDataChartColors, int menuTextColor, int primaryTextColor,
                  int onSyncButtonGradientStart, int onSyncButtonGradientEnd,
-                 int offSyncButtonGradientStart, int offSyncButtonGradientEnd, int warningTextColor) {
+                 int offSyncButtonGradientStart, int offSyncButtonGradientEnd, int warningTextColor,
+                 int toolbarBackgroundColor, int toolbarElementsColor) {
         this.name = name;
         this.primaryBackgroundColor = primaryBackgroundColor;
         this.deviceButtonColors = deviceButtonColors;
@@ -64,6 +67,9 @@ public class Theme {
         this.OffSyncButtonGradientStart = offSyncButtonGradientStart;
         this.OffSyncButtonGradientEnd = offSyncButtonGradientEnd;
         this.warningTextColor = warningTextColor;
+        this.toolbarBackgroundColor = toolbarBackgroundColor;
+        this.toolbarElementsColor = toolbarElementsColor;
+
         themes.add(this);
     }
 
@@ -108,54 +114,59 @@ public class Theme {
                 Color.parseColor("#80CBC4"),
                 Color.parseColor("#90A4AE"),
                 Color.parseColor("#B0BEC5"),
-                Color.parseColor("#FF5722")
+                Color.parseColor("#FF5722"),
+                Color.parseColor("#6A5ACD"), // toolbar background
+                Color.parseColor("#FFFFFF") // toolbar elements
         );
     }
 
-    public static Theme whitePurpleTheme() {
+    public static Theme whiteTheme() {
         return new Theme(
-                "whitePurple",
-                Color.WHITE, // Primary background color set to white
+                "white",
+                Color.parseColor("#F7F9FC"), // Light subtle background color
                 new int[] {
-                        Color.parseColor("#6D74A1"), // Device button colors
-                        Color.parseColor("#4F518C"),
+                        Color.parseColor("#F0F0F0"), // Device button background: soft gray
+                        Color.parseColor("#EDEDED"), // Slightly darker for pressed state
                 },
                 new int[] {
-                        Color.parseColor("#907AD6"), // Account button colors
-                        Color.parseColor("#6D5F9C"),
+                        Color.parseColor("#FFE4B5"), // Account button: muted pale gold
+                        Color.parseColor("#FFD27F"), // Slightly darker accent for interactions
                 },
                 new int[] {
-                        Color.parseColor("#907AD6"), // Add backup account button colors
-                        Color.parseColor("#6D5F9C"),
+                        Color.parseColor("#FFD700"), // Add backup account button: gold highlight
+                        Color.parseColor("#FFC107"), // Slightly deeper gold for contrast
                 },
                 new int[] {
-                        Color.parseColor("#00796B"), // Device storage chart colors
+                        Color.parseColor("#00897B"), // Device storage chart: teal green
+                        Color.parseColor("#00574B"), // Darker teal for clarity
+                        Color.parseColor("#4DB6AC")  // Lighter teal for highlights
+                },
+                new int[] {
+                        Color.parseColor("#00796B"), // Device app storage chart: same green palette
                         Color.parseColor("#004D40"),
                         Color.parseColor("#80CBC4")
                 },
                 new int[] {
-                        Color.parseColor("#00796B"), // Device app storage chart colors
+                        Color.parseColor("#00796B"), // Device assets synced chart
                         Color.parseColor("#004D40"),
                         Color.parseColor("#80CBC4")
                 },
                 new int[] {
-                        Color.parseColor("#00796B"), // Device assets synced status chart colors
-                        Color.parseColor("#004D40"),
-                        Color.parseColor("#80CBC4")
+                        Color.parseColor("#2196F3"), // Account storage data chart: cool blue
+                        Color.parseColor("#1976D2")  // Slightly darker shade for differentiation
                 },
-                new int[] {
-                        Color.parseColor("#1E88E5"), // Account storage data chart colors
-                        Color.parseColor("#304194")
-                },
-                Color.parseColor("#202124"), // Menu text color
-                Color.BLACK, // Primary text color (contrast with white background)
-                Color.parseColor("#004D40"), // On sync button gradient start
-                Color.parseColor("#80CBC4"), // On sync button gradient end
-                Color.parseColor("#90A4AE"), // Off sync button gradient start
-                Color.parseColor("#B0BEC5"), // Off sync button gradient end
-                Color.parseColor("#FF5722")  // Warning text color
+                Color.parseColor("#212121"), // Menu text color: almost black for contrast
+                Color.parseColor("#333333"), // Primary text color: dark gray for readability
+                Color.parseColor("#26A69A"), // On sync button gradient start: bright teal
+                Color.parseColor("#4DB6AC"), // On sync button gradient end: softer teal
+                Color.parseColor("#B0BEC5"), // Off sync button gradient start: cool gray
+                Color.parseColor("#CFD8DC"), // Off sync button gradient end: lighter gray
+                Color.parseColor("#FF5252"),  // Warning text color: red for high visibility
+                Color.parseColor("#5C6BC0"), // Toolbar background: soft, muted indigo
+                Color.parseColor("#FFFFFF")  // Toolbar elements: white for clean contrast
         );
     }
+
 
     public static Theme blueTheme() {
         return new Theme(
@@ -198,14 +209,16 @@ public class Theme {
                 Color.parseColor("#81D4FA"), // On sync button gradient end
                 Color.parseColor("#B0BEC5"), // Off sync button gradient start
                 Color.parseColor("#90A4AE"), // Off sync button gradient end
-                Color.parseColor("#FF5722")  // Warning text color
+                Color.parseColor("#FF5722"),  // Warning text color
+                Color.parseColor("#6A5ACD"), // toolbar background
+                Color.parseColor("#FFFFFF") // toolbar elements
         );
     }
 
     public static Theme greenTealTheme() {
         return new Theme(
                 "greenTeal",
-                Color.parseColor("#E0F2F1"), // Light teal background
+                Color.parseColor("#000000"), // Light teal background
                 new int[] {
                         Color.parseColor("#00796B"), // Device button colors
                         Color.parseColor("#004D40"),
@@ -243,7 +256,9 @@ public class Theme {
                 Color.parseColor("#80CBC4"), // On sync button gradient end
                 Color.parseColor("#B0BEC5"), // Off sync button gradient start
                 Color.parseColor("#90A4AE"), // Off sync button gradient end
-                Color.parseColor("#FF5722")  // Warning text color
+                Color.parseColor("#FF5722"),  // Warning text color
+                Color.parseColor("#6A5ACD"), // toolbar background
+                Color.parseColor("#FFFFFF") // toolbar elements
         );
     }
 
@@ -288,7 +303,9 @@ public class Theme {
                 Color.parseColor("#484848"), // On sync button gradient end
                 Color.parseColor("#616161"), // Off sync button gradient start
                 Color.parseColor("#757575"), // Off sync button gradient end
-                Color.parseColor("#FF5722")  // Warning text color
+                Color.parseColor("#FF5722"),  // Warning text color
+                Color.parseColor("#6A5ACD"), // toolbar background
+                Color.parseColor("#FFFFFF") // toolbar elements
         );
     }
 
@@ -333,7 +350,9 @@ public class Theme {
                 Color.parseColor("#CFD8DC"), // On sync button gradient end
                 Color.parseColor("#90A4AE"), // Off sync button gradient start
                 Color.parseColor("#B0BEC5"), // Off sync button gradient end
-                Color.parseColor("#FF5722")  // Warning text color
+                Color.parseColor("#FF5722"),  // Warning text color
+                Color.parseColor("#6A5ACD"), // toolbar background
+                Color.parseColor("#FFFFFF") // toolbar elements
         );
     }
 

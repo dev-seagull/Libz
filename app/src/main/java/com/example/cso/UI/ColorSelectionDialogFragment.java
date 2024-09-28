@@ -66,7 +66,12 @@ public class ColorSelectionDialogFragment extends DialogFragment {
                 dismiss();
             });
 
+            TextView textView = new TextView(getActivity());
+            textView.setText(theme.name);
+            textView.setGravity(Gravity.CENTER);
+
             gridLayout.addView(colorView);
+            gridLayout.addView(textView);
         }
         temp.addView(gridLayout);
         layout.addView(temp);
