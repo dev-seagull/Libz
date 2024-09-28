@@ -2,6 +2,7 @@ package com.example.cso.UI;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -29,7 +30,9 @@ public class ColorSelectionDialogFragment extends DialogFragment {
         LinearLayout layout = new LinearLayout(getActivity());
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
-        layout.setForegroundGravity(Gravity.CENTER);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            layout.setForegroundGravity(Gravity.CENTER);
+        }
 
         TextView titleTextView = new TextView(getActivity());
         titleTextView.setText("Select a Color");

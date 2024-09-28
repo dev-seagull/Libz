@@ -18,6 +18,15 @@ import android.widget.TextView;
 
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.anychart.AnyChart;
+import com.anychart.AnyChartView;
+import com.anychart.chart.common.dataentry.BubbleDataEntry;
+import com.anychart.chart.common.dataentry.DataEntry;
+import com.anychart.charts.Cartesian;
+import com.anychart.charts.Scatter;
+import com.anychart.core.cartesian.series.Bubble;
+import com.anychart.data.Set;
+import com.anychart.enums.TooltipPositionMode;
 import com.example.cso.DBHelper;
 import com.example.cso.DeviceHandler;
 import com.example.cso.MainActivity;
@@ -252,6 +261,7 @@ public class Details {
         pieChart.setDrawEntryLabels(true);
         pieChart.setDrawHoleEnabled(false);
     }
+
 
     public static PieChart createPieChartForDeviceSyncedAssetsLocationStatus(Context context, JsonObject data){
         PieChart pieChart = new PieChart(context);
