@@ -67,6 +67,7 @@
             preferences = getPreferences(Context.MODE_PRIVATE);
             mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
             dbHelper = new DBHelper(this);
+            Upgrade.versionHandler(preferences);
 
             androidUniqueDeviceIdentifier = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
             serviceIntent = new Intent(this , TimerService.class);
@@ -218,8 +219,6 @@
 
             boolean hasCreated = LogHandler.createLogFile();
             Log.d("logFile","Log file is created :"  + hasCreated);
-
-            Upgrade.versionHandler(preferences);
 
             setupTimers();
 

@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -87,13 +88,19 @@ public class Details {
     }
 
     public static FrameLayout getDetailsView(Button button){
-        RelativeLayout deviceButtonView = (RelativeLayout) button.getParent();
-        LinearLayout parentLayout = (LinearLayout) deviceButtonView.getParent();
-        int deviceViewChildrenCount = parentLayout.getChildCount();
-        for (int j = 0; j < deviceViewChildrenCount; j++) {
-            View view = parentLayout.getChildAt(j);
-            if (!(view instanceof RelativeLayout)) {
-                return (FrameLayout) view;
+        ViewParent deviceButtonView = button.getParent();
+        if (deviceButtonView instanceof RelativeLayout){
+            RelativeLayout deviceButtonRelativeLayout = (RelativeLayout) deviceButtonView;
+            ViewParent parentLayout = deviceButtonRelativeLayout.getParent();
+            if (parentLayout instanceof LinearLayout){
+                LinearLayout parentLinearLayout = (LinearLayout) parentLayout;
+                int deviceViewChildrenCount = parentLinearLayout.getChildCount();
+                for (int j = 0; j < deviceViewChildrenCount; j++) {
+                    View view = parentLinearLayout.getChildAt(j);
+                    if (!(view instanceof RelativeLayout)) {
+                        return (FrameLayout) view;
+                    }
+                }
             }
         }
         return null;

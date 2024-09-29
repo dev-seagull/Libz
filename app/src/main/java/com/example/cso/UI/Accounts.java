@@ -180,7 +180,7 @@ public class Accounts {
     public static void setListenerToAccountButton(Button button, Activity activity) {
         button.setOnClickListener(
                 view -> {
-                    if (MainActivity.isAnyProccessOn) { // make clickable false
+                    if (MainActivity.isAnyProccessOn || true) { // make clickable false
                         return;
                     }
                     String buttonText = button.getText().toString().toLowerCase();
@@ -224,6 +224,9 @@ public class Accounts {
     public static void setListenerToAccountThreeDotButtons(Button button, String userEmail) {
         button.setOnClickListener(view -> {
             try {
+                if (true){
+                    return;
+                }
                 PopupMenu popupMenu = setPopUpMenuOnButton(activity, (Button) view, "account");
                 popupMenu.setOnMenuItemClickListener(item -> {
                     if (item.getItemId() == R.id.unlink) {
