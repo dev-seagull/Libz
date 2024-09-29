@@ -40,8 +40,10 @@ import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.BubbleData;
 import com.github.mikephil.charting.data.BubbleDataSet;
 import com.github.mikephil.charting.data.BubbleEntry;
+import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.google.gson.JsonObject;
 
 import org.checkerframework.checker.units.qual.C;
 
@@ -53,41 +55,43 @@ import java.util.List;
 //
 public class ChartHelper {
 
-    public static LinearLayout createChartView(Context context){
-        LinearLayout layout = new LinearLayout(context);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-//        params.gravity = Gravity.CENTER;
-        layout.setLayoutParams(params);
-        TextView title = new TextView(context);
-        title.setText("15 MB to Sync");
+//    public static LinearLayout createChartView(Context context){
+//        LinearLayout layout = new LinearLayout(context);
+//        layout.setOrientation(LinearLayout.VERTICAL);
+//        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+//                ViewGroup.LayoutParams.MATCH_PARENT,
+//                ViewGroup.LayoutParams.WRAP_CONTENT
+//        );
+////        params.gravity = Gravity.CENTER;
+//        layout.setLayoutParams(params);
+//        TextView title = new TextView(context);
+//        title.setText("15 MB to Sync");
+//
+//        HorizontalBarChart barChart = new HorizontalBarChart(context);
+//        barChart.setLayoutParams(new LinearLayout.LayoutParams(
+//                ViewGroup.LayoutParams.MATCH_PARENT,
+//                ViewGroup.LayoutParams.WRAP_CONTENT
+//        ));
+//
+//        layout.addView(barChart);
+//        setupHorizontalStackedBarChart(barChart);
+//
+//
+//        return layout;
+//    }
 
-        HorizontalBarChart barChart = new HorizontalBarChart(context);
-        barChart.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        ));
-
-        layout.addView(barChart);
-        setupHorizontalStackedBarChart(barChart);
-
-
-        return layout;
-    }
-
-    private static void setupHorizontalStackedBarChart(HorizontalBarChart barChart) {
+    public static void setupHorizontalStackedBarChart(HorizontalBarChart barChart,double freeSpace
+            ,double mediaStorage,double usedSpaceExcludingMedia) {
         CustomHorizontalBarChartRenderer customHorizontalBarChartRenderer = new CustomHorizontalBarChartRenderer(barChart, barChart.getAnimator(), barChart.getViewPortHandler());
         barChart.setRenderer(customHorizontalBarChartRenderer);
 
         List<BarEntry> entries = new ArrayList<>();
-        entries.add(new BarEntry(0f, new float[]{400f, 300f, 500f})); // Sample stack
+        entries.add(new BarEntry(0f, new float[]{(float) mediaStorage, (float) freeSpace, (float) usedSpaceExcludingMedia})); // Sample stack
 
         BarDataSet dataSet = new BarDataSet(entries, "");
-        dataSet.setColors(MainActivity.currentTheme.deviceStorageChartColors); // Dynamic colors from theme
-        dataSet.setStackLabels(new String[]{"Media", "Free", "Others"}); // Labels for the stacks
+        dataSet.setColors(MainActivity.currentTheme.deviceStorageChartColors);
+        dataSet.setStackLabels(new String[]{"Media", "Free", "Others"});
+        dataSet.setValueFormatter(new PieChartValueFormatter());
 
         BarData barData = new BarData(dataSet);
         barData.setBarWidth(6f);
@@ -112,6 +116,52 @@ public class ChartHelper {
         legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
         legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
         legend.setDrawInside(false); // Ensure the legend is not drawn inside the chart
+
+        barChart.invalidate();
+
+    }
+
+    public static void setupHorizontalStackedAssetLocationBarChart(HorizontalBarChart barChart, JsonObject data) {
+
+        List<BarEntry> entries = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+
+
+        for (String location : data.keySet()) {
+            double locationSize = data.get(location).getAsDouble();
+
+            entries.add(new BarEntry(entries.size(), (float) locationSize));
+
+            labels.add(location);
+        }
+
+
+        BarDataSet dataSet = new BarDataSet(entries, "");
+        dataSet.setColors(MainActivity.currentTheme.deviceStorageChartColors);
+        dataSet.setStackLabels(labels.toArray(new String[0]));
+        dataSet.setValueFormatter(new PieChartValueFormatter());
+
+        BarData barData = new BarData(dataSet);
+        barData.setBarWidth(6f);
+
+
+        barChart.setData(barData);
+
+
+        barChart.getDescription().setEnabled(false); // Disable description text
+        barChart.setFitBars(true);
+
+        barChart.getXAxis().setDrawGridLines(false);
+        barChart.getXAxis().setEnabled(false);
+        barChart.getAxisLeft().setDrawGridLines(false);
+        barChart.getAxisLeft().setEnabled(false);
+        barChart.getAxisRight().setEnabled(false);
+
+        Legend legend = barChart.getLegend();
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
+        legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+        legend.setDrawInside(false);
 
         barChart.invalidate();
 

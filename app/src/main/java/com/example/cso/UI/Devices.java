@@ -29,7 +29,10 @@ import com.example.cso.DeviceStatusSync;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
+import com.github.mikephil.charting.charts.HorizontalBarChart;
 import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.PieEntry;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
@@ -275,7 +278,7 @@ public class Devices {
 //        PieChart pieChart = Details.createPieChartForDeviceStorageStatus(context, data);
 
 //        layout.addView(temp);
-        LinearLayout layout = createSquareView(context);
+        LinearLayout layout = createHorizontalBarChartView(context, data);
         return layout;
     }
 
@@ -302,11 +305,11 @@ public class Devices {
 
 
     public static LinearLayout createChartForSyncedAssetsLocationStatus(Context context, String deviceId){
-        LinearLayout layout = Details.createInnerDetailsLayout(context);
+//        LinearLayout layout = Details.createInnerDetailsLayout(context);
         JsonObject data = getSyncedAssetsLocationStatus(deviceId);
         Log.d("DeviceStatusSync", "assets location data : " + data);
-        PieChart pieChart = Details.createPieChartForDeviceSyncedAssetsLocationStatus(context, data);
-        layout.addView(pieChart);
+//        PieChart pieChart = Details.createPieChartForDeviceSyncedAssetsLocationStatus(context, data);
+        LinearLayout layout = createHorizontalBarAssetLocationChartView(context, data) ;
         return layout;
     }
 
@@ -332,11 +335,10 @@ public class Devices {
     }
 
     public static LinearLayout createChartForSourceStatus(Context context, String deviceId){
-        LinearLayout layout = Details.createInnerDetailsLayout(context);
+//        LinearLayout layout = Details.createInnerDetailsLayout(context);
         JsonObject data = getAssetsSourceStatus(deviceId);
         Log.d("DeviceStatusSync", "assets source data : " + data);
-        PieChart pieChart = Details.createPieChartForDeviceSourceStatus(context, data);
-        layout.addView(pieChart);
+        LinearLayout layout = createHorizontalBarAssetLocationChartView(context, data) ;
         return layout;
     }
 
@@ -396,4 +398,74 @@ public class Devices {
         return layout;
     }
 
+    private static LinearLayout createHorizontalBarChartView(Context context, JsonObject storageData){
+        double freeSpace = storageData.get("freeSpace").getAsDouble() * 1000;
+        double mediaStorage = storageData.get("mediaStorage").getAsDouble() * 1000;
+        double usedSpaceExcludingMedia = storageData.get("usedSpaceExcludingMedia").getAsDouble() * 1000;
+
+        ArrayList<PieEntry> entries = new ArrayList<>();
+
+        entries.add(new PieEntry((float) freeSpace, "Free Space"));
+        entries.add(new PieEntry((float) mediaStorage, "Media"));
+        entries.add(new PieEntry((float) usedSpaceExcludingMedia, "Others"));
+
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
+        layout.setOrientation(LinearLayout.VERTICAL);
+
+        TextView title = new TextView(context);
+        title.setText(mediaStorage/1000 + " GB media found!");
+        title.setPadding(100,20,0,0);
+        layout.addView(title);
+
+        HorizontalBarChart barChart = new HorizontalBarChart(context);
+        barChart.setLayoutParams(new LinearLayout.LayoutParams(
+                (int) (UI.getDeviceWidth(context) * 0.75),
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+
+        layout.addView(barChart);
+
+        ChartHelper.setupHorizontalStackedBarChart(barChart, freeSpace, mediaStorage, usedSpaceExcludingMedia);
+
+        return layout;
+    }
+
+
+    private static LinearLayout createHorizontalBarAssetLocationChartView(Context context, JsonObject data){
+        String biggestLocation = "";
+        double biggestSize = 0;
+        for (String location : data.keySet()){
+            double locationSize = data.get(location).getAsDouble();
+            if(locationSize > biggestSize){
+                biggestSize = locationSize;
+                biggestLocation = location;
+            }
+            Log.d("DeviceStatusSync","location size for " + location + " is " + locationSize );
+        }
+
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
+        layout.setOrientation(LinearLayout.VERTICAL);
+
+        TextView title = new TextView(context);
+        title.setText(biggestLocation + " is the largest asset location on your device with " + biggestSize /1000 + " GB media!");
+        title.setTextSize(12);
+        title.setPadding(100,20,0,0);
+        layout.addView(title);
+
+        HorizontalBarChart barChart = new HorizontalBarChart(context);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                (int) (UI.getDeviceWidth(context) * 0.75),
+                (int) (UI.getDeviceHeight(context) / 20)
+        );
+        params.gravity = Gravity.CENTER;
+        barChart.setLayoutParams(params);
+
+
+        layout.addView(barChart);
+
+        ChartHelper.setupHorizontalStackedAssetLocationBarChart(barChart,data);
+
+        return layout;
+    }
 }
