@@ -26,12 +26,11 @@ public class ToolBar {
         toolbar.setId(toolbarButtonId);
         Toolbar.LayoutParams toolbarParams = new Toolbar.LayoutParams(
                 Toolbar.LayoutParams.MATCH_PARENT,
-                0//(int) (UI.getDeviceHeight(context) * 0.08)
+                (int) (UI.getDeviceHeight(context) * 0.08)
         );
         toolbar.setLayoutParams(toolbarParams);
-        toolbar.setBackgroundColor(MainActivity.currentTheme.toolbarBackgroundColor); // Setting background color
+        toolbar.setBackgroundColor(MainActivity.currentTheme.toolbarBackgroundColor);
 
-        // Create TextView
         TextView headerTextView = new TextView(context);
         headerTextView.setId(View.generateViewId());
         Toolbar.LayoutParams textParams = new Toolbar.LayoutParams(
@@ -48,14 +47,14 @@ public class ToolBar {
         headerTextView.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
 
         AppCompatButton infoButton = new AppCompatButton(context);
-        menuButtonId = View.generateViewId(); // Generate unique ID for menu button
+        menuButtonId = View.generateViewId();
         infoButton.setId(menuButtonId);
         Toolbar.LayoutParams buttonParams = new Toolbar.LayoutParams(
                 (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 35, context.getResources().getDisplayMetrics()),
                 (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 35, context.getResources().getDisplayMetrics())
         );
         buttonParams.gravity = Gravity.END;
-        buttonParams.setMarginEnd(5); // Margin end
+        buttonParams.setMarginEnd(5);
         infoButton.setLayoutParams(buttonParams);
         infoButton.setBackground(ContextCompat.getDrawable(context, R.drawable.hamburgermenu));
         infoButton.setTextColor(MainActivity.currentTheme.toolbarElementsColor);
