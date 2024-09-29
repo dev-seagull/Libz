@@ -8,15 +8,20 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.DialogFragment;
 
 import com.example.cso.MainActivity;
+import com.example.cso.R;
+import com.google.android.material.navigation.NavigationView;
 
 import java.util.ArrayList;
 
@@ -66,6 +71,10 @@ public class ColorSelectionDialogFragment extends DialogFragment {
 
             colorView.setOnClickListener(v -> {
                 Theme.applyTheme(theme);
+                DrawerLayout drawerLayout = MainActivity.activity.findViewById(R.id.drawer_layout);
+                if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
+                    drawerLayout.closeDrawer(GravityCompat.END);
+                }
                 dismiss();
             });
 

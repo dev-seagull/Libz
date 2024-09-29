@@ -123,5 +123,27 @@ public class SharedPreferencesHandler {
         }
     }
 
+    public static String getCurrentTheme(){
+        return MainActivity.preferences.getString("theme", "purple");
+    }
+
+    public static void setCurrentTheme(String theme){
+        Thread setCurrentThemeThread = new Thread(()-> {
+            try{
+                android.content.SharedPreferences.Editor editor = MainActivity.preferences.edit();
+                editor.putString("theme", theme);
+                editor.apply();
+            }catch (Exception e){
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
+        });
+        setCurrentThemeThread.start();
+        try{
+            setCurrentThemeThread.join();
+        }catch (Exception e){
+            FirebaseCrashlytics.getInstance().recordException(e);
+        }
+    }
+
 
 }

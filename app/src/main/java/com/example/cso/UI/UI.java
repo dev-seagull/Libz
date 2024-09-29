@@ -13,7 +13,9 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.TypefaceSpan;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -68,7 +70,8 @@ public class UI{
         mainLayout.addView(SyncButton.createVerticalLayoutForSyncButtonsAndStatistics(activity));
         mainLayout.addView(SyncButton.createWarningTextView(activity));
         mainLayout.addView(Accounts.createParentLayoutForAccountsButtons(activity));
-        mainLayout.addView(ChartHelper.createChartView(activity));
+//        TreeMapChart temp = new TreeMapChart(activity);
+//        temp.invalidate();
     }
 
     public static void handleStatistics(String deviceId){

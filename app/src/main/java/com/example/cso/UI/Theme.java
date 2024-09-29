@@ -3,12 +3,14 @@ package com.example.cso.UI;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.widget.LinearLayout;
 
 import com.example.cso.R;
 
 import com.example.cso.MainActivity;
+import com.example.cso.SharedPreferencesHandler;
 
 import java.util.ArrayList;
 
@@ -30,17 +32,19 @@ public class Theme {
     public int warningTextColor;
     public int toolbarBackgroundColor;
     public int toolbarElementsColor;
+    public Drawable deviceIcon;
+    public int threeDotButtonId;
     public String name;
     public static ArrayList<Theme> themes = new ArrayList<>();
 
     public static void initializeThemes(){
-        MainActivity.currentTheme = whiteTheme();
         whiteTheme();
         purpleTheme();
         blueTheme();
         grayTheme();
         blackTheme();
         greenTealTheme();
+        MainActivity.currentTheme = getThemeByName(SharedPreferencesHandler.getCurrentTheme());
         Log.d("ui","theme size : "+ themes.size());
     }
 
@@ -50,7 +54,8 @@ public class Theme {
                  int[] accountStorageDataChartColors, int menuTextColor, int primaryTextColor,
                  int onSyncButtonGradientStart, int onSyncButtonGradientEnd,
                  int offSyncButtonGradientStart, int offSyncButtonGradientEnd, int warningTextColor,
-                 int toolbarBackgroundColor, int toolbarElementsColor) {
+                 int toolbarBackgroundColor, int toolbarElementsColor, Drawable deviceIcon,
+                    int threeDotButtonId) {
         this.name = name;
         this.primaryBackgroundColor = primaryBackgroundColor;
         this.deviceButtonColors = deviceButtonColors;
@@ -69,6 +74,8 @@ public class Theme {
         this.warningTextColor = warningTextColor;
         this.toolbarBackgroundColor = toolbarBackgroundColor;
         this.toolbarElementsColor = toolbarElementsColor;
+        this.deviceIcon = deviceIcon;
+        this.threeDotButtonId = threeDotButtonId;
 
         themes.add(this);
     }
@@ -116,7 +123,9 @@ public class Theme {
                 Color.parseColor("#B0BEC5"),
                 Color.parseColor("#FF5722"),
                 Color.parseColor("#6A5ACD"), // toolbar background
-                Color.parseColor("#FFFFFF") // toolbar elements
+                Color.parseColor("#FFFFFF"), // toolbar elements
+                MainActivity.activity.getResources().getDrawable((R.drawable.white_device)),
+                R.drawable.three_dot_white
         );
     }
 
@@ -163,7 +172,9 @@ public class Theme {
                 Color.parseColor("#CFD8DC"), // Off sync button gradient end: lighter gray
                 Color.parseColor("#FF5252"),  // Warning text color: red for high visibility
                 Color.parseColor("#5C6BC0"), // Toolbar background: soft, muted indigo
-                Color.parseColor("#FFFFFF")  // Toolbar elements: white for clean contrast
+                Color.parseColor("#FFFFFF"), // toolbar elements
+                MainActivity.activity.getResources().getDrawable((R.drawable.white_device)),
+                R.drawable.three_dot_black
         );
     }
 
@@ -211,7 +222,9 @@ public class Theme {
                 Color.parseColor("#90A4AE"), // Off sync button gradient end
                 Color.parseColor("#FF5722"),  // Warning text color
                 Color.parseColor("#6A5ACD"), // toolbar background
-                Color.parseColor("#FFFFFF") // toolbar elements
+                                Color.parseColor("#FFFFFF"), // toolbar elements
+                MainActivity.activity.getResources().getDrawable((R.drawable.white_device)),
+                R.drawable.three_dot_black
         );
     }
 
@@ -258,7 +271,9 @@ public class Theme {
                 Color.parseColor("#90A4AE"), // Off sync button gradient end
                 Color.parseColor("#FF5722"),  // Warning text color
                 Color.parseColor("#6A5ACD"), // toolbar background
-                Color.parseColor("#FFFFFF") // toolbar elements
+                                Color.parseColor("#FFFFFF"), // toolbar elements
+                MainActivity.activity.getResources().getDrawable((R.drawable.white_device)),
+                R.drawable.three_dot_black
         );
     }
 
@@ -305,7 +320,9 @@ public class Theme {
                 Color.parseColor("#757575"), // Off sync button gradient end
                 Color.parseColor("#FF5722"),  // Warning text color
                 Color.parseColor("#6A5ACD"), // toolbar background
-                Color.parseColor("#FFFFFF") // toolbar elements
+                                Color.parseColor("#FFFFFF"), // toolbar elements
+                MainActivity.activity.getResources().getDrawable((R.drawable.white_device)),
+                R.drawable.three_dot_black
         );
     }
 
@@ -352,14 +369,27 @@ public class Theme {
                 Color.parseColor("#B0BEC5"), // Off sync button gradient end
                 Color.parseColor("#FF5722"),  // Warning text color
                 Color.parseColor("#6A5ACD"), // toolbar background
-                Color.parseColor("#FFFFFF") // toolbar elements
+                                Color.parseColor("#FFFFFF"), // toolbar elements
+                MainActivity.activity.getResources().getDrawable((R.drawable.white_device)),
+                R.drawable.three_dot_black
         );
     }
 
     public static void applyTheme(Theme theme){
+        SharedPreferencesHandler.setCurrentTheme(theme.name);
         MainActivity.currentTheme = theme;
         LinearLayout mainLayout = MainActivity.activity.findViewById(R.id.mainLayout);
         mainLayout.removeAllViews();
         UI.initAppUI(MainActivity.activity);
+    }
+
+
+    public static Theme getThemeByName(String name){
+        for (Theme theme : themes){
+            if (theme.name.equals(name)){
+                return theme;
+            }
+        }
+        return null;
     }
 }

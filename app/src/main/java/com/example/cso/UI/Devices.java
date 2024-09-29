@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
@@ -48,7 +49,7 @@ public class Devices {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        params.setMargins(0,(int) UI.dpToPx(24),0,0);
+        params.setMargins(0, UI.dpToPx(24),0,0);
         parentLayout.setLayoutParams(params);
         deviceButtonsId = View.generateViewId();
         parentLayout.setId(deviceButtonsId);
@@ -134,7 +135,7 @@ public class Devices {
 
         RelativeLayout.LayoutParams deviceButtonParams = new RelativeLayout.LayoutParams(
                 RelativeLayout.LayoutParams.MATCH_PARENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT
+                Math.min(UI.getDeviceHeight(context) / 14,120)
         );
         deviceButtonParams.addRule(RelativeLayout.ALIGN_PARENT_START);
         newDeviceButton.setLayoutParams(deviceButtonParams);
@@ -146,24 +147,29 @@ public class Devices {
     public static Button createNewDeviceThreeDotsButton(Context context,String deviceId, Button deviceButton){
         Button newThreeDotButton = new Button(context);
         newThreeDotButton.setContentDescription(deviceId + "threeDot");
-        addEffectsToThreeDotButton(newThreeDotButton);
+        addEffectsToThreeDotButton(newThreeDotButton,context);
         setListenerToDeviceThreeDotButtons(newThreeDotButton, deviceId);
 
-        RelativeLayout.LayoutParams threeDotButtonParams = new RelativeLayout.LayoutParams(
-                112,
-                112
-        );
+        deviceButton.getHeight();
+        int buttonSize =Math.min(UI.getDeviceHeight(context) / 20, 84);
+        deviceButton.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        int parentHeight = deviceButton.getMeasuredHeight();
+        int topMargin = (parentHeight - buttonSize) / 2 - 8;
+
+        RelativeLayout.LayoutParams threeDotButtonParams = new RelativeLayout.LayoutParams(buttonSize, buttonSize);
         threeDotButtonParams.addRule(RelativeLayout.ALIGN_TOP, deviceButton.getId());
         threeDotButtonParams.addRule(RelativeLayout.ALIGN_PARENT_END);
+        threeDotButtonParams.topMargin = topMargin;
+        threeDotButtonParams.rightMargin = 10;
+
         newThreeDotButton.setLayoutParams(threeDotButtonParams);
         newThreeDotButton.setVisibility(View.VISIBLE);
         newThreeDotButton.bringToFront();
-
         return newThreeDotButton;
     }
 
     public static void addEffectsToDeviceButton(Button androidDeviceButton, Context context){
-        Drawable deviceDrawable = context.getResources().getDrawable(R.drawable.android_device_icon);
+        Drawable deviceDrawable = MainActivity.currentTheme.deviceIcon;
         androidDeviceButton.setCompoundDrawablesWithIntrinsicBounds
                 (deviceDrawable, null, null, null);
 
@@ -178,17 +184,17 @@ public class Devices {
         MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                170
+                UI.getDeviceHeight(context) / 18
         );
         androidDeviceButton.setLayoutParams(layoutParams);
     }
 
-    public static void addEffectsToThreeDotButton(Button threeDotButton){
-        threeDotButton.setBackgroundResource(R.drawable.three_dot_white);
+    public static void addEffectsToThreeDotButton(Button threeDotButton, Context context){
+        threeDotButton.setBackgroundResource(MainActivity.currentTheme.threeDotButtonId);
 
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
-                112,
-                112
+                UI.getDeviceHeight(context) / 20,
+                UI.getDeviceHeight(context) / 20
         );
 
         threeDotButton.setLayoutParams(layoutParams);
@@ -263,11 +269,13 @@ public class Devices {
     } // for more data
 
     public static LinearLayout createChartForStorageStatus(Context context, String deviceId) {
-        LinearLayout layout = Details.createInnerDetailsLayout(context);
+//        LinearLayout layout = Details.createInnerDetailsLayout(context);
         JsonObject data = getStorageStatus(deviceId);
         Log.d("DeviceStatusSync", "storage data : " + data);
-        PieChart pieChart = Details.createPieChartForDeviceStorageStatus(context, data);
-        layout.addView(pieChart);
+//        PieChart pieChart = Details.createPieChartForDeviceStorageStatus(context, data);
+
+//        layout.addView(temp);
+        LinearLayout layout = createSquareView(context);
         return layout;
     }
 
@@ -353,5 +361,39 @@ public class Devices {
         }
     }
 
+    public static LinearLayout createSquareView(Context context){
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
+        layout.setOrientation(LinearLayout.HORIZONTAL);
+        ImageView temp = new ImageView(activity);
+        temp.setImageResource(R.drawable.temp);
+        temp.setLayoutParams(new LinearLayout.LayoutParams(
+                UI.getDeviceWidth(context) / 2,
+                UI.getDeviceHeight(context) / 3
+        ));
+
+        LinearLayout textLayout = new LinearLayout(context);
+        textLayout.setOrientation(LinearLayout.VERTICAL);
+
+                TextView textView1 = new TextView(context);
+        textView1.setText("Total\n\n\n\nOccupied\n\nMedia\n\nSynced");
+
+        TextView textView2 = new TextView(context);
+        textView2.setText("Occupied");
+
+        TextView textView3 = new TextView(context);
+        textView3.setText("Media");
+
+        TextView textView4 = new TextView(context);
+        textView4.setText("Synced");
+
+//        textLayout.addView(textView1);
+//        textLayout.addView(textView2);
+//        textLayout.addView(textView3);
+//        textLayout.addView(textView4);
+
+        layout.addView(temp);
+        layout.addView(textView1);
+        return layout;
+    }
 
 }
