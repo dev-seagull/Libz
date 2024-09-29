@@ -98,17 +98,17 @@ public class Theme {
                 },
                 new int[] {
                     Color.parseColor("#00796B"),
-                    Color.parseColor("#004D40"),
+                    Color.parseColor("#388E3C"),
                     Color.parseColor("#80CBC4")
                 },
                 new int[] {
                         Color.parseColor("#00796B"),
-                        Color.parseColor("#004D40"),
+                        Color.parseColor("#388E3C"),
                         Color.parseColor("#80CBC4")
                 },
                 new int[] {
                         Color.parseColor("#00796B"),
-                        Color.parseColor("#004D40"),
+                        Color.parseColor("#388E3C"),
                         Color.parseColor("#80CBC4")
                 },
                 new int[] {
@@ -117,7 +117,7 @@ public class Theme {
                 },
                 Color.parseColor("#202124"),
                 Color.WHITE,
-                Color.parseColor("#004D40"),
+                Color.parseColor("#388E3C"),
                 Color.parseColor("#80CBC4"),
                 Color.parseColor("#90A4AE"),
                 Color.parseColor("#B0BEC5"),
