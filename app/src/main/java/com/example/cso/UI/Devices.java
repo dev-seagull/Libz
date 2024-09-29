@@ -418,37 +418,31 @@ public class Devices {
         layout.addView(title);
 
         HorizontalBarChart barChart = new HorizontalBarChart(context);
-        barChart.setLayoutParams(new LinearLayout.LayoutParams(
-                (int) (UI.getDeviceWidth(context) * 0.75),
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-        ));
+        );
+
+        params.setMargins(0,75,0,75);
+        barChart.setLayoutParams(params);
 
 
         layout.addView(barChart);
 
-        ChartHelper.setupHorizontalStackedBarChart(barChart, freeSpace, mediaStorage, usedSpaceExcludingMedia);
+        if (storageData != null && storageData.size() > 0){
+            ChartHelper.setupHorizontalStackedBarChart(barChart, freeSpace, mediaStorage, usedSpaceExcludingMedia);
+        }
+
 
         return layout;
     }
 
 
     private static LinearLayout createHorizontalBarAssetLocationChartView(Context context, JsonObject data){
-        String biggestLocation = "";
-        double biggestSize = 0;
-        for (String location : data.keySet()){
-            double locationSize = data.get(location).getAsDouble();
-            if(locationSize > biggestSize){
-                biggestSize = locationSize;
-                biggestLocation = location;
-            }
-            Log.d("DeviceStatusSync","location size for " + location + " is " + locationSize );
-        }
-
         LinearLayout layout = Details.createInnerDetailsLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
 
         TextView title = new TextView(context);
-        title.setText(biggestLocation + " is the largest asset location on your device with " + biggestSize /1000 + " GB media!");
         title.setTextSize(12);
         title.setPadding(100,20,0,0);
         layout.addView(title);
@@ -464,7 +458,10 @@ public class Devices {
 
         layout.addView(barChart);
 
-        ChartHelper.setupHorizontalStackedAssetLocationBarChart(barChart,data);
+        if (data != null && data.size() > 0){
+            ChartHelper.setupHorizontalStackedAssetLocationBarChart(barChart,data);
+        }
+
 
         return layout;
     }

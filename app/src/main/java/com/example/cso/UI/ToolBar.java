@@ -26,7 +26,7 @@ public class ToolBar {
         toolbar.setId(toolbarButtonId);
         Toolbar.LayoutParams toolbarParams = new Toolbar.LayoutParams(
                 Toolbar.LayoutParams.MATCH_PARENT,
-                (int) (UI.getDeviceHeight(context) * 0.08)
+                (int) (UI.getDeviceHeight(context) * 0.06)
         );
         toolbar.setLayoutParams(toolbarParams);
         toolbar.setBackgroundColor(MainActivity.currentTheme.toolbarBackgroundColor);

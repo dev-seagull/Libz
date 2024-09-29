@@ -1,55 +1,14 @@
 package com.example.cso.UI;
 
-import static com.anychart.enums.Layout.HORIZONTAL;
-
-import android.content.Context;
-import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.drawable.GradientDrawable;
-import android.util.Log;
-import android.view.Gravity;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.GridLayout;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-
-import com.anychart.AnyChart;
-import com.anychart.AnyChartView;
-import com.anychart.chart.common.dataentry.BubbleDataEntry;
-import com.anychart.chart.common.dataentry.DataEntry;
-import com.anychart.chart.common.dataentry.ValueDataEntry;
-import com.anychart.charts.Cartesian;
-import com.anychart.charts.Scatter;
-import com.anychart.core.Text;
-import com.anychart.core.cartesian.series.Bar;
-import com.anychart.data.Set;
-import com.anychart.enums.TooltipDisplayMode;
-import com.anychart.enums.TooltipPositionMode;
 import com.example.cso.MainActivity;
-import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.charts.BubbleChart;
 import com.github.mikephil.charting.charts.HorizontalBarChart;
 import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.data.BubbleData;
-import com.github.mikephil.charting.data.BubbleDataSet;
-import com.github.mikephil.charting.data.BubbleEntry;
-import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
-import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.gson.JsonObject;
 
-import org.checkerframework.checker.units.qual.C;
-
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 //
@@ -82,6 +41,7 @@ public class ChartHelper {
 
     public static void setupHorizontalStackedBarChart(HorizontalBarChart barChart,double freeSpace
             ,double mediaStorage,double usedSpaceExcludingMedia) {
+
         CustomHorizontalBarChartRenderer customHorizontalBarChartRenderer = new CustomHorizontalBarChartRenderer(barChart, barChart.getAnimator(), barChart.getViewPortHandler());
         barChart.setRenderer(customHorizontalBarChartRenderer);
 
@@ -92,9 +52,9 @@ public class ChartHelper {
         dataSet.setColors(MainActivity.currentTheme.deviceStorageChartColors);
         dataSet.setStackLabels(new String[]{"Media", "Free", "Others"});
         dataSet.setValueFormatter(new PieChartValueFormatter());
-
+        dataSet.setValueTextSize(12f);
         BarData barData = new BarData(dataSet);
-        barData.setBarWidth(6f);
+        barData.setBarWidth(30f);
 
 
         barChart.setData(barData);
@@ -116,7 +76,9 @@ public class ChartHelper {
         legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
         legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
         legend.setDrawInside(false); // Ensure the legend is not drawn inside the chart
+        legend.setTextSize(12f);
 
+        barChart.setScaleY(1.3f);
         barChart.invalidate();
 
     }
@@ -140,9 +102,9 @@ public class ChartHelper {
         dataSet.setColors(MainActivity.currentTheme.deviceStorageChartColors);
         dataSet.setStackLabels(labels.toArray(new String[0]));
         dataSet.setValueFormatter(new PieChartValueFormatter());
-
+        dataSet.setValueTextSize(12f);
         BarData barData = new BarData(dataSet);
-        barData.setBarWidth(6f);
+        barData.setBarWidth(30f);
 
 
         barChart.setData(barData);
@@ -162,7 +124,8 @@ public class ChartHelper {
         legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
         legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
         legend.setDrawInside(false);
-
+        legend.setTextSize(12f);
+        barChart.setScaleY(1.3f);
         barChart.invalidate();
 
     }
