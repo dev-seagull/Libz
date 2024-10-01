@@ -272,13 +272,10 @@ public class Devices {
     } // for more data
 
     public static LinearLayout createChartForStorageStatus(Context context, String deviceId) {
-//        LinearLayout layout = Details.createInnerDetailsLayout(context);
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
         JsonObject data = getStorageStatus(deviceId);
         Log.d("DeviceStatusSync", "storage data : " + data);
-//        PieChart pieChart = Details.createPieChartForDeviceStorageStatus(context, data);
-
-//        layout.addView(temp);
-        LinearLayout layout = createHorizontalBarChartView(context, data);
+        layout.addView(AreaSquareChart.createChart(context,data));
         return layout;
     }
 

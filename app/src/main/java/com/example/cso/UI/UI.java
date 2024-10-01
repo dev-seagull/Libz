@@ -35,6 +35,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
+import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 
@@ -70,8 +71,7 @@ public class UI{
         mainLayout.addView(SyncButton.createVerticalLayoutForSyncButtonsAndStatistics(activity));
         mainLayout.addView(SyncButton.createWarningTextView(activity));
         mainLayout.addView(Accounts.createParentLayoutForAccountsButtons(activity));
-//        TreeMapChart temp = new TreeMapChart(activity);
-//        temp.invalidate();
+        mainLayout.addView(AreaSquareChart.createChart(activity,new JsonObject()));
     }
 
     public static void handleStatistics(String deviceId){

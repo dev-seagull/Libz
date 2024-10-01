@@ -7,7 +7,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -19,7 +18,6 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -44,7 +42,7 @@ public class Accounts {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        params.setMargins(0,(int) UI.dpToPx(26),0,0);
+        params.setMargins(0,UI.dpToPx(26),0,0);
         parentLayout.setLayoutParams(params);
         accountButtonsId = View.generateViewId();
         parentLayout.setId(accountButtonsId);
@@ -179,26 +177,26 @@ public class Accounts {
 
     public static void setListenerToAccountButton(Button button, Activity activity) {
         button.setOnClickListener(
-                view -> {
-                    if (MainActivity.isAnyProccessOn || true) { // make clickable false
-                        return;
-                    }
-                    String buttonText = button.getText().toString().toLowerCase();
-                    if (buttonText.equals("add a backup account")) {
-                        MainActivity.isAnyProccessOn = true; // add a backup account
-                        button.setText("Adding in progress ...");
-                        GoogleCloud.signInToGoogleCloud(signInToBackUpLauncher, activity);
-                    }else{
-                        FrameLayout detailsView = Details.getDetailsView(button);
-                        if (detailsView.getVisibility() == View.VISIBLE){
-                            detailsView.setVisibility(View.GONE);
-                        } else {
-                            detailsView.setVisibility(View.VISIBLE);
-                        }
-                        RelativeLayout parent = (RelativeLayout) view.getParent();
-                        reInitializeAccountButtonsLayout(parent,activity,buttonText);
-                    }
+            view -> {
+                if (MainActivity.isAnyProccessOn) { // make clickable false
+                    return;
                 }
+                String buttonText = button.getText().toString().toLowerCase();
+                if (buttonText.equals("add a backup account")) {
+                    MainActivity.isAnyProccessOn = true; // add a backup account
+                    button.setText("Adding in progress ...");
+                    GoogleCloud.signInToGoogleCloud(signInToBackUpLauncher, activity);
+                }else{
+                    FrameLayout detailsView = Details.getDetailsView(button);
+                    if (detailsView.getVisibility() == View.VISIBLE){
+                        detailsView.setVisibility(View.GONE);
+                    } else {
+                        detailsView.setVisibility(View.VISIBLE);
+                    }
+                    RelativeLayout parent = (RelativeLayout) view.getParent();
+                    reInitializeAccountButtonsLayout(parent,activity,buttonText);
+                }
+            }
         );
     }
 
@@ -224,13 +222,10 @@ public class Accounts {
     public static void setListenerToAccountThreeDotButtons(Button button, String userEmail) {
         button.setOnClickListener(view -> {
             try {
-                if (true){
-                    return;
-                }
                 PopupMenu popupMenu = setPopUpMenuOnButton(activity, (Button) view, "account");
                 popupMenu.setOnMenuItemClickListener(item -> {
                     if (item.getItemId() == R.id.unlink) {
-                        MainActivity.isAnyProccessOn = true;//unlink
+                        MainActivity.isAnyProccessOn = true; //unlink
                         button.setText("Unlink in progress ...");
                         new Thread(() -> GoogleCloud.unlink(userEmail, activity)).start();
                     }
