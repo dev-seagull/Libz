@@ -14,18 +14,23 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.example.cso.LogHandler;
+import com.example.cso.MainActivity;
 import com.google.gson.JsonObject;
 
 public class AreaSquareChart {
-
     public static View createChart(Context context, JsonObject data) {
         int width =(int) (UI.getDeviceWidth(context) * 0.35);
-        int total = (int) 126.5; //data.get("total").getAsDouble();
-        int used = (int) Math.log(51.2 / total);   //data.get("used").getAsDouble();
-        int media = (int) Math.log(49.8 / total);  //data.get("media").getAsDouble();
-        int synced = (int) Math.log(30.8 / total);  //data.get("synced").getAsDouble();
-        
-        width = total;
+        int total = (int) data.get("totalStorage").getAsDouble();
+        int used = (int) ( data.get("usedSpace").getAsDouble() / total * width );
+        int media = (int) ( data.get("mediaStorage").getAsDouble() / total * width );
+        int synced = (int) ( data.get("syncedAssetsStorage").getAsDouble() / total * width );
+
+        total = (int) (Math.log10(total) / Math.log10(total) * width);
+        used = (int) (Math.log10(used) / Math.log10(total) * width);
+        media = (int) (Math.log10(media) / Math.log10(total) * width);
+        synced = (int) (Math.log10(synced) / Math.log10(total) * width);
+
+        total = width;
 
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.HORIZONTAL);
@@ -34,7 +39,6 @@ public class AreaSquareChart {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         );
-//        layoutParams.gravity = Gravity.CENTER;
         layoutParams.setMargins(10, 10, 10, 10);
         layout.setLayoutParams(layoutParams);
 
@@ -70,7 +74,6 @@ public class AreaSquareChart {
         layout.addView(labelsLayout);
         return layout;
     }
-
     public static RelativeLayout createStackedSquares(Context context, int square1Size, int square2Size, int square3Size, int square4Size) {
         RelativeLayout relativeLayout = new RelativeLayout(context);
         ImageView square1 = new ImageView(context);
@@ -78,10 +81,10 @@ public class AreaSquareChart {
         ImageView square3 = new ImageView(context);
         ImageView square4 = new ImageView(context);
 
-        square1.setBackgroundColor(0xFFD3D3D3); // Light Gray
-        square2.setBackgroundColor(0xFFB0B0B0); // Medium Gray
-        square3.setBackgroundColor(0xFF808080); // Dark Gray
-        square4.setBackgroundColor(0xFF4F9EDB); // Blue
+        square1.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
+        square2.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
+        square3.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
+        square4.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
 
         addSquareToLayout(relativeLayout, square1, square1Size);
         addSquareToLayout(relativeLayout, square2, square2Size);
@@ -105,33 +108,28 @@ public class AreaSquareChart {
             protected void onDraw(Canvas canvas) {
                 super.onDraw(canvas);
 
-                // Prepare the Paint object for drawing the grid lines
                 Paint paint = new Paint();
-                paint.setColor(Color.WHITE); // Set grid line color (changeable)
-                paint.setStrokeWidth(1.5f);     // Set the thickness of the grid lines
+                paint.setColor(Color.WHITE);
+                paint.setStrokeWidth(1.5f);
 
                 int width = getWidth();
                 int height = getHeight();
 
-                // Calculate the width of each cell based on the number of columns and rows
                 float cellWidth = (float) width / colNum;
                 float cellHeight = (float) height / rowNum;
 
-                // Draw vertical lines
                 for (int i = 0; i <= colNum; i++) {
                     float x = i * cellWidth;
-                    canvas.drawLine(x, 0, x, height, paint); // Draw from (x, 0) to (x, height)
+                    canvas.drawLine(x, 0, x, height, paint);
                 }
 
-                // Draw horizontal lines
                 for (int i = 0; i <= rowNum; i++) {
                     float y = i * cellHeight;
-                    canvas.drawLine(0, y, width, y, paint); // Draw from (0, y) to (width, y)
+                    canvas.drawLine(0, y, width, y, paint);
                 }
             }
         };
 
-        // Set layout parameters to match the parent size
         RelativeLayout.LayoutParams gridParams = new RelativeLayout.LayoutParams(
                 RelativeLayout.LayoutParams.MATCH_PARENT,
                 RelativeLayout.LayoutParams.MATCH_PARENT
@@ -139,13 +137,11 @@ public class AreaSquareChart {
         gridParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
         gridParams.addRule(RelativeLayout.ALIGN_PARENT_START);
 
-        // Add the gridView on top of the stacked squares
         layout.addView(gridView, gridParams);
     }
 
     private static int calculateGreatestCommonDivisor(int a, int b, int c, int d) {
         try {
-            // Calculate the GCD of pairs of numbers
             int gcdAB = calculateGreatestCommonDivisor(a, b);
             int gcdCD = calculateGreatestCommonDivisor(c, d);
             int gcdResult = calculateGreatestCommonDivisor(gcdAB, gcdCD);
@@ -154,7 +150,7 @@ public class AreaSquareChart {
         } catch (Exception e) {
             LogHandler.crashLog(e, "AreaChart");
         }
-        return 1;  // Return 1 in case of error (1 is the identity element for GCD)
+        return 1;
     }
 
     private static int calculateGreatestCommonDivisor(int a, int b){
@@ -194,7 +190,7 @@ public class AreaSquareChart {
         TextView totalText = new TextView(context);
         totalText.setText("Total");
         totalText.setTextSize(10f);
-        totalText.setTextColor(0xFFD3D3D3);
+        totalText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
         totalParams.setMargins(10,(total - used) /2,0,0);
         totalText.setLayoutParams(totalParams);
 
@@ -202,21 +198,21 @@ public class AreaSquareChart {
         usedText.setText("Used");
         usedText.setTextSize(10f);
         usedText.getHeight();
-        usedText.setTextColor(0xFFB0B0B0);
+        usedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
         usedParams.setMargins(10,0,0,0);
         usedText.setLayoutParams(usedParams);
 
         TextView mediaText = new TextView(context);
         mediaText.setText("Media");
         mediaText.setTextSize(10f);
-        mediaText.setTextColor(0xFF808080);
+        mediaText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
         mediaParams.setMargins(10,0,0,(media - synced) /2 - 10);
         mediaText.setLayoutParams(mediaParams);
 
         TextView syncedText = new TextView(context);
         syncedText.setText("Synced");
         syncedText.setTextSize(10f);
-        syncedText.setTextColor(0xFF4F9EDB);
+        syncedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
         syncedParams.setMargins(10,synced/2 ,0,synced/2);
         syncedText.setLayoutParams(syncedParams);
 

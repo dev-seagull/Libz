@@ -1773,4 +1773,34 @@ public class DBHelper extends SQLiteOpenHelper {
         double percentage = ((double) syncedAssets / totalAssets) * 100;
         return percentage;
     }
+
+    public static double getSizeOfSyncedAssetsOnDevice(String deviceId){
+            double totalSize = 0.0;
+
+        String query = "SELECT SUM(a.fileSize) AS totalSize " +
+                "FROM ANDROID a " +
+                "INNER JOIN DRIVE d ON a.assetId = d.assetId " +
+                "WHERE a.device = ?";
+
+
+        Cursor cursor = null;
+            try {
+                cursor = dbReadable.rawQuery(query, null);
+
+                if (cursor != null && cursor.moveToFirst()) {
+                    int columnIndex = cursor.getColumnIndex("totalSize");
+                    if(columnIndex >= 0) {
+                        totalSize = cursor.getDouble(columnIndex);
+                    }
+                }
+            } catch (Exception e) {
+                LogHandler.crashLog(e,"ui");
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+
+            return totalSize;
+        }
 }

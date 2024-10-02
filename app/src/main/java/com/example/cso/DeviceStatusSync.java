@@ -127,12 +127,15 @@ public class DeviceStatusSync {
             double freeSpace = storageHandler.getFreeSpace();
             double totalStorage = storageHandler.getTotalStorage();
             double mediaStorage = Double.parseDouble(DBHelper.getPhotosAndVideosStorage());
-            double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
+            double usedSpace = totalStorage - freeSpace;
+            double syncedAssetsStorage = DBHelper.getSizeOfSyncedAssetsOnDevice(MainActivity.androidUniqueDeviceIdentifier);
 
             JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("totalStorage", totalStorage);
             jsonObject.addProperty("freeSpace", freeSpace);
             jsonObject.addProperty("mediaStorage", mediaStorage);
-            jsonObject.addProperty("usedSpaceExcludingMedia", usedSpaceExcludingMedia);
+            jsonObject.addProperty("usedSpace", usedSpace);
+            jsonObject.addProperty("syncedAssetsStorage", syncedAssetsStorage);
             Log.d("DeviceStatusSync","storageStatus : " + jsonObject);
             jsonObjects[0] = jsonObject;
         });

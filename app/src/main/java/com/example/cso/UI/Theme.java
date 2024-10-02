@@ -86,23 +86,24 @@ public class Theme {
     public static Theme purpleTheme() {
         return new Theme(
                 "purple",
-                Color.parseColor("#2C2A4A"),
+                Color.parseColor("#2C2A4A"), //primaryBackgroundColor
                 new int[] {
-                        Color.parseColor("#6D74A1"),
+                        Color.parseColor("#6D74A1"), //deviceButtonColors
                         Color.parseColor("#4F518C"),
                 },
                 new int[] {
-                        Color.parseColor("#907AD6"),
+                        Color.parseColor("#907AD6"), //accountButtonColors
                         Color.parseColor("#6D5F9C"),
                 },
                 new int[] {
-                        Color.parseColor("#907AD6"),
+                        Color.parseColor("#907AD6"), //addBackupAccountButtonColors
                         Color.parseColor("#6D5F9C"),
                 },
                 new int[] {
-                    Color.parseColor("#00796B"),
-                    Color.parseColor("#388E3C"),
-                    Color.parseColor("#80CBC4")
+                    Color.parseColor("#B0BEC5"), //deviceStorageChartColors , total
+                    Color.parseColor("#BBDEFB"), // used
+                    Color.parseColor("#72098E"), //media
+                    Color.parseColor("#FAB34B") // synced
                 },
                 new int[] {
                         Color.parseColor("#00796B"),
@@ -119,7 +120,7 @@ public class Theme {
                         Color.parseColor("#304194")
                 },
                 Color.parseColor("#202124"),
-                Color.WHITE,
+                Color.WHITE,  //primaryTextColor
                 Color.parseColor("#388E3C"),
                 Color.parseColor("#80CBC4"),
                 Color.parseColor("#90A4AE"),
@@ -151,7 +152,8 @@ public class Theme {
                 new int[] {
                         Color.parseColor("#00897B"), // Device storage chart: teal green
                         Color.parseColor("#00574B"), // Darker teal for clarity
-                        Color.parseColor("#4DB6AC")  // Lighter teal for highlights
+                        Color.parseColor("#4DB6AC"),  // Lighter teal for highlights
+                        Color.parseColor("#4DB6AC")
                 },
                 new int[] {
                         Color.parseColor("#00796B"), // Device app storage chart: same green palette
@@ -201,6 +203,7 @@ public class Theme {
                 new int[]{
                         Color.parseColor("#2196F3"), // Device storage chart colors (blue)
                         Color.parseColor("#1976D2"),
+                        Color.parseColor("#BBDEFB"),
                         Color.parseColor("#BBDEFB")
                 },
                 new int[]{
@@ -250,6 +253,7 @@ public class Theme {
                 new int[]{
                         Color.parseColor("#212121"), // Device storage chart colors (black)
                         Color.parseColor("#424242"),
+                        Color.parseColor("#757575"),
                         Color.parseColor("#757575")
                 },
                 new int[]{
@@ -299,6 +303,7 @@ public class Theme {
                 new int[]{
                         Color.parseColor("#004D40"), // Device storage chart colors (dark teal)
                         Color.parseColor("#00796B"),
+                        Color.parseColor("#80CBC4"),
                         Color.parseColor("#80CBC4")
                 },
                 new int[]{
@@ -348,6 +353,7 @@ public class Theme {
                 new int[] {
                         Color.parseColor("#00796B"), // Device storage chart colors
                         Color.parseColor("#004D40"),
+                        Color.parseColor("#80CBC4"),
                         Color.parseColor("#80CBC4")
                 },
                 new int[] {
@@ -397,6 +403,7 @@ public class Theme {
                 new int[] {
                         Color.parseColor("#37474F"), // Device storage chart colors
                         Color.parseColor("#263238"),
+                        Color.parseColor("#546E7A"),
                         Color.parseColor("#546E7A")
                 },
                 new int[] {
@@ -446,6 +453,7 @@ public class Theme {
                 new int[]{
                         Color.parseColor("#757575"), // Device storage chart colors (gray)
                         Color.parseColor("#616161"),
+                        Color.parseColor("#BDBDBD"),
                         Color.parseColor("#BDBDBD")
                 },
                 new int[]{
@@ -503,6 +511,7 @@ public class Theme {
                 new int[]{
                         Color.parseColor("#0D47A1"), // Device storage chart colors (dark blue)
                         Color.parseColor("#1565C0"),
+                        Color.parseColor("#42A5F5"),
                         Color.parseColor("#42A5F5")
                 },
                 new int[]{

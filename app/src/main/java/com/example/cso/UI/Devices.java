@@ -275,7 +275,8 @@ public class Devices {
         LinearLayout layout = Details.createInnerDetailsLayout(context);
         JsonObject data = getStorageStatus(deviceId);
         Log.d("DeviceStatusSync", "storage data : " + data);
-        layout.addView(AreaSquareChart.createChart(context,data));
+        View areaSquareChart = AreaSquareChart.createChart(context,data);
+        layout.addView(areaSquareChart);
         return layout;
     }
 
