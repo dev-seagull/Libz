@@ -71,7 +71,6 @@ public class UI{
         mainLayout.addView(SyncButton.createVerticalLayoutForSyncButtonsAndStatistics(activity));
         mainLayout.addView(SyncButton.createWarningTextView(activity));
         mainLayout.addView(Accounts.createParentLayoutForAccountsButtons(activity));
-        mainLayout.addView(AreaSquareChart.createChart(activity,new JsonObject()));
     }
 
     public static void handleStatistics(String deviceId){

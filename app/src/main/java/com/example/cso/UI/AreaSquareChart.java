@@ -4,50 +4,70 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
+import com.example.cso.LogHandler;
 import com.google.gson.JsonObject;
 
 public class AreaSquareChart {
 
     public static View createChart(Context context, JsonObject data) {
-        // Parse the data from the JsonObject
-//        double total = 100; //data.get("total").getAsDouble();
-//        double used = 80;   //data.get("used").getAsDouble();
-//        double media = 50;  //data.get("media").getAsDouble();
-//        double synced = 30; //data.get("synced").getAsDouble();
+        int width =(int) (UI.getDeviceWidth(context) * 0.35);
+        int total = (int) 126.5; //data.get("total").getAsDouble();
+        int used = (int) Math.log(51.2 / total);   //data.get("used").getAsDouble();
+        int media = (int) Math.log(49.8 / total);  //data.get("media").getAsDouble();
+        int synced = (int) Math.log(30.8 / total);  //data.get("synced").getAsDouble();
+        
+        width = total;
 
         LinearLayout layout = new LinearLayout(context);
-        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setOrientation(LinearLayout.HORIZONTAL);
         layout.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         );
+//        layoutParams.gravity = Gravity.CENTER;
         layoutParams.setMargins(10, 10, 10, 10);
         layout.setLayoutParams(layoutParams);
 
-        // Use RelativeLayout for temp so gridView can be added on top
         RelativeLayout temp = new RelativeLayout(context);
         temp.setGravity(Gravity.CENTER);
 
-        // Create the stacked squares
-        RelativeLayout stackedSquaresLayout = createStackedSquares(context, 300, 250, 200, 150);
+        RelativeLayout stackedSquaresLayout = createStackedSquares(context, total, used, media, synced);
         RelativeLayout.LayoutParams stackedParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.MATCH_PARENT,
-                RelativeLayout.LayoutParams.MATCH_PARENT
+                width,
+                width
         );
+
+        stackedParams.addRule(RelativeLayout.CENTER_IN_PARENT);
         temp.addView(stackedSquaresLayout, stackedParams);
 
-        // Draw grid lines on top of stacked squares
-        drawGridLines(temp, context, 5, 5); // Adjust columns and rows here
+        LinearLayout linesLayout = new LinearLayout(context);
+        linesLayout.setOrientation(LinearLayout.HORIZONTAL);
+        RelativeLayout.LayoutParams linesParams = new RelativeLayout.LayoutParams(
+                width,
+                width
+        );
+        linesParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        linesParams.addRule(RelativeLayout.CENTER_IN_PARENT);
 
-        layout.addView(temp); // Add the RelativeLayout to the main LinearLayout
+        linesLayout.setLayoutParams(linesParams);
+
+        int columnCount = Math.min(width / calculateGreatestCommonDivisor(total,used,media,synced),12);
+        drawGridLines(linesLayout, context, columnCount, columnCount);
+
+        layout.addView(temp);
+        stackedSquaresLayout.addView(linesLayout);
+        LinearLayout labelsLayout = createLabels(context,total,used,media,synced);
+        layout.addView(labelsLayout);
         return layout;
     }
 
@@ -78,8 +98,8 @@ public class AreaSquareChart {
         layout.addView(square, params);
     }
 
-    public static void drawGridLines(RelativeLayout layout, Context context, int colNum, int rowNum) {
-        // Create a custom View to handle the drawing of the grid
+    public static void drawGridLines(LinearLayout layout, Context context, int colNum, int rowNum) {
+
         View gridView = new View(context) {
             @Override
             protected void onDraw(Canvas canvas) {
@@ -87,8 +107,8 @@ public class AreaSquareChart {
 
                 // Prepare the Paint object for drawing the grid lines
                 Paint paint = new Paint();
-                paint.setColor(Color.BLACK); // Set grid line color (changeable)
-                paint.setStrokeWidth(3);     // Set the thickness of the grid lines
+                paint.setColor(Color.WHITE); // Set grid line color (changeable)
+                paint.setStrokeWidth(1.5f);     // Set the thickness of the grid lines
 
                 int width = getWidth();
                 int height = getHeight();
@@ -121,5 +141,89 @@ public class AreaSquareChart {
 
         // Add the gridView on top of the stacked squares
         layout.addView(gridView, gridParams);
+    }
+
+    private static int calculateGreatestCommonDivisor(int a, int b, int c, int d) {
+        try {
+            // Calculate the GCD of pairs of numbers
+            int gcdAB = calculateGreatestCommonDivisor(a, b);
+            int gcdCD = calculateGreatestCommonDivisor(c, d);
+            int gcdResult = calculateGreatestCommonDivisor(gcdAB, gcdCD);
+            Log.d("AreaChart",a + " " + b + " " + c + " " + d + " : " + gcdResult);
+            return gcdResult;
+        } catch (Exception e) {
+            LogHandler.crashLog(e, "AreaChart");
+        }
+        return 1;  // Return 1 in case of error (1 is the identity element for GCD)
+    }
+
+    private static int calculateGreatestCommonDivisor(int a, int b){
+        try{
+            if(b == 0)
+                return a;
+            else
+                return calculateGreatestCommonDivisor(b, a % b);
+        }catch (Exception e){
+            LogHandler.crashLog(e,"AreaChart");
+        }
+        return a;
+    }
+
+    private static LinearLayout createLabels(Context context, int total, int used, int media, int synced){
+        LinearLayout layout = new LinearLayout(context);
+        layout.setOrientation(LinearLayout.VERTICAL);
+
+
+        RelativeLayout.LayoutParams totalParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+        );
+        RelativeLayout.LayoutParams usedParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+        );
+        RelativeLayout.LayoutParams mediaParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+        );
+        RelativeLayout.LayoutParams syncedParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+        );
+
+        TextView totalText = new TextView(context);
+        totalText.setText("Total");
+        totalText.setTextSize(10f);
+        totalText.setTextColor(0xFFD3D3D3);
+        totalParams.setMargins(10,(total - used) /2,0,0);
+        totalText.setLayoutParams(totalParams);
+
+        TextView usedText = new TextView(context);
+        usedText.setText("Used");
+        usedText.setTextSize(10f);
+        usedText.getHeight();
+        usedText.setTextColor(0xFFB0B0B0);
+        usedParams.setMargins(10,0,0,0);
+        usedText.setLayoutParams(usedParams);
+
+        TextView mediaText = new TextView(context);
+        mediaText.setText("Media");
+        mediaText.setTextSize(10f);
+        mediaText.setTextColor(0xFF808080);
+        mediaParams.setMargins(10,0,0,(media - synced) /2 - 10);
+        mediaText.setLayoutParams(mediaParams);
+
+        TextView syncedText = new TextView(context);
+        syncedText.setText("Synced");
+        syncedText.setTextSize(10f);
+        syncedText.setTextColor(0xFF4F9EDB);
+        syncedParams.setMargins(10,synced/2 ,0,synced/2);
+        syncedText.setLayoutParams(syncedParams);
+
+        layout.addView(totalText);
+        layout.addView(usedText);
+        layout.addView(mediaText);
+        layout.addView(syncedText);
+        return layout;
     }
 }
