@@ -300,8 +300,7 @@ public class Devices {
             return null;
         }
     }
-
-
+    
     public static LinearLayout createChartForSyncedAssetsLocationStatus(Context context, String deviceId){
 //        LinearLayout layout = Details.createInnerDetailsLayout(context);
         JsonObject data = getSyncedAssetsLocationStatus(deviceId);

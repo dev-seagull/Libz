@@ -21,16 +21,15 @@ public class AreaSquareChart {
     public static View createChart(Context context, JsonObject data) {
         int width =(int) (UI.getDeviceWidth(context) * 0.35);
         int total = (int) data.get("totalStorage").getAsDouble();
-        int used = (int) ( data.get("usedSpace").getAsDouble() / total * width );
-        int media = (int) ( data.get("mediaStorage").getAsDouble() / total * width );
-        int synced = (int) ( data.get("syncedAssetsStorage").getAsDouble() / total * width );
+        int used = (int) ( data.get("usedSpace").getAsDouble() * width / total);
+        int media = (int) ( data.get("mediaStorage").getAsDouble() * width / total);
+        int synced = (int) ( data.get("syncedAssetsStorage").getAsDouble()  * width / total);
 
         total = (int) (Math.log10(total) / Math.log10(total) * width);
         used = (int) (Math.log10(used) / Math.log10(total) * width);
         media = (int) (Math.log10(media) / Math.log10(total) * width);
         synced = (int) (Math.log10(synced) / Math.log10(total) * width);
 
-        total = width;
 
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.HORIZONTAL);
