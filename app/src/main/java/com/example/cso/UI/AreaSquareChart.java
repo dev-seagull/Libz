@@ -70,7 +70,9 @@ public class AreaSquareChart {
 
         layout.addView(temp);
         stackedSquaresLayout.addView(linesLayout);
-        LinearLayout labelsLayout = createLabels(context,total,used,media,synced);
+        LinearLayout labelsLayout = createLabels(context,data.get("totalStorage").getAsDouble()
+                ,data.get("usedSpace").getAsDouble(),data.get("mediaStorage").getAsDouble(),
+                data.get("syncedAssetsStorage").getAsDouble());
         layout.addView(labelsLayout);
         return layout;
     }
@@ -165,10 +167,14 @@ public class AreaSquareChart {
         return a;
     }
 
-    private static LinearLayout createLabels(Context context, int total, int used, int media, int synced){
+    private static LinearLayout createLabels(Context context, double total, double used, double media, double synced){
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
 
+        String formattedTotal = formatStorageSize(total);
+        String formattedUsed = formatStorageSize(used);
+        String formattedMedia = formatStorageSize(media);
+        String formattedSynced = formatStorageSize(synced);
 
         RelativeLayout.LayoutParams totalParams = new RelativeLayout.LayoutParams(
                 RelativeLayout.LayoutParams.WRAP_CONTENT,
@@ -188,32 +194,32 @@ public class AreaSquareChart {
         );
 
         TextView totalText = new TextView(context);
-        totalText.setText("Total");
+        totalText.setText("Total: " + formattedTotal);
         totalText.setTextSize(10f);
         totalText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
-        totalParams.setMargins(10,(total - used) /2,0,0);
+        totalParams.setMargins(30, 0,0,0);
         totalText.setLayoutParams(totalParams);
 
         TextView usedText = new TextView(context);
-        usedText.setText("Used");
+        usedText.setText("Used: " + formattedUsed);
         usedText.setTextSize(10f);
         usedText.getHeight();
         usedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
-        usedParams.setMargins(10,0,0,0);
+        usedParams.setMargins(30,0,0,0);
         usedText.setLayoutParams(usedParams);
 
         TextView mediaText = new TextView(context);
-        mediaText.setText("Media");
+        mediaText.setText("Media: " + formattedMedia);
         mediaText.setTextSize(10f);
         mediaText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
-        mediaParams.setMargins(10,0,0,(media - synced) /2 - 10);
+        mediaParams.setMargins(30,0,0,0);
         mediaText.setLayoutParams(mediaParams);
 
         TextView syncedText = new TextView(context);
-        syncedText.setText("Synced");
+        syncedText.setText("Synced: " + formattedSynced);
         syncedText.setTextSize(10f);
         syncedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
-        syncedParams.setMargins(10,synced/2 ,0,synced/2);
+        syncedParams.setMargins(30,0 ,0,0);
         syncedText.setLayoutParams(syncedParams);
 
         layout.addView(totalText);
@@ -221,5 +227,14 @@ public class AreaSquareChart {
         layout.addView(mediaText);
         layout.addView(syncedText);
         return layout;
+    }
+
+    private static String formatStorageSize(double sizeInGB) {
+        if (sizeInGB < 0.1) {
+            double sizeInMB = sizeInGB * 1024;
+            return String.format("%.1f MB", sizeInMB);
+        } else {
+            return String.format("%.1f GB", sizeInGB);
+        }
     }
 }
