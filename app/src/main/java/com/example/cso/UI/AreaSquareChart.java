@@ -18,7 +18,7 @@ import com.example.cso.MainActivity;
 import com.google.gson.JsonObject;
 
 public class AreaSquareChart {
-    public static View createChart(Context context, JsonObject data) {
+    public static View createStorageChart(Context context, JsonObject data) {
         int width =(int) (UI.getDeviceWidth(context) * 0.35);
         int total = (int) data.get("totalStorage").getAsDouble();
         int used = (int) ( data.get("usedSpace").getAsDouble() * width / total);
@@ -29,7 +29,6 @@ public class AreaSquareChart {
         used = (int) (Math.log10(used) / Math.log10(total) * width);
         media = (int) (Math.log10(media) / Math.log10(total) * width);
         synced = (int) (Math.log10(synced) / Math.log10(total) * width);
-
 
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.HORIZONTAL);
