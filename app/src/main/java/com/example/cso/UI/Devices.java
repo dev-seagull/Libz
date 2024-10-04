@@ -4,6 +4,8 @@ import static com.example.cso.MainActivity.activity;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.DisplayMetrics;
@@ -20,17 +22,21 @@ import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.example.cso.Android;
 import com.example.cso.DeviceHandler;
 import com.example.cso.DeviceStatusSync;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.github.mikephil.charting.charts.HorizontalBarChart;
+import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieEntry;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.FutureTask;
 
 public class Devices {
@@ -298,7 +304,6 @@ public class Devices {
         LinearLayout layout = Details.createInnerDetailsLayout(context);
         JsonObject data = getSyncedAssetsLocationStatus(deviceId);
         Log.d("DeviceStatusSync", "assets location data : " + data);
-//        PieChart pieChart = Details.createPieChartForDeviceSyncedAssetsLocationStatus(context, data);
         LinearLayout treeMapChartLayout = CustomTreeMapChart.createChart(context, data); ;
         layout.addView(treeMapChartLayout);
         return layout;
@@ -326,10 +331,17 @@ public class Devices {
     }
 
     public static LinearLayout createChartForSourceStatus(Context context, String deviceId){
-//        LinearLayout layout = Details.createInnerDetailsLayout(context);
+        List<PackageInfo> packagesInfo = Android.getInstalledApps();
+        for(PackageInfo packageInfo: packagesInfo){
+            File file = Android.getAppDirectories(packageInfo);
+            Android.getMediaSizeFromDirectory(file);
+        }
+
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
         JsonObject data = getAssetsSourceStatus(deviceId);
         Log.d("DeviceStatusSync", "assets source data : " + data);
-        LinearLayout layout = createHorizontalBarAssetLocationChartView(context, data) ;
+        PieChart chartLayout = Details.createPieChartForDeviceSourceStatus(context, data);
+        layout.addView(chartLayout);
         return layout;
     }
 

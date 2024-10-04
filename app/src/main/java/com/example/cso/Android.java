@@ -1,6 +1,10 @@
 package com.example.cso;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.MediaScannerConnection;
 import android.os.Environment;
@@ -11,8 +15,10 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Queue;
 import java.util.concurrent.Callable;
@@ -282,6 +288,61 @@ public class Android {
     public static void startThreads(Activity activity){
         startDeleteRedundantAndroidThread();
         startUpdateAndroidThread(activity);
+    }
+
+    public static List<PackageInfo> getInstalledApps() {
+        PackageManager pm = MainActivity.activity.getApplicationContext().getPackageManager();
+
+        List<PackageInfo> packages = pm.getInstalledPackages(0);
+        List<PackageInfo> installedApps = new ArrayList<>();
+
+        for (PackageInfo packageInfo : packages) {
+//            if ((packageInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {
+                installedApps.add(packageInfo);
+//            }
+        }
+        Log.i("AppDirectoriesUtil", "App: " + installedApps);
+        return installedApps;
+    }
+
+    public static File getAppDirectories(PackageInfo packageInfo) {
+        String packageName = packageInfo.packageName;
+
+        File internalDir = new File(MainActivity.activity.getApplicationContext()
+                .getFilesDir().getParentFile().getAbsolutePath().replace(
+                        MainActivity.activity.getApplicationContext().getPackageName(), packageName));
+
+        File externalDir = new File(Environment.getExternalStorageDirectory() + "/Android/data/" + packageName);
+
+
+        Log.i("AppDirectoriesUtil", "App: " + packageName);
+        Log.i("AppDirectoriesUtil", "Internal Storage Directory: " + internalDir.getAbsolutePath());
+        Log.i("AppDirectoriesUtil", "External Storage Directory: " + externalDir.getAbsolutePath());
+        return internalDir;
+    }
+
+    public static long getMediaSizeFromDirectory(File rootDir) {
+        long totalSize = 0;
+
+        Queue<File> queue = new LinkedList<>();
+        queue.add(rootDir);
+
+        while (!queue.isEmpty()) {
+            File currentDir = queue.poll();
+            File[] files = currentDir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        queue.add(file);
+                    } else if (file.isFile() &&  ( Media.isImage(file.getName())
+                            | Media.isVideo(file.getName())) ) {
+                        totalSize += file.length();
+                    }
+                }
+            }
+        }
+        Log.i("AppDirectoriesUtil", "Total size: " + totalSize);
+        return totalSize;
     }
 }
 

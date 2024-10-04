@@ -108,7 +108,7 @@ public class Details {
 
     public static PieChart createPieChartForDeviceStorageStatus(Context context, JsonObject data) {
         PieChart pieChart = new PieChart(context);
-        configurePieChartDimensions(pieChart);
+        configurePieChartDimensions(pieChart, context);
         if (data != null && data.size() > 0){
             configurePieChartDataForDeviceStorageStatus(pieChart, data);
             configurePieChartLegend(pieChart);
@@ -201,7 +201,7 @@ public class Details {
 
     public static PieChart createPieChartForDeviceSourceStatus(Context context, JsonObject data) {
         PieChart pieChart = new PieChart(context);
-        configurePieChartDimensions(pieChart);
+        configurePieChartDimensions(pieChart, context);
         if (data != null && data.size() > 0){
             configurePieChartDataForDeviceSourceStatus(pieChart, data);
             configurePieChartLegend(pieChart);
@@ -249,17 +249,19 @@ public class Details {
         int[] colors = MainActivity.currentTheme.deviceAppStorageChartColors;
         dataSet.setColors(colors);
         dataSet.setValueTextColor(Color.WHITE);
-        dataSet.setValueTextSize(12f);
+        dataSet.setValueTextSize(10f);
 
         dataSet.setValueFormatter(new PieChartValueFormatter());
 
         dataSet.setDrawValues(true);
-        dataSet.setValueLinePart1OffsetPercentage(80f);
-        dataSet.setValueLinePart1Length(0.3f);
-        dataSet.setValueLinePart2Length(0.4f);
+        dataSet.setValueLinePart1OffsetPercentage(200f);
+        dataSet.setValueLinePart1Length(0.5f);
+        dataSet.setValueLinePart2Length(0.8f);
         dataSet.setValueLineWidth(2f);
-        dataSet.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+        dataSet.setYValuePosition(PieDataSet.ValuePosition.INSIDE_SLICE);
         dataSet.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+        dataSet.setValueLinePart1OffsetPercentage(100f);
+        dataSet.setValueLineVariableLength(true);
 
 
         PieData data = new PieData(dataSet);
@@ -272,7 +274,7 @@ public class Details {
 
     public static PieChart createPieChartForDeviceSyncedAssetsLocationStatus(Context context, JsonObject data){
         PieChart pieChart = new PieChart(context);
-        configurePieChartDimensions(pieChart);
+        configurePieChartDimensions(pieChart, context);
         if (data != null && data.size() > 0){
             configurePieChartDataForDeviceSyncedAssetsLocationStatus(pieChart, data);
             configurePieChartLegend(pieChart);
@@ -319,20 +321,11 @@ public class Details {
         pieChart.setDrawHoleEnabled(false);
     }
 
-    public static void configurePieChartDimensions(PieChart pieChart) {
-        pieChart.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-
-        int chartHeight = (int) (displayMetrics.heightPixels * 0.25);
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                displayMetrics.widthPixels, chartHeight
-        );
-
-        pieChart.setLayoutParams(layoutParams);
+    public static void configurePieChartDimensions(PieChart pieChart, Context context) {
+        int width =(int) (UI.getDeviceWidth(context) * 0.4);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, width);
+        params.setMargins(0,10,0,10);
+        pieChart.setLayoutParams(params);
     }
 
     public static void configurePieChartLegend(PieChart pieChart) {
@@ -342,7 +335,7 @@ public class Details {
 
     public static PieChart createPieChartForAccount(Context context, String userEmail){
         PieChart pieChart = new PieChart(context);
-        configurePieChartDimensions(pieChart);
+        configurePieChartDimensions(pieChart, context);
         configurePieChartDataForAccount(pieChart, userEmail);
         configurePieChartLegend(pieChart);
 //        configurePieChartInteractions(pieChart);
