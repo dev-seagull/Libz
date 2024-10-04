@@ -63,7 +63,6 @@ public class Devices {
         ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromDB();
         for (DeviceHandler device : devices) {
             if (!deviceButtonExistsInUI(device.getDeviceId(), activity)) {
-                Log.d("ui","creating button for device " + device.getDeviceName());
                 View newDeviceButtonView = createNewDeviceMainView(activity, device);
                 MainActivity.activity.runOnUiThread(() -> deviceButtons.addView(newDeviceButtonView));
             }
@@ -78,7 +77,6 @@ public class Devices {
             CharSequence contentDescription = deviceButtonsChildView.getContentDescription();
             if(contentDescription != null){
                 if(contentDescription.toString().equalsIgnoreCase(deviceId)) {
-                    Log.d("ui", deviceId+ " exists.");
                     return true;
                 }
             }
@@ -100,6 +98,7 @@ public class Devices {
 
         RelativeLayout buttonFrame = createNewDeviceButtonLayout(context, device);
         FrameLayout frameLayout = Details.createFrameLayoutForButtonDetails(context,"device",device.getDeviceId());
+
         activity.runOnUiThread(() -> {
             layout.addView(buttonFrame);
             layout.addView(frameLayout);
@@ -146,6 +145,44 @@ public class Devices {
         return newDeviceButton;
     }
 
+    public static void addEffectsToDeviceButton(Button androidDeviceButton, Context context){
+        Drawable deviceDrawable = MainActivity.currentTheme.deviceIcon;
+        androidDeviceButton.setCompoundDrawablesWithIntrinsicBounds
+                (deviceDrawable, null, null, null);
+
+        UI.addGradientEffectToButton(androidDeviceButton,MainActivity.currentTheme.deviceButtonColors);
+
+        androidDeviceButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        androidDeviceButton.setTextColor(MainActivity.currentTheme.primaryTextColor);
+        androidDeviceButton.setTextSize(12);
+        androidDeviceButton.setPadding(40,0,150,0);
+
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                UI.getDeviceHeight(context) / 18
+        );
+        androidDeviceButton.setLayoutParams(layoutParams);
+    }
+
+    public static void setListenerToDeviceButtons(Button button, DeviceHandler device){
+        button.setOnClickListener( view -> {
+            if (MainActivity.isAnyProccessOn) {// clickable false
+                return;
+            }
+            FrameLayout detailsView = Details.getDetailsView(button);
+            if (detailsView.getVisibility() == View.VISIBLE) {
+                detailsView.setVisibility(View.GONE);
+            } else {
+                detailsView.setVisibility(View.VISIBLE);
+            }
+
+            RelativeLayout parent = (RelativeLayout) view.getParent();
+            reInitializeDeviceButtonsLayout(parent,activity,device);
+        });
+    }
+
     public static Button createNewDeviceThreeDotsButton(Context context,String deviceId, Button deviceButton){
         Button newThreeDotButton = new Button(context);
         newThreeDotButton.setContentDescription(deviceId + "threeDot");
@@ -168,27 +205,6 @@ public class Devices {
         newThreeDotButton.setVisibility(View.VISIBLE);
         newThreeDotButton.bringToFront();
         return newThreeDotButton;
-    }
-
-    public static void addEffectsToDeviceButton(Button androidDeviceButton, Context context){
-        Drawable deviceDrawable = MainActivity.currentTheme.deviceIcon;
-        androidDeviceButton.setCompoundDrawablesWithIntrinsicBounds
-                (deviceDrawable, null, null, null);
-
-        UI.addGradientEffectToButton(androidDeviceButton,MainActivity.currentTheme.deviceButtonColors);
-
-        androidDeviceButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        androidDeviceButton.setTextColor(MainActivity.currentTheme.primaryTextColor);
-        androidDeviceButton.setTextSize(12);
-        androidDeviceButton.setPadding(40,0,150,0);
-
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                UI.getDeviceHeight(context) / 18
-        );
-        androidDeviceButton.setLayoutParams(layoutParams);
     }
 
     public static void addEffectsToThreeDotButton(Button threeDotButton, Context context){
@@ -223,23 +239,6 @@ public class Devices {
         });
     }
 
-    public static void setListenerToDeviceButtons(Button button, DeviceHandler device){
-        button.setOnClickListener( view -> {
-            if (MainActivity.isAnyProccessOn) {// clickable false
-                return;
-            }
-            FrameLayout detailsView = Details.getDetailsView(button);
-            if (detailsView.getVisibility() == View.VISIBLE) {
-                detailsView.setVisibility(View.GONE);
-            } else {
-                detailsView.setVisibility(View.VISIBLE);
-            }
-
-            RelativeLayout parent = (RelativeLayout) view.getParent();
-            reInitializeDeviceButtonsLayout(parent,activity,device);
-        });
-    }
-
     public static PopupMenu setPopUpMenuOnButton(Activity activity, Button button, String type) {
         PopupMenu popupMenu = new PopupMenu(activity.getApplicationContext(), button, Gravity.CENTER);
 
@@ -269,6 +268,8 @@ public class Devices {
     public static boolean isCurrentDevice(String deviceId) {
         return deviceId.equals(MainActivity.androidUniqueDeviceIdentifier);
     } // for more data
+
+
 
     public static LinearLayout createChartForStorageStatus(Context context, String deviceId) {
         LinearLayout layout = Details.createInnerDetailsLayout(context);
@@ -439,7 +440,6 @@ public class Devices {
 
         return layout;
     }
-
 
     private static LinearLayout createHorizontalBarAssetLocationChartView(Context context, JsonObject data){
         LinearLayout layout = Details.createInnerDetailsLayout(context);

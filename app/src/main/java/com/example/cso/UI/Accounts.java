@@ -42,13 +42,12 @@ public class Accounts {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        params.setMargins(0,UI.dpToPx(26),0,0);
+        params.setMargins(0,UI.dpToPx(24),0,0);
         parentLayout.setLayoutParams(params);
         accountButtonsId = View.generateViewId();
         parentLayout.setId(accountButtonsId);
         return parentLayout;
     }
-
 
     public static void setupAccountButtons(Activity activity){ // define
         activity.runOnUiThread(() -> {
@@ -59,24 +58,22 @@ public class Accounts {
             for (String[] accountRow : accountRows) {
                 String userEmail = accountRow[0];
                 String type = accountRow[1];
-                if (type.equals("primary")) {
-                } else if (type.equals("backup")) {
+                if (type.equals("backup")) {
                     if (accountButtonDoesNotExistsInUI(userEmail)){
                         LinearLayout newAccountButtonView = createNewAccountMainView(activity, userEmail);
-                        backupAccountsLinearLayout.addView(newAccountButtonView);
+                        MainActivity.activity.runOnUiThread(() ->backupAccountsLinearLayout.addView(newAccountButtonView));
                     }
                 }
             }
-            // add a back up account button
             if (accountButtonDoesNotExistsInUI("add a back up account")){
                 LinearLayout addABackupAccountButtonView = createNewAccountMainView(activity, "add a backup account");
-                backupAccountsLinearLayout.addView(addABackupAccountButtonView);
+                MainActivity.activity.runOnUiThread(() ->backupAccountsLinearLayout.addView(addABackupAccountButtonView));
             }
         });
 
     }
 
-    public static boolean accountButtonDoesNotExistsInUI(String userEmail){ // need change
+    public static boolean accountButtonDoesNotExistsInUI(String userEmail){
         LinearLayout backupButtonsLinearLayout = MainActivity.activity.findViewById(accountButtonsId);
         int backupButtonsCount = backupButtonsLinearLayout.getChildCount();
         for(int i=0 ; i < backupButtonsCount ; i++){
@@ -102,14 +99,13 @@ public class Accounts {
         layout.setGravity(Gravity.CENTER);
 
         RelativeLayout buttonFrame = createNewAccountButtonLayout(context, userEmail);
-        LinearLayout detailsLayout = Details.createDetailsLayout(context);
+        FrameLayout frameLayout = Details.createFrameLayoutForButtonDetails(context,"account",userEmail);
 
-        ViewPager2 pager = DetailsViewPager.createViewerPage(context, userEmail, "account");
-        detailsLayout.addView(pager);
-
-        layout.addView(buttonFrame);
-        layout.addView(detailsLayout);
-        layout.setContentDescription(userEmail);
+        MainActivity.activity.runOnUiThread(() -> {
+            layout.addView(buttonFrame);
+            layout.addView(frameLayout);
+            layout.setContentDescription(userEmail);
+        });
         return layout;
     }
 
@@ -126,7 +122,6 @@ public class Accounts {
 
     public static void reInitializeAccountButtonsLayout(RelativeLayout layout, Context context, String userEmail){
         layout.removeAllViews();
-
         Button newAccountButton = createNewAccountButton(context,userEmail);
         Button threeDotButton = createNewAccountThreeDotsButton(context,userEmail,newAccountButton);
 
@@ -145,7 +140,7 @@ public class Accounts {
 
         RelativeLayout.LayoutParams accountButtonParams = new RelativeLayout.LayoutParams(
                 RelativeLayout.LayoutParams.MATCH_PARENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT
+                Math.min(UI.getDeviceHeight(context) / 14,120)
         );
         accountButtonParams.addRule(RelativeLayout.ALIGN_PARENT_START);
         newLoginButton.setLayoutParams(accountButtonParams);
@@ -170,7 +165,7 @@ public class Accounts {
         MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                170
+                UI.getDeviceHeight(context) / 18
         );
         newLoginButton.setLayoutParams(layoutParams);
     }
@@ -203,20 +198,36 @@ public class Accounts {
     public static Button createNewAccountThreeDotsButton(Context context,String userEmail, Button accountButton){
         Button newThreeDotButton = new Button(context);
         newThreeDotButton.setContentDescription(userEmail + "threeDot");
-        addEffectsToThreeDotButton(newThreeDotButton);
+        addEffectsToThreeDotButton(newThreeDotButton,context);
         setListenerToAccountThreeDotButtons(newThreeDotButton, userEmail);
 
-        RelativeLayout.LayoutParams threeDotButtonParams = new RelativeLayout.LayoutParams(
-                112,
-                112
-        );
+        accountButton.getHeight();
+        int buttonSize =Math.min(UI.getDeviceHeight(context) / 20, 84);
+        accountButton.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        int parentHeight = accountButton.getMeasuredHeight();
+        int topMargin = (parentHeight - buttonSize) / 2 - 8;
+
+        RelativeLayout.LayoutParams threeDotButtonParams = new RelativeLayout.LayoutParams(buttonSize,buttonSize);
         threeDotButtonParams.addRule(RelativeLayout.ALIGN_TOP, accountButton.getId());
         threeDotButtonParams.addRule(RelativeLayout.ALIGN_PARENT_END);
+        threeDotButtonParams.topMargin = topMargin;
+        threeDotButtonParams.rightMargin = 10;
+
         newThreeDotButton.setLayoutParams(threeDotButtonParams);
         newThreeDotButton.setVisibility(View.VISIBLE);
         newThreeDotButton.bringToFront();
-
         return newThreeDotButton;
+    }
+
+    public static void addEffectsToThreeDotButton(Button threeDotButton, Context context){
+        threeDotButton.setBackgroundResource(R.drawable.three_dot_white);
+
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
+                UI.getDeviceHeight(context) / 20,
+                UI.getDeviceHeight(context) / 20
+        );
+
+        threeDotButton.setLayoutParams(layoutParams);
     }
 
     public static void setListenerToAccountThreeDotButtons(Button button, String userEmail) {
@@ -236,17 +247,6 @@ public class Accounts {
                 FirebaseCrashlytics.getInstance().recordException(e);
             }
         });
-    }
-
-    public static void addEffectsToThreeDotButton(Button threeDotButton){
-        threeDotButton.setBackgroundResource(R.drawable.three_dot_white);
-
-        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
-                112,
-                112
-        );
-
-        threeDotButton.setLayoutParams(layoutParams);
     }
 
     public static PopupMenu setPopUpMenuOnButton(Activity activity, Button button, String type) {
