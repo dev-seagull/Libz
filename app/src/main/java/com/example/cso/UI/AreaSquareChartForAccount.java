@@ -13,21 +13,38 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.example.cso.DBHelper;
+import com.example.cso.GoogleDriveFolders;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.google.gson.JsonObject;
 
-public class AreaSquareChart {
-    public static View createStorageChart(Context context, JsonObject data) {
+import java.util.List;
+
+public class AreaSquareChartForAccount {
+
+    public static View createStorageChart(Context context, String userEmail) {
         int width =(int) (UI.getDeviceWidth(context) * 0.35);
-        int total = (int) data.get("totalStorage").getAsDouble();
-        int used = (int) ( data.get("usedSpace").getAsDouble() * width / total);
-        int media = (int) ( data.get("mediaStorage").getAsDouble() * width / total);
-        int synced = (int) ( data.get("syncedAssetsStorage").getAsDouble()  * width / total);
+
+        double earlyTotal = 15;
+        double earlyUsed = 0;
+        double earlySynced = GoogleDriveFolders.getSizeOfAssetsFolder(userEmail);
+        String[] columns = new String[] {"totalStorage","usedStorage","userEmail","type"};
+        List<String[]> account_rows = DBHelper.getAccounts(columns);
+        for (String[] account : account_rows){
+            if (account[2].equals(userEmail) && account[3].equals("backup")){
+                earlyTotal = Double.parseDouble(account[0]) / 1000;
+                earlyUsed = Double.parseDouble(account[1]) / 1000;
+                break;
+            }
+        }
+
+        int total = (int) (earlyTotal * width / earlyTotal);
+        int used = (int) (earlyUsed * width / earlyTotal);
+        int synced = (int) (earlySynced * width / earlyTotal);
 
         total = (int) (Math.log10(total) / Math.log10(total) * width);
         used = (int) (Math.log10(used) / Math.log10(total) * width);
-        media = (int) (Math.log10(media) / Math.log10(total) * width);
         synced = (int) (Math.log10(synced) / Math.log10(total) * width);
 
         LinearLayout layout = new LinearLayout(context);
@@ -43,7 +60,7 @@ public class AreaSquareChart {
         RelativeLayout temp = new RelativeLayout(context);
         temp.setGravity(Gravity.CENTER);
 
-        RelativeLayout stackedSquaresLayout = createStackedSquares(context, total, used, media, synced);
+        RelativeLayout stackedSquaresLayout = createStackedSquares(context, total, used, synced);
         RelativeLayout.LayoutParams stackedParams = new RelativeLayout.LayoutParams(
                 width,
                 width
@@ -63,34 +80,29 @@ public class AreaSquareChart {
 
         linesLayout.setLayoutParams(linesParams);
 
-        int columnCount = Math.min(width / calculateGreatestCommonDivisor(total,used,media,synced),12);
+        int columnCount = Math.min(width / calculateGreatestCommonDivisor(total,used,synced),12);
         drawGridLines(linesLayout, context, columnCount, columnCount);
 
         layout.addView(temp);
         stackedSquaresLayout.addView(linesLayout);
-        LinearLayout labelsLayout = createLabels(context,data.get("totalStorage").getAsDouble()
-                ,data.get("usedSpace").getAsDouble(),data.get("mediaStorage").getAsDouble(),
-                data.get("syncedAssetsStorage").getAsDouble());
+        LinearLayout labelsLayout = createLabels(context,earlyTotal, earlyUsed, earlySynced);
         layout.addView(labelsLayout);
         return layout;
     }
 
-    public static RelativeLayout createStackedSquares(Context context, int square1Size, int square2Size, int square3Size, int square4Size) {
+    public static RelativeLayout createStackedSquares(Context context, int square1Size, int square2Size, int square3Size) {
         RelativeLayout relativeLayout = new RelativeLayout(context);
         ImageView square1 = new ImageView(context);
         ImageView square2 = new ImageView(context);
         ImageView square3 = new ImageView(context);
-        ImageView square4 = new ImageView(context);
 
         square1.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
         square2.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
         square3.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
-        square4.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
 
         addSquareToLayout(relativeLayout, square1, square1Size);
         addSquareToLayout(relativeLayout, square2, square2Size);
         addSquareToLayout(relativeLayout, square3, square3Size);
-        addSquareToLayout(relativeLayout, square4, square4Size);
 
         return relativeLayout;
     }
@@ -141,12 +153,11 @@ public class AreaSquareChart {
         layout.addView(gridView, gridParams);
     }
 
-    private static int calculateGreatestCommonDivisor(int a, int b, int c, int d) {
+    private static int calculateGreatestCommonDivisor(int a, int b, int c) {
         try {
             int gcdAB = calculateGreatestCommonDivisor(a, b);
-            int gcdCD = calculateGreatestCommonDivisor(c, d);
-            int gcdResult = calculateGreatestCommonDivisor(gcdAB, gcdCD);
-            Log.d("AreaChart",a + " " + b + " " + c + " " + d + " : " + gcdResult);
+            int gcdResult = calculateGreatestCommonDivisor(gcdAB, c);
+            Log.d("AreaChart",a + " " + b + " " + c + " : " + gcdResult);
             return gcdResult;
         } catch (Exception e) {
             LogHandler.crashLog(e, "AreaChart");
@@ -166,13 +177,12 @@ public class AreaSquareChart {
         return a;
     }
 
-    private static LinearLayout createLabels(Context context, double total, double used, double media, double synced){
+    private static LinearLayout createLabels(Context context, double total, double used, double synced){
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
 
         String formattedTotal = formatStorageSize(total);
         String formattedUsed = formatStorageSize(used);
-        String formattedMedia = formatStorageSize(media);
         String formattedSynced = formatStorageSize(synced);
 
         RelativeLayout.LayoutParams totalParams = new RelativeLayout.LayoutParams(
@@ -180,10 +190,6 @@ public class AreaSquareChart {
                 RelativeLayout.LayoutParams.WRAP_CONTENT
         );
         RelativeLayout.LayoutParams usedParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT
-        );
-        RelativeLayout.LayoutParams mediaParams = new RelativeLayout.LayoutParams(
                 RelativeLayout.LayoutParams.WRAP_CONTENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT
         );
@@ -207,15 +213,8 @@ public class AreaSquareChart {
         usedParams.setMargins(30,0,0,0);
         usedText.setLayoutParams(usedParams);
 
-        TextView mediaText = new TextView(context);
-        mediaText.setText("Media: " + formattedMedia);
-        mediaText.setTextSize(10f);
-        mediaText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
-        mediaParams.setMargins(30,0,0,0);
-        mediaText.setLayoutParams(mediaParams);
-
         TextView syncedText = new TextView(context);
-        syncedText.setText("Synced: " + formattedSynced);
+        syncedText.setText("Libz: " + formattedSynced);
         syncedText.setTextSize(10f);
         syncedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
         syncedParams.setMargins(30,0 ,0,0);
@@ -223,7 +222,6 @@ public class AreaSquareChart {
 
         layout.addView(totalText);
         layout.addView(usedText);
-        layout.addView(mediaText);
         layout.addView(syncedText);
         return layout;
     }

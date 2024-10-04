@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 public class GoogleDriveFolders {
     public static String parentFolderName = "libz_app";
@@ -265,4 +266,53 @@ public class GoogleDriveFolders {
             deleteSubFolderThread.join();
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
     }
+
+    public static double getSizeOfAssetsFolder(String userEmail) {
+        double[] size = {0};
+        Thread getSizeThread = new Thread(() -> {
+            try {
+                String folderId = getParentFolderId(userEmail, true, null);
+                Drive service = GoogleDrive.initializeDrive(null);
+
+                size[0] = calculateFolderSize(service, folderId);
+
+            } catch (Exception e) {
+                LogHandler.crashLog(e, "GoogleDriveFolder");
+            }
+        });
+
+        getSizeThread.start();
+        try {
+            getSizeThread.join();
+        } catch (Exception e) {
+            LogHandler.crashLog(e, "GoogleDriveFolder");
+        }
+        return size[0];
+    }
+
+    private static double calculateFolderSize(Drive service, String folderId) {
+        double totalSize = 0;
+        try {
+            String query = "'" + folderId + "' in parents and trashed = false";
+            Drive.Files.List request = service.files().list().setQ(query)
+                    .setFields("files(id, name, mimeType, size)"); // Request file ID, name, type, and size
+
+            FileList fileList = request.execute();
+
+            for (File file : fileList.getFiles()) {
+                if ("application/vnd.google-apps.folder".equals(file.getMimeType())) {
+                    totalSize += calculateFolderSize(service, file.getId());
+                } else {
+                    if (file.getSize() != null) {
+                        totalSize += file.getSize();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LogHandler.crashLog(e, "GoogleDriveFolder");
+        }
+
+        return totalSize;
+    }
+
 }

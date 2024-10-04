@@ -269,8 +269,6 @@ public class Devices {
         return deviceId.equals(MainActivity.androidUniqueDeviceIdentifier);
     } // for more data
 
-
-
     public static LinearLayout createChartForStorageStatus(Context context, String deviceId) {
         LinearLayout layout = Details.createInnerDetailsLayout(context);
         JsonObject data = getStorageStatus(deviceId);

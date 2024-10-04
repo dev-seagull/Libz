@@ -277,11 +277,12 @@ public class Accounts {
 
     public static LinearLayout createChartForStorageStatus(Context context, String userEmail){
         LinearLayout layout = Details.createInnerDetailsLayout(context);
-        PieChart pieChart = Details.createPieChartForAccount(context,userEmail);
+        View chart = AreaSquareChartForAccount.createStorageChart(context,userEmail);
 
-        layout.addView(pieChart);
+        layout.addView(chart);
         return layout;
     }
+
 
     public static LinearLayout createChartForSyncAndSourceStatus(Context context, String userEmail){
         LinearLayout layout = Details.createInnerDetailsLayout(context);
