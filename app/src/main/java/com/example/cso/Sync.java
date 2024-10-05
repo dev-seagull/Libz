@@ -6,6 +6,7 @@ import android.util.Log;
 import android.widget.TextView;
 
 import com.example.cso.UI.SyncButton;
+import com.example.cso.UI.SyncDetails;
 import com.example.cso.UI.UI;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
@@ -30,16 +31,12 @@ public class Sync {
 
                 Log.d("service","isAllOfAccountsFull : " + isAllOfAccountsFull);
                 Log.d("service", "any backup account exists: " + accountExists);
-                TextView warningText = MainActivity.activity.findViewById(SyncButton.warningTextViewId);
                 if(!accountExists){
-                    MainActivity.activity.runOnUiThread(() -> {
-                        warningText.setText(
-                                "There is no backup account to sync!");
-                    });
+                    MainActivity.syncDetailsStatus = "There is no backup account to sync!";
+                    SyncDetails.setSyncStatusDetailsTextView(activity);
                 }else if(!InternetManager.isInternetReachable("https://drive.google.com")){
-                    MainActivity.activity.runOnUiThread( () -> {
-                        warningText.setText("No Internet connection");
-                    });
+                    MainActivity.syncDetailsStatus = "No Internet connection";
+                    SyncDetails.setSyncStatusDetailsTextView(activity);
 //                }
 //                else if(isAllOfAccountsFull){
 //                    MainActivity.activity.runOnUiThread(() -> {
@@ -48,7 +45,8 @@ public class Sync {
 //                                        " Add more back up accounts.");
 //                    });
                 }else{
-                    warningText.setText("");
+                    MainActivity.syncDetailsStatus = "";
+                    SyncDetails.setSyncStatusDetailsTextView(activity);
                     for(String[] account_row: account_rows){
                         double freeSpace = GoogleDrive.calculateDriveFreeSpace(account_row);
                         Log.d("service","free space of " + account_row[0] + " : " + freeSpace);
@@ -198,8 +196,8 @@ public class Sync {
                 String fileHash = androidRow[5];
                 String mimeType = androidRow[7];
                 String assetId = androidRow[8];
-                SyncButton.startSyncButtonAnimation(MainActivity.activity);
                 MainActivity.syncDetailsStatus = "Syncing " + fileName + " to " + userEmail + " ...";
+                SyncButton.startSyncButtonAnimation(MainActivity.activity);
                 BackUp backUp = new BackUp();
                 isBackedUp[0] = backUp.backupAndroidToDrive(fileId,fileName, filePath,fileHash,mimeType,assetId,
                         accessToken,userEmail,syncedAssetsFolderId);

@@ -34,6 +34,7 @@ public class Theme {
     public int toolbarElementsColor;
     public Drawable deviceIcon;
     public int threeDotButtonId;
+    public int syncProgressTextColor;
     public String name;
     public static ArrayList<Theme> themes = new ArrayList<>();
 

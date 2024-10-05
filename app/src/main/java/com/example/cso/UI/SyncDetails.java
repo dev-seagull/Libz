@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -16,8 +17,15 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 
 import com.example.cso.DBHelper;
+import com.example.cso.DeviceHandler;
+import com.example.cso.GoogleDriveFolders;
+import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
+import com.google.gson.JsonObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SyncDetails {
 
@@ -46,7 +54,7 @@ public class SyncDetails {
         syncDetailsStatisticsLayoutId = View.generateViewId();
         syncDetailsStatisticsLayout.setId(syncDetailsStatisticsLayoutId);
         TextView textView = new TextView(activity);
-        textView.setText("Sync assets count: "+ DBHelper.countAndroidSyncedAssetsOnThisDevice(MainActivity.androidUniqueDeviceIdentifier));
+        textView.setText("unsynced size : " + getTotalUnsyncedAssetsOfDevices() + " libz folders size : " + getTotalLibzFolderSizes());
         syncDetailsStatisticsLayout.addView(textView);
         return syncDetailsStatisticsLayout;
     }
@@ -82,7 +90,6 @@ public class SyncDetails {
 
         actionButton.setBackground(firstLayer);
     }
-
 
     public static FrameLayout createCircularSyncDetailsButtonContainer(Activity activity) {
         FrameLayout frameLayout = new FrameLayout(activity);
@@ -140,11 +147,48 @@ public class SyncDetails {
     }
 
     public static void setSyncStatusDetailsTextView(Activity activity){
-        String syncStatusDetailsTextView = MainActivity.syncDetailsStatus;
-        if(syncStatusDetailsTextView != null && !syncStatusDetailsTextView.isEmpty()){
-            TextView syncStatusTextView = activity.findViewById(SyncButton.warningTextViewId);
-            syncStatusTextView.setText(MainActivity.syncDetailsStatus);
-        }
+        TextView syncStatusTextView = activity.findViewById(SyncButton.warningTextViewId);
+        MainActivity.activity.runOnUiThread(() -> syncStatusTextView.setText(MainActivity.syncDetailsStatus));
     }
+
+    public static double getTotalLibzFolderSizes(){
+        double[] libzFolderSize = {0};
+
+        Thread getTotalLibzFolderSizesThread = new Thread(() -> {
+            List<String[]> accounts = DBHelper.getAccounts(new String[]{"type","userEmail"});
+
+            for (String[] account: accounts){
+                if (account[0].equals("backup")){
+                    double folderSize = GoogleDriveFolders.getSizeOfAssetsFolder(account[1]);
+                    libzFolderSize[0] += folderSize;
+                    Log.d("SyncDetails","size of " + account[1] + " is " + folderSize);
+                }
+            }
+        });
+        getTotalLibzFolderSizesThread.start();
+        try {
+            getTotalLibzFolderSizesThread.join();
+        }catch (Exception e){
+            LogHandler.crashLog(e,"SyncDetails");
+        }
+        return libzFolderSize[0];
+    }
+
+    public static double getTotalUnsyncedAssetsOfDevices(){
+        double unsyncedAssetsOfDevicesSize = 0;
+        ArrayList<DeviceHandler> devices = DBHelper.getDevicesFromDB();
+        for (DeviceHandler device : devices){
+            JsonObject storageData = Devices.getStorageStatus(device.getDeviceId());
+            double media = storageData.get("mediaStorage").getAsDouble();
+            double synced = 0;
+            if (storageData.has("syncedAssetsStorage")){
+                synced =storageData.get("syncedAssetsStorage").getAsDouble();
+            }
+
+            unsyncedAssetsOfDevicesSize += (media - synced);
+        }
+        return unsyncedAssetsOfDevicesSize;
+    }
+
 
 }

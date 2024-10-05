@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -193,8 +194,11 @@ public class SyncButton {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         params.setMargins(0, UI.dpToPx(20), 0, 0);
         warningText.setGravity(Gravity.CENTER);
-        warningText.setVisibility(View.GONE);
+        warningText.setVisibility(View.VISIBLE);
         warningText.setTextColor(MainActivity.currentTheme.warningTextColor);
+        warningText.setHorizontallyScrolling(true);
+        warningText.setSingleLine(true);
+        warningText.setEllipsize(TextUtils.TruncateAt.END);
         return warningText;
     }
 
