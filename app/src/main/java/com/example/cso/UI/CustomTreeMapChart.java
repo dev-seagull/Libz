@@ -30,20 +30,16 @@ public class CustomTreeMapChart {
             unsynced = jsonData.get("UnSynced").getAsDouble();
         }
 
-        double total = 0.0;
-        for (Map.Entry<String, JsonElement> entry : jsonData.entrySet()) {
-            total += entry.getValue().getAsDouble();
-        }
 
-        double totalAccountSize = 0.0;
         List<String> accountKeys = new ArrayList<>();
         List<Double> accountSizes = new ArrayList<>();
 
+        double total = 0.0;
         for (Map.Entry<String, JsonElement> entry : jsonData.entrySet()) {
+            total += entry.getValue().getAsDouble();
             String key = entry.getKey();
             double size = entry.getValue().getAsDouble();
             if (!key.equals("UnSynced")) {
-                totalAccountSize += size;
                 accountKeys.add(key);
                 accountSizes.add(size);
             }
@@ -91,14 +87,13 @@ public class CustomTreeMapChart {
             ));
         }
 
-
         TextView unsyncedTextView = new TextView(context);
         unsyncedTextView.setText("Unsynced\n" + AreaSquareChart.formatStorageSize(unsynced /1000));
         unsyncedTextView.setGravity(Gravity.CENTER);
         unsyncedTextView.setTextColor(Color.WHITE);
         unsyncedTextView.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
         ));
         layout.addView(unsyncedTextView);
 
@@ -110,38 +105,35 @@ public class CustomTreeMapChart {
                                                     , int remainingWidth, double totalAccountSize) {
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setLayoutParams(new LinearLayout.LayoutParams(
-                remainingWidth, height
-        ));
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(remainingWidth, height);
+        layoutParams.gravity = Gravity.CENTER;
+        layout.setLayoutParams(layoutParams);
+
         int[] colors = new int[]{Color.GREEN, Color.RED, Color.BLUE, Color.YELLOW, Color.BLACK};
         for (int i = 0; i < accountSizes.size(); i++) {
             double accountSize = accountSizes.get(i);
 
-            View view = new View(context);
             int viewHeight = (int) (accountSize * height / totalAccountSize);
-            view.setBackgroundColor(colors[i % colors.length]);
-
-            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(remainingWidth, viewHeight);
-            view.setLayoutParams(layoutParams);
-
-            layout.addView(view);
+            LinearLayout parentLayout = new LinearLayout(context);
+            parentLayout.setOrientation(LinearLayout.VERTICAL);
+            parentLayout.setBackgroundColor(colors[i % colors.length]);
+            parentLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                    remainingWidth, viewHeight
+            ));
+            parentLayout.setGravity(Gravity.CENTER);
 
             TextView textView = new TextView(context);
             textView.setText(accountKeys.get(i)+ "\n" + AreaSquareChart
                     .formatStorageSize(accountSizes.get(i) / 1000));
-            textView.setLayoutParams(new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            ));
             textView.setGravity(Gravity.CENTER);
             textView.setTextColor(Color.WHITE);
+            textView.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT
+            ));
 
-            LinearLayout textContainer = new LinearLayout(context);
-            textContainer.setLayoutParams(new LinearLayout.LayoutParams(remainingWidth, viewHeight));
-            textContainer.setGravity(Gravity.CENTER);
-            textContainer.addView(textView);
-
-            layout.addView(textContainer);
+            parentLayout.addView(textView);
+            layout.addView(parentLayout);
         }
 
         return layout;
