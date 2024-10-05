@@ -1,22 +1,16 @@
 package com.example.cso.UI;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.view.Gravity;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.anychart.enums.MapAsTableMode;
-import com.example.cso.DBHelper;
-import com.example.cso.MainActivity;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +23,6 @@ public class CustomTreeMapChart {
         if (jsonData.has("UnSynced")) {
             unsynced = jsonData.get("UnSynced").getAsDouble();
         }
-
 
         List<String> accountKeys = new ArrayList<>();
         List<Double> accountSizes = new ArrayList<>();
@@ -61,17 +54,18 @@ public class CustomTreeMapChart {
         tempParams.setMargins(0, 10, 0, 10);
         temp.setLayoutParams(tempParams);
 
-        LinearLayout unsyncedView = createUnSyncedView(context,width,height,total,unsynced);
-        LinearLayout accountsView = createAccountsView(context,accountKeys,accountSizes,height,width - unsyncedView.getWidth(),total-unsynced);
+        LinearLayout unsyncedView = createUnsyncedView(context,width,height,total,unsynced);
+        LinearLayout accountsView = createAccountsView(context,accountKeys,accountSizes,height,
+                width - unsyncedView.getWidth(),total-unsynced);
         temp.addView(unsyncedView);
         temp.addView(accountsView);
         layout.addView(temp);
         return layout;
     }
 
-    private static LinearLayout createUnSyncedView(Context context, int width,int height
+    private static LinearLayout createUnsyncedView(Context context, int width, int height
             , double total, double unsynced) {
-        double relation = Math.min(0.4,(unsynced / total));
+        double relation = Math.min(0.55,(unsynced / total));
         width = (int) (relation * width);
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
@@ -113,7 +107,7 @@ public class CustomTreeMapChart {
         for (int i = 0; i < accountSizes.size(); i++) {
             double accountSize = accountSizes.get(i);
 
-            int viewHeight = (int) (accountSize * height / totalAccountSize);
+            int viewHeight = (int) (Math.log10(accountSize + 1) / Math.log10(totalAccountSize + 1) * height);
             LinearLayout parentLayout = new LinearLayout(context);
             parentLayout.setOrientation(LinearLayout.VERTICAL);
             parentLayout.setBackgroundColor(colors[i % colors.length]);

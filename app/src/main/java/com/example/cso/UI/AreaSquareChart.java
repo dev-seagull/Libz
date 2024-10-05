@@ -24,7 +24,15 @@ public class AreaSquareChart {
         int used = (int) ( data.get("usedSpace").getAsDouble() * width / total);
         int media = (int) ( data.get("mediaStorage").getAsDouble() * width / total);
         int synced = (int) ( data.get("syncedAssetsStorage").getAsDouble()  * width / total);
+        Log.d("ui", "area chart total value: " + total);
+        Log.d("ui", "area chart used value: " + used);
+        Log.d("ui", "area chart media value: " + media);
+        Log.d("ui", "area chart synced value: " + synced);
 
+        total = Math.max(1, total);
+        used = Math.max(1, used);
+        media = Math.max(1, media);
+        synced = Math.max(1, synced);
         total = (int) (Math.log10(total) / Math.log10(total) * width);
         used = (int) (Math.log10(used) / Math.log10(total) * width);
         media = (int) (Math.log10(media) / Math.log10(total) * width);
@@ -64,6 +72,7 @@ public class AreaSquareChart {
         linesLayout.setLayoutParams(linesParams);
 
         int columnCount = Math.min(width / calculateGreatestCommonDivisor(total,used,media,synced),12);
+        Log.d("ui", "area square chart column count: " + columnCount);
         drawGridLines(linesLayout, context, columnCount, columnCount);
 
         layout.addView(temp);

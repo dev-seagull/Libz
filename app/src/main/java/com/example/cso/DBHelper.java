@@ -1771,13 +1771,19 @@ public class DBHelper extends SQLiteOpenHelper {
 
     private static int getNumberOfSyncedAssets() {
         int count = 0;
-        String query = "SELECT COUNT(*) FROM DRIVE";
+        String query = "SELECT COUNT(*) FROM DRIVE d as result " +
+                "INNER JOIN ASSET a ON d.fileHash = a.fileHash";
         Cursor cursor = null;
         try {
             cursor = dbReadable.rawQuery(query, null);
             if (cursor.moveToFirst()) {
+                int columnIndex = cursor.getColumnIndex("result");
+                if(columnIndex >= 0){
+                    count = cursor.getInt(columnIndex);
+                }
                 count = cursor.getInt(0);
             }
+            Log.d("ui","synced assets: " + count);
         } catch (Exception e) {
             FirebaseCrashlytics.getInstance().recordException(e);
         } finally {
