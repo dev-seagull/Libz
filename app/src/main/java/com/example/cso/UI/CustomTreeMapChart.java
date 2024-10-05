@@ -36,7 +36,6 @@ public class CustomTreeMapChart {
         layoutParams.setMargins(0, 10, 0, 10);
         layout.setLayoutParams(layoutParams);
 
-
         LinearLayout temp = new LinearLayout(context);
         temp.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams tempParams = new LinearLayout.LayoutParams(
@@ -45,7 +44,6 @@ public class CustomTreeMapChart {
         );
         tempParams.setMargins(0, 10, 0, 10);
         temp.setLayoutParams(tempParams);
-
 
         LinearLayout unsyncedView = createUnSyncedView(context,width,height,total,unsynced);
 

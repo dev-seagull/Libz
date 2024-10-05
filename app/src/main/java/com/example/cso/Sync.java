@@ -199,9 +199,11 @@ public class Sync {
                 String mimeType = androidRow[7];
                 String assetId = androidRow[8];
                 SyncButton.startSyncButtonAnimation(MainActivity.activity);
+                MainActivity.syncDetailsStatus = "Syncing " + fileName + " to " + userEmail + " ...";
                 BackUp backUp = new BackUp();
                 isBackedUp[0] = backUp.backupAndroidToDrive(fileId,fileName, filePath,fileHash,mimeType,assetId,
                         accessToken,userEmail,syncedAssetsFolderId);
+                MainActivity.syncDetailsStatus = "";
                 SyncButton.stopSyncButtonAnimation(MainActivity.activity);
             });
 

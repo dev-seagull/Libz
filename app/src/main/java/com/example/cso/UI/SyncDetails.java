@@ -36,7 +36,6 @@ public class SyncDetails {
             syncDetailsButtonTextView.setGravity(Gravity.CENTER);
             setListenerForSyncDetailsButton(activity);
         });
-
     }
 
     public static LinearLayout createSyncDetailsStatisticsLayout(Activity activity){
@@ -138,6 +137,14 @@ public class SyncDetails {
                 syncDetailsStatisticsLayout.setVisibility(View.GONE);
             }
         });
+    }
+
+    public static void setSyncStatusDetailsTextView(Activity activity){
+        String syncStatusDetailsTextView = MainActivity.syncDetailsStatus;
+        if(syncStatusDetailsTextView != null && !syncStatusDetailsTextView.isEmpty()){
+            TextView syncStatusTextView = activity.findViewById(SyncButton.warningTextViewId);
+            syncStatusTextView.setText(MainActivity.syncDetailsStatus);
+        }
     }
 
 }

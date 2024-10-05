@@ -3,28 +3,20 @@ package com.example.cso.UI;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.LayerDrawable;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.OvalShape;
 import android.os.Build;
-import android.provider.ContactsContract;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
-import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 
-import com.example.cso.BackUp;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.example.cso.SharedPreferencesHandler;
@@ -42,9 +34,7 @@ public class SyncButton {
 
         boolean[] syncState = {SharedPreferencesHandler.getSyncSwitchState()};
         boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
-        if(syncState[0] && isServiceRunning){
-            startSyncButtonAnimation(activity);
-        }else{
+        if(! (syncState[0] && isServiceRunning)){
             SharedPreferencesHandler.setSwitchState("syncSwitchState",false, MainActivity.preferences);
             syncState[0] = false;
         }
@@ -61,6 +51,7 @@ public class SyncButton {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 syncButton.startFillAnimation();
             }
+            SyncDetails.setSyncStatusDetailsTextView(activity);
         });
 
     }
@@ -100,6 +91,7 @@ public class SyncButton {
     public static void stopSyncButtonAnimation(Activity activity){
         LiquidFillButton syncButton = activity.findViewById(syncButtonId);
         activity.runOnUiThread(syncButton::endFillAnimation);
+        SyncDetails.setSyncStatusDetailsTextView(activity);
     }
 
     public static RotateAnimation createContinuousRotateAnimation() {
@@ -194,7 +186,7 @@ public class SyncButton {
         actionButton.setBackground(firstLayer);
     }
 
-    public static TextView createWarningTextView(Activity activity){
+    public static TextView createSyncProgressTextView(Activity activity){
         TextView warningText = new TextView(activity);
         warningTextViewId = View.generateViewId();
         warningText.setId(warningTextViewId);
@@ -278,6 +270,7 @@ public class SyncButton {
         syncDetailsVerticalLayout.setLayoutParams(params);
         LinearLayout syncDetailsStatisticsLayout = SyncDetails.createSyncDetailsStatisticsLayout(activity);
         syncDetailsVerticalLayout.addView(createSyncButtonsParentLayout(activity));
+        syncDetailsVerticalLayout.addView(SyncButton.createSyncProgressTextView(activity));
         syncDetailsVerticalLayout.addView(syncDetailsStatisticsLayout);
 
         return syncDetailsVerticalLayout;

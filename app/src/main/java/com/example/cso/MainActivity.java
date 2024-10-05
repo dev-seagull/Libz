@@ -38,6 +38,7 @@
 
     public class MainActivity extends AppCompatActivity  implements NavigationView.OnNavigationItemSelectedListener{
         public static Theme currentTheme;
+        public static String syncDetailsStatus= "";
         public static boolean isStoragePermissionGranted = false;
         public static boolean isReadAndWritePermissionGranted = false;
         public static boolean isGettingReadAndWritePermission = false;

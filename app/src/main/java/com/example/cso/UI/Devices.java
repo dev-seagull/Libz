@@ -303,7 +303,7 @@ public class Devices {
         LinearLayout layout = Details.createInnerDetailsLayout(context);
         JsonObject data = getSyncedAssetsLocationStatus(deviceId);
         Log.d("DeviceStatusSync", "assets location data : " + data);
-        LinearLayout treeMapChartLayout = CustomTreeMapChart.createChart(context, data); ;
+        LinearLayout treeMapChartLayout = CustomTreeMapChart.createChart(context, data);
         layout.addView(treeMapChartLayout);
         return layout;
     }

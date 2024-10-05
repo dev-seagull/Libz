@@ -3,7 +3,6 @@ package com.example.cso.UI;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageInfo;
-import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.text.Layout;
 import android.text.Spannable;
@@ -13,13 +12,10 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.TypefaceSpan;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -35,7 +31,6 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
-import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 
@@ -69,7 +64,6 @@ public class UI{
         LinearLayout mainLayout = activity.findViewById(R.id.mainLayout);
         mainLayout.addView(Devices.createParentLayoutForDeviceButtons(activity));
         mainLayout.addView(SyncButton.createVerticalLayoutForSyncButtonsAndStatistics(activity));
-        mainLayout.addView(SyncButton.createWarningTextView(activity));
         mainLayout.addView(Accounts.createParentLayoutForAccountsButtons(activity));
     }
 
