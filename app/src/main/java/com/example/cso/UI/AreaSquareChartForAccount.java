@@ -33,8 +33,8 @@ public class AreaSquareChartForAccount {
         List<String[]> account_rows = DBHelper.getAccounts(columns);
         for (String[] account : account_rows){
             if (account[2].equals(userEmail) && account[3].equals("backup")){
-                earlyTotal = Double.parseDouble(account[0]) / 1000;
-                earlyUsed = Double.parseDouble(account[1]) / 1000;
+                earlyTotal = Double.parseDouble(account[0]);
+                earlyUsed = Double.parseDouble(account[1]);
                 break;
             }
         }
@@ -226,12 +226,12 @@ public class AreaSquareChartForAccount {
         return layout;
     }
 
-    private static String formatStorageSize(double sizeInGB) {
-        if (sizeInGB < 0.1) {
-            double sizeInMB = sizeInGB * 1024;
-            return String.format("%.1f MB", sizeInMB);
-        } else {
+    private static String formatStorageSize(double sizeInMB) {
+        if (sizeInMB >= 100) {
+            double sizeInGB = sizeInMB / 1024;
             return String.format("%.1f GB", sizeInGB);
+        } else {
+            return String.format("%.1f MB", sizeInMB);
         }
     }
 

@@ -479,8 +479,8 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public static void insertIntoAccounts(String userEmail,String type,String refreshToken ,String accessToken,
-                                   Double totalStorage , Double usedStorage , Double usedInDriveStorage ,
-                                   Double UsedInGmailAndPhotosStorage,String parentFolderId,
+                                   double totalStorage , double usedStorage , double usedInDriveStorage ,
+                                   double UsedInGmailAndPhotosStorage,String parentFolderId,
                                    String profileFolderId, String assetsFolderId, String databaseFolderId) {
         dbWritable.beginTransaction();
         try{

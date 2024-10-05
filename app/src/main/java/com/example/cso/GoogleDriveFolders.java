@@ -271,8 +271,9 @@ public class GoogleDriveFolders {
         double[] size = {0};
         Thread getSizeThread = new Thread(() -> {
             try {
-                String folderId = getParentFolderId(userEmail, true, null);
-                Drive service = GoogleDrive.initializeDrive(null);
+                String folderId = getParentFolderId(userEmail, false, null);
+                String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
+                Drive service = GoogleDrive.initializeDrive(accessToken);
 
                 size[0] = calculateFolderSize(service, folderId);
 
@@ -294,17 +295,17 @@ public class GoogleDriveFolders {
         double totalSize = 0;
         try {
             String query = "'" + folderId + "' in parents and trashed = false";
-            Drive.Files.List request = service.files().list().setQ(query)
-                    .setFields("files(id, name, mimeType, size)"); // Request file ID, name, type, and size
-
-            FileList fileList = request.execute();
+            FileList fileList = service.files().list().setQ(query)
+                    .setFields("files(id, name, mimeType, size)").execute(); // Request file ID, name, type, and size
 
             for (File file : fileList.getFiles()) {
                 if ("application/vnd.google-apps.folder".equals(file.getMimeType())) {
                     totalSize += calculateFolderSize(service, file.getId());
                 } else {
                     if (file.getSize() != null) {
-                        totalSize += file.getSize();
+                        double fileSize = convertByteToMegaByte(file.getSize());
+                        Log.d("GoogleDriveFolder", "size of " + file.getName() + " is : " + fileSize);
+                        totalSize += fileSize;
                     }
                 }
             }
@@ -315,4 +316,7 @@ public class GoogleDriveFolders {
         return totalSize;
     }
 
+    private static double convertByteToMegaByte(double byteSize){
+        return byteSize / 1024 / 1024;
+    }
 }

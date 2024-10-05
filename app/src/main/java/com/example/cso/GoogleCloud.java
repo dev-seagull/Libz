@@ -7,7 +7,6 @@
 
     import androidx.activity.result.ActivityResultLauncher;
     import androidx.appcompat.app.AppCompatActivity;
-    import androidx.fragment.app.FragmentActivity;
 
     import com.example.cso.UI.Dialogs;
     import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -18,6 +17,7 @@
     import com.google.android.gms.common.api.Scope;
     import com.google.android.gms.tasks.Task;
     import com.google.api.services.drive.Drive;
+    import com.google.api.services.drive.model.About;
     import com.google.firebase.crashlytics.FirebaseCrashlytics;
     import com.google.gson.JsonArray;
     import com.google.gson.JsonObject;
@@ -41,12 +41,7 @@
     import java.util.concurrent.Future;
 
     public class GoogleCloud extends AppCompatActivity {
-        private Activity activity;
         private static GoogleSignInClient googleSignInClient;
-
-        public GoogleCloud(FragmentActivity activity){
-            this.activity = activity;
-        }
 
         public GoogleCloud(){
 
@@ -242,7 +237,6 @@
             }
             return new SignInResult(userEmail, isHandled[0], isInAccounts, tokens, storage, new ArrayList<>());
         }
-
 
         public static SignInResult handleSignInLinkedBackupResult(String userEmail, String refreshToken){
             boolean isInAccounts = false;
@@ -450,29 +444,32 @@
             ExecutorService executor = Executors.newSingleThreadExecutor();
             String accessToken = tokens.getAccessToken();
             Storage[] storage = new Storage[1];
-            Double[] totalStorage = new Double[1];
-            Double[] usedStorage = new Double[1];
-            Double[] usedInDriveStorage = new Double[1];
+            double[] totalStorage = new double[1];
+            double[] usedStorage = new double[1];
+            double[] usedInDriveStorage = new double[1];
             Callable<Storage> backgroundTask = () -> {
                 try {
                     Drive driveService = GoogleDrive.initializeDrive(accessToken);
 
-                    totalStorage[0] = StorageHandler.convertStorageToGigaByte(driveService.about().get()
-                            .setFields("user, storageQuota")
-                            .execute().getStorageQuota().getLimit());
+                    About.StorageQuota storageQuota = driveService.about().get().setFields("user, storageQuota")
+                            .execute().getStorageQuota();
 
-                    usedStorage[0] = StorageHandler.convertStorageToGigaByte(driveService.about().get()
-                            .setFields("user, storageQuota")
-                            .execute().getStorageQuota().getUsage());
-
-                    usedInDriveStorage[0] = StorageHandler.convertStorageToGigaByte(driveService.about().get()
-                            .setFields("user, storageQuota")
-                            .execute().getStorageQuota().getUsageInDrive());
+                    double total = storageQuota.getLimit();
+                    double used = storageQuota.getUsage();
+                    double gmailUsed = storageQuota.getUsageInDrive();
+                    Log.d("GoogleCloud" ,"before convert => total : " + total + " used : " + used);
+                    total = Storage.convertByteToMegaByte(total);
+                    used = Storage.convertByteToMegaByte(used);
+                    gmailUsed = Storage.convertByteToMegaByte(gmailUsed);
+                    Log.d("GoogleCloud" ,"after convert => total : " + total + " used : " + used);
+                    totalStorage[0] = total;
+                    usedStorage[0] = used;
+                    usedInDriveStorage[0] = gmailUsed;
 
                     storage[0] = new Storage(totalStorage[0], usedStorage[0], usedInDriveStorage[0]);
                     return storage[0];
                 } catch (Exception e) {
-                    LogHandler.saveLog("Failed to get the storage : " + e.getLocalizedMessage(), true);
+                    LogHandler.crashLog(e,"GoogleCloud");
                 }
                 return storage[0];
             };
@@ -481,7 +478,7 @@
                 Future<Storage> future = executor.submit(backgroundTask);
                 storage[0] = future.get();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to get the storage in future: " + e.getLocalizedMessage(), true);
+                LogHandler.crashLog(e,"GoogleCloud");
             }finally {
                 executor.shutdown();
             }
@@ -511,30 +508,34 @@
         }
 
         public static class Storage{
-            private Double totalStorage;
-            private Double usedStorage;
-            private Double usedInDriveStorage;
-            private Double UsedInGmailAndPhotosStorage;
+            private double totalStorage;
+            private double usedStorage;
+            private double usedInDriveStorage;
+            private double UsedInGmailAndPhotosStorage;
 
 
-            public Storage(Double totalStorage, Double usedStorage,
-                           Double usedInDriveStorage){
-                this.totalStorage = totalStorage * 1000;
-                this.usedStorage = usedStorage * 1000;
-                this.usedInDriveStorage = usedInDriveStorage * 1000;
-                this.UsedInGmailAndPhotosStorage = (usedStorage - usedInDriveStorage) * 1000;
+            public Storage(double totalStorage, double usedStorage,
+                           double usedInDriveStorage){
+                this.totalStorage = totalStorage;
+                this.usedStorage = usedStorage;
+                this.usedInDriveStorage = usedInDriveStorage;
+                this.UsedInGmailAndPhotosStorage = (usedStorage - usedInDriveStorage);
             }
-            public Double getUsedInDriveStorage() {
+            public double getUsedInDriveStorage() {
                 return usedInDriveStorage;
             }
-            public Double getUsedInGmailAndPhotosStorage() {
+            public double getUsedInGmailAndPhotosStorage() {
                 return UsedInGmailAndPhotosStorage;
             }
-            public Double getTotalStorage() {
+            public double getTotalStorage() {
                 return totalStorage;
             }
-            public Double getUsedStorage() {
+            public double getUsedStorage() {
                 return usedStorage;
+            }
+
+            public static double convertByteToMegaByte(double storage){
+                return storage / 1024 / 1024;
             }
         }
 

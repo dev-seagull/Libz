@@ -25,29 +25,8 @@ public class StorageHandler {
     public void setTotalStorage(double totalStorage) {
         this.totalStorage = totalStorage;
     }
-    public long getBlockSize() {
-        return blockSize;
-    }
-    public void setBlockSize(long blockSize) {
-        this.blockSize = blockSize;
-    }
-    public double getOptimizedFreeSpace() {
-        return desiredFreeSpace;
-    }
-    public void setOptimizedFreeSpace(double optimizedFreeSpace) {
-        this.desiredFreeSpace = optimizedFreeSpace;
-    }
-    public double getOptimizedPercent() {
-        return optimizedPercent;
-    }
-    public void setOptimizedPercent(double optimizedPercent) {
-        this.optimizedPercent = optimizedPercent;
-    }
     public double getFreeSpace() {
         return freeSpace;
-    }
-    public void setFreeSpace(double freeSpace) {
-        this.freeSpace = freeSpace;
     }
 
 
@@ -98,17 +77,6 @@ public class StorageHandler {
         long availableBlocks = statFs.getAvailableBlocksLong();;
         double freeSpaceGB = (availableBlocks * blockSize) / (1024.0 * 1024.0 * 1024.0);
         return Double.valueOf(String.format(Locale.getDefault(),"%.1f", freeSpaceGB));
-    }
-
-
-    public static  double convertStorageToGigaByte(float storage){
-        double divider = (Math.pow(1024,3));
-        double result = storage / divider;
-
-        DecimalFormat decimalFormat = new DecimalFormat("#.###",new DecimalFormatSymbols(Locale.getDefault()));
-        Double formattedResult = Double.parseDouble(decimalFormat.format(result));
-
-        return formattedResult;
     }
 
     public static HashMap<String,String> directoryUIDisplay(){
