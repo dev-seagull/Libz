@@ -650,6 +650,32 @@ public class DBHelper extends SQLiteOpenHelper {
         return resultList;
     }
 
+    public static List<String []> getAndroidTableOnThisDevice(String[] columns, String deviceId){
+        List<String[]> resultList = new ArrayList<>();
+
+        String sqlQuery = "SELECT ";
+        for (String column:columns){
+            sqlQuery += column + ", ";
+        }
+        sqlQuery = sqlQuery.substring(0, sqlQuery.length() - 2);
+        sqlQuery += " FROM ANDROID where device = ? ORDER BY dateModified ASC" ;
+        Cursor cursor = dbReadable.rawQuery(sqlQuery,  new String[]{deviceId});
+        if (cursor.moveToFirst()) {
+            do {
+                String[] row = new String[columns.length];
+                for (int i = 0; i < columns.length; i++) {
+                    int columnIndex = cursor.getColumnIndex(columns[i]);
+                    if (columnIndex >= 0) {
+                        row[i] = cursor.getString(columnIndex);
+                    }
+                }
+                resultList.add(row);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return resultList;
+    }
+
     public static void insertIntoAndroidTable(long assetId,String fileName,String filePath,String device,
                                        String fileHash, Double fileSize,String dateModified,String mimeType) {
         fileHash = fileHash.toLowerCase();
@@ -1307,7 +1333,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
         try {
             if (cursor.moveToFirst()) {
-                sum = cursor.getDouble(0) / Math.pow(10, 3);
+                sum = cursor.getDouble(0) / 1000;
             }
         } catch (Exception e) {
             LogHandler.saveLog("Failed to get storage of videos and photos : " + e.getLocalizedMessage(), true);

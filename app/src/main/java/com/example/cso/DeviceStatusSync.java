@@ -151,7 +151,8 @@ public class DeviceStatusSync {
     public static JsonObject createAssetsLocationStatusJson(){
         JsonObject[] jsonObjects = {new JsonObject()};
         Thread createAssetsLocationStatusJsonThread = new Thread(() -> {
-            ArrayList<String[]> files = (ArrayList<String[]>) DBHelper.getAndroidTable(new String[]{"assetId","fileSize"});
+            ArrayList<String[]> files = (ArrayList<String[]>) DBHelper.getAndroidTableOnThisDevice(
+                    new String[]{"assetId","fileSize"}, MainActivity.androidUniqueDeviceIdentifier);
             if (files.isEmpty()){
                 return;
             }
