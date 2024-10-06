@@ -3,6 +3,7 @@ package com.example.cso.UI;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.media.Image;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -65,7 +66,8 @@ public class Details {
         layout.setGravity(Gravity.CENTER);
 
         layout.setElevation(4f);
-        layout.setBackgroundResource(R.drawable.border_background);
+        GradientDrawable gradientDrawable = UI.createBorderInnerLayoutDrawable(context);
+        layout.setBackground(gradientDrawable);
         layout.setVisibility(View.GONE);
         return layout;
     }
@@ -83,7 +85,8 @@ public class Details {
 
         layout.setPadding(8, 8, 8, 8);
         layout.setElevation(4f);
-        layout.setBackgroundResource(R.drawable.border_background);
+        GradientDrawable gradientDrawable = UI.createBorderInnerLayoutDrawable(context);
+        layout.setBackground(gradientDrawable);
         return layout;
     }
 
@@ -119,9 +122,9 @@ public class Details {
     }
 
     public static void configurePieChartDataForDeviceStorageStatus(PieChart pieChart, JsonObject storageData) {
-        double freeSpace = storageData.get("freeSpace").getAsDouble() * 1000;
-        double mediaStorage = storageData.get("mediaStorage").getAsDouble() * 1000;
-        double usedSpaceExcludingMedia = storageData.get("usedSpaceExcludingMedia").getAsDouble() * 1000;
+        double freeSpace = storageData.get("freeSpace").getAsDouble() * 1024;
+        double mediaStorage = storageData.get("mediaStorage").getAsDouble() * 1024;
+        double usedSpaceExcludingMedia = storageData.get("usedSpaceExcludingMedia").getAsDouble() * 1024;
 
         ArrayList<PieEntry> entries = new ArrayList<>();
 

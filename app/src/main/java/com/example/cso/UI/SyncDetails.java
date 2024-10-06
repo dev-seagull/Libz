@@ -146,9 +146,16 @@ public class SyncDetails {
         });
     }
 
-    public static void setSyncStatusDetailsTextView(Activity activity){
+    public static void setSyncStatusDetailsTextView(Activity activity, boolean isWarning){
         TextView syncStatusTextView = activity.findViewById(SyncButton.warningTextViewId);
-        MainActivity.activity.runOnUiThread(() -> syncStatusTextView.setText(MainActivity.syncDetailsStatus));
+        MainActivity.activity.runOnUiThread(() -> {
+            syncStatusTextView.setText(MainActivity.syncDetailsStatus);
+            if(isWarning){
+                syncStatusTextView.setTextColor(MainActivity.currentTheme.warningTextColor);
+            }else{
+                syncStatusTextView.setTextColor(MainActivity.currentTheme.syncProgressTextColor);
+            }
+        });
     }
 
     public static double getTotalLibzFolderSizes(){

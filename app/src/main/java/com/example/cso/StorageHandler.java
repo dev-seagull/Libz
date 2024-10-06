@@ -110,7 +110,7 @@ public class StorageHandler {
                 } else if (0.0 <= size && size <= 1000) {
                     directorySizes.put(directoryName,"less than one ");
                 }else {
-                    directorySizes.put(directoryName,String.format(Locale.getDefault(),"%.1f", size / 1000));
+                    directorySizes.put(directoryName,String.format(Locale.getDefault(),"%.1f", size / 1024));
                 }
             }
         }catch (Exception e){

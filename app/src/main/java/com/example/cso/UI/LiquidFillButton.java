@@ -54,12 +54,12 @@ public class LiquidFillButton extends FrameLayout {
     }
 
     public void startFillAnimation() {
-        fillAnimator = ObjectAnimator.ofFloat(this, "fillLevel", 0f, 1f);
-        fillAnimator.setDuration(5000);
-        fillAnimator.start();
-        fillAnimator.setRepeatCount(ObjectAnimator.INFINITE);
-        fillAnimator.setRepeatMode(ObjectAnimator.REVERSE);
-        fillAnimator.start();
+//        fillAnimator = ObjectAnimator.ofFloat(this, "fillLevel", 0f, 1f);
+//        fillAnimator.setDuration(5000);
+//        fillAnimator.start();
+//        fillAnimator.setRepeatCount(ObjectAnimator.INFINITE);
+//        fillAnimator.setRepeatMode(ObjectAnimator.REVERSE);
+//        fillAnimator.start();
     }
 
     public void setFillLevel(float fillLevel) {
@@ -72,9 +72,9 @@ public class LiquidFillButton extends FrameLayout {
     }
 
     public void endFillAnimation() {
-        if (fillAnimator != null && fillAnimator.isRunning()) {
-            fillAnimator.cancel();
-        }
-        setFillLevel(0f);
+//        if (fillAnimator != null && fillAnimator.isRunning()) {
+//            fillAnimator.cancel();
+//        }
+//        setFillLevel(0f);
     }
 }

@@ -228,7 +228,7 @@ public class AreaSquareChartForAccount {
 
     private static String formatStorageSize(double sizeInMB) {
         if (sizeInMB >= 100) {
-            double sizeInGB = sizeInMB / 1000;
+            double sizeInGB = sizeInMB / 1024;
             return String.format("%.1f GB", sizeInGB);
         } else {
             return String.format("%.1f MB", sizeInMB);

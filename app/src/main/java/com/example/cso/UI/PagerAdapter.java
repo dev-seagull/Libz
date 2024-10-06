@@ -1,6 +1,7 @@
 package com.example.cso.UI;
 
 import android.content.Context;
+import android.graphics.drawable.GradientDrawable;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.ViewGroup;
@@ -40,7 +41,8 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
         pageLayout.setGravity(Gravity.CENTER);
 
         pageLayout.setElevation(4f);
-        pageLayout.setBackgroundResource(R.drawable.border_background);
+        GradientDrawable gradientDrawable = UI.createBorderInnerLayoutDrawable(context);
+        pageLayout.setBackground(gradientDrawable);
         return new PageViewHolder(pageLayout);
     }
 

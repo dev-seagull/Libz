@@ -57,9 +57,9 @@ public class Theme {
                  int[] deviceAppStorageChartColors, int[] deviceAssetsSyncedStatusChartColors,
                  int[] accountStorageDataChartColors, int menuTextColor, int primaryTextColor,
                  int onSyncButtonGradientStart, int onSyncButtonGradientEnd,
-                 int offSyncButtonGradientStart, int offSyncButtonGradientEnd, int warningTextColor,
-                 int toolbarBackgroundColor, int toolbarElementsColor, Drawable deviceIcon,
-                    int threeDotButtonId) {
+                 int offSyncButtonGradientStart, int offSyncButtonGradientEnd,int syncProgressTextColor,
+                 int warningTextColor, int toolbarBackgroundColor,
+                 int toolbarElementsColor, Drawable deviceIcon, int threeDotButtonId) {
         this.name = name;
         this.primaryBackgroundColor = primaryBackgroundColor;
         this.deviceButtonColors = deviceButtonColors;
@@ -75,6 +75,7 @@ public class Theme {
         this.OnSyncButtonGradientEnd = onSyncButtonGradientEnd;
         this.OffSyncButtonGradientStart = offSyncButtonGradientStart;
         this.OffSyncButtonGradientEnd = offSyncButtonGradientEnd;
+        this.syncProgressTextColor = syncProgressTextColor;
         this.warningTextColor = warningTextColor;
         this.toolbarBackgroundColor = toolbarBackgroundColor;
         this.toolbarElementsColor = toolbarElementsColor;
@@ -122,11 +123,12 @@ public class Theme {
                 },
                 Color.parseColor("#202124"),
                 Color.WHITE,  //primaryTextColor
-                Color.parseColor("#388E3C"),
-                Color.parseColor("#80CBC4"),
+                Color.parseColor("#388E3C"), // onSyncButtonGradientStart (for sync progress)
+                Color.parseColor("#80CBC4"), // onSyncButtonGradientEnd (for sync progress)
                 Color.parseColor("#90A4AE"),
                 Color.parseColor("#B0BEC5"),
-                Color.parseColor("#FF5722"),
+                Color.parseColor("#00FFB3"), // syncProgressTextColor
+                Color.parseColor("#FF5722"), // warningTextColor
                 Color.parseColor("#6A5ACD"), // toolbar background
                 Color.parseColor("#FFFFFF"), // toolbar elements
                 MainActivity.activity.getResources().getDrawable((R.drawable.white_device)),
@@ -176,6 +178,7 @@ public class Theme {
                 Color.parseColor("#4DB6AC"), // On sync button gradient end: softer teal
                 Color.parseColor("#B0BEC5"), // Off sync button gradient start: cool gray
                 Color.parseColor("#CFD8DC"), // Off sync button gradient end: lighter gray
+                Color.parseColor("#00E5FF"), // syncProgressTextColor
                 Color.parseColor("#FF5252"),  // Warning text color: red for high visibility
                 Color.parseColor("#5C6BC0"), // Toolbar background: soft, muted indigo
                 Color.parseColor("#FFFFFF"), // toolbar elements
@@ -227,6 +230,7 @@ public class Theme {
                 Color.parseColor("#1565C0"), // On sync button gradient end
                 Color.parseColor("#90A4AE"), // Off sync button gradient start
                 Color.parseColor("#B0BEC5"), // Off sync button gradient end
+                Color.parseColor("#00E5FF"), // syncProgressTextColor
                 Color.parseColor("#FF5722"), // Warning text color (orange)
                 Color.parseColor("#1E88E5"), // Toolbar background (blue)
                 Color.parseColor("#FFFFFF"), // Toolbar elements (white)
@@ -277,6 +281,7 @@ public class Theme {
                 Color.parseColor("#1565C0"), // On sync button gradient end (darker blue)
                 Color.parseColor("#90A4AE"), // Off sync button gradient start (gray)
                 Color.parseColor("#B0BEC5"), // Off sync button gradient end (lighter gray)
+                Color.parseColor("#00E5FF"), // syncProgressTextColor
                 Color.parseColor("#FF5722"), // Warning text color (orange)
                 Color.parseColor("#333333"), // Toolbar background (dark)
                 Color.parseColor("#FFFFFF"), // Toolbar elements (white)
@@ -327,6 +332,7 @@ public class Theme {
                 Color.parseColor("#004D40"), // On sync button gradient end
                 Color.parseColor("#90A4AE"), // Off sync button gradient start
                 Color.parseColor("#B0BEC5"), // Off sync button gradient end
+                Color.parseColor("#00E5FF"), // syncProgressTextColor
                 Color.parseColor("#FF5722"), // Warning text color (orange)
                 Color.parseColor("#00796B"), // Toolbar background (teal)
                 Color.parseColor("#FFFFFF"), // Toolbar elements (white)
@@ -377,6 +383,7 @@ public class Theme {
                 Color.parseColor("#80CBC4"), // On sync button gradient end
                 Color.parseColor("#B0BEC5"), // Off sync button gradient start
                 Color.parseColor("#90A4AE"), // Off sync button gradient end
+                Color.parseColor("#00E5FF"), // syncProgressTextColor
                 Color.parseColor("#FF5722"),  // Warning text color
                 Color.parseColor("#6A5ACD"), // toolbar background
                                 Color.parseColor("#FFFFFF"), // toolbar elements
@@ -427,6 +434,7 @@ public class Theme {
                 Color.parseColor("#484848"), // On sync button gradient end
                 Color.parseColor("#616161"), // Off sync button gradient start
                 Color.parseColor("#757575"), // Off sync button gradient end
+                Color.parseColor("#00E5FF"), // syncProgressTextColor
                 Color.parseColor("#FF5722"),  // Warning text color
                 Color.parseColor("#6A5ACD"), // toolbar background
                                 Color.parseColor("#FFFFFF"), // toolbar elements
@@ -477,6 +485,7 @@ public class Theme {
                 Color.parseColor("#757575"), // On sync button gradient end
                 Color.parseColor("#90A4AE"), // Off sync button gradient start
                 Color.parseColor("#B0BEC5"), // Off sync button gradient end
+                Color.parseColor("#00E5FF"), // syncProgressTextColor
                 Color.parseColor("#FF5722"), // Warning text color (orange)
                 Color.parseColor("#E0E0E0"), // Toolbar background (light gray)
                 Color.parseColor("#424242"), // Toolbar elements (dark gray)
@@ -535,6 +544,7 @@ public class Theme {
                 Color.parseColor("#1565C0"), // On sync button gradient end
                 Color.parseColor("#90A4AE"), // Off sync button gradient start
                 Color.parseColor("#B0BEC5"), // Off sync button gradient end
+                Color.parseColor("#00E5FF"), // syncProgressTextColor
                 Color.parseColor("#FF5722"), // Warning text color (orange)
                 Color.parseColor("#1565C0"), // Toolbar background (blue)
                 Color.parseColor("#FFFFFF"), // Toolbar elements (white)

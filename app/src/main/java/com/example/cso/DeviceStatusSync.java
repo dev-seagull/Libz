@@ -126,7 +126,7 @@ public class DeviceStatusSync {
             StorageHandler storageHandler = new StorageHandler();
             double freeSpace = storageHandler.getFreeSpace();
             double totalStorage = storageHandler.getTotalStorage();
-            double mediaStorage = Double.parseDouble(DBHelper.getPhotosAndVideosStorage());
+            double mediaStorage = DBHelper.getPhotosAndVideosStorageOnThisDevice();
             double usedSpace = totalStorage - freeSpace;
             double syncedAssetsStorage = DBHelper.getSizeOfSyncedAssetsOnDevice(MainActivity.androidUniqueDeviceIdentifier);
 

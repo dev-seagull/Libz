@@ -706,9 +706,6 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-
-
-
     private static void deleteFromAndroidTable(String filePath, String assetId){
         dbWritable.beginTransaction();
         try {
@@ -1325,24 +1322,31 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
 
-    public static String getPhotosAndVideosStorage(){
+    public static double getPhotosAndVideosStorageOnThisDevice(){
 //        createIndex();
+        Log.d("media","try to get photos and videos");
         double sum = 0.0;
-        String query = "SELECT SUM(fileSize) FROM ANDROID";
-        Cursor cursor = dbReadable.rawQuery(query, null);
+        String query = "SELECT SUM(fileSize) as result FROM ANDROID  where device = ? ;";
+        Cursor cursor = dbReadable.rawQuery(query, new String[]{MainActivity.androidUniqueDeviceIdentifier});
 
         try {
-            if (cursor.moveToFirst()) {
-                sum = cursor.getDouble(0) / 1000;
+            if (cursor!= null && cursor.moveToFirst()) {
+                int columnIndex = cursor.getColumnIndex("result");
+                Log.d("media","result index is " + columnIndex);
+                if (columnIndex >= 0){
+                    sum = cursor.getDouble(columnIndex) / 1024;
+                    Log.d("media","sum is " + sum);
+                }
             }
         } catch (Exception e) {
             LogHandler.saveLog("Failed to get storage of videos and photos : " + e.getLocalizedMessage(), true);
         } finally {
-            cursor.close();
-        }
+            if (cursor != null) {
+                cursor.close();
+            }
 
-//        return String.format("%.1f GB", sum);
-        return String.format("%.1f", sum);
+        }
+        return sum;
     }
 
 //    public void createIndex() {
@@ -1639,7 +1643,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public static String getAssetsFolderId(String userEmail){
         String sqlQuery = "SELECT assetsFolderId FROM ACCOUNTS WHERE userEmail =?";
-        Cursor cursor = null;
+        Cursor cursor ;
         try {
             cursor = dbReadable.rawQuery(sqlQuery, new String[]{userEmail});
             if (cursor!= null && cursor.moveToFirst()) {
@@ -1752,12 +1756,15 @@ public class DBHelper extends SQLiteOpenHelper {
 
     private static int getNumberOfAssets() {
         int count = 0;
-        String query = "SELECT COUNT(*) FROM ASSET";
+        String query = "SELECT COUNT(*) as result FROM ASSET;" ;
         Cursor cursor = null;
         try {
             cursor = dbReadable.rawQuery(query, null);
             if (cursor.moveToFirst()) {
-                count = cursor.getInt(0);
+                int column = cursor.getColumnIndex("result");
+                if(column >= 0){
+                    count = cursor.getInt(column);
+                }
             }
         } catch (Exception e) {
             FirebaseCrashlytics.getInstance().recordException(e);
@@ -1799,8 +1806,8 @@ public class DBHelper extends SQLiteOpenHelper {
         int syncedAssets = getNumberOfSyncedAssets();
         Log.d("ui","total assets: " + totalAssets);
         Log.d("ui","synced assets: " + syncedAssets);
-        if (totalAssets == 0 || syncedAssets == 0) {
-            return 0.0;
+        if (totalAssets == 0) {
+            return 100.0;
         }
         double percentage = ((double) syncedAssets / totalAssets) * 100;
         return percentage;
@@ -1817,7 +1824,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
         Cursor cursor = null;
             try {
-                cursor = dbReadable.rawQuery(query, null);
+                cursor = dbReadable.rawQuery(query, new String[]{deviceId});
 
                 if (cursor != null && cursor.moveToFirst()) {
                     int columnIndex = cursor.getColumnIndex("totalSize");

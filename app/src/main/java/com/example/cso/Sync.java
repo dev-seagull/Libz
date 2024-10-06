@@ -33,10 +33,10 @@ public class Sync {
                 Log.d("service", "any backup account exists: " + accountExists);
                 if(!accountExists){
                     MainActivity.syncDetailsStatus = "There is no backup account to sync!";
-                    SyncDetails.setSyncStatusDetailsTextView(activity);
+                    SyncDetails.setSyncStatusDetailsTextView(activity, true);
                 }else if(!InternetManager.isInternetReachable("https://drive.google.com")){
                     MainActivity.syncDetailsStatus = "No Internet connection";
-                    SyncDetails.setSyncStatusDetailsTextView(activity);
+                    SyncDetails.setSyncStatusDetailsTextView(activity, true);
 //                }
 //                else if(isAllOfAccountsFull){
 //                    MainActivity.activity.runOnUiThread(() -> {
@@ -46,7 +46,7 @@ public class Sync {
 //                    });
                 }else{
                     MainActivity.syncDetailsStatus = "";
-                    SyncDetails.setSyncStatusDetailsTextView(activity);
+                    SyncDetails.setSyncStatusDetailsTextView(activity, false);
                     for(String[] account_row: account_rows){
                         double freeSpace = GoogleDrive.calculateDriveFreeSpace(account_row);
                         Log.d("service","free space of " + account_row[0] + " : " + freeSpace);

@@ -38,6 +38,12 @@ public class AreaSquareChart {
         media = (int) (Math.log10(media) / Math.log10(total) * width);
         synced = (int) (Math.log10(synced) / Math.log10(total) * width);
 
+        Log.d("ui", "after area chart total value: " + total);
+        Log.d("ui", "after area chart used value: " + used);
+        Log.d("ui", "after area chart media value: " + media);
+        Log.d("ui", "after area chart synced value: " + synced);
+
+
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.HORIZONTAL);
         layout.setGravity(Gravity.CENTER);
@@ -239,7 +245,7 @@ public class AreaSquareChart {
 
     public static String formatStorageSize(double sizeInGB) {
         if (sizeInGB < 0.1) {
-            double sizeInMB = sizeInGB * 1000;
+            double sizeInMB = sizeInGB * 1024;
             return String.format("%.1f MB", sizeInMB);
         } else {
             return String.format("%.1f GB", sizeInGB);

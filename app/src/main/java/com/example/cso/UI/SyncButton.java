@@ -52,7 +52,7 @@ public class SyncButton {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 syncButton.startFillAnimation();
             }
-            SyncDetails.setSyncStatusDetailsTextView(activity);
+            SyncDetails.setSyncStatusDetailsTextView(activity, false);
         });
 
     }
@@ -92,7 +92,7 @@ public class SyncButton {
     public static void stopSyncButtonAnimation(Activity activity){
         LiquidFillButton syncButton = activity.findViewById(syncButtonId);
         activity.runOnUiThread(syncButton::endFillAnimation);
-        SyncDetails.setSyncStatusDetailsTextView(activity);
+        SyncDetails.setSyncStatusDetailsTextView(activity, false);
     }
 
     public static RotateAnimation createContinuousRotateAnimation() {

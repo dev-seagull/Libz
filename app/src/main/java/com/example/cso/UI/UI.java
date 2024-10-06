@@ -3,6 +3,7 @@ package com.example.cso.UI;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageInfo;
+import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.text.Layout;
 import android.text.Spannable;
@@ -11,9 +12,11 @@ import android.text.style.AlignmentSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.TypefaceSpan;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -24,6 +27,8 @@ import com.example.cso.DBHelper;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
+import com.example.cso.SharedPreferencesHandler;
+import com.example.cso.TimerService;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
@@ -67,56 +72,18 @@ public class UI{
         mainLayout.addView(Accounts.createParentLayoutForAccountsButtons(activity));
     }
 
-    public static void handleStatistics(String deviceId){
-        int total_Assets_count = DBHelper.countAssets();
-        int total_android_assets = DBHelper.countAndroidAssetsOnThisDevice(deviceId);
-        int android_synced_assets_count = DBHelper.countAndroidSyncedAssetsOnThisDevice(deviceId);
-        int unsynced_android_assets =  total_android_assets - android_synced_assets_count;
-        int synced_assets = total_Assets_count -(DBHelper.countAndroidAssets() - DBHelper.countAndroidUnsyncedAssets());
-
-        System.out.println("total_Assets_count : " + total_Assets_count +
-                        "\ntotal_android_assets : " + total_android_assets +
-                        "\nandroid_synced_assets_count : " +  android_synced_assets_count +
-                        "\nunsynced_android_assets : " + unsynced_android_assets +
-//                "\nsynced_assets : " + synced_assets +
-                        "\nDbhelper.countAndroidAssets() : " + DBHelper.countAndroidAssets() +
-                        "\nDbhelper.countAndroidUnsyncedAssets() : " + DBHelper.countAndroidUnsyncedAssets()
-        );
-        DBHelper.getAndroidSyncedAssetsOnThisDevice();
-
-        ArrayList<BarEntry> syncedEntries = new ArrayList<>();
-        syncedEntries.add(new BarEntry(0f, new float[]{android_synced_assets_count}));
-
-        ArrayList<BarEntry> unsyncedEntries = new ArrayList<>();
-        unsyncedEntries.add(new BarEntry(1f, new float[]{unsynced_android_assets}));
-
-        // Create BarDataSets for each category
-        BarDataSet syncedDataSet = new BarDataSet(syncedEntries, "Synced");
-        syncedDataSet.setColor(ColorTemplate.MATERIAL_COLORS[0]); // Customize color
-
-        BarDataSet unsyncedDataSet = new BarDataSet(unsyncedEntries, "Unsynced");
-        unsyncedDataSet.setColor(ColorTemplate.MATERIAL_COLORS[1]);
-
-        BarData barData = new BarData(syncedDataSet, unsyncedDataSet);
-//        dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
-//        dataSet.setStackLabels(new String[]{"Synced", "Unsynced"});
-
-        barData.setValueFormatter(new ValueFormatter() {
-            @Override
-            public String getFormattedValue(float value) {
-                return String.format("%d", (int) value);
-            }
-        });
-        Log.d("Threads","startUpdateUIThread finished");
-    }
-
     public static void startUpdateUIThread(Activity activity){
         Log.d("Threads","startUpdateUIThread started");
         Thread updateUIThread =  new Thread(() -> {
             try{
+                boolean[] syncState = {SharedPreferencesHandler.getSyncSwitchState()};
+                boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
                 activity.runOnUiThread(() -> {
+                    if(! (syncState[0] & isServiceRunning)){
+                        TextView syncProgressText = activity.findViewById(SyncButton.warningTextViewId);
+                        syncProgressText.setText("");
+                    }
                     SyncDetails.handleSyncDetailsButton(activity);
-                    handleStatistics(MainActivity.androidUniqueDeviceIdentifier);
                 });
             }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
         });
@@ -267,6 +234,28 @@ public class UI{
         gradientDrawable.setColors(colors);
         button.setBackground(gradientDrawable);
     }
+
+    public static GradientDrawable createBorderInnerLayoutDrawable(Context context){
+        GradientDrawable drawable = new GradientDrawable();
+
+        drawable.setOrientation(GradientDrawable.Orientation.BOTTOM_TOP);
+        drawable.setColors(new int[] {
+                MainActivity.currentTheme.deviceButtonColors[0]    ,
+                MainActivity.currentTheme.deviceButtonColors[1]
+        });
+
+        int strokeWidth = (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 2, context.getResources().getDisplayMetrics());
+        drawable.setStroke(strokeWidth, Color.BLACK);
+
+        // Set the corner radius
+        float cornerRadius = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 8, context.getResources().getDisplayMetrics());
+        drawable.setCornerRadius(cornerRadius);
+
+        return drawable;
+    }
+
 
 
 //    private void openThemeSelection() {
