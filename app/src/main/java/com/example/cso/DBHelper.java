@@ -1829,7 +1829,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 if (cursor != null && cursor.moveToFirst()) {
                     int columnIndex = cursor.getColumnIndex("totalSize");
                     if(columnIndex >= 0) {
-                        totalSize = cursor.getDouble(columnIndex);
+                        totalSize = cursor.getDouble(columnIndex) / 1024;
                     }
                 }
             } catch (Exception e) {

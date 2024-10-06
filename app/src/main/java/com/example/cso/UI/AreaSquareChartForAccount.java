@@ -39,13 +39,24 @@ public class AreaSquareChartForAccount {
             }
         }
 
-        int total = (int) (earlyTotal * width / earlyTotal);
-        int used = (int) (earlyUsed * width / earlyTotal);
-        int synced = (int) (earlySynced * width / earlyTotal);
+        Log.d("AccountAreaChart","earlyTotal : " + earlyTotal);
+        Log.d("AccountAreaChart", "earlyUsed : " + earlyUsed);
+        Log.d("AccountAreaChart","earlySynced : " + earlySynced);
+        double total = (earlyTotal * width / earlyTotal);
+        double used = (earlyUsed * width / earlyTotal);
+        double synced = (earlySynced * width / earlyTotal);
 
-        total = (int) (Math.log10(total) / Math.log10(total) * width);
-        used = (int) (Math.log10(used) / Math.log10(total) * width);
-        synced = (int) (Math.log10(synced) / Math.log10(total) * width);
+        total = Math.sqrt(total) * width / Math.sqrt(total);
+        used = Math.sqrt(used)  * width / Math.sqrt(total);
+        synced = Math.sqrt(synced) * width / Math.sqrt(total);
+
+        total = Math.sqrt(total) * width / Math.sqrt(total);
+        used = Math.sqrt(used)  * width / Math.sqrt(total);
+        synced = Math.sqrt(synced) * width / Math.sqrt(total);
+
+        Log.d("AccountAreaChart","total : " + total);
+        Log.d("AccountAreaChart", "used : " + used);
+        Log.d("AccountAreaChart","synced : " + synced);
 
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.HORIZONTAL);
@@ -60,7 +71,7 @@ public class AreaSquareChartForAccount {
         RelativeLayout temp = new RelativeLayout(context);
         temp.setGravity(Gravity.CENTER);
 
-        RelativeLayout stackedSquaresLayout = createStackedSquares(context, total, used, synced);
+        RelativeLayout stackedSquaresLayout = createStackedSquares(context,(int) total,(int) used,(int) synced);
         RelativeLayout.LayoutParams stackedParams = new RelativeLayout.LayoutParams(
                 width,
                 width
@@ -80,7 +91,7 @@ public class AreaSquareChartForAccount {
 
         linesLayout.setLayoutParams(linesParams);
 
-        int columnCount = Math.min(width / calculateGreatestCommonDivisor(total,used,synced),12);
+        int columnCount = Math.min(width / calculateGreatestCommonDivisor((int)total,(int)used,(int)synced),12);
         drawGridLines(linesLayout, context, columnCount, columnCount);
 
         layout.addView(temp);
@@ -216,7 +227,7 @@ public class AreaSquareChartForAccount {
         TextView syncedText = new TextView(context);
         syncedText.setText("Libz: " + formattedSynced);
         syncedText.setTextSize(10f);
-        syncedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
+        syncedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
         syncedParams.setMargins(30,0 ,0,0);
         syncedText.setLayoutParams(syncedParams);
 

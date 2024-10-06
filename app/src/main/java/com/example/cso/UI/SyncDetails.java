@@ -53,9 +53,10 @@ public class SyncDetails {
         syncDetailsStatisticsLayout.setVisibility(View.GONE);
         syncDetailsStatisticsLayoutId = View.generateViewId();
         syncDetailsStatisticsLayout.setId(syncDetailsStatisticsLayoutId);
-        TextView textView = new TextView(activity);
-        textView.setText("unsynced size : " + getTotalUnsyncedAssetsOfDevices() + " libz folders size : " + getTotalLibzFolderSizes());
-        syncDetailsStatisticsLayout.addView(textView);
+//        TextView textView = new TextView(activity);
+//        textView.setText("unsynced size : " + getTotalUnsyncedAssetsOfDevices() + " libz folders size : " + getTotalLibzFolderSizes());
+//        syncDetailsStatisticsLayout.addView(textView);
+        syncDetailsStatisticsLayout.addView(SyncDetailsPieChart.createPieChartView(activity));
         return syncDetailsStatisticsLayout;
     }
 
@@ -191,7 +192,7 @@ public class SyncDetails {
             if (storageData.has("syncedAssetsStorage")){
                 synced =storageData.get("syncedAssetsStorage").getAsDouble();
             }
-
+            Log.d("SyncDetails", "media - sync : " + media + " - " + synced + " = " + (media -synced));
             unsyncedAssetsOfDevicesSize += (media - synced);
         }
         return unsyncedAssetsOfDevicesSize;

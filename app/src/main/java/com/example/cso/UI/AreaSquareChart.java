@@ -20,23 +20,38 @@ import com.google.gson.JsonObject;
 public class AreaSquareChart {
     public static View createStorageChart(Context context, JsonObject data) {
         int width =(int) (UI.getDeviceWidth(context) * 0.35);
-        int total = (int) data.get("totalStorage").getAsDouble();
-        int used = (int) ( data.get("usedSpace").getAsDouble() * width / total);
-        int media = (int) ( data.get("mediaStorage").getAsDouble() * width / total);
-        int synced = (int) ( data.get("syncedAssetsStorage").getAsDouble()  * width / total);
+        double total = data.get("totalStorage").getAsDouble();
+        double used = ( data.get("usedSpace").getAsDouble() * width / total);
+        double media = ( data.get("mediaStorage").getAsDouble() * width / total);
+        double synced =  ( data.get("syncedAssetsStorage").getAsDouble()  * width / total);
         Log.d("ui", "area chart total value: " + total);
         Log.d("ui", "area chart used value: " + used);
         Log.d("ui", "area chart media value: " + media);
         Log.d("ui", "area chart synced value: " + synced);
 
-        total = Math.max(1, total);
-        used = Math.max(1, used);
-        media = Math.max(1, media);
-        synced = Math.max(1, synced);
-        total = (int) (Math.log10(total) / Math.log10(total) * width);
-        used = (int) (Math.log10(used) / Math.log10(total) * width);
-        media = (int) (Math.log10(media) / Math.log10(total) * width);
-        synced = (int) (Math.log10(synced) / Math.log10(total) * width);
+//        total = Math.max(1, total);
+//        used = Math.max(1, used);
+//        media = Math.max(1, media);
+//        synced = Math.max(1, synced);
+//        total = (int) (Math.log10(total) / Math.log10(total) * width);
+//        used = (int) (Math.log10(used) / Math.log10(total) * width);
+//        media = (int) (Math.log10(media) / Math.log10(total) * width);
+//        synced = (int) (Math.log10(synced) / Math.log10(total) * width);
+        total = Math.sqrt(total) * width / Math.sqrt(total);
+        used = Math.sqrt(used)  * width / Math.sqrt(total);
+        media = Math.sqrt(media) * width / Math.sqrt(total);
+        synced = Math.sqrt(synced) * width / Math.sqrt(total);
+
+        Log.d("ui", "after2 area chart total value: " + total);
+        Log.d("ui", "after2 area chart used value: " + used);
+        Log.d("ui", "after2 area chart media value: " + media);
+        Log.d("ui", "after2 area chart synced value: " + synced);
+
+
+        total = Math.sqrt(total) * width / Math.sqrt(total);
+        used = Math.sqrt(used)  * width / Math.sqrt(total);
+        media = Math.sqrt(media) * width / Math.sqrt(total);
+        synced = Math.sqrt(synced) * width / Math.sqrt(total);
 
         Log.d("ui", "after area chart total value: " + total);
         Log.d("ui", "after area chart used value: " + used);
@@ -57,7 +72,7 @@ public class AreaSquareChart {
         RelativeLayout temp = new RelativeLayout(context);
         temp.setGravity(Gravity.CENTER);
 
-        RelativeLayout stackedSquaresLayout = createStackedSquares(context, total, used, media, synced);
+        RelativeLayout stackedSquaresLayout = createStackedSquares(context,(int) total,(int) used,(int) media,(int) synced);
         RelativeLayout.LayoutParams stackedParams = new RelativeLayout.LayoutParams(
                 width,
                 width
@@ -77,7 +92,7 @@ public class AreaSquareChart {
 
         linesLayout.setLayoutParams(linesParams);
 
-        int columnCount = Math.min(width / calculateGreatestCommonDivisor(total,used,media,synced),12);
+        int columnCount = Math.min(width / calculateGreatestCommonDivisor((int)total,(int)used,(int)media,(int)synced),12);
         Log.d("ui", "area square chart column count: " + columnCount);
         drawGridLines(linesLayout, context, columnCount, columnCount);
 
