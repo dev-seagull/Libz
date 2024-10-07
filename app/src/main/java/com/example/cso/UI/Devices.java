@@ -271,10 +271,27 @@ public class Devices {
 
     public static LinearLayout createChartForStorageStatus(Context context, String deviceId) {
         LinearLayout layout = Details.createInnerDetailsLayout(context);
-        JsonObject data = getStorageStatus(deviceId);
-        Log.d("DeviceStatusSync", "storage data : " + data);
-        View areaSquareChart = AreaSquareChart.createStorageChart(context,data);
-        layout.addView(areaSquareChart);
+
+        new Thread(() -> {
+            ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
+            MainActivity.activity.runOnUiThread(() -> {
+                loadingImage[0].setBackgroundResource(R.drawable.yellow_loading);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(128,128);
+                params.setMargins(0,64,0,64);
+                loadingImage[0].setLayoutParams(params);
+                layout.addView(loadingImage[0]);
+            });
+            JsonObject data = getStorageStatus(deviceId);
+            Log.d("DeviceSyncStatus","starage for device " + deviceId +" is " + data);
+            View areaSquareChart = AreaSquareChart.createStorageChart(context,data);
+
+            MainActivity.activity.runOnUiThread(() -> {
+                layout.addView(areaSquareChart);
+                layout.removeView(loadingImage[0]);
+            });
+
+        }).start();
+
         return layout;
     }
 
@@ -301,10 +318,27 @@ public class Devices {
 
     public static LinearLayout createChartForSyncedAssetsLocationStatus(Context context, String deviceId){
         LinearLayout layout = Details.createInnerDetailsLayout(context);
-        JsonObject data = getSyncedAssetsLocationStatus(deviceId);
-        Log.d("DeviceStatusSync", "assets location data : " + data);
-        LinearLayout treeMapChartLayout = CustomTreeMapChart.createChart(context, data);
-        layout.addView(treeMapChartLayout);
+
+        new Thread(() -> {
+            ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
+            MainActivity.activity.runOnUiThread(() -> {
+                loadingImage[0].setBackgroundResource(R.drawable.yellow_loading);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(128,128);
+                params.setMargins(0,64,0,64);
+                loadingImage[0].setLayoutParams(params);
+                layout.addView(loadingImage[0]);
+            });
+            JsonObject data = getSyncedAssetsLocationStatus(deviceId);
+            Log.d("DeviceStatusSync", "assets of "+deviceId+" location data : " + data);
+            LinearLayout treeMapChartLayout = CustomTreeMapChart.createChart(context, data);
+
+            MainActivity.activity.runOnUiThread(() -> {
+                layout.addView(treeMapChartLayout);
+                layout.removeView(loadingImage[0]);
+            });
+
+        }).start();
+
         return layout;
     }
 
@@ -330,17 +364,34 @@ public class Devices {
     }
 
     public static LinearLayout createChartForSourceStatus(Context context, String deviceId){
-        List<PackageInfo> packagesInfo = Android.getInstalledApps();
-        for(PackageInfo packageInfo: packagesInfo){
-            File file = Android.getAppDirectories(packageInfo);
-            Android.getMediaSizeFromDirectory(file);
-        }
+//        List<PackageInfo> packagesInfo = Android.getInstalledApps();
+//        for(PackageInfo packageInfo: packagesInfo){
+//            File file = Android.getAppDirectories(packageInfo);
+//            Android.getMediaSizeFromDirectory(file);
+//        }
 
         LinearLayout layout = Details.createInnerDetailsLayout(context);
-        JsonObject data = getAssetsSourceStatus(deviceId);
-        Log.d("DeviceStatusSync", "assets source data : " + data);
-        PieChart chartLayout = Details.createPieChartForDeviceSourceStatus(context, data);
-        layout.addView(chartLayout);
+
+        new Thread(() -> {
+            ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
+            MainActivity.activity.runOnUiThread(() -> {
+                loadingImage[0].setBackgroundResource(R.drawable.yellow_loading);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(128,128);
+                params.setMargins(0,64,0,64);
+                loadingImage[0].setLayoutParams(params);
+                layout.addView(loadingImage[0]);
+            });
+            JsonObject data = getAssetsSourceStatus(deviceId);
+            Log.d("DeviceStatusSync", "assets source data : " + data);
+
+            MainActivity.activity.runOnUiThread(() -> {
+                PieChart chartLayout = Details.createPieChartForDeviceSourceStatus(context, data);
+                layout.addView(chartLayout);
+                layout.removeView(loadingImage[0]);
+            });
+
+        }).start();
+
         return layout;
     }
 

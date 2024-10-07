@@ -306,7 +306,25 @@ public class Accounts {
 
     public static LinearLayout createChartForSyncAndSourceStatus(Context context, String userEmail){
         LinearLayout layout = Details.createInnerDetailsLayout(context);
-        layout.setBackgroundColor(Color.WHITE);
+        new Thread(() -> {
+            ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
+            MainActivity.activity.runOnUiThread(() -> {
+                loadingImage[0].setBackgroundResource(R.drawable.yellow_loading);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(128,128);
+                params.setMargins(0,64,0,64);
+                loadingImage[0].setLayoutParams(params);
+                layout.addView(loadingImage[0]);
+            });
+
+            View chart = AreaSquareChartForAccount.createStorageChart(context,userEmail);
+
+            MainActivity.activity.runOnUiThread(() -> {
+                layout.addView(chart);
+                layout.removeView(loadingImage[0]);
+
+            });
+
+        }).start();
         return layout;
     }
 
