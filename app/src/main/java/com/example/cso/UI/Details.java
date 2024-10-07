@@ -325,7 +325,7 @@ public class Details {
     }
 
     public static void configurePieChartDimensions(PieChart pieChart, Context context) {
-        int width =(int) (UI.getDeviceWidth(context) * 0.4);
+        int width =(int) (UI.getDeviceWidth(context) * 0.35);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, width);
         params.setMargins(0,10,0,10);
         pieChart.setLayoutParams(params);
@@ -462,8 +462,12 @@ public class Details {
 
         return frameLayout;
 
-
     }
+
+//    public static LinearLayout createLoadingLayout(Context context){
+//        LinearLayout layout = createInnerDetailsLayout(context);
+//
+//    }
 
 }
 

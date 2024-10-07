@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
@@ -27,6 +28,7 @@ import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.github.mikephil.charting.charts.PieChart;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
+import com.google.gson.internal.NonNullElementWrapperList;
 
 import java.util.List;
 
@@ -182,6 +184,7 @@ public class Accounts {
                     button.setText("Adding in progress ...");
                     GoogleCloud.signInToGoogleCloud(signInToBackUpLauncher, activity);
                 }else{
+//                    button.setText("Loading ... ");
                     FrameLayout detailsView = Details.getDetailsView(button);
                     if (detailsView.getVisibility() == View.VISIBLE){
                         detailsView.setVisibility(View.GONE);
@@ -220,7 +223,7 @@ public class Accounts {
     }
 
     public static void addEffectsToThreeDotButton(Button threeDotButton, Context context){
-        threeDotButton.setBackgroundResource(R.drawable.three_dot_white);
+        threeDotButton.setBackgroundResource(MainActivity.currentTheme.threeDotButtonId);
 
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
                 UI.getDeviceHeight(context) / 20,
@@ -277,12 +280,29 @@ public class Accounts {
 
     public static LinearLayout createChartForStorageStatus(Context context, String userEmail){
         LinearLayout layout = Details.createInnerDetailsLayout(context);
-        View chart = AreaSquareChartForAccount.createStorageChart(context,userEmail);
 
-        layout.addView(chart);
+        new Thread(() -> {
+            ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
+            MainActivity.activity.runOnUiThread(() -> {
+                loadingImage[0].setBackgroundResource(R.drawable.yellow_loading);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(128,128);
+                params.setMargins(0,64,0,64);
+                loadingImage[0].setLayoutParams(params);
+                layout.addView(loadingImage[0]);
+            });
+
+            View chart = AreaSquareChartForAccount.createStorageChart(context,userEmail);
+
+            MainActivity.activity.runOnUiThread(() -> {
+                layout.addView(chart);
+                layout.removeView(loadingImage[0]);
+
+            });
+
+        }).start();
+
         return layout;
     }
-
 
     public static LinearLayout createChartForSyncAndSourceStatus(Context context, String userEmail){
         LinearLayout layout = Details.createInnerDetailsLayout(context);

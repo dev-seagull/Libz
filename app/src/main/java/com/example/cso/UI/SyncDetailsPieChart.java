@@ -1,5 +1,6 @@
 package com.example.cso.UI;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.view.View;
@@ -17,21 +18,30 @@ import java.util.ArrayList;
 
 public class SyncDetailsPieChart {
 
-    public static View createPieChartView(Context context){
-        PieChart pieChart = new PieChart(context);
-        configurePieChartDimensions(pieChart, context);
+    public static View createPieChartView(Activity activity){
+        final PieChart[] pieChart = new PieChart[1];
+        activity.runOnUiThread(() -> {
+            pieChart[0] = new PieChart(activity);
+            configurePieChartDimensions(pieChart[0], activity);
+        });
         double libzFolderSize = SyncDetails.getTotalLibzFolderSizes();
         double unsyncedMediaSize = SyncDetails.getTotalUnsyncedAssetsOfDevices();
-        configurePieChartDataForSyncDetails(pieChart,libzFolderSize,unsyncedMediaSize);
-        configurePieChartLegend(pieChart);
-        pieChart.invalidate();
-        return pieChart;
+        activity.runOnUiThread(() -> {
+            configurePieChartDataForSyncDetails(pieChart[0],libzFolderSize,unsyncedMediaSize);
+            configurePieChartLegend(pieChart[0]);
+            pieChart[0].invalidate();
+        });
+        return pieChart[0];
     }
 
     public static void configurePieChartDataForSyncDetails(PieChart pieChart,double libzFolderSize,double unsyncedMediaSize) {
         ArrayList<PieEntry> entries = new ArrayList<>();
-        entries.add(new PieEntry((float) libzFolderSize, "Synced"));
-        entries.add(new PieEntry((float) unsyncedMediaSize, "unSynced"));
+        if (libzFolderSize != 0){
+            entries.add(new PieEntry((float) libzFolderSize, "Synced"));
+        }
+        if (unsyncedMediaSize != 0){
+            entries.add(new PieEntry((float) unsyncedMediaSize, "unSynced"));
+        }
         configurePieChartDataFormatForDeviceSyncedAssetsLocationStatus(pieChart, entries);
     }
 

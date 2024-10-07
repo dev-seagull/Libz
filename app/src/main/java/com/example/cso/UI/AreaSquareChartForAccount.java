@@ -25,6 +25,59 @@ public class AreaSquareChartForAccount {
 
     public static View createStorageChart(Context context, String userEmail) {
         int width =(int) (UI.getDeviceWidth(context) * 0.35);
+        double[] dimensions = getRegularizedDimensions(width, userEmail);
+        double total = dimensions[0];
+        double used = dimensions[1];
+        double synced = dimensions[2];
+        double earlyTotal = dimensions[3];
+        double earlyUsed = dimensions[4];
+        double earlySynced = dimensions[5];
+        int columnCount = Math.min(width / calculateGreatestCommonDivisor((int)total,(int)used,(int)synced),12);
+        LinearLayout[] layout = new LinearLayout[]{new LinearLayout(context)};
+        MainActivity.activity.runOnUiThread(() -> {
+            layout[0].setOrientation(LinearLayout.HORIZONTAL);
+            layout[0].setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            );
+            layoutParams.setMargins(10, 10, 10, 10);
+            layout[0].setLayoutParams(layoutParams);
+
+            RelativeLayout temp = new RelativeLayout(context);
+            temp.setGravity(Gravity.CENTER);
+
+            RelativeLayout stackedSquaresLayout = createStackedSquares(context,(int) total,(int) used,(int) synced);
+            RelativeLayout.LayoutParams stackedParams = new RelativeLayout.LayoutParams(
+                    width,
+                    width
+            );
+
+            stackedParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+            temp.addView(stackedSquaresLayout, stackedParams);
+
+            LinearLayout linesLayout = new LinearLayout(context);
+            linesLayout.setOrientation(LinearLayout.HORIZONTAL);
+            RelativeLayout.LayoutParams linesParams = new RelativeLayout.LayoutParams(
+                    width,
+                    width
+            );
+            linesParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            linesParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+
+            linesLayout.setLayoutParams(linesParams);
+            drawGridLines(linesLayout, context, columnCount, columnCount);
+
+            layout[0].addView(temp);
+            stackedSquaresLayout.addView(linesLayout);
+            LinearLayout labelsLayout = createLabels(context,earlyTotal, earlyUsed, earlySynced);
+            layout[0].addView(labelsLayout);
+        });
+
+        return layout[0];
+    }
+
+    public static double[] getRegularizedDimensions(int width, String userEmail){
 
         double earlyTotal = 15;
         double earlyUsed = 0;
@@ -58,47 +111,7 @@ public class AreaSquareChartForAccount {
         Log.d("AccountAreaChart", "used : " + used);
         Log.d("AccountAreaChart","synced : " + synced);
 
-        LinearLayout layout = new LinearLayout(context);
-        layout.setOrientation(LinearLayout.HORIZONTAL);
-        layout.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-        );
-        layoutParams.setMargins(10, 10, 10, 10);
-        layout.setLayoutParams(layoutParams);
-
-        RelativeLayout temp = new RelativeLayout(context);
-        temp.setGravity(Gravity.CENTER);
-
-        RelativeLayout stackedSquaresLayout = createStackedSquares(context,(int) total,(int) used,(int) synced);
-        RelativeLayout.LayoutParams stackedParams = new RelativeLayout.LayoutParams(
-                width,
-                width
-        );
-
-        stackedParams.addRule(RelativeLayout.CENTER_IN_PARENT);
-        temp.addView(stackedSquaresLayout, stackedParams);
-
-        LinearLayout linesLayout = new LinearLayout(context);
-        linesLayout.setOrientation(LinearLayout.HORIZONTAL);
-        RelativeLayout.LayoutParams linesParams = new RelativeLayout.LayoutParams(
-                width,
-                width
-        );
-        linesParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-        linesParams.addRule(RelativeLayout.CENTER_IN_PARENT);
-
-        linesLayout.setLayoutParams(linesParams);
-
-        int columnCount = Math.min(width / calculateGreatestCommonDivisor((int)total,(int)used,(int)synced),12);
-        drawGridLines(linesLayout, context, columnCount, columnCount);
-
-        layout.addView(temp);
-        stackedSquaresLayout.addView(linesLayout);
-        LinearLayout labelsLayout = createLabels(context,earlyTotal, earlyUsed, earlySynced);
-        layout.addView(labelsLayout);
-        return layout;
+        return new double[]{total,used,synced,earlyTotal,earlyUsed,earlySynced};
     }
 
     public static RelativeLayout createStackedSquares(Context context, int square1Size, int square2Size, int square3Size) {

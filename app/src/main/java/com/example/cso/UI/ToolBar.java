@@ -3,6 +3,7 @@ package com.example.cso.UI;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -29,6 +30,9 @@ public class ToolBar {
                 (int) (UI.getDeviceHeight(context) * 0.06)
         );
         toolbar.setLayoutParams(toolbarParams);
+        Log.d("toolbar","toolbar is : " + toolbar);
+        Log.d("toolbar"," currentTheme is : " + MainActivity.currentTheme.name);
+
         toolbar.setBackgroundColor(MainActivity.currentTheme.toolbarBackgroundColor);
 
         TextView headerTextView = new TextView(context);

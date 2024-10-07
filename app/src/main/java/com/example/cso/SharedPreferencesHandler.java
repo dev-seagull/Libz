@@ -124,7 +124,11 @@ public class SharedPreferencesHandler {
     }
 
     public static String getCurrentTheme(){
-        return MainActivity.preferences.getString("theme", "purple");
+        String name = MainActivity.preferences.getString("theme", "purple");
+        if (name.equals("purple") || name.equals("dark") || name.equals("gray") || name.equals("teal")){
+            return name;
+        }
+        return "purple";
     }
 
     public static void setCurrentTheme(String theme){
@@ -142,6 +146,24 @@ public class SharedPreferencesHandler {
             setCurrentThemeThread.join();
         }catch (Exception e){
             FirebaseCrashlytics.getInstance().recordException(e);
+        }
+    }
+
+    public static void setAccountStorageStatus(String userEmail, String dataJsonContent){
+        Thread setAccountStorageThread = new Thread(() -> {
+            try{
+                android.content.SharedPreferences.Editor editor = MainActivity.preferences.edit();
+                editor.putString(userEmail, dataJsonContent);
+                editor.apply();
+            }catch (Exception e){
+                LogHandler.crashLog(e,"SharedPreferences");
+            }
+        });
+        setAccountStorageThread.start();
+        try{
+            setAccountStorageThread.join();
+        }catch (Exception e){
+            LogHandler.crashLog(e,"SharedPreferences");
         }
     }
 

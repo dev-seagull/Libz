@@ -146,7 +146,7 @@ public class Devices {
     }
 
     public static void addEffectsToDeviceButton(Button androidDeviceButton, Context context){
-        Drawable deviceDrawable = MainActivity.currentTheme.deviceIcon;
+        Drawable deviceDrawable = MainActivity.activity.getDrawable(MainActivity.currentTheme.deviceIconId);
         androidDeviceButton.setCompoundDrawablesWithIntrinsicBounds
                 (deviceDrawable, null, null, null);
 

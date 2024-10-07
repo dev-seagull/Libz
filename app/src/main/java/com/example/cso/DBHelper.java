@@ -1323,10 +1323,9 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
     public static double getPhotosAndVideosStorageOnThisDevice(){
-//        createIndex();
         Log.d("media","try to get photos and videos");
         double sum = 0.0;
-        String query = "SELECT SUM(fileSize) as result FROM ANDROID  where device = ? ;";
+        String query = "SELECT SUM(fileSize) as result FROM ANDROID where device = ? ;";
         Cursor cursor = dbReadable.rawQuery(query, new String[]{MainActivity.androidUniqueDeviceIdentifier});
 
         try {

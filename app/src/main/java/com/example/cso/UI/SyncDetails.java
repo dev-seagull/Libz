@@ -53,10 +53,23 @@ public class SyncDetails {
         syncDetailsStatisticsLayout.setVisibility(View.GONE);
         syncDetailsStatisticsLayoutId = View.generateViewId();
         syncDetailsStatisticsLayout.setId(syncDetailsStatisticsLayoutId);
-//        TextView textView = new TextView(activity);
-//        textView.setText("unsynced size : " + getTotalUnsyncedAssetsOfDevices() + " libz folders size : " + getTotalLibzFolderSizes());
-//        syncDetailsStatisticsLayout.addView(textView);
-        syncDetailsStatisticsLayout.addView(SyncDetailsPieChart.createPieChartView(activity));
+        new Thread(() -> {
+            ImageView[] loadingImage = new ImageView[]{new ImageView(activity)};
+            MainActivity.activity.runOnUiThread(() -> {
+                loadingImage[0].setBackgroundResource(R.drawable.yellow_loading);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(128,128);
+                params.setMargins(0,64,0,64);
+                loadingImage[0].setLayoutParams(params);
+                syncDetailsStatisticsLayout.addView(loadingImage[0]);
+            });
+
+            View pieChartView = SyncDetailsPieChart.createPieChartView(activity);
+            activity.runOnUiThread(() -> {
+                syncDetailsStatisticsLayout.addView(pieChartView);
+                syncDetailsStatisticsLayout.removeView(loadingImage[0]);
+            });
+        }).start();
+
         return syncDetailsStatisticsLayout;
     }
 
