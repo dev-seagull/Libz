@@ -26,6 +26,7 @@ import com.anychart.chart.common.dataentry.BubbleDataEntry;
 import com.anychart.chart.common.dataentry.DataEntry;
 import com.anychart.charts.Cartesian;
 import com.anychart.charts.Scatter;
+import com.anychart.core.Text;
 import com.anychart.core.cartesian.series.Bubble;
 import com.anychart.data.Set;
 import com.anychart.enums.TooltipPositionMode;
@@ -464,10 +465,17 @@ public class Details {
 
     }
 
-//    public static LinearLayout createLoadingLayout(Context context){
-//        LinearLayout layout = createInnerDetailsLayout(context);
-//
-//    }
+    public static TextView getErrorAsChartAlternative(Context context){
+        TextView view = new TextView(context);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,128);
+        params.setMargins(0,64,0,64);
+        view.setGravity(Gravity.CENTER);
+        view.setLayoutParams(params);
+
+        view.setText("Unable to get Data");
+        view.setTextColor(MainActivity.currentTheme.warningTextColor);
+        return view;
+    }
 
 }
 

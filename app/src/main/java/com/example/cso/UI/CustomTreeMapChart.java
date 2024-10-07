@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.example.cso.LogHandler;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -16,50 +17,61 @@ import java.util.Map;
 
 public class CustomTreeMapChart {
     public static LinearLayout createChart(Context context, JsonObject jsonData){
-        int width =(int) (UI.getDeviceWidth(context) * 0.65);
-        int height = (int) (UI.getDeviceWidth(context) * 0.35);
-
-        double unsynced = 0.0;
-        if (jsonData.has("UnSynced")) {
-            unsynced = jsonData.get("UnSynced").getAsDouble();
-        }
-
-        List<String> accountKeys = new ArrayList<>();
-        List<Double> accountSizes = new ArrayList<>();
-
-        double total = 0.0;
-        for (Map.Entry<String, JsonElement> entry : jsonData.entrySet()) {
-            total += entry.getValue().getAsDouble();
-            String key = entry.getKey();
-            double size = entry.getValue().getAsDouble();
-            if (!key.equals("UnSynced")) {
-                accountKeys.add(key);
-                accountSizes.add(size);
-            }
-        }
-
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(width, height);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
         layoutParams.setMargins(0, 10, 0, 10);
         layout.setLayoutParams(layoutParams);
 
-        LinearLayout temp = new LinearLayout(context);
-        temp.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams tempParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-        );
-        tempParams.setMargins(0, 10, 0, 10);
-        temp.setLayoutParams(tempParams);
+        try{
+            int width =(int) (UI.getDeviceWidth(context) * 0.65);
+            int height = (int) (UI.getDeviceWidth(context) * 0.35);
 
-        LinearLayout unsyncedView = createUnsyncedView(context,width,height,total,unsynced);
-        LinearLayout accountsView = createAccountsView(context,accountKeys,accountSizes,height,
-                width - unsyncedView.getWidth(),total-unsynced);
-        temp.addView(unsyncedView);
-        temp.addView(accountsView);
-        layout.addView(temp);
+            double unsynced = 0.0;
+            if (jsonData.has("UnSynced")) {
+                unsynced = jsonData.get("UnSynced").getAsDouble();
+            }
+
+            List<String> accountKeys = new ArrayList<>();
+            List<Double> accountSizes = new ArrayList<>();
+
+            double total = 0.0;
+            for (Map.Entry<String, JsonElement> entry : jsonData.entrySet()) {
+                total += entry.getValue().getAsDouble();
+                String key = entry.getKey();
+                double size = entry.getValue().getAsDouble();
+                if (!key.equals("UnSynced")) {
+                    accountKeys.add(key);
+                    accountSizes.add(size);
+                }
+            }
+
+            layoutParams = new LinearLayout.LayoutParams(width, height);
+            layoutParams.setMargins(0, 10, 0, 10);
+            layout.setLayoutParams(layoutParams);
+
+            LinearLayout temp = new LinearLayout(context);
+            temp.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams tempParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            );
+            tempParams.setMargins(0, 10, 0, 10);
+            temp.setLayoutParams(tempParams);
+
+            LinearLayout unsyncedView = createUnsyncedView(context,width,height,total,unsynced);
+            LinearLayout accountsView = createAccountsView(context,accountKeys,accountSizes,height,
+                    width - unsyncedView.getWidth(),total-unsynced);
+            temp.addView(unsyncedView);
+            temp.addView(accountsView);
+            layout.addView(temp);
+        }catch (Exception e){
+            LogHandler.crashLog(e,"customTreeMapChart");
+            layout.removeAllViews();
+            layout.addView(Details.getErrorAsChartAlternative(context));
+        }
         return layout;
     }
 

@@ -1,17 +1,18 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    >
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/unlink"
         android:title="Unlink"
         />
     <item
-        android:id="@+id/details"
-        android:title="Details"
+        android:id="@+id/reportStolen"
+        android:title="Report Stolen"
         />
     <item
-        android:id="@+id/reportStolen"
-        android:title="reportStolen"
+        android:id="@+id/unlinkThisDevice"
+        android:title="I Don't Use this Device Anymore"
+        />
+    <item
+        android:id="@+id/unlinkAnotherDevice"
+        android:title="I Won't Use this Device"
         />
 </menu>

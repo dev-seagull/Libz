@@ -385,7 +385,7 @@ public class Devices {
             Log.d("DeviceStatusSync", "assets source data : " + data);
 
             MainActivity.activity.runOnUiThread(() -> {
-                PieChart chartLayout = Details.createPieChartForDeviceSourceStatus(context, data);
+                View chartLayout = AssetsSourcePieChart.createPieChartForDeviceSourceStatus(context, data);
                 layout.addView(chartLayout);
                 layout.removeView(loadingImage[0]);
             });
