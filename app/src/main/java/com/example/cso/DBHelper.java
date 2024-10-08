@@ -1777,7 +1777,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     private static int getNumberOfSyncedAssets() {
         int count = 0;
-        String query = "SELECT COUNT(*) FROM DRIVE d as result " +
+        String query = "SELECT COUNT(*) as result FROM DRIVE d " +
                 "INNER JOIN ASSET a ON d.fileHash = a.fileHash";
         Cursor cursor = null;
         try {
@@ -1811,24 +1811,53 @@ public class DBHelper extends SQLiteOpenHelper {
         double percentage = ((double) syncedAssets / totalAssets) * 100;
         return percentage;
     }
+    
+    public static void printDriveTable(){
+        String query = "SELECT * " +
+                "FROM DRIVE;";
+
+        Cursor cursor = null;
+        try {
+            cursor = dbReadable.rawQuery(query, null);
+
+            if (cursor.moveToFirst()) {
+                do {
+                    int columnIndex = cursor.getColumnIndex("fileName");
+                    if(columnIndex >= 0){
+                        String fileName  = cursor.getColumnName(columnIndex);
+                        Log.d("ui", "file name of drive item is : " + fileName);
+                    }
+                }while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            LogHandler.crashLog(e,"ui");
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
 
     public static double getSizeOfSyncedAssetsOnDevice(String deviceId){
-            double totalSize = 0.0;
+        printDriveTable();
+
+        double totalSize = 0.0;
 
         String query = "SELECT SUM(a.fileSize) AS totalSize " +
                 "FROM ANDROID a " +
                 "INNER JOIN DRIVE d ON a.assetId = d.assetId " +
                 "WHERE a.device = ?";
 
-
         Cursor cursor = null;
             try {
                 cursor = dbReadable.rawQuery(query, new String[]{deviceId});
 
-                if (cursor != null && cursor.moveToFirst()) {
+                if (cursor.moveToFirst()) {
                     int columnIndex = cursor.getColumnIndex("totalSize");
+                    Log.d("ui","total size index: " + columnIndex);
                     if(columnIndex >= 0) {
                         totalSize = cursor.getDouble(columnIndex) / 1024;
+                        Log.d("ui" , "total size :" + totalSize);
                     }
                 }
             } catch (Exception e) {

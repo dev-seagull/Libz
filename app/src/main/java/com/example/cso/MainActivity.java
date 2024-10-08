@@ -84,6 +84,8 @@
             NavigationView navigationView = findViewById(R.id.navigationView);
             navigationView.setNavigationItemSelectedListener(this);
 
+            GoogleDrive.startThreads();
+
 //            boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
 //            if(isFirstTime){
 //                System.out.println("it is first time!");
