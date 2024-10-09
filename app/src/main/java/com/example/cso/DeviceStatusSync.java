@@ -208,42 +208,16 @@ public class DeviceStatusSync {
     public static JsonObject createAssetsSourceStatusJson(){
         JsonObject[] jsonObjects = {new JsonObject()};
         Thread createAssetsSourceStatusJsonThread = new Thread(() -> {
-            List<String[]> files = DBHelper.getAndroidTable(new String[]{"filePath","fileSize"});
-            HashMap<String, Double> sourceSizeMap = new HashMap<>();
-
-            String[] sources = {"Telegram", "Photos" , "Downloads" , "Camera" ,
-                    "Screenshots", "Screen Recorded"};
-
-            for (String[] file : files){
-                String filePath = file[0];
-                Double fileSize = Double.parseDouble(file[1]);
-                String sourceName = "Others";
-
-                for (String source : sources){
-                    String keyword = "/" + source + "/";
-                    if (filePath.toLowerCase().contains(keyword.toLowerCase())){
-                        sourceName = source;
-                        break;
-                    }
-                }
-
-                if (sourceName.equals("Others")){
-                    String[] splitPath = file[0].split("/");
-                    sourceName = splitPath[splitPath.length-2];
-                    if(sourceName.equals("0")){
-                        sourceName = "ROOT";
-                    }
-                }
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    sourceSizeMap.put(sourceName, sourceSizeMap.getOrDefault(sourceName, 0.0) + fileSize);
-                }
-            }
-
             JsonObject assetsSourceSize = new JsonObject();
-            for (Map.Entry<String, Double> entry : sourceSizeMap.entrySet()){
-                assetsSourceSize.addProperty(entry.getKey(), entry.getValue());
+            String[] folderNames = new String[] {"DCIM", "Documents","Download","Movies"
+                ,"Pictures","Telegram","WhatsApp"};
+            for(String folderName: folderNames){
+                double folderSize = DBHelper.getRootFolderMediaSize(folderName);
+                if(folderSize != 0){
+                    assetsSourceSize.addProperty(folderName, folderSize);
+                }
             }
+
             Log.d("DeviceStatusSync","assetsSourceSize : " + assetsSourceSize);
             jsonObjects[0] = assetsSourceSize;
         });

@@ -1,10 +1,8 @@
 package com.example.cso;
 
 import android.annotation.SuppressLint;
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteException;
 import android.text.TextUtils;
 import android.util.Log;
@@ -1750,7 +1748,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return backupAccountsInDevice;
     }
 
-    private static int getNumberOfAssets() {
+    public static int getNumberOfAssets() {
         int count = 0;
         String query = "SELECT COUNT(*) as result FROM ASSET;" ;
         Cursor cursor = null;
@@ -1772,7 +1770,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return count;
     }
 
-    private static int getNumberOfSyncedAssets() {
+    public static int getNumberOfSyncedAssets() {
         int count = 0;
         String query = "SELECT COUNT(*) as result FROM DRIVE d " +
                 "INNER JOIN ASSET a ON d.fileHash = a.fileHash";
@@ -1821,7 +1819,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 do {
                     int columnIndex = cursor.getColumnIndex("fileName");
                     if(columnIndex >= 0){
-                        String fileName  = cursor.getColumnName(columnIndex);
+                        String fileName  = cursor.getString(columnIndex);
                         Log.d("ui", "file name of drive item is : " + fileName);
                     }
                 }while (cursor.moveToNext());
@@ -1835,9 +1833,61 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    public static void printAndroidTable(){
+        String query = "SELECT * " +
+                "FROM ANDROID;";
+
+        Cursor cursor = null;
+        try {
+            cursor = dbReadable.rawQuery(query, null);
+
+            if (cursor.moveToFirst()) {
+                do {
+                    int columnIndex = cursor.getColumnIndex("filePath");
+                    if(columnIndex >= 0){
+                        String filePath  = cursor.getString(columnIndex);
+                        Log.d("database", "file path of android item is : " + filePath);
+                    }
+                }while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            LogHandler.crashLog(e,"ui");
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public static double getRootFolderMediaSize(String folderName){
+        String pattern = "/storage/emulated/0/" + folderName + "/%";
+        String query = "SELECT sum(fileSize) as result FROM ANDROID WHERE filePath LIKE ?";
+
+        Cursor cursor = null;
+        double sum = 0.0;
+        try {
+            cursor = dbReadable.rawQuery(query, new String[]{pattern});
+
+            if (cursor.moveToFirst()) {
+                int columnIndex = cursor.getColumnIndex("result");
+                if (columnIndex >= 0) {
+                    sum = cursor.getDouble(columnIndex);
+                    Log.d("database", "sum of " + pattern + " : " + pattern);
+                }
+            }
+        } catch (Exception e) {
+            LogHandler.crashLog(e, "ui");
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return sum;
+    }
+
     public static double getSizeOfSyncedAssetsOnThisDevice() {
 
-        printDriveTable();
+//        printDriveTable();
         double totalSize = 0.0;
         String query = "SELECT SUM(a.fileSize) AS totalSize " +
                 "FROM ANDROID a " +

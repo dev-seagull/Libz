@@ -7,38 +7,37 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
+import com.example.cso.DBHelper;
 import com.example.cso.MainActivity;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import java.util.ArrayList;
 
 public class SyncDetailsPieChart {
 
     public static View createPieChartView(PieChart pieChart, Activity activity){
-        new Thread(() -> {
-            MainActivity.activity.runOnUiThread(() -> configurePieChartDimensions(pieChart, activity));
-            double libzFolderSize = SyncDetails.getTotalLibzFolderSizes();
-            double unsyncedMediaSize = SyncDetails.getTotalUnsyncedAssetsOfDevices();
-            MainActivity.activity.runOnUiThread(() -> {
-                configurePieChartDataForSyncDetails(pieChart,libzFolderSize,unsyncedMediaSize);
-                configurePieChartLegend(pieChart);
-                pieChart.invalidate();
-            });
-        }).start();
+        int totalAssets = DBHelper.getNumberOfAssets();
+        int syncedAssets = DBHelper.getNumberOfSyncedAssets();
+        SyncDetailsPieChart.configurePieChartDimensions(pieChart, activity);
+        SyncDetailsPieChart.configurePieChartDataForSyncDetails(pieChart,syncedAssets,totalAssets - syncedAssets);
+        SyncDetailsPieChart.configurePieChartLegend(pieChart);
+        pieChart.invalidate();
+
         return pieChart;
     }
 
-    public static void configurePieChartDataForSyncDetails(PieChart pieChart,double libzFolderSize,double unsyncedMediaSize) {
+    public static void configurePieChartDataForSyncDetails(PieChart pieChart,double synced,double unsyncedMediaSize) {
         ArrayList<PieEntry> entries = new ArrayList<>();
-        if (libzFolderSize != 0){
-            entries.add(new PieEntry((float) libzFolderSize, "Synced"));
+        if (synced != 0){
+            entries.add(new PieEntry((int) synced, "Synced"));
         }
         if (unsyncedMediaSize != 0){
-            entries.add(new PieEntry((float) unsyncedMediaSize, "unSynced"));
+            entries.add(new PieEntry((int) unsyncedMediaSize, "unsynced"));
         }
         configurePieChartDataFormatForDeviceSyncedAssetsLocationStatus(pieChart, entries);
     }
@@ -51,17 +50,16 @@ public class SyncDetailsPieChart {
         dataSet.setValueTextColor(Color.WHITE);
         dataSet.setValueTextSize(14f);
 
-        dataSet.setValueFormatter(new PieChartValueFormatter());
-
-        // Enable value lines and set value positions
         dataSet.setDrawValues(true);
-        dataSet.setValueLinePart1OffsetPercentage(80f); // Offset of the line
-        dataSet.setValueLinePart1Length(0.3f);
-        dataSet.setValueLinePart2Length(0.4f);
-        dataSet.setValueLineWidth(2f);
-        dataSet.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+        dataSet.setYValuePosition(PieDataSet.ValuePosition.INSIDE_SLICE);
         dataSet.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
 
+        dataSet.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return String.valueOf((int) value);
+            }
+        });
 
         PieData data = new PieData(dataSet);
         pieChart.setData(data);

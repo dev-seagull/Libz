@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
@@ -14,6 +15,8 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.google.gson.JsonObject;
+
+import org.checkerframework.checker.units.qual.C;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,21 +60,21 @@ public class AssetsSourcePieChart {
                 }
             });
 
-            float othersValue = 0;
-            ArrayList<PieEntry> limitedEntries = new ArrayList<>();
-            for (int i = 0; i < entries.size(); i++) {
-                if (i < 4) {
-                    limitedEntries.add(entries.get(i));
-                } else {
-                    othersValue += entries.get(i).getValue();
-                }
+//            float othersValue = 0;
+//            ArrayList<PieEntry> limitedEntries = new ArrayList<>();
+//            for (int i = 0; i < entries.size(); i++) {
+//                if (i < 4) {
+//                    limitedEntries.add(entries.get(i));
+//                } else {
+//                    othersValue += entries.get(i).getValue();
+//                }
             }
-
-            if (othersValue > 0) {
-                limitedEntries.add(new PieEntry(othersValue, "Others"));
-            }
-            entries = limitedEntries;
-        }
+//
+//            if (othersValue > 0) {
+//                limitedEntries.add(new PieEntry(othersValue, "Others"));
+//            }
+//            entries = limitedEntries;
+//        }
 
         PieDataSet dataSet = new PieDataSet(entries, null);
 
