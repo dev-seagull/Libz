@@ -1859,20 +1859,46 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public static double getRootFolderMediaSize(String folderName){
-        String pattern = "/storage/emulated/0/" + folderName + "/%";
-        String query = "SELECT sum(fileSize) as result FROM ANDROID WHERE filePath LIKE ?";
+    public static double getRootFolderMediaSize(String pattern){
 
+        String query = "SELECT sum(fileSize) as result FROM ANDROID WHERE filePath LIKE ? ";
         Cursor cursor = null;
         double sum = 0.0;
         try {
-            cursor = dbReadable.rawQuery(query, new String[]{pattern});
+            cursor = dbReadable.rawQuery(query, new String[] {pattern});
 
             if (cursor.moveToFirst()) {
                 int columnIndex = cursor.getColumnIndex("result");
                 if (columnIndex >= 0) {
                     sum = cursor.getDouble(columnIndex);
-                    Log.d("database", "sum of " + pattern + " : " + pattern);
+                    Log.d("database", "sum of " + pattern + " : " + sum);
+                }
+            }
+        } catch (Exception e) {
+            LogHandler.crashLog(e, "ui");
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return sum;
+    }
+
+    public static double getRootFolderMediaExcludeChildrenSize(String rootPath){
+        String pattern1 = rootPath + "/%.%";
+        String pattern2 = rootPath + "/%/%.%";
+        String query = "SELECT sum(fileSize) as result FROM ANDROID WHERE filePath LIKE ? and filePath not LIKE ? ";
+
+        Cursor cursor = null;
+        double sum = 0.0;
+        try {
+            cursor = dbReadable.rawQuery(query, new String[]{pattern1, pattern2});
+
+            if (cursor.moveToFirst()) {
+                int columnIndex = cursor.getColumnIndex("result");
+                if (columnIndex >= 0) {
+                    sum = cursor.getDouble(columnIndex);
+                    Log.d("database", "sum of root : " + sum);
                 }
             }
         } catch (Exception e) {

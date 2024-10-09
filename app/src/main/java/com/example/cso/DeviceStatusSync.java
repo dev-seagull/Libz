@@ -9,6 +9,7 @@ import com.google.api.client.http.ByteArrayContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -205,28 +206,54 @@ public class DeviceStatusSync {
         return jsonObjects[0];
     }
 
-    public static JsonObject createAssetsSourceStatusJson(){
-        JsonObject[] jsonObjects = {new JsonObject()};
+    public static JsonObject createAssetsSourceStatusJson() {
+        JsonObject[] assetsSourceSizeJson = new JsonObject[]{new JsonObject()};
         Thread createAssetsSourceStatusJsonThread = new Thread(() -> {
-            JsonObject assetsSourceSize = new JsonObject();
-            String[] folderNames = new String[] {"DCIM", "Documents","Download","Movies"
-                ,"Pictures","Telegram","WhatsApp"};
-            for(String folderName: folderNames){
-                double folderSize = DBHelper.getRootFolderMediaSize(folderName);
-                if(folderSize != 0){
-                    assetsSourceSize.addProperty(folderName, folderSize);
+            String rootPath = "/storage/emulated/0"; // should get based on the device status
+            HashMap<String, List<String>> folderTypeMap = new HashMap<>();
+
+            folderTypeMap.put("Screenshots", List.of("DCIM/Screenshots",
+                    "Pictures/Screenshots", "Screenshots"));
+            folderTypeMap.put("Screen Recorder", List.of("DCIM/ScreenRecorder",
+                    "Pictures/ScreenRecorder", "ScreenRecorder"));
+            folderTypeMap.put("Camera", List.of("DCIM/Camera", "Camera", "Pictures/Camera"));
+            folderTypeMap.put("Documents", List.of("Documents"));
+            folderTypeMap.put("Downloads", List.of("Download", "Downloads"));
+            folderTypeMap.put("Movies", List.of("Movies"));
+            folderTypeMap.put("Telegram", List.of("Telegram"));
+            folderTypeMap.put("WhatsApp", List.of("WhatsApp"));
+
+            for (String folderType : folderTypeMap.keySet()) {
+                double totalFolderSize = 0;
+
+                for (String folderPath : folderTypeMap.get(folderType)) {
+                    String pattern = rootPath + "/" + folderPath + "/%.%";
+                    double folderSize = DBHelper.getRootFolderMediaSize(pattern);
+                    totalFolderSize += folderSize;
+                }
+
+                if (totalFolderSize > 0) {
+                    assetsSourceSizeJson[0].addProperty(folderType, totalFolderSize);
                 }
             }
+            // this is for root
+            double folderSize = DBHelper.getRootFolderMediaExcludeChildrenSize(rootPath);
+            if (folderSize > 0) {
+                assetsSourceSizeJson[0].addProperty("Root", folderSize);
+            }
 
-            Log.d("DeviceStatusSync","assetsSourceSize : " + assetsSourceSize);
-            jsonObjects[0] = assetsSourceSize;
+            Log.d("DeviceStatusSync", "assetsSourceSize : " + assetsSourceSizeJson[0]);
         });
-        createAssetsSourceStatusJsonThread.start();
-        try{
-            createAssetsSourceStatusJsonThread.join();
-        }catch (Exception e) { LogHandler.crashLog(e,"deviceStatusSync");}
 
-        return jsonObjects[0];
+        createAssetsSourceStatusJsonThread.start();
+
+        try {
+            createAssetsSourceStatusJsonThread.join();
+        } catch (Exception e) {
+            LogHandler.crashLog(e, "deviceStatusSync");
+        }
+
+        return assetsSourceSizeJson[0];
     }
 
     public static JsonObject getDeviceStatusJsonFile(String deviceId) {

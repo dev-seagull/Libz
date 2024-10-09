@@ -124,21 +124,18 @@ public class AreaSquareChart {
         boolean isSquare2SizeSet = false;
         boolean isSquare3SizeSet = false;
 
-        for (int i = 0; i < square4Size + (3 * distance); i = i + distance ){
+        for (int i = 0; i <= square4Size + (3 * distance); i = i + distance ){
             if (i >= square1Size && !isSquare1SizeSet){
                 square1Size = i;
                 isSquare1SizeSet = true;
-//                continue;
             }
             if (i >= square2Size && !isSquare2SizeSet){
                 square2Size = i;
                 isSquare2SizeSet = true;
-//                continue;
             }
             if (i >= square3Size && !isSquare3SizeSet){
                 square3Size = i;
                 isSquare3SizeSet = true;
-//                continue;
             }
             if (i >= square4Size){
                 square4Size = i;

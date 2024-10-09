@@ -53,12 +53,7 @@ public class AssetsSourcePieChart {
 
     public static void configurePieChartDataFormatForDeviceSourceStatus(PieChart pieChart, ArrayList<PieEntry> entries) {
         if (entries.size() > 5) {
-            Collections.sort(entries, new Comparator<PieEntry>() {
-                @Override
-                public int compare(PieEntry e1, PieEntry e2) {
-                    return Float.compare(e2.getValue(), e1.getValue());
-                }
-            });
+            Collections.sort(entries, (e1, e2) -> Float.compare(e2.getValue(), e1.getValue()));
 
 //            float othersValue = 0;
 //            ArrayList<PieEntry> limitedEntries = new ArrayList<>();

@@ -57,7 +57,10 @@ public class SyncDetailsPieChart {
         dataSet.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                return String.valueOf((int) value);
+                if (value >= 100) {
+                    return String.format("%.2f GB",value / 1024);
+                }
+                return String.format("%.2f MB", value);
             }
         });
 

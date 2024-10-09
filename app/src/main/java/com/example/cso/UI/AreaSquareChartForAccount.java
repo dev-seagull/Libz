@@ -142,11 +142,10 @@ public class AreaSquareChartForAccount {
 
         int width = square1Size;
         int distance = square1Size / columnCount;
-        boolean isSquare1SizeSet = false;
         boolean isSquare2SizeSet = false;
         boolean isSquare3SizeSet = false;
 
-        for (int i = 0; i < square1Size + (3 * distance); i = i + distance ){
+        for (int i = 0; i <= square1Size + (2 * distance); i = i + distance ){
             if (i >= square3Size && !isSquare3SizeSet){
                 square3Size = i;
                 isSquare3SizeSet = true;
@@ -155,9 +154,9 @@ public class AreaSquareChartForAccount {
                 square2Size = i;
                 isSquare2SizeSet = true;
             }
-            if (i >= square1Size && !isSquare1SizeSet){
+            if (i >= square1Size){
                 square1Size = i;
-                isSquare1SizeSet = true;
+                break;
             }
         }
         Log.d("AccountAreaChart", "after round area chart synced value: " + square3Size);
