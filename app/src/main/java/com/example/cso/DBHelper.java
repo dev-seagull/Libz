@@ -1319,9 +1319,6 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-
-
-
     public static double getPhotosAndVideosStorageOnThisDevice(){
         Log.d("media","try to get photos and videos");
         double sum = 0.0;
@@ -1331,14 +1328,14 @@ public class DBHelper extends SQLiteOpenHelper {
         try {
             if (cursor!= null && cursor.moveToFirst()) {
                 int columnIndex = cursor.getColumnIndex("result");
-                Log.d("media","result index is " + columnIndex);
+                Log.d("AreaSquareChart","media size result index is " + columnIndex);
                 if (columnIndex >= 0){
                     sum = cursor.getDouble(columnIndex) / 1024;
-                    Log.d("media","sum is " + sum);
+                    Log.d("AreaSquareChart","media size sum is " + sum);
                 }
             }
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to get storage of videos and photos : " + e.getLocalizedMessage(), true);
+            LogHandler.crashLog(e,"AreaSquareChart");
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -1838,36 +1835,35 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public static double getSizeOfSyncedAssetsOnDevice(String deviceId){
+    public static double getSizeOfSyncedAssetsOnThisDevice() {
+
         printDriveTable();
-
         double totalSize = 0.0;
-
         String query = "SELECT SUM(a.fileSize) AS totalSize " +
                 "FROM ANDROID a " +
                 "INNER JOIN DRIVE d ON a.assetId = d.assetId " +
                 "WHERE a.device = ?";
 
         Cursor cursor = null;
-            try {
-                cursor = dbReadable.rawQuery(query, new String[]{deviceId});
+        try {
+            cursor = dbReadable.rawQuery(query, new String[]{MainActivity.androidUniqueDeviceIdentifier});
 
-                if (cursor.moveToFirst()) {
-                    int columnIndex = cursor.getColumnIndex("totalSize");
-                    Log.d("ui","total size index: " + columnIndex);
-                    if(columnIndex >= 0) {
-                        totalSize = cursor.getDouble(columnIndex) / 1024;
-                        Log.d("ui" , "total size :" + totalSize);
-                    }
-                }
-            } catch (Exception e) {
-                LogHandler.crashLog(e,"ui");
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
+            if (cursor.moveToFirst()) {
+                int columnIndex = cursor.getColumnIndex("totalSize");
+                if (columnIndex >= 0) {
+                    totalSize = cursor.getDouble(columnIndex) / 1024;
+                    Log.d("AreaSquareChart", "synced assets Total size: " + totalSize + " KB");
                 }
             }
-
-            return totalSize;
+        } catch (Exception e) {
+            LogHandler.crashLog(e, "AreaSquareChart");
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
         }
+
+        return totalSize;
+    }
+
 }

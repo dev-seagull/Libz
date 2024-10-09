@@ -12,6 +12,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cso.R;
 
+import java.util.ArrayList;
+
 public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHolder> {
 
     private Context context;
@@ -20,12 +22,14 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
     public String buttonId;
     public static int totalPagesForAccount = 2 ;
     public static int totalPagesForDevice = 3 ;
+    public static ArrayList<PagerAdapter> pagerAdapters = new ArrayList<PagerAdapter>();
 
     public PagerAdapter(Context context, int pageNumber, String buttonType, String buttonId) {
         this.context = context;
         this.pageNumber = pageNumber;
         this.buttonType = buttonType;
         this.buttonId = buttonId;
+        pagerAdapters.add(this);
     }
 
     @NonNull
@@ -87,6 +91,15 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
             super(itemView);
             currentPage = itemView;
         }
+    }
+
+    public static PagerAdapter getPagerAdapterByButtonId(String buttonId) {
+        for (PagerAdapter adapter : pagerAdapters){
+            if (adapter.buttonId.equals(buttonId)){
+                return adapter;
+            }
+        }
+        return null;
     }
 
 }

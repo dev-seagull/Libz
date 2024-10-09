@@ -17,7 +17,10 @@ import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.google.gson.JsonObject;
 
+import java.util.ConcurrentModificationException;
+
 public class AreaSquareChart {
+    public static int columnCount = 14;
     public static View createStorageChart(Context context, JsonObject data) {
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.HORIZONTAL);
@@ -36,39 +39,42 @@ public class AreaSquareChart {
             double media = ( data.get("mediaStorage").getAsDouble() * width / total);
             double synced =  ( data.get("syncedAssetsStorage").getAsDouble()  * width / total);
 
-            Log.d("ui", "area chart total value: " + total);
-            Log.d("ui", "area chart used value: " + used);
-            Log.d("ui", "area chart media value: " + media);
-            Log.d("ui", "area chart synced value: " + synced);
+            Log.d("AreaSquareChart", "area chart total value: " + total);
+            Log.d("AreaSquareChart", "area chart used value: " + used);
+            Log.d("AreaSquareChart", "area chart media value: " + media);
+            Log.d("AreaSquareChart", "area chart synced value: " + synced);
+
+//            for (int i = 0; i < )
 
             total = Math.sqrt(total) * width / Math.sqrt(total);
             used = Math.sqrt(used)  * width / Math.sqrt(total);
             media = Math.sqrt(media) * width / Math.sqrt(total);
             synced = Math.sqrt(synced) * width / Math.sqrt(total);
 
-            Log.d("ui", "after2 area chart total value: " + total);
-            Log.d("ui", "after2 area chart used value: " + used);
-            Log.d("ui", "after2 area chart media value: " + media);
-            Log.d("ui", "after2 area chart synced value: " + synced);
+            Log.d("AreaSquareChart", "after2 area chart total value: " + total);
+            Log.d("AreaSquareChart", "after2 area chart used value: " + used);
+            Log.d("AreaSquareChart", "after2 area chart media value: " + media);
+            Log.d("AreaSquareChart", "after2 area chart synced value: " + synced);
 
             total = Math.sqrt(total) * width / Math.sqrt(total);
             used = Math.sqrt(used)  * width / Math.sqrt(total);
             media = Math.sqrt(media) * width / Math.sqrt(total);
             synced = Math.sqrt(synced) * width / Math.sqrt(total);
 
-            Log.d("ui", "after area chart total value: " + total);
-            Log.d("ui", "after area chart used value: " + used);
-            Log.d("ui", "after area chart media value: " + media);
-            Log.d("ui", "after area chart synced value: " + synced);
-
-
+            Log.d("AreaSquareChart", "after area chart total value: " + total);
+            Log.d("AreaSquareChart", "after area chart used value: " + used);
+            Log.d("AreaSquareChart", "after area chart media value: " + media);
+            Log.d("AreaSquareChart", "after area chart synced value: " + synced);
+            Log.d("AreaSquareChart", "total before cast to int :  " + total);
+            total = ((int)(total / columnCount)) * columnCount;
+            Log.d("AreaSquareChart", "total after cast to int :  " + total);
             RelativeLayout temp = new RelativeLayout(context);
             temp.setGravity(Gravity.CENTER);
 
-            RelativeLayout stackedSquaresLayout = createStackedSquares(context,(int) total,(int) used,(int) media,(int) synced);
+            RelativeLayout stackedSquaresLayout = createStackedSquares(context,(int) synced,(int) media,(int) used,(int) total);
             RelativeLayout.LayoutParams stackedParams = new RelativeLayout.LayoutParams(
-                    width,
-                    width
+                    (int) total,
+                    (int) total
             );
 
             stackedParams.addRule(RelativeLayout.CENTER_IN_PARENT);
@@ -77,16 +83,16 @@ public class AreaSquareChart {
             LinearLayout linesLayout = new LinearLayout(context);
             linesLayout.setOrientation(LinearLayout.HORIZONTAL);
             RelativeLayout.LayoutParams linesParams = new RelativeLayout.LayoutParams(
-                    width,
-                    width
+                    (int) total,
+                    (int) total
             );
             linesParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
             linesParams.addRule(RelativeLayout.CENTER_IN_PARENT);
 
             linesLayout.setLayoutParams(linesParams);
 
-            int columnCount = Math.min(width / calculateGreatestCommonDivisor((int)total,(int)used,(int)media,(int)synced),12);
-            Log.d("ui", "area square chart column count: " + columnCount);
+
+            Log.d("AreaSquareChart", "area square chart column count: " + columnCount);
             drawGridLines(linesLayout, context, columnCount, columnCount);
 
             layout.addView(temp);
@@ -110,15 +116,60 @@ public class AreaSquareChart {
         ImageView square3 = new ImageView(context);
         ImageView square4 = new ImageView(context);
 
-        square1.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
-        square2.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
-        square3.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
-        square4.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
+        square1.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
+        square2.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
+        square3.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
+        square4.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
+        int width = square4Size;
+        int distance = square4Size / columnCount;
+        boolean isSquare1SizeSet = false;
+        boolean isSquare2SizeSet = false;
+        boolean isSquare3SizeSet = false;
 
-        addSquareToLayout(relativeLayout, square1, square1Size);
-        addSquareToLayout(relativeLayout, square2, square2Size);
-        addSquareToLayout(relativeLayout, square3, square3Size);
+        for (int i = 0; i < square4Size + (3 * distance); i = i + distance ){
+            if (i >= square1Size && !isSquare1SizeSet){
+                square1Size = i;
+                isSquare1SizeSet = true;
+//                continue;
+            }
+            if (i >= square2Size && !isSquare2SizeSet){
+                square2Size = i;
+                isSquare2SizeSet = true;
+//                continue;
+            }
+            if (i >= square3Size && !isSquare3SizeSet){
+                square3Size = i;
+                isSquare3SizeSet = true;
+//                continue;
+            }
+            if (i >= square4Size){
+                square4Size = i;
+                break;
+            }
+        }
+        Log.d("AreaSquareChart", "after round area chart total value: " + square4Size);
+        Log.d("AreaSquareChart", "after round area chart used value: " + square3Size);
+        Log.d("AreaSquareChart", "after round area chart media value: " + square2Size);
+        Log.d("AreaSquareChart", "after round area chart synced value: " + square1Size);
+
+
+
+        square4Size = square4Size - (square4Size - width);
+        square3Size = square3Size - (square4Size - width);
+        square2Size = square2Size - (square4Size - width);
+        square1Size = square1Size - (square4Size - width);
+
+        Log.d("AreaSquareChart", "after round and scale area chart total value: " + square4Size);
+        Log.d("AreaSquareChart", "after round and scale area chart used value: " + square3Size);
+        Log.d("AreaSquareChart", "after round and scale area chart media value: " + square2Size);
+        Log.d("AreaSquareChart", "after round and scale area chart synced value: " + square1Size);
+
+
+
         addSquareToLayout(relativeLayout, square4, square4Size);
+        addSquareToLayout(relativeLayout, square3, square3Size);
+        addSquareToLayout(relativeLayout, square2, square2Size);
+        addSquareToLayout(relativeLayout, square1, square1Size);
 
         return relativeLayout;
     }
@@ -264,5 +315,6 @@ public class AreaSquareChart {
             return String.format("%.1f GB", sizeInGB);
         }
     }
+
 
 }

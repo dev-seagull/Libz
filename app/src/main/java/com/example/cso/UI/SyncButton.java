@@ -194,7 +194,7 @@ public class SyncButton {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         params.setMargins(0, UI.dpToPx(20), 0, 0);
         warningText.setGravity(Gravity.CENTER);
-        warningText.setVisibility(View.VISIBLE);
+        warningText.setVisibility(View.GONE);
         warningText.setTextColor(MainActivity.currentTheme.warningTextColor);
         warningText.setHorizontallyScrolling(true);
         warningText.setSingleLine(true);

@@ -124,11 +124,14 @@ public class DeviceStatusSync {
         JsonObject[] jsonObjects = {new JsonObject()};
         Thread createStorageStatusJsonThread = new Thread(() -> {
             StorageHandler storageHandler = new StorageHandler();
-            double freeSpace = storageHandler.getFreeSpace();
             double totalStorage = storageHandler.getTotalStorage();
-            double mediaStorage = DBHelper.getPhotosAndVideosStorageOnThisDevice();
+            double freeSpace = storageHandler.getFreeSpace();
             double usedSpace = totalStorage - freeSpace;
-            double syncedAssetsStorage = DBHelper.getSizeOfSyncedAssetsOnDevice(MainActivity.androidUniqueDeviceIdentifier);
+
+            double mediaStorage = DBHelper.getPhotosAndVideosStorageOnThisDevice();
+            double syncedAssetsStorage = DBHelper.getSizeOfSyncedAssetsOnThisDevice();
+
+
 
             JsonObject jsonObject = new JsonObject();
             jsonObject.addProperty("totalStorage", totalStorage);
@@ -136,14 +139,14 @@ public class DeviceStatusSync {
             jsonObject.addProperty("mediaStorage", mediaStorage);
             jsonObject.addProperty("usedSpace", usedSpace);
             jsonObject.addProperty("syncedAssetsStorage", syncedAssetsStorage);
-            Log.d("DeviceStatusSync","storageStatus : " + jsonObject);
+            Log.d("AreaSquareChart","storageStatus : " + jsonObject);
             jsonObjects[0] = jsonObject;
         });
         createStorageStatusJsonThread.start();
         try{
             createStorageStatusJsonThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,"DeviceStatusSync");
+            LogHandler.crashLog(e,"AreaSquareChart");
         }
         return jsonObjects[0];
     }

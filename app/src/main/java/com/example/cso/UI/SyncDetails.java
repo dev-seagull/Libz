@@ -22,6 +22,7 @@ import com.example.cso.GoogleDriveFolders;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
+import com.github.mikephil.charting.charts.PieChart;
 import com.google.gson.JsonObject;
 
 import org.checkerframework.checker.index.qual.LengthOf;
@@ -55,6 +56,8 @@ public class SyncDetails {
         syncDetailsStatisticsLayout.setVisibility(View.GONE);
         syncDetailsStatisticsLayoutId = View.generateViewId();
         syncDetailsStatisticsLayout.setId(syncDetailsStatisticsLayoutId);
+
+        PieChart pieChart = new PieChart(activity);
         new Thread(() -> {
             ImageView[] loadingImage = new ImageView[]{new ImageView(activity)};
             MainActivity.activity.runOnUiThread(() -> {
@@ -64,8 +67,7 @@ public class SyncDetails {
                 loadingImage[0].setLayoutParams(params);
                 syncDetailsStatisticsLayout.addView(loadingImage[0]);
             });
-
-            View pieChartView = SyncDetailsPieChart.createPieChartView(activity);
+            View pieChartView = SyncDetailsPieChart.createPieChartView(pieChart,activity);
             activity.runOnUiThread(() -> {
                 syncDetailsStatisticsLayout.addView(pieChartView);
                 syncDetailsStatisticsLayout.removeView(loadingImage[0]);
@@ -197,7 +199,7 @@ public class SyncDetails {
         return libzFolderSize[0];
     }
 
-    public static double getTotalUnsyncedAssetsOfDevices(){
+    public static double getTotalUnsyncedAssetsOfDevices(){ // fix it
         double unsyncedAssetsOfDevicesSize = 0;
         ArrayList<DeviceHandler> devices = DBHelper.getDevicesFromDB();
         for (DeviceHandler device : devices){

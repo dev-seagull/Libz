@@ -168,18 +168,23 @@ public class Devices {
 
     public static void setListenerToDeviceButtons(Button button, DeviceHandler device){
         button.setOnClickListener( view -> {
-            if (MainActivity.isAnyProccessOn) {// clickable false
-                return;
-            }
-            FrameLayout detailsView = Details.getDetailsView(button);
-            if (detailsView.getVisibility() == View.VISIBLE) {
-                detailsView.setVisibility(View.GONE);
-            } else {
-                detailsView.setVisibility(View.VISIBLE);
-            }
+            try{
+                if (MainActivity.isAnyProccessOn) {// clickable false
+                    return;
+                }
+                FrameLayout detailsView = Details.getDetailsView(button);
+                if (detailsView.getVisibility() == View.VISIBLE) {
+                    detailsView.setVisibility(View.GONE);
+                } else {
+                    PagerAdapter.getPagerAdapterByButtonId(device.getDeviceId()).notifyDataSetChanged();
+                    detailsView.setVisibility(View.VISIBLE);
+                }
 
-            RelativeLayout parent = (RelativeLayout) view.getParent();
-            reInitializeDeviceButtonsLayout(parent,activity,device);
+                RelativeLayout parent = (RelativeLayout) view.getParent();
+                reInitializeDeviceButtonsLayout(parent,activity,device);
+            }catch (Exception e){
+                LogHandler.crashLog(e,"ui");
+            }
         });
     }
 

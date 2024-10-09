@@ -22,6 +22,7 @@
     import com.example.cso.UI.Accounts;
     import com.example.cso.UI.ColorSelectionDialogFragment;
     import com.example.cso.UI.Dialogs;
+    import com.example.cso.UI.PagerAdapter;
     import com.example.cso.UI.Theme;
     import com.example.cso.UI.UI;
     import com.google.android.material.navigation.NavigationView;
@@ -262,6 +263,7 @@
         finish();
         Log.d("state","end of onDestroyed");
     }
+
 
     private void destroyAndroidTimer(){
         if(androidTimer != null){

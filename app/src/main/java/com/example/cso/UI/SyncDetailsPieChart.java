@@ -18,20 +18,18 @@ import java.util.ArrayList;
 
 public class SyncDetailsPieChart {
 
-    public static View createPieChartView(Activity activity){
-        final PieChart[] pieChart = new PieChart[1];
-        activity.runOnUiThread(() -> {
-            pieChart[0] = new PieChart(activity);
-            configurePieChartDimensions(pieChart[0], activity);
-        });
-        double libzFolderSize = SyncDetails.getTotalLibzFolderSizes();
-        double unsyncedMediaSize = SyncDetails.getTotalUnsyncedAssetsOfDevices();
-        activity.runOnUiThread(() -> {
-            configurePieChartDataForSyncDetails(pieChart[0],libzFolderSize,unsyncedMediaSize);
-            configurePieChartLegend(pieChart[0]);
-            pieChart[0].invalidate();
-        });
-        return pieChart[0];
+    public static View createPieChartView(PieChart pieChart, Activity activity){
+        new Thread(() -> {
+            MainActivity.activity.runOnUiThread(() -> configurePieChartDimensions(pieChart, activity));
+            double libzFolderSize = SyncDetails.getTotalLibzFolderSizes();
+            double unsyncedMediaSize = SyncDetails.getTotalUnsyncedAssetsOfDevices();
+            MainActivity.activity.runOnUiThread(() -> {
+                configurePieChartDataForSyncDetails(pieChart,libzFolderSize,unsyncedMediaSize);
+                configurePieChartLegend(pieChart);
+                pieChart.invalidate();
+            });
+        }).start();
+        return pieChart;
     }
 
     public static void configurePieChartDataForSyncDetails(PieChart pieChart,double libzFolderSize,double unsyncedMediaSize) {
