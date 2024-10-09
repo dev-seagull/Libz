@@ -280,9 +280,8 @@ public class Accounts {
 
     public static LinearLayout createChartForStorageStatus(Context context, String userEmail){
         LinearLayout layout = Details.createInnerDetailsLayout(context);
-
+        ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
         new Thread(() -> {
-            ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
             MainActivity.activity.runOnUiThread(() -> {
                 loadingImage[0].setBackgroundResource(R.drawable.yellow_loading);
                 LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(128,128);

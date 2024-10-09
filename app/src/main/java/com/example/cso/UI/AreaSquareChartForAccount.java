@@ -22,17 +22,29 @@ import com.google.gson.JsonObject;
 import java.util.List;
 
 public class AreaSquareChartForAccount {
-
+    public static int columnCount = 14;
     public static View createStorageChart(Context context, String userEmail) {
         int width =(int) (UI.getDeviceWidth(context) * 0.35);
-        double[] dimensions = getRegularizedDimensions(width, userEmail);
-        double total = dimensions[0];
-        double used = dimensions[1];
-        double synced = dimensions[2];
-        double earlyTotal = dimensions[3];
-        double earlyUsed = dimensions[4];
-        double earlySynced = dimensions[5];
-        int columnCount = Math.min(width / calculateGreatestCommonDivisor((int)total,(int)used,(int)synced),12);
+        double[] dimensions;
+        double total;
+        double used;
+        double synced;
+        double earlyTotal;
+        double earlyUsed;
+        double earlySynced;
+        try{
+            dimensions = getRegularizedDimensions(width, userEmail);
+            total = dimensions[0];
+            used = dimensions[1];
+            synced = dimensions[2];
+            earlyTotal = dimensions[3];
+            earlyUsed = dimensions[4];
+            earlySynced = dimensions[5];
+        }catch (Exception e){
+            LogHandler.crashLog(e,"AccountAreaChart");
+            return Details.getErrorAsChartAlternative(context);
+        }
+
         LinearLayout[] layout = new LinearLayout[]{new LinearLayout(context)};
         MainActivity.activity.runOnUiThread(() -> {
             layout[0].setOrientation(LinearLayout.HORIZONTAL);
@@ -49,8 +61,8 @@ public class AreaSquareChartForAccount {
 
             RelativeLayout stackedSquaresLayout = createStackedSquares(context,(int) total,(int) used,(int) synced);
             RelativeLayout.LayoutParams stackedParams = new RelativeLayout.LayoutParams(
-                    width,
-                    width
+                    (int) total,
+                    (int) total
             );
 
             stackedParams.addRule(RelativeLayout.CENTER_IN_PARENT);
@@ -59,8 +71,8 @@ public class AreaSquareChartForAccount {
             LinearLayout linesLayout = new LinearLayout(context);
             linesLayout.setOrientation(LinearLayout.HORIZONTAL);
             RelativeLayout.LayoutParams linesParams = new RelativeLayout.LayoutParams(
-                    width,
-                    width
+                    (int) total,
+                    (int) total
             );
             linesParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
             linesParams.addRule(RelativeLayout.CENTER_IN_PARENT);
@@ -111,6 +123,10 @@ public class AreaSquareChartForAccount {
         Log.d("AccountAreaChart", "used : " + used);
         Log.d("AccountAreaChart","synced : " + synced);
 
+        total = ((int)(total / columnCount)) * columnCount;
+        Log.d("AreaSquareChart", "total after cast to int :  " + total);
+
+
         return new double[]{total,used,synced,earlyTotal,earlyUsed,earlySynced};
     }
 
@@ -123,6 +139,42 @@ public class AreaSquareChartForAccount {
         square1.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
         square2.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
         square3.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
+
+        int width = square1Size;
+        int distance = square1Size / columnCount;
+        boolean isSquare1SizeSet = false;
+        boolean isSquare2SizeSet = false;
+        boolean isSquare3SizeSet = false;
+
+        for (int i = 0; i < square1Size + (3 * distance); i = i + distance ){
+            if (i >= square3Size && !isSquare3SizeSet){
+                square3Size = i;
+                isSquare3SizeSet = true;
+            }
+            if (i >= square2Size && !isSquare2SizeSet){
+                square2Size = i;
+                isSquare2SizeSet = true;
+            }
+            if (i >= square1Size && !isSquare1SizeSet){
+                square1Size = i;
+                isSquare1SizeSet = true;
+            }
+        }
+        Log.d("AccountAreaChart", "after round area chart synced value: " + square3Size);
+        Log.d("AccountAreaChart", "after round area chart used value: " + square2Size);
+        Log.d("AccountAreaChart", "after round area chart total value: " + square1Size);
+
+
+
+        square1Size = square1Size - (square1Size - width);
+        square3Size = square3Size - (square1Size - width);
+        square2Size = square2Size - (square1Size - width);
+        square1Size = square1Size - (square1Size - width);
+
+        Log.d("AreaSquareChart", "after round and scale area chart synced value: " + square3Size);
+        Log.d("AreaSquareChart", "after round and scale area chart used value: " + square2Size);
+        Log.d("AreaSquareChart", "after round and scale area chart total value: " + square1Size);
+
 
         addSquareToLayout(relativeLayout, square1, square1Size);
         addSquareToLayout(relativeLayout, square2, square2Size);

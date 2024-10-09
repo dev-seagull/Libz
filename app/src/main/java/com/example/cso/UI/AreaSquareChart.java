@@ -44,8 +44,6 @@ public class AreaSquareChart {
             Log.d("AreaSquareChart", "area chart media value: " + media);
             Log.d("AreaSquareChart", "area chart synced value: " + synced);
 
-//            for (int i = 0; i < )
-
             total = Math.sqrt(total) * width / Math.sqrt(total);
             used = Math.sqrt(used)  * width / Math.sqrt(total);
             media = Math.sqrt(media) * width / Math.sqrt(total);

@@ -6,6 +6,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -61,6 +62,7 @@ public class SyncButton {
         LiquidFillButton syncButton = activity.findViewById(syncButtonId);
         boolean currentSyncState = toggleSyncState();
         boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
+        Log.d("ui","Sync state after button click: " + currentSyncState);
         if(currentSyncState){
             startSyncIfNotRunning(isServiceRunning, activity);
         }else{
