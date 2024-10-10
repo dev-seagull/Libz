@@ -56,6 +56,7 @@ public class SyncDetails {
         syncDetailsStatisticsLayout.setVisibility(View.GONE);
         syncDetailsStatisticsLayoutId = View.generateViewId();
         syncDetailsStatisticsLayout.setId(syncDetailsStatisticsLayoutId);
+        syncDetailsStatisticsLayout.setOrientation(LinearLayout.HORIZONTAL);
 
         PieChart pieChart = new PieChart(activity);
         new Thread(() -> {
@@ -70,6 +71,11 @@ public class SyncDetails {
             View pieChartView = SyncDetailsPieChart.createPieChartView(pieChart,activity);
             activity.runOnUiThread(() -> {
                 syncDetailsStatisticsLayout.addView(pieChartView);
+
+                if(pieChartView instanceof PieChart){
+                    SyncDetailsPieChart.createTextAreaForSyncDetailsPieChart(pieChartView,syncDetailsStatisticsLayout,activity);
+                }
+
                 syncDetailsStatisticsLayout.removeView(loadingImage[0]);
             });
         }).start();

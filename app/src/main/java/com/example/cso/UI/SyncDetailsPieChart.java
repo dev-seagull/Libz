@@ -3,9 +3,15 @@ package com.example.cso.UI;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.example.cso.DBHelper;
 import com.example.cso.MainActivity;
@@ -17,6 +23,7 @@ import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class SyncDetailsPieChart {
 
@@ -45,12 +52,12 @@ public class SyncDetailsPieChart {
     public static void configurePieChartDataFormatForDeviceSyncedAssetsLocationStatus(PieChart pieChart, ArrayList<PieEntry> entries) {
         PieDataSet dataSet = new PieDataSet(entries, null);
 
-        int[] colors = MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors;
+        int[] colors = MainActivity.currentTheme.syncDetailsPieChartColors;
         dataSet.setColors(colors);
         dataSet.setValueTextColor(Color.WHITE);
         dataSet.setValueTextSize(14f);
 
-        dataSet.setDrawValues(true);
+        dataSet.setDrawValues(false);
         dataSet.setYValuePosition(PieDataSet.ValuePosition.INSIDE_SLICE);
         dataSet.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
 
@@ -67,21 +74,58 @@ public class SyncDetailsPieChart {
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
         pieChart.getDescription().setEnabled(false);
-        pieChart.setDrawEntryLabels(true);
+        pieChart.setDrawEntryLabels(false);
         pieChart.setDrawHoleEnabled(true);
         pieChart.setDrawHoleEnabled(false);
     }
 
     public static void configurePieChartDimensions(PieChart pieChart, Context context) {
-        int width =(int) (UI.getDeviceWidth(context) * 0.35);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, width);
+        int width = (int) (UI.getDeviceWidth(context) * 0.35);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(width, width);
         params.setMargins(0,10,0,10);
         pieChart.setLayoutParams(params);
     }
 
     public static void configurePieChartLegend(PieChart pieChart) {
-            Legend legend = pieChart.getLegend();
-            legend.setEnabled(false);
+        Legend legend = pieChart.getLegend();
+        legend.setEnabled(false);
+    }
+
+    public static void createTextAreaForSyncDetailsPieChart(View chartLayout, LinearLayout layout, Context context){
+        if(chartLayout instanceof PieChart){
+            PieChart pieChart = (PieChart) chartLayout;
+            PieData chartData = pieChart.getData();
+            PieDataSet dataSet = (PieDataSet) chartData.getDataSet();
+            List<PieEntry> entries = dataSet.getValues();
+            int[] colors = MainActivity.currentTheme.syncDetailsPieChartColors;
+
+            SpannableStringBuilder coloredText = new SpannableStringBuilder();
+
+            for (int i = 0; i < entries.size(); i++) {
+                PieEntry entry = entries.get(i);
+                String label = entry.getLabel();
+                int value = (int) entry.getValue();
+
+                int colorIndex = i % colors.length;
+                SpannableString entryText = new SpannableString(label + " assets count : " + value + "\n\n");
+                entryText.setSpan(new ForegroundColorSpan(colors[colorIndex]), 0, entryText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                coloredText.append(entryText);
+            }
+
+            TextView statusTextView = new TextView(context);
+            statusTextView.setText(coloredText);
+            statusTextView.setTextSize(10);
+//            statusTextView.setPadding(32, 0, 0, 0);
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            layoutParams.gravity = Gravity.CENTER_VERTICAL;
+            layoutParams.setMargins(0,10,0,10);
+            statusTextView.setLayoutParams(layoutParams);
+
+            layout.addView(statusTextView);
         }
+    }
 
 }

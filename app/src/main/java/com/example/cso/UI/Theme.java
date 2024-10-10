@@ -38,6 +38,7 @@ public class Theme {
     public int loadingImageId;
     public String name;
     public static ArrayList<Theme> themes = new ArrayList<>();
+    public int[] syncDetailsPieChartColors;
 
     public static void initializeThemes(){
         purpleTheme();
@@ -54,7 +55,9 @@ public class Theme {
                  int[] accountStorageDataChartColors, int menuTextColor, int primaryTextColor,
                  int onSyncButtonGradientStart, int onSyncButtonGradientEnd, int offSyncButtonGradientStart,
                  int offSyncButtonGradientEnd,int syncProgressTextColor, int warningTextColor,
-                 int toolbarBackgroundColor, int toolbarElementsColor, int deviceIconId, int threeDotButtonId, int loadingImageId) {
+                 int toolbarBackgroundColor, int toolbarElementsColor
+                , int deviceIconId, int threeDotButtonId,
+                int loadingImageId, int[] syncDetailsPieChartColors) {
         this.name = name;
         this.primaryBackgroundColor = primaryBackgroundColor;
         this.deviceButtonColors = deviceButtonColors;
@@ -77,6 +80,7 @@ public class Theme {
         this.deviceIconId = deviceIconId;
         this.threeDotButtonId = threeDotButtonId;
         this.loadingImageId = loadingImageId;
+        this.syncDetailsPieChartColors = syncDetailsPieChartColors;
         themes.add(this);
     }
 
@@ -103,7 +107,8 @@ public class Theme {
                     Color.parseColor("#FAB34B") // synced
                 },
                 new int[] {
-                        Color.parseColor("#00796B"),
+                        //                        Color.parseColor("#00796B"),
+                        Color.GRAY,
                         Color.parseColor("#388E3C"),
                         Color.parseColor("#80CBC4")
                 },
@@ -128,7 +133,11 @@ public class Theme {
                 Color.parseColor("#FFFFFF"), // toolbar elements
                 R.drawable.white_device,
                 R.drawable.three_dot_white,
-                R.drawable.yellow_loading
+                R.drawable.yellow_loading,
+                new int[]{
+                Color.parseColor("#80CBC4"), //synced color for details chart
+                Color.parseColor("#B0BEC5"), //unsynced color for details chart
+                }
         );
     }
 
@@ -180,7 +189,11 @@ public class Theme {
                 Color.parseColor("#FFFFFF"), // Toolbar elements (white)
                 R.drawable.white_device, // Device icon
                 R.drawable.three_dot_white,
-                R.drawable.yellow_loading
+                R.drawable.yellow_loading,
+                new int[]{
+                        Color.parseColor("#388E3C"), //synced color for details chart
+                        Color.parseColor("#80CBC4"), //unsynced color for details chart
+                }
         );
     }
 
@@ -232,7 +245,11 @@ public class Theme {
                 Color.parseColor("#FFFFFF"), // Toolbar elements (white for clarity)
                 R.drawable.black_device, // Device icon
                 R.drawable.three_dot_black, // Three dot button
-                R.drawable.yellow_loading
+                R.drawable.yellow_loading,
+                new int[]{
+                        Color.parseColor("#388E3C"), //synced color for details chart
+                        Color.parseColor("#80CBC4"), //unsynced color for details chart
+                }
         );
     }
 
@@ -284,7 +301,11 @@ public class Theme {
                 Color.parseColor("#424242"), // Toolbar elements (dark gray)
                 R.drawable.black_device, // Device icon
                 R.drawable.three_dot_blue,
-                R.drawable.yellow_loading
+                R.drawable.yellow_loading,
+                new int[]{
+                        Color.parseColor("#388E3C"), //synced color for details chart
+                        Color.parseColor("#80CBC4"), //unsynced color for details chart
+                }
         );
     }
 

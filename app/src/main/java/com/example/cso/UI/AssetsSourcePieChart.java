@@ -131,8 +131,16 @@ public class AssetsSourcePieChart {
 
             TextView statusTextView = new TextView(context);
             statusTextView.setText(coloredText);
-            statusTextView.setTextSize(14);
+            statusTextView.setTextSize(10);
             statusTextView.setPadding(32, 0, 0, 0);
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            layoutParams.gravity = Gravity.CENTER_VERTICAL;
+            layoutParams.setMargins(0,10,0,10);
+            statusTextView.setLayoutParams(layoutParams);
+
             layout.addView(statusTextView);
         }
     }

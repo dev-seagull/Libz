@@ -1,24 +1,31 @@
 package com.example.cso.UI;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 
+import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.example.cso.SharedPreferencesHandler;
@@ -59,18 +66,47 @@ public class SyncButton {
     }
 
     public static void handleSyncButtonClick(Activity activity){
-        LiquidFillButton syncButton = activity.findViewById(syncButtonId);
-        boolean currentSyncState = toggleSyncState();
-        boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
-        Log.d("ui","Sync state after button click: " + currentSyncState);
-        if(currentSyncState){
-            startSyncIfNotRunning(isServiceRunning, activity);
-        }else{
-            TextView warningText = MainActivity.activity.findViewById(warningTextViewId);
-            warningText.setText("");
-            stopSyncIfRunning(isServiceRunning, activity);
+        try{
+            Vibrator vibrator = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);
+
+            LiquidFillButton syncButton = activity.findViewById(syncButtonId);
+            boolean currentSyncState = toggleSyncState();
+            boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
+            Log.d("ui","Sync state after button click: " + currentSyncState);
+
+            ImageView syncIcon = new ImageView(activity);
+            syncIcon = new ImageView(activity);
+            syncIcon.setImageResource(R.drawable.android_device_icon);
+            ((ViewGroup) syncButton.getParent()).addView(syncIcon);
+            ObjectAnimator rotateAnimation = ObjectAnimator.ofFloat(syncIcon, "rotation", 0f, 360f);
+            rotateAnimation.setDuration(1000);
+            rotateAnimation.setInterpolator(new LinearInterpolator());
+            rotateAnimation.setRepeatCount(ObjectAnimator.INFINITE);  
+
+
+            if(currentSyncState){
+//            startSyncIfNotRunning(isServiceRunning, activity);
+                if (vibrator.hasVibrator()) {
+                    vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
+                }
+                rotateAnimation.start();
+                syncButton.setVisibility(View.INVISIBLE);
+                syncIcon.setVisibility(View.VISIBLE);
+
+            }else{
+                if (vibrator.hasVibrator()) {
+                    vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
+                }
+                rotateAnimation.end();
+                syncIcon.clearAnimation();
+                syncIcon.setVisibility(View.INVISIBLE);
+//                syncButton.setVisibility(View.VISIBLE);
+//                stopSyncIfRunning(isServiceRunning, activity);
+            }
+            updateSyncAndWifiButtonBackground(syncButton,currentSyncState);
+        }catch (Exception e){
+            LogHandler.crashLog(e,"ui");
         }
-        updateSyncAndWifiButtonBackground(syncButton,currentSyncState);
     }
 
     public static void startSyncIfNotRunning(boolean isServiceRunning, Activity activity){
