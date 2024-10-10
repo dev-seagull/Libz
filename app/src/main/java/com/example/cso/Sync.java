@@ -48,17 +48,17 @@ public class Sync {
                     MainActivity.syncDetailsStatus = "";
                     SyncDetails.setSyncStatusDetailsTextView(activity, false);
                     for(String[] account_row: account_rows){
-                        double freeSpace = GoogleDrive.calculateDriveFreeSpace(account_row);
-                        Log.d("service","free space of " + account_row[0] + " : " + freeSpace);
-                        boolean isAccountFull = true;
-                        if(freeSpace > 50) {
-                            isAccountFull = false;
+                        if (!TimerService.isTimerRunning){
+                            Log.d("service","sync Stopped suddenly");
+                            break;
                         }
-
-                        if(!isAccountFull){
-                            isAllOfAccountsFull = false;
-                            String type = account_row[1];
-                            if(type.equals("backup")){
+                        String type = account_row[1];
+                        if(type.equals("backup")) {
+                            double freeSpace = GoogleDrive.calculateDriveFreeSpace(account_row);
+                            Log.d("service","free space of " + account_row[0] + " : " + freeSpace);
+                            boolean isAccountFull = (freeSpace < 50);
+                            if(!isAccountFull){
+                                isAllOfAccountsFull = false;
                                 syncAndroidToBackupAccount(freeSpace,account_row[0], account_row[4],
                                         activity);
                             }
@@ -98,6 +98,10 @@ public class Sync {
             new Thread( () -> checkForStatusChanges(activity)).start();
 
             for (String[] androidRow : sortedAndroidFiles) {
+                if (!TimerService.isTimerRunning){
+                    Log.d("service","sync Stopped suddenly");
+                    break;
+                }
                 Log.d("service","amountSpaceToFreeUp : " + amountSpaceToFreeUp);
                 double fileSize = Double.parseDouble(androidRow[4]);
                 amountSpaceToFreeUp  = amountSpaceToFreeUp - fileSize;
@@ -238,16 +242,21 @@ public class Sync {
         return unique_android_rows;
     }
 
-    public static void stopSync(){
+    public static void stopSync(Activity activity){
         try{
-            MainActivity.activity.getApplicationContext().stopService(MainActivity.serviceIntent);
-        }catch (Exception e) {  FirebaseCrashlytics.getInstance().recordException(e); }
+            TimerService.isTimerRunning = false;
+            if (TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on")) {
+                MainActivity.activity.getApplicationContext().stopService(MainActivity.serviceIntent);
+            }
+        }catch (Exception e) {  LogHandler.crashLog(e,"Service"); }
     }
 
     public static void startSync(Activity activity){
         try{
-            activity.getApplicationContext().startService(MainActivity.serviceIntent);
-        }catch (Exception e) {  FirebaseCrashlytics.getInstance().recordException(e); }
+            if (TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("off")){
+                activity.getApplicationContext().startService(MainActivity.serviceIntent);
+            }
+        }catch (Exception e) { LogHandler.crashLog(e,"Service"); }
     }
 
 

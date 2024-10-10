@@ -262,9 +262,6 @@ public class Android {
         Log.d("Threads","DeleteRedundantAndroidThread started");
         Thread deleteRedundantAndroidThread = new Thread(DBHelper::deleteRedundantAndroidFromDB);
         deleteRedundantAndroidThread.start();
-//        try{
-//            deleteRedundantAndroidThread.join();
-//        }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
         Log.d("Threads","DeleteRedundantAndroidThread finished");
     }
 

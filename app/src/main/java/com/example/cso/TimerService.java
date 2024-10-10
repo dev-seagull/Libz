@@ -30,7 +30,7 @@ public class TimerService extends Service {
     private static String CHANNEL_NAME = "Syncing Channel";
 
     private Timer timer;
-    private boolean isTimerRunning = false; // init
+    public static boolean isTimerRunning = false; // init
     private TimerTask timerTask;
     private  Notification notification;
 
@@ -53,9 +53,8 @@ public class TimerService extends Service {
         if (intent != null && intent.getAction() != null && intent.getAction().equals("STOP_SERVICE")) {
             Log.d("service", "Service stop request received");
             stopTimer();
-
             if(isAppInForeground()){
-                SyncButton.handleSyncButtonClick(MainActivity.activity);
+                SyncButton.handleRotateSyncButtonClick(MainActivity.activity);
             }else{
                 SyncButton.toggleSyncState();
             }
@@ -79,13 +78,12 @@ public class TimerService extends Service {
                 public void run() {
                     try{
                         Log.d("service", "Android timer is running: " + MainActivity.isAndroidTimerRunning);
-                        Log.d("service", "Is any process on: " + MainActivity.isAnyProccessOn);// log
-                        Log.d("service","isTimer Running : " + isTimerRunning); // log
-                        if (isTimerRunning // previous running
-                                || MainActivity.isAnyProccessOn) { // service check
+                        Log.d("service", "Is any process on: " + MainActivity.isAnyProccessOn);
+                        Log.d("service","isTimer Running : " + isTimerRunning);
+                        if (isTimerRunning || MainActivity.isAnyProccessOn) {
                             return;
                         }
-                        isTimerRunning = true; // start of timer service
+                        isTimerRunning = true;
 
                         new Thread( () -> {
                             try {
@@ -112,7 +110,7 @@ public class TimerService extends Service {
                 }
             };
 
-            timer.schedule(timerTask, 5000 , 1000);
+            timer.schedule(timerTask, 1000 , 1000);
         }
         Log.d("service","Service Timer Finished");
     }
@@ -154,11 +152,10 @@ public class TimerService extends Service {
         actionIntent.setAction("STOP_SERVICE");
 
        PendingIntent actionPendingIntent;
-       int request_code = 5;
        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-           actionPendingIntent = PendingIntent.getService(this, request_code, actionIntent, PendingIntent.FLAG_IMMUTABLE);
+           actionPendingIntent = PendingIntent.getService(this, NOTIFICATION_ID, actionIntent, PendingIntent.FLAG_IMMUTABLE);
        } else {
-           actionPendingIntent = PendingIntent.getService(this, request_code, actionIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+           actionPendingIntent = PendingIntent.getService(this, NOTIFICATION_ID, actionIntent, PendingIntent.FLAG_UPDATE_CURRENT);
        }
 
         builder.addAction(R.drawable.googledriveimage, "Stop Service", actionPendingIntent);
@@ -181,8 +178,8 @@ public class TimerService extends Service {
             timer.purge();
             timer = null;
         }
-
-        Log.d("TimerForegroundService", "Timer stopped");
+        isTimerRunning = false;
+        Log.d("TimerForegroundService", "Timer stop status : " + (timer == null) + " and timerTask : " + timerTask);
     }
 
     @Override

@@ -80,9 +80,9 @@ public class SyncButton {
                 vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
             }
             boolean currentSyncState = toggleSyncState();
-            boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
             Log.d("ui","Sync state after button click: " + currentSyncState);
             updateSyncAndWifiButtonBackground(activity,true);
+            Sync.startSync(activity);
         }catch (Exception e){
             LogHandler.crashLog(e,"ui");
         }
@@ -94,11 +94,10 @@ public class SyncButton {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && vibrator.hasVibrator()) {
                 vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
             }
-
             boolean currentSyncState = toggleSyncState();
-            boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
             Log.d("ui","Sync state after button click: " + currentSyncState);
             updateSyncAndWifiButtonBackground(activity,false);
+            Sync.stopSync(activity);
         }catch (Exception e){
             LogHandler.crashLog(e,"ui");
         }
