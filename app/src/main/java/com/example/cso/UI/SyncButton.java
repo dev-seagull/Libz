@@ -55,11 +55,11 @@ public class SyncButton {
         boolean syncState = SharedPreferencesHandler.getSyncSwitchState();
         boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
 
-        if(! (syncState && isServiceRunning)){
+        if(!(syncState && isServiceRunning)){
             SharedPreferencesHandler.setSwitchState("syncSwitchState",false, MainActivity.preferences);
             syncState = false;
         }
-        updateSyncAndWifiButtonBackground(activity,false);
+        updateSyncAndWifiButtonBackground(activity,syncState);
     }
 
     public static void startSyncButtonAnimation(Activity activity){
