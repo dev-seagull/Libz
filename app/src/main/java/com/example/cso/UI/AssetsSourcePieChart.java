@@ -58,12 +58,8 @@ public class AssetsSourcePieChart {
     }
 
     public static void configurePieChartDataFormatForDeviceSourceStatus(PieChart pieChart, ArrayList<PieEntry> entries) {
-        if (entries.size() > 5) {
-            Collections.sort(
-                    entries, (e1, e2) -> Float.compare(e2.getValue(), e1.getValue())
-            );
-        }
-
+        Collections.sort(entries, (e1, e2) -> Float.compare(e2.getValue(), e1.getValue()));
+        
         PieDataSet dataSet = new PieDataSet(entries, null);
 
         int[] colors = MainActivity.currentTheme.deviceAppStorageChartColors;

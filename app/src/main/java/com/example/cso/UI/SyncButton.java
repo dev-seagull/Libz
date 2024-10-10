@@ -81,7 +81,7 @@ public class SyncButton {
             ObjectAnimator rotateAnimation = ObjectAnimator.ofFloat(syncIcon, "rotation", 0f, 360f);
             rotateAnimation.setDuration(1000);
             rotateAnimation.setInterpolator(new LinearInterpolator());
-            rotateAnimation.setRepeatCount(ObjectAnimator.INFINITE);  
+            rotateAnimation.setRepeatCount(ObjectAnimator.INFINITE);
 
 
             if(currentSyncState){
