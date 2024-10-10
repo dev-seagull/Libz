@@ -209,7 +209,7 @@ public class DeviceStatusSync {
     public static JsonObject createAssetsSourceStatusJson() {
         JsonObject[] assetsSourceSizeJson = new JsonObject[]{new JsonObject()};
         Thread createAssetsSourceStatusJsonThread = new Thread(() -> {
-            String rootPath = "/storage/emulated/0"; // should get based on the device status
+            String rootPath = "/storage/emulated/0";
             HashMap<String, List<String>> folderTypeMap = new HashMap<>();
 
             folderTypeMap.put("Screenshots", List.of("DCIM/Screenshots",

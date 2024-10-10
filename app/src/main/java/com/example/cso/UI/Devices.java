@@ -6,8 +6,13 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.View;
@@ -25,10 +30,15 @@ import com.example.cso.DeviceStatusSync;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.FutureTask;
 
 public class Devices {
@@ -361,30 +371,28 @@ public class Devices {
     }
 
     public static LinearLayout createChartForSourceStatus(Context context, String deviceId){
-//        List<PackageInfo> packagesInfo = Android.getInstalledApps();
-//        for(PackageInfo packageInfo: packagesInfo){
-//            File file = Android.getAppDirectories(packageInfo);
-//            Android.getMediaSizeFromDirectory(file);
-//        }
-
         LinearLayout layout = Details.createInnerDetailsLayout(context);
+        layout.setOrientation(LinearLayout.HORIZONTAL);
 
         new Thread(() -> {
             ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
-            MainActivity.activity.runOnUiThread(() -> {
+            activity.runOnUiThread(() -> {
                 loadingImage[0].setBackgroundResource(R.drawable.yellow_loading);
                 LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(128,128);
                 params.setMargins(0,64,0,64);
                 loadingImage[0].setLayoutParams(params);
                 layout.addView(loadingImage[0]);
             });
+
             JsonObject data = getAssetsSourceStatus(deviceId);
             Log.d("DeviceStatusSync", "assets source data : " + data);
 
-            MainActivity.activity.runOnUiThread(() -> {
+            activity.runOnUiThread(() -> {
                 View chartLayout = AssetsSourcePieChart.createPieChartForDeviceSourceStatus(context, data);
-//                TextView chartTextView =  AssetsSourcePieChart.createAssetSourcePieChartTextView();
                 layout.addView(chartLayout);
+
+                AssetsSourcePieChart.createTextAreaForAssetSourcePieChart(chartLayout,layout,context);
+
                 layout.removeView(loadingImage[0]);
             });
 

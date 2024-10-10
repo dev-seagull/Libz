@@ -2,6 +2,11 @@ package com.example.cso.UI;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -21,6 +26,7 @@ import org.checkerframework.checker.units.qual.C;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 public class AssetsSourcePieChart {
     public static View createPieChartForDeviceSourceStatus(Context context, JsonObject data) {
@@ -53,23 +59,10 @@ public class AssetsSourcePieChart {
 
     public static void configurePieChartDataFormatForDeviceSourceStatus(PieChart pieChart, ArrayList<PieEntry> entries) {
         if (entries.size() > 5) {
-            Collections.sort(entries, (e1, e2) -> Float.compare(e2.getValue(), e1.getValue()));
-
-//            float othersValue = 0;
-//            ArrayList<PieEntry> limitedEntries = new ArrayList<>();
-//            for (int i = 0; i < entries.size(); i++) {
-//                if (i < 4) {
-//                    limitedEntries.add(entries.get(i));
-//                } else {
-//                    othersValue += entries.get(i).getValue();
-//                }
-            }
-//
-//            if (othersValue > 0) {
-//                limitedEntries.add(new PieEntry(othersValue, "Others"));
-//            }
-//            entries = limitedEntries;
-//        }
+            Collections.sort(
+                    entries, (e1, e2) -> Float.compare(e2.getValue(), e1.getValue())
+            );
+        }
 
         PieDataSet dataSet = new PieDataSet(entries, null);
 
@@ -80,7 +73,7 @@ public class AssetsSourcePieChart {
 
         dataSet.setValueFormatter(new PieChartValueFormatter());
 
-        dataSet.setDrawValues(true);
+        dataSet.setDrawValues(false);
         dataSet.setValueLinePart1OffsetPercentage(200f);
         dataSet.setValueLinePart1Length(0.5f);
         dataSet.setValueLinePart2Length(0.8f);
@@ -94,13 +87,13 @@ public class AssetsSourcePieChart {
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
         pieChart.getDescription().setEnabled(false);
-        pieChart.setDrawEntryLabels(true);
+        pieChart.setDrawEntryLabels(false);
         pieChart.setDrawHoleEnabled(false);
     }
 
     public static void configurePieChartDimensions(PieChart pieChart, Context context) {
         int width =(int) (UI.getDeviceWidth(context) * 0.35);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, width);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(width, width);
         params.setMargins(0,10,0,10);
         pieChart.setLayoutParams(params);
     }
@@ -108,6 +101,40 @@ public class AssetsSourcePieChart {
     public static void configurePieChartLegend(PieChart pieChart) {
         Legend legend = pieChart.getLegend();
         legend.setEnabled(false);
+    }
+
+    public static void createTextAreaForAssetSourcePieChart(View chartLayout, LinearLayout layout, Context context){
+        if(chartLayout instanceof PieChart){
+            PieChart pieChart = (PieChart) chartLayout;
+            PieData chartData = pieChart.getData();
+            PieDataSet dataSet = (PieDataSet) chartData.getDataSet();
+            List<PieEntry> entries = dataSet.getValues();
+            int[] colors = MainActivity.currentTheme.deviceAppStorageChartColors;
+
+            SpannableStringBuilder coloredText = new SpannableStringBuilder();
+
+            for (int i = 0; i < entries.size(); i++) {
+                PieEntry entry = entries.get(i);
+                String label = entry.getLabel();
+                String value = String.valueOf(entry.getValue());
+                if (Double.valueOf(value) >= 100){
+                    value =  String.format("%.1f GB", Double.valueOf(value) / 1024);
+                }else{
+                    value =  String.format("%.1f MB", Double.valueOf(value));
+                }
+
+                int colorIndex = i % colors.length;
+                SpannableString entryText = new SpannableString(label + ": " + value + "\n");
+                entryText.setSpan(new ForegroundColorSpan(colors[colorIndex]), 0, entryText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                coloredText.append(entryText);
+            }
+
+            TextView statusTextView = new TextView(context);
+            statusTextView.setText(coloredText);
+            statusTextView.setTextSize(14);
+            statusTextView.setPadding(32, 0, 0, 0);
+            layout.addView(statusTextView);
+        }
     }
 
 }

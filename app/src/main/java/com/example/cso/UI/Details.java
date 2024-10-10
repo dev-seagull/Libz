@@ -110,45 +110,6 @@ public class Details {
         return null;
     }
 
-//    public static void configurePieChartInteractions(PieChart pieChart) {
-//        pieChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
-//            @Override
-//            public void onValueSelected(Entry e, Highlight h) {
-//                handlePieChartSelection(pieChart,(int) h.getX());
-//            }
-//
-//            @Override
-//            public void onNothingSelected() {
-//
-//            }
-//        });
-//    }
-
-//    public static void handlePieChartSelection(PieChart pieChart, int index) {
-//        PieData pieData = pieChart.getData();
-//        PieDataSet pieDataSet = (PieDataSet) pieData.getDataSet();
-//        String label = pieDataSet.getEntryForIndex(index).getLabel();
-//
-//        if ("Media(GB)".equals(label)) {
-////            displayDirectoryUsage();
-//        } else {
-//
-//        }
-//    }
-
-//    public static TextView createDirectoryUsageTextView(Context context){
-//        TextView directoryUsages = new TextView(context);
-//        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
-//                LinearLayout.LayoutParams.WRAP_CONTENT,
-//                LinearLayout.LayoutParams.WRAP_CONTENT
-//        );
-//        directoryUsages.setLayoutParams(textParams);
-////        directoryUsages.setFontFamily(ResourcesCompat.getFont(context, R.font.sans_serif));
-//        directoryUsages.setGravity(Gravity.CENTER);
-//        directoryUsages.setTextSize(12);
-//        return directoryUsages;
-//    }
-
     public static void configurePieChartDimensions(PieChart pieChart, Context context) {
         int width =(int) (UI.getDeviceWidth(context) * 0.35);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, width);
