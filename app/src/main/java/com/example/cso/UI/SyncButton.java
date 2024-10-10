@@ -38,20 +38,28 @@ public class SyncButton {
     public static int syncButtonId;
     public static int warningTextViewId;
     public static int syncButtonsParentLayoutId;
+    public static int syncTextId;
+    public static int rotateSyncButtonId;
     public static void initializeSyncButton(Activity activity){
         LiquidFillButton syncButton = activity.findViewById(syncButtonId);
-
-        boolean[] syncState = {SharedPreferencesHandler.getSyncSwitchState()};
-        boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
-        if(! (syncState[0] && isServiceRunning)){
-            SharedPreferencesHandler.setSwitchState("syncSwitchState",false, MainActivity.preferences);
-            syncState[0] = false;
-        }
-        updateSyncAndWifiButtonBackground(syncButton, syncState[0]);
+        ImageView rotateSyncButton = activity.findViewById(rotateSyncButtonId);
 
         syncButton.setOnClickListener(view -> {
             handleSyncButtonClick(activity);
         });
+
+        rotateSyncButton.setOnClickListener(view -> {
+            handleRotateSyncButtonClick(activity);
+        });
+
+        boolean syncState = SharedPreferencesHandler.getSyncSwitchState();
+        boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
+
+        if(! (syncState && isServiceRunning)){
+            SharedPreferencesHandler.setSwitchState("syncSwitchState",false, MainActivity.preferences);
+            syncState = false;
+        }
+        updateSyncAndWifiButtonBackground(activity,false);
     }
 
     public static void startSyncButtonAnimation(Activity activity){
@@ -68,78 +76,32 @@ public class SyncButton {
     public static void handleSyncButtonClick(Activity activity){
         try{
             Vibrator vibrator = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);
-
-            LiquidFillButton syncButton = activity.findViewById(syncButtonId);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && vibrator.hasVibrator()) {
+                vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
+            }
             boolean currentSyncState = toggleSyncState();
             boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
             Log.d("ui","Sync state after button click: " + currentSyncState);
-
-            ImageView syncIcon = new ImageView(activity);
-            syncIcon = new ImageView(activity);
-            syncIcon.setImageResource(R.drawable.android_device_icon);
-            ((ViewGroup) syncButton.getParent()).addView(syncIcon);
-            ObjectAnimator rotateAnimation = ObjectAnimator.ofFloat(syncIcon, "rotation", 0f, 360f);
-            rotateAnimation.setDuration(1000);
-            rotateAnimation.setInterpolator(new LinearInterpolator());
-            rotateAnimation.setRepeatCount(ObjectAnimator.INFINITE);
-
-
-            if(currentSyncState){
-//            startSyncIfNotRunning(isServiceRunning, activity);
-                if (vibrator.hasVibrator()) {
-                    vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
-                }
-                rotateAnimation.start();
-                syncButton.setVisibility(View.INVISIBLE);
-                syncIcon.setVisibility(View.VISIBLE);
-
-            }else{
-                if (vibrator.hasVibrator()) {
-                    vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
-                }
-                rotateAnimation.end();
-                syncIcon.clearAnimation();
-                syncIcon.setVisibility(View.INVISIBLE);
-//                syncButton.setVisibility(View.VISIBLE);
-//                stopSyncIfRunning(isServiceRunning, activity);
-            }
-            updateSyncAndWifiButtonBackground(syncButton,currentSyncState);
+            updateSyncAndWifiButtonBackground(activity,true);
         }catch (Exception e){
             LogHandler.crashLog(e,"ui");
         }
     }
 
-    public static void startSyncIfNotRunning(boolean isServiceRunning, Activity activity){
+    public static void handleRotateSyncButtonClick(Activity activity){
         try{
-            if(!isServiceRunning){
-                Sync.startSync(activity);
+            Vibrator vibrator = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && vibrator.hasVibrator()) {
+                vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
             }
-//            startSyncButtonAnimation(activity);
-        }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e);}
-    }
 
-    public static void stopSyncIfRunning(boolean isServiceRunning, Activity activity){
-        try{
-            if(isServiceRunning){
-                Sync.stopSync();
-            }
-            stopSyncButtonAnimation(activity);
-        }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
-    }
-
-    public static void stopSyncButtonAnimation(Activity activity){
-        LiquidFillButton syncButton = activity.findViewById(syncButtonId);
-        activity.runOnUiThread(syncButton::endFillAnimation);
-        SyncDetails.setSyncStatusDetailsTextView(activity, false);
-    }
-
-    public static RotateAnimation createContinuousRotateAnimation() {
-        RotateAnimation continuousRotate = new RotateAnimation(0, 360,
-                Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-        continuousRotate.setDuration(4000);
-        continuousRotate.setStartOffset(1000);
-        continuousRotate.setRepeatCount(Animation.INFINITE);
-        return continuousRotate;
+            boolean currentSyncState = toggleSyncState();
+            boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
+            Log.d("ui","Sync state after button click: " + currentSyncState);
+            updateSyncAndWifiButtonBackground(activity,false);
+        }catch (Exception e){
+            LogHandler.crashLog(e,"ui");
+        }
     }
 
     public static boolean toggleSyncState() {
@@ -151,12 +113,19 @@ public class SyncButton {
         return false;
     }
 
-    public static void updateSyncAndWifiButtonBackground(View button, Boolean state) {
+    public static void updateSyncAndWifiButtonBackground(Activity activity, Boolean syncState) {
+        LiquidFillButton syncButton = activity.findViewById(syncButtonId);
+        TextView syncText = activity.findViewById(syncTextId);
+        ImageView rotateSyncButton = activity.findViewById(rotateSyncButtonId);
         try{
-            if (state){
-                addGradientOnToSyncButton((LiquidFillButton) button);
+            if (syncState){
+                syncButton.setVisibility(View.GONE);
+                syncText.setVisibility(View.GONE);
+                rotateSyncButton.setVisibility(View.VISIBLE);
             }else{
-                addGradientOffToSyncButton((LiquidFillButton) button);
+                rotateSyncButton.setVisibility(View.GONE);
+                syncText.setVisibility(View.VISIBLE);
+                syncButton.setVisibility(View.VISIBLE);
             }
         }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
     }
@@ -170,57 +139,6 @@ public class SyncButton {
         firstLayer.setShape(GradientDrawable.OVAL);
         firstLayer.setSize(UI.dpToPx(104), UI.dpToPx(104));
         firstLayer.setCornerRadius(UI.dpToPx(52));
-
-//        ShapeDrawable secondLayer = new ShapeDrawable(new OvalShape());
-//        secondLayer.getPaint().setColor(android.graphics.Color.parseColor("#B0BEC5"));
-//        secondLayer.setPadding((int) UI.dpToPx(4), (int) UI.dpToPx(4), (int) UI.dpToPx(4), (int) UI.dpToPx(4));
-//
-//        GradientDrawable secondLayerStroke = new GradientDrawable();
-//        secondLayerStroke.setShape(GradientDrawable.OVAL);
-//        secondLayerStroke.setStroke((int) UI.dpToPx(2), android.graphics.Color.parseColor("#90A4AE"));
-//        secondLayerStroke.setCornerRadius(UI.dpToPx(50));
-//
-//        GradientDrawable thirdLayer = new GradientDrawable(
-//                GradientDrawable.Orientation.BOTTOM_TOP,
-//                new int[]{android.graphics.Color.parseColor("#B0BEC5"), android.graphics.Color.parseColor("#90A4AE")}
-//        );
-//        thirdLayer.setShape(GradientDrawable.OVAL);
-//        thirdLayer.setCornerRadius(UI.dpToPx(50));
-
-//        Drawable[] layers = {firstLayer, secondLayerStroke, thirdLayer};
-//        LayerDrawable layerDrawable = new LayerDrawable(layers);
-
-        actionButton.setBackground(firstLayer);
-    }
-
-    public static void addGradientOnToSyncButton(LiquidFillButton actionButton){
-        GradientDrawable firstLayer = new GradientDrawable(
-                GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[] {MainActivity.currentTheme.OnSyncButtonGradientStart,
-                        MainActivity.currentTheme.OnSyncButtonGradientEnd}
-        );
-        firstLayer.setShape(GradientDrawable.OVAL);
-        firstLayer.setSize(UI.dpToPx(104), UI.dpToPx(104));
-        firstLayer.setCornerRadius(UI.dpToPx(52));
-
-//        ShapeDrawable secondLayer = new ShapeDrawable(new OvalShape());
-//        secondLayer.getPaint().setColor(android.graphics.Color.parseColor("#B0BEC5"));
-//        secondLayer.setPadding((int) UI.dpToPx(4), (int) UI.dpToPx(4), (int) UI.dpToPx(4), (int) UI.dpToPx(4));
-//
-//        GradientDrawable secondLayerStroke = new GradientDrawable();
-//        secondLayerStroke.setShape(GradientDrawable.OVAL);
-//        secondLayerStroke.setStroke((int) UI.dpToPx(2), android.graphics.Color.parseColor("#90A4AE"));
-//        secondLayerStroke.setCornerRadius(UI.dpToPx(50));
-//
-//        GradientDrawable thirdLayer = new GradientDrawable(
-//                GradientDrawable.Orientation.BOTTOM_TOP,
-//                new int[]{android.graphics.Color.parseColor("#B0BEC5"), android.graphics.Color.parseColor("#90A4AE")}
-//        );
-//        thirdLayer.setShape(GradientDrawable.OVAL);
-//        thirdLayer.setCornerRadius(UI.dpToPx(50));
-
-//        Drawable[] layers = {firstLayer, secondLayerStroke, thirdLayer};
-//        LayerDrawable layerDrawable = new LayerDrawable(layers);
 
         actionButton.setBackground(firstLayer);
     }
@@ -259,9 +177,12 @@ public class SyncButton {
         );
         syncButton.setPadding(UI.dpToPx(16), UI.dpToPx(16), UI.dpToPx(16), UI.dpToPx(16));
         syncButton.setLayoutParams(buttonParams);
+        addGradientOffToSyncButton(syncButton);
+
 
         TextView syncText = new TextView(context);
-        syncText.setId(View.generateViewId());
+        syncTextId = View.generateViewId();
+        syncText.setId(syncTextId);
         syncText.setText("Sync");
         syncText.setTextSize(22);
         syncText.setTextColor(ContextCompat.getColor(context, R.color.textColor));
@@ -276,8 +197,19 @@ public class SyncButton {
         );
         syncText.setLayoutParams(textParams);
 
+        ImageView rotateSyncButton = new ImageView(context);
+        rotateSyncButtonId = View.generateViewId();
+        rotateSyncButton.setId(rotateSyncButtonId);
+        rotateSyncButton.setImageResource(R.drawable.back_sync);
+        ObjectAnimator rotateAnimation = ObjectAnimator.ofFloat(rotateSyncButton, "rotation", 0f, 360f);
+        rotateAnimation.setDuration(2000);
+        rotateAnimation.setInterpolator(new LinearInterpolator());
+        rotateAnimation.setRepeatCount(ObjectAnimator.INFINITE);
+        rotateAnimation.start();
+
         frameLayout.addView(syncButton);
         frameLayout.addView(syncText);
+        frameLayout.addView(rotateSyncButton);
 
         return frameLayout;
     }

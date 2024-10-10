@@ -130,7 +130,7 @@ public class Details {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        rightImageButton.setPadding(0,0,30,0);
+        rightImageButton.setPadding(0,0,25,0);
         rightImageButton.setScaleX(1.75f);
         rightImageButton.setScaleY(1.75f);
         rightImageButton.setLayoutParams(rightButtonParams);
@@ -151,7 +151,7 @@ public class Details {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        leftImageButton.setPadding(30,0,0,0);
+        leftImageButton.setPadding(25,0,0,0);
         leftImageButton.setScaleX(1.75f);
         leftImageButton.setScaleY(1.75f);
         leftImageButton.setLayoutParams(leftButtonParams);

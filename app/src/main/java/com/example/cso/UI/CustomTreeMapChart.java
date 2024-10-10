@@ -94,7 +94,7 @@ public class CustomTreeMapChart {
         }
 
         TextView unsyncedTextView = new TextView(context);
-        unsyncedTextView.setText("Unsynced\n" + AreaSquareChart.formatStorageSize(unsynced / 1024));
+        unsyncedTextView.setText("UnSynced\n" + AreaSquareChart.formatStorageSize(unsynced / 1024));
         unsyncedTextView.setGravity(Gravity.CENTER);
         unsyncedTextView.setTextColor(Color.WHITE);
         unsyncedTextView.setLayoutParams(new LinearLayout.LayoutParams(

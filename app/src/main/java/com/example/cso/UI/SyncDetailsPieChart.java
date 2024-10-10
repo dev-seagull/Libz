@@ -44,7 +44,7 @@ public class SyncDetailsPieChart {
             entries.add(new PieEntry((int) synced, "Synced"));
         }
         if (unsyncedMediaSize != 0){
-            entries.add(new PieEntry((int) unsyncedMediaSize, "unsynced"));
+            entries.add(new PieEntry((int) unsyncedMediaSize, "UnSynced"));
         }
         configurePieChartDataFormatForDeviceSyncedAssetsLocationStatus(pieChart, entries);
     }

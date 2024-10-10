@@ -202,7 +202,6 @@ public class Sync {
                 isBackedUp[0] = backUp.backupAndroidToDrive(fileId,fileName, filePath,fileHash,mimeType,assetId,
                         accessToken,userEmail,syncedAssetsFolderId);
                 MainActivity.syncDetailsStatus = "";
-                SyncButton.stopSyncButtonAnimation(MainActivity.activity);
             });
 
             backupThread.start();
