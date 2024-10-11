@@ -3,50 +3,62 @@ package com.example.cso;
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
-import android.widget.TextView;
+import android.widget.Toast;
 
-import com.example.cso.UI.SyncButton;
-import com.example.cso.UI.SyncDetails;
 import com.example.cso.UI.UI;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Sync {
 //    private static boolean isAllOfAccountsFull = true;
     public static boolean isJsonChangeCheckRunning = false;
+    public static boolean isAnyBackUpAccountExistsToastShown = false;
+    public static boolean isInternetConnectionToastShown = false;
+    public static long lastToastTime = 0;
+    public static long toastInterval = 10000;
     public static void syncAndroidFiles(Context context, Activity activity){
         Log.d("Threads","startSyncThread started");
         Thread syncThread =  new Thread( () -> {
             try{
                 List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","type",
                         "totalStorage","usedStorage", "refreshToken","usedStorage","totalStorage"});
-                boolean accountExists = DBHelper.anyBackupAccountExists();
+                boolean anyBackUpaAccountExists = DBHelper.anyBackupAccountExists();
                 boolean isAllOfAccountsFull = true;
 
-                if (!shouldSyncBasedOnInternetConnection(context)){
-                    return;
-                }
+                String internetConnectionStatus = getInternetStatusForSync(context);
 
                 Log.d("service","isAllOfAccountsFull : " + isAllOfAccountsFull);
-                Log.d("service", "any backup account exists: " + accountExists);
-                if(!accountExists){
-                    MainActivity.syncDetailsStatus = "There is no backup account to sync!";
-//                    SyncDetails.setSyncStatusDetailsTextView(activity, true);
-                }else if(!InternetManager.isInternetReachable("https://drive.google.com")){
-                    MainActivity.syncDetailsStatus = "No Internet connection";
-//                    SyncDetails.setSyncStatusDetailsTextView(activity, true);
-//                }
-//                else if(isAllOfAccountsFull){
-//                    MainActivity.activity.runOnUiThread(() -> {
-//                        UIHelper.warningText.setText(
-//                                "Sync failed! You are running out of space." +
-//                                        " Add more back up accounts.");
-//                    });
-                }else{
-                    MainActivity.syncDetailsStatus = "";
-//                    SyncDetails.setSyncStatusDetailsTextView(activity, false);
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastToastTime >= toastInterval) {
+                    lastToastTime = currentTime;
+                    isAnyBackUpAccountExistsToastShown = false;
+                    isInternetConnectionToastShown = false;
+                }
+                if (!anyBackUpaAccountExists) {
+                    isInternetConnectionToastShown = false;
+                    String message = "There is no backup account to sync!";
+                    if(!isAnyBackUpAccountExistsToastShown) {
+                        MainActivity.activity.runOnUiThread(() -> {
+                            isAnyBackUpAccountExistsToastShown = true;
+                            Toast.makeText(MainActivity.activity, message, Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                } else if(!internetConnectionStatus.equals("wifi") && !internetConnectionStatus.equals("data")) {
+                        isAnyBackUpAccountExistsToastShown = false;
+                        String message = internetConnectionStatus;
+                        if (!isInternetConnectionToastShown) {
+                            MainActivity.activity.runOnUiThread(() -> {
+                                isInternetConnectionToastShown = true;
+                                Toast.makeText(MainActivity.activity, message, Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                } else {
+                    isAnyBackUpAccountExistsToastShown = false;
+                    isInternetConnectionToastShown = false;
                     for(String[] account_row: account_rows){
                         if (!TimerService.isTimerRunning){
                             Log.d("service","sync Stopped suddenly");
@@ -65,6 +77,13 @@ public class Sync {
                         }
                     }
                 }
+//                }
+//                else if(isAllOfAccountsFull){
+//                    MainActivity.activity.runOnUiThread(() -> {
+//                        UIHelper.warningText.setText(
+//                                "Sync failed! You are running out of space." +
+//                                        " Add more back up accounts.");
+//                    });
 
                 Log.d("service","end of check for account existence and capacity");
             }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e);  }
@@ -181,11 +200,25 @@ public class Sync {
         Log.d("Threads","syncAndroidFileThread finished");
     }
 
-    private static boolean shouldSyncBasedOnInternetConnection(Context context) {
+    private static String getInternetStatusForSync(Context context) {
         boolean isWifiOnlySwitchOn = SharedPreferencesHandler.getWifiOnlySwitchState();
-        boolean isWifiConnected = InternetManager.getInternetStatus(context).equals("wifi");
+        String internetStatus = InternetManager.getInternetStatus(context);
 
-        return !isWifiOnlySwitchOn || isWifiConnected;
+        Log.d("service","isWifiOnlySwitchOn : " + isWifiOnlySwitchOn);
+        Log.d("service","internetStatus : " + internetStatus);
+        if(isWifiOnlySwitchOn){
+            if(internetStatus.equals("wifi")){
+                return "wifi";
+            }else {
+                return "No wifi connection!";
+            }
+        }else {
+            if(internetStatus.equals("noInternet")){
+                return "noInternet";
+            }else{
+                return internetStatus;
+            }
+        }
     }
 
 

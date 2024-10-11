@@ -48,7 +48,7 @@ public class InternetManager {
                 int responseCode = urlConnection.getResponseCode();
                 return (responseCode == 200);
             } catch (Exception e) {
-                LogHandler.saveLog("Failed to check if internet is reachable : " + e.getLocalizedMessage()) ;
+                LogHandler.crashLog(e,"service");
                 return false;
             }
         };

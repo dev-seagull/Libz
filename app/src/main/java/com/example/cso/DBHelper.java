@@ -957,6 +957,7 @@ public class DBHelper extends SQLiteOpenHelper {
             cursor.close();
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
 
+        Log.d("service","anyBackUpaAccountExists: " + exists);
         return exists;
     }
 
