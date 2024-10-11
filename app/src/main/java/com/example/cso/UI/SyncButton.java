@@ -1,7 +1,6 @@
 package com.example.cso.UI;
 
 import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Typeface;
@@ -9,14 +8,11 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
-import android.view.animation.RotateAnimation;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -36,7 +32,6 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics;
 public class SyncButton {
 
     public static int syncButtonId;
-    public static int warningTextViewId;
     public static int syncButtonsParentLayoutId;
     public static int syncTextId;
     public static int rotateSyncButtonId;
@@ -60,17 +55,6 @@ public class SyncButton {
             syncState = false;
         }
         updateSyncAndWifiButtonBackground(activity,syncState);
-    }
-
-    public static void startSyncButtonAnimation(Activity activity){
-        LiquidFillButton syncButton = activity.findViewById(syncButtonId);
-        activity.runOnUiThread(() -> {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                syncButton.startFillAnimation();
-            }
-            SyncDetails.setSyncStatusDetailsTextView(activity, false);
-        });
-
     }
 
     public static void handleSyncButtonClick(Activity activity){
@@ -140,21 +124,6 @@ public class SyncButton {
         firstLayer.setCornerRadius(UI.dpToPx(52));
 
         actionButton.setBackground(firstLayer);
-    }
-
-    public static TextView createSyncProgressTextView(Activity activity){
-        TextView warningText = new TextView(activity);
-        warningTextViewId = View.generateViewId();
-        warningText.setId(warningTextViewId);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, UI.dpToPx(20), 0, 0);
-        warningText.setGravity(Gravity.CENTER);
-        warningText.setVisibility(View.GONE);
-        warningText.setTextColor(MainActivity.currentTheme.warningTextColor);
-        warningText.setHorizontallyScrolling(true);
-        warningText.setSingleLine(true);
-        warningText.setEllipsize(TextUtils.TruncateAt.END);
-        return warningText;
     }
 
     public static FrameLayout createCircularButtonContainer(Context context) {
@@ -243,7 +212,6 @@ public class SyncButton {
         syncDetailsVerticalLayout.setLayoutParams(params);
         LinearLayout syncDetailsStatisticsLayout = SyncDetails.createSyncDetailsStatisticsLayout(activity);
         syncDetailsVerticalLayout.addView(createSyncButtonsParentLayout(activity));
-        syncDetailsVerticalLayout.addView(SyncButton.createSyncProgressTextView(activity));
         syncDetailsVerticalLayout.addView(syncDetailsStatisticsLayout);
 
         return syncDetailsVerticalLayout;

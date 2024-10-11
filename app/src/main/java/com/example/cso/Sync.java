@@ -33,10 +33,10 @@ public class Sync {
                 Log.d("service", "any backup account exists: " + accountExists);
                 if(!accountExists){
                     MainActivity.syncDetailsStatus = "There is no backup account to sync!";
-                    SyncDetails.setSyncStatusDetailsTextView(activity, true);
+//                    SyncDetails.setSyncStatusDetailsTextView(activity, true);
                 }else if(!InternetManager.isInternetReachable("https://drive.google.com")){
                     MainActivity.syncDetailsStatus = "No Internet connection";
-                    SyncDetails.setSyncStatusDetailsTextView(activity, true);
+//                    SyncDetails.setSyncStatusDetailsTextView(activity, true);
 //                }
 //                else if(isAllOfAccountsFull){
 //                    MainActivity.activity.runOnUiThread(() -> {
@@ -46,7 +46,7 @@ public class Sync {
 //                    });
                 }else{
                     MainActivity.syncDetailsStatus = "";
-                    SyncDetails.setSyncStatusDetailsTextView(activity, false);
+//                    SyncDetails.setSyncStatusDetailsTextView(activity, false);
                     for(String[] account_row: account_rows){
                         if (!TimerService.isTimerRunning){
                             Log.d("service","sync Stopped suddenly");
@@ -201,7 +201,7 @@ public class Sync {
                 String mimeType = androidRow[7];
                 String assetId = androidRow[8];
                 MainActivity.syncDetailsStatus = "Syncing " + fileName + " to " + userEmail + " ...";
-                SyncButton.startSyncButtonAnimation(MainActivity.activity);
+//                SyncDetails.setSyncStatusDetailsTextView(activity, false);
                 BackUp backUp = new BackUp();
                 isBackedUp[0] = backUp.backupAndroidToDrive(fileId,fileName, filePath,fileHash,mimeType,assetId,
                         accessToken,userEmail,syncedAssetsFolderId);

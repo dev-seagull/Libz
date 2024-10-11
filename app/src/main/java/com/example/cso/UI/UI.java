@@ -80,8 +80,8 @@ public class UI{
                 boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
                 activity.runOnUiThread(() -> {
                     if(! (syncState[0] & isServiceRunning)){
-                        TextView syncProgressText = activity.findViewById(SyncButton.warningTextViewId);
-                        syncProgressText.setText("");
+//                        TextView syncProgressText = activity.findViewById(SyncButton.warningTextViewId);
+//                        syncProgressText.setText("");
                     }
                     SyncDetails.handleSyncDetailsButton(activity);
                 });
