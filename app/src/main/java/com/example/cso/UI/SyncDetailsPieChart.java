@@ -10,11 +10,13 @@ import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.cso.DBHelper;
 import com.example.cso.MainActivity;
+import com.example.cso.R;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.PieData;
@@ -126,6 +128,30 @@ public class SyncDetailsPieChart {
 
             layout.addView(statusTextView);
         }
+    }
+
+    public static void addPieChartToSyncDetailsStatisticsLayout(PieChart pieChart, Activity activity,
+                                                                LinearLayout syncDetailsStatisticsLayout){
+        new Thread(() -> {
+            ImageView[] loadingImage = new ImageView[]{new ImageView(activity)};
+            MainActivity.activity.runOnUiThread(() -> {
+                loadingImage[0].setBackgroundResource(R.drawable.yellow_loading);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(128,128);
+                params.setMargins(0,64,0,64);
+                loadingImage[0].setLayoutParams(params);
+                syncDetailsStatisticsLayout.addView(loadingImage[0]);
+            });
+            View pieChartView = SyncDetailsPieChart.createPieChartView(pieChart,activity);
+            activity.runOnUiThread(() -> {
+                syncDetailsStatisticsLayout.addView(pieChartView);
+
+                if(pieChartView instanceof PieChart){
+                    SyncDetailsPieChart.createTextAreaForSyncDetailsPieChart(pieChartView,syncDetailsStatisticsLayout,activity);
+                }
+
+                syncDetailsStatisticsLayout.removeView(loadingImage[0]);
+            });
+        }).start();
     }
 
 }

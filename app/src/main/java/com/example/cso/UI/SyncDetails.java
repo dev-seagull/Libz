@@ -16,6 +16,7 @@ import android.widget.TextView;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 
+import com.anychart.charts.Pie;
 import com.example.cso.DBHelper;
 import com.example.cso.DeviceHandler;
 import com.example.cso.GoogleDriveFolders;
@@ -57,28 +58,6 @@ public class SyncDetails {
         syncDetailsStatisticsLayoutId = View.generateViewId();
         syncDetailsStatisticsLayout.setId(syncDetailsStatisticsLayoutId);
         syncDetailsStatisticsLayout.setOrientation(LinearLayout.HORIZONTAL);
-
-        PieChart pieChart = new PieChart(activity);
-        new Thread(() -> {
-            ImageView[] loadingImage = new ImageView[]{new ImageView(activity)};
-            MainActivity.activity.runOnUiThread(() -> {
-                loadingImage[0].setBackgroundResource(R.drawable.yellow_loading);
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(128,128);
-                params.setMargins(0,64,0,64);
-                loadingImage[0].setLayoutParams(params);
-                syncDetailsStatisticsLayout.addView(loadingImage[0]);
-            });
-            View pieChartView = SyncDetailsPieChart.createPieChartView(pieChart,activity);
-            activity.runOnUiThread(() -> {
-                syncDetailsStatisticsLayout.addView(pieChartView);
-
-                if(pieChartView instanceof PieChart){
-                    SyncDetailsPieChart.createTextAreaForSyncDetailsPieChart(pieChartView,syncDetailsStatisticsLayout,activity);
-                }
-
-                syncDetailsStatisticsLayout.removeView(loadingImage[0]);
-            });
-        }).start();
 
         return syncDetailsStatisticsLayout;
     }
@@ -163,9 +142,12 @@ public class SyncDetails {
         ImageButton syncDetailsButton = activity.findViewById(syncDetailsButtonId);
         syncDetailsButton.setOnClickListener(view -> {
             if(syncDetailsStatisticsLayout.getVisibility() == View.GONE){
+                PieChart pieChart  = new PieChart(activity);
+                SyncDetailsPieChart.addPieChartToSyncDetailsStatisticsLayout(pieChart,activity,syncDetailsStatisticsLayout);
                 syncDetailsStatisticsLayout.setVisibility(View.VISIBLE);
             }else{
                 syncDetailsStatisticsLayout.setVisibility(View.GONE);
+                syncDetailsStatisticsLayout.removeAllViews();
             }
         });
     }
