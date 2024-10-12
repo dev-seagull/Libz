@@ -1,6 +1,7 @@
 package com.example.cso;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
@@ -26,54 +27,19 @@ public class Sync {
             try{
                 List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail","type",
                         "totalStorage","usedStorage", "refreshToken","usedStorage","totalStorage"});
-                boolean anyBackUpaAccountExists = DBHelper.anyBackupAccountExists();
-                boolean isAllOfAccountsFull = true;
-
-                String internetConnectionStatus = getInternetStatusForSync(context);
-
-                Log.d("service","isAllOfAccountsFull : " + isAllOfAccountsFull);
-                long currentTime = System.currentTimeMillis();
-                if (currentTime - lastToastTime >= toastInterval) {
-                    lastToastTime = currentTime;
-                    isAnyBackUpAccountExistsToastShown = false;
-                    isInternetConnectionToastShown = false;
-                }
-                if (!anyBackUpaAccountExists) {
-                    isInternetConnectionToastShown = false;
-                    String message = "There is no backup account to sync!";
-                    if(!isAnyBackUpAccountExistsToastShown) {
-                        MainActivity.activity.runOnUiThread(() -> {
-                            isAnyBackUpAccountExistsToastShown = true;
-                            Toast.makeText(MainActivity.activity, message, Toast.LENGTH_SHORT).show();
-                        });
+                for(String[] account_row: account_rows){
+                    if (!TimerService.isTimerRunning){
+                        Log.d("service","sync Stopped suddenly");
+                        break;
                     }
-                } else if(!internetConnectionStatus.equals("wifi") && !internetConnectionStatus.equals("data")) {
-                        isAnyBackUpAccountExistsToastShown = false;
-                        String message = internetConnectionStatus;
-                        if (!isInternetConnectionToastShown) {
-                            MainActivity.activity.runOnUiThread(() -> {
-                                isInternetConnectionToastShown = true;
-                                Toast.makeText(MainActivity.activity, message, Toast.LENGTH_SHORT).show();
-                            });
-                        }
-                } else {
-                    isAnyBackUpAccountExistsToastShown = false;
-                    isInternetConnectionToastShown = false;
-                    for(String[] account_row: account_rows){
-                        if (!TimerService.isTimerRunning){
-                            Log.d("service","sync Stopped suddenly");
-                            break;
-                        }
-                        String type = account_row[1];
-                        if(type.equals("backup")) {
-                            double freeSpace = GoogleDrive.calculateDriveFreeSpace(account_row);
-                            Log.d("service","free space of " + account_row[0] + " : " + freeSpace);
-                            boolean isAccountFull = (freeSpace < 50);
-                            if(!isAccountFull){
-                                isAllOfAccountsFull = false;
-                                syncAndroidToBackupAccount(freeSpace,account_row[0], account_row[4],
-                                        activity);
-                            }
+                    String type = account_row[1];
+                    if(type.equals("backup")) {
+                        double freeSpace = GoogleDrive.calculateDriveFreeSpace(account_row);
+                        Log.d("service","free space of " + account_row[0] + " : " + freeSpace);
+                        boolean isAccountFull = (freeSpace < 50);
+                        if(!isAccountFull){
+                            syncAndroidToBackupAccount(freeSpace,account_row[0], account_row[4],
+                                    activity);
                         }
                     }
                 }
@@ -121,6 +87,45 @@ public class Sync {
                     Log.d("service","sync Stopped suddenly");
                     break;
                 }
+                String internetConnectionStatus = getInternetStatusForSync(activity);
+                boolean anyBackUpaAccountExists = DBHelper.anyBackupAccountExists();
+//                Log.d("service","isAllOfAccountsFull : " + isAllOfAccountsFull);
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastToastTime >= toastInterval) {
+                    lastToastTime = currentTime;
+                    isAnyBackUpAccountExistsToastShown = false;
+                    isInternetConnectionToastShown = false;
+                }
+                if (!anyBackUpaAccountExists) {
+                    isInternetConnectionToastShown = false;
+                    String message = "There is no backup account to sync!";
+                    if(!isAnyBackUpAccountExistsToastShown) {
+                        MainActivity.activity.runOnUiThread(() -> {
+                            isAnyBackUpAccountExistsToastShown = true;
+                            if (TimerService.isAppinForeGround){
+                                Toast.makeText(MainActivity.activity, message, Toast.LENGTH_SHORT).show();
+                            }
+
+                        });
+                    }
+                    break;
+                }
+                if(!internetConnectionStatus.equals("wifi") && !internetConnectionStatus.equals("data")) {
+                    isAnyBackUpAccountExistsToastShown = false;
+                    String message = internetConnectionStatus;
+                    if (!isInternetConnectionToastShown) {
+                        MainActivity.activity.runOnUiThread(() -> {
+                            isInternetConnectionToastShown = true;
+                            if (TimerService.isAppinForeGround){
+                                Toast.makeText(MainActivity.activity, message, Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                    break;
+                }
+                isAnyBackUpAccountExistsToastShown = false;
+                isInternetConnectionToastShown = false;
+
                 Log.d("service","amountSpaceToFreeUp : " + amountSpaceToFreeUp);
                 double fileSize = Double.parseDouble(androidRow[4]);
                 amountSpaceToFreeUp  = amountSpaceToFreeUp - fileSize;
@@ -174,7 +179,6 @@ public class Sync {
                                     }
                                 }
                             }
-
                         }
                     }
                 }else {
@@ -344,4 +348,5 @@ public class Sync {
             FirebaseCrashlytics.getInstance().recordException(e);
         }
     }
+
 }

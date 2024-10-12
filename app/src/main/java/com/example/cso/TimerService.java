@@ -33,7 +33,7 @@ public class TimerService extends Service {
     public static boolean isTimerRunning = false; // init
     private TimerTask timerTask;
     private  Notification notification;
-
+    public static boolean isAppinForeGround;
     @Override
     public void onCreate() {
         super.onCreate();
@@ -80,6 +80,7 @@ public class TimerService extends Service {
                         Log.d("service", "Android timer is running: " + MainActivity.isAndroidTimerRunning);
                         Log.d("service", "Is any process on: " + MainActivity.isAnyProccessOn);
                         Log.d("service","isTimer Running : " + isTimerRunning);
+                        isAppinForeGround = isAppInForeground();
                         if (isTimerRunning || MainActivity.isAnyProccessOn) {
                             return;
                         }
@@ -200,7 +201,7 @@ public class TimerService extends Service {
         Log.d("service", "Service onDestroy Finished");
     }
 
-    private boolean isAppInForeground() {
+    public boolean isAppInForeground() {
         try{
             ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
             if (activityManager == null) {

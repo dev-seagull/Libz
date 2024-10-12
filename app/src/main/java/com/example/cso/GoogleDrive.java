@@ -36,6 +36,7 @@ public class GoogleDrive {
     public static ArrayList<DriveAccountInfo.MediaItem> getMediaItems(String userEmail, boolean isLogin, String accessToken) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         ArrayList<DriveAccountInfo.MediaItem> mediaItems = new ArrayList<>();
+
         Callable<ArrayList<DriveAccountInfo.MediaItem>> backgroundTask = () -> {
             try {
                 String backupAccessToken = "";
@@ -66,7 +67,12 @@ public class GoogleDrive {
                             .setPageToken(nextPageToken)
                             .execute();
                     List<File> files = result.getFiles();
-                    if (files != null && !result.getFiles().isEmpty()) {
+                    Log.d("GoogleDrive","cant get files : " + (files == null));
+                    if (files == null){
+                        Log.d("GoogleDrive","media Items is null");
+                        return null;
+                    }
+                    if (!result.getFiles().isEmpty()) {
                         for (File file : files) {
                             System.out.println("mimetype given to isVideo or isimage :" + Media.getMimeType(file.getName()));
                             if (Media.isVideo(Media.getMimeType(file.getName())) ||
@@ -78,16 +84,18 @@ public class GoogleDrive {
                                 Log.d("media","File " + file.getName() + " is not a media item.");
                             }
                         }
-                    }    nextPageToken = result.getNextPageToken();
+                    }
+                    nextPageToken = result.getNextPageToken();
                 }while (nextPageToken != null);
 
                 LogHandler.saveLog(mediaItems.size() + " files were found in Google Drive back up account",false);
-
+                Log.d("GoogleDrive","media Items is not null : " + mediaItems.size() + " files were found in Google Drive");
                 return mediaItems;
             }catch (Exception e) {
                 LogHandler.saveLog("Error when trying to get files from google drive: " + e.getLocalizedMessage());
+                Log.d("GoogleDrive","media Items is null");
+                return null;
             }
-            return mediaItems;
         };
         Future<ArrayList<DriveAccountInfo.MediaItem>> future = executor.submit(backgroundTask);
         ArrayList<DriveAccountInfo.MediaItem> uploadFileIDs_fromFuture = null;
@@ -96,6 +104,7 @@ public class GoogleDrive {
         } catch (Exception e) {
             LogHandler.saveLog("Error when trying to get drive files from future: " + e.getLocalizedMessage());
         }
+        Log.d("GoogleDrive","returned media Items is " + uploadFileIDs_fromFuture);
         return uploadFileIDs_fromFuture;
     }
 
@@ -237,9 +246,15 @@ public class GoogleDrive {
     }
 
     public static void deleteRedundantDriveFilesFromAccount(String userEmail) {
+
         Thread deleteRedundantDrive = new Thread(() -> {
             try{
+                Log.d("GoogleDrive","start to get media drive files from " + userEmail);
                 ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail, false, null);
+                Log.d("GoogleDrive","driveMediaItems : " + driveMediaItems);
+                if (driveMediaItems == null){
+                    return;
+                }
                 ArrayList<String> driveFileIds = new ArrayList<>();
 
                 for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
@@ -247,7 +262,10 @@ public class GoogleDrive {
                     driveFileIds.add(fileId);
                 }
                 DBHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
-            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+            }catch (Exception e) {
+                Log.d("GoogleDrive","Exception in delete redundatnt ...");
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
         });
 
         deleteRedundantDrive.start();
@@ -259,19 +277,26 @@ public class GoogleDrive {
     private static void startDeleteRedundantDriveThread(){
         Log.d("Threads","startDeleteRedundantDrive thread started");
         Thread deleteRedundantDriveThread = new Thread(() -> {
-            List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail", "type"});
+            try{
+                List<String[]> account_rows = DBHelper.getAccounts(new String[]{"userEmail", "type"});
 
-            for(String[] account_row : account_rows) {
-                String type = account_row[1];
-                if(type.equals("backup")){
-                    String userEmail = account_row[0];
-                    ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail, false, null);
-                    ArrayList<String> driveFileIds = new ArrayList<>();
-                    for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
-                        driveFileIds.add( driveMediaItem.getId());
+                for(String[] account_row : account_rows) {
+                    String type = account_row[1];
+                    if(type.equals("backup")){
+                        String userEmail = account_row[0];
+                        ArrayList<DriveAccountInfo.MediaItem> driveMediaItems = GoogleDrive.getMediaItems(userEmail, false, null);
+                        if (driveMediaItems == null){
+                            return;
+                        }
+                        ArrayList<String> driveFileIds = new ArrayList<>();
+                        for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
+                            driveFileIds.add(driveMediaItem.getId());
+                        }
+                        DBHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
                     }
-                    DBHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
                 }
+            }catch (Exception e){
+                LogHandler.crashLog(e,"GoogleDrive");
             }
         });
         deleteRedundantDriveThread.start();
@@ -419,8 +444,6 @@ public class GoogleDrive {
         return moveResult[0];
     }
 
-
-
     public static int getAssetsSizeOfDriveAccount(String userEmail){
         int[] totalSize = {0};
         Thread getAssetsSizeOfDriveAccountThread = new Thread(() -> {
@@ -454,7 +477,6 @@ public class GoogleDrive {
 
         return totalSize[0];
     }
-
 
     public static void deleteDriveFolders(Drive service,String sourceUserEmail,boolean completeMove){
         Thread deleteDriveFoldersThread = new Thread(() -> {
