@@ -1802,7 +1802,7 @@ public class DBHelper extends SQLiteOpenHelper {
         Log.d("ui","total assets: " + totalAssets);
         Log.d("ui","synced assets: " + syncedAssets);
         if (totalAssets == 0) {
-            return 100.0;
+            return 0.0;
         }
         double percentage = ((double) syncedAssets / totalAssets) * 100;
         return percentage;

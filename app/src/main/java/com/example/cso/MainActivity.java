@@ -297,9 +297,8 @@
                 MainActivity.androidTimer = new Timer();
                 MainActivity.androidTimer.schedule(new TimerTask() {
                     public void run() {
-                        boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
                         if (isAndroidTimerRunning // previous running
-                                || isServiceRunning){
+                                || TimerService.isServiceAndroidTimerRunning){
                             return;
                         }
                         isAndroidTimerRunning = true; // start timer
@@ -323,7 +322,7 @@
                         try{
                             UI.startUpdateUIThread(activity);
                         }catch (Exception e){
-                            LogHandler.saveLog("Failed to run on ui thread : " + e.getLocalizedMessage() , true);
+                            LogHandler.crashLog(e,"UITimer");
                         }
                     }
                 }, 1000, 1000);
@@ -347,7 +346,7 @@
 
     }
 
-        private void openThemeSelection() {
+    private void openThemeSelection() {
             ColorSelectionDialogFragment dialog = new ColorSelectionDialogFragment();
             dialog.show(getSupportFragmentManager(), "ColorSelectionDialog");
         }

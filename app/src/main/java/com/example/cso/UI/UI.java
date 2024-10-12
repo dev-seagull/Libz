@@ -76,13 +76,13 @@ public class UI{
         Log.d("Threads","startUpdateUIThread started");
         Thread updateUIThread =  new Thread(() -> {
             try{
-                boolean[] syncState = {SharedPreferencesHandler.getSyncSwitchState()};
-                boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
+//                boolean[] syncState = {SharedPreferencesHandler.getSyncSwitchState()};
+//                boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
                 activity.runOnUiThread(() -> {
-                    if(! (syncState[0] & isServiceRunning)){
+//                    if(! (syncState[0] & isServiceRunning)){
 //                        TextView syncProgressText = activity.findViewById(SyncButton.warningTextViewId);
 //                        syncProgressText.setText("");
-                    }
+//                    }
                     SyncDetails.handleSyncDetailsButton(activity);
                 });
             }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }

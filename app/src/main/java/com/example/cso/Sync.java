@@ -19,9 +19,11 @@ public class Sync {
     public static boolean isJsonChangeCheckRunning = false;
     public static boolean isAnyBackUpAccountExistsToastShown = false;
     public static boolean isInternetConnectionToastShown = false;
+    public static boolean isAllOfAccountsFullToastShown = false;
     public static long lastToastTime = 0;
+    public static boolean isAllOfAccountsFull = true;
     public static long toastInterval = 10000;
-    public static void syncAndroidFiles(Context context, Activity activity){
+    public static void syncAndroidFiles(Activity activity){
         Log.d("Threads","startSyncThread started");
         Thread syncThread =  new Thread( () -> {
             try{
@@ -38,19 +40,26 @@ public class Sync {
                         Log.d("service","free space of " + account_row[0] + " : " + freeSpace);
                         boolean isAccountFull = (freeSpace < 50);
                         if(!isAccountFull){
+                            isAllOfAccountsFull = false;
                             syncAndroidToBackupAccount(freeSpace,account_row[0], account_row[4],
                                     activity);
                         }
                     }
                 }
-//                }
-//                else if(isAllOfAccountsFull){
-//                    MainActivity.activity.runOnUiThread(() -> {
-//                        UIHelper.warningText.setText(
-//                                "Sync failed! You are running out of space." +
-//                                        " Add more back up accounts.");
-//                    });
-
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastToastTime >= toastInterval) {
+                    lastToastTime = currentTime;
+                    isAllOfAccountsFullToastShown = false;
+                }
+                if (isAllOfAccountsFull){
+                    if (!isAllOfAccountsFullToastShown){
+                        isAllOfAccountsFullToastShown = true;
+                        MainActivity.activity.runOnUiThread(()->{
+                            Toast.makeText(MainActivity.activity,"Sync failed! You are running out of space." +
+                                    " Add more back up accounts.", Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                }
                 Log.d("service","end of check for account existence and capacity");
             }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e);  }
         });
@@ -105,7 +114,6 @@ public class Sync {
                             if (TimerService.isAppinForeGround){
                                 Toast.makeText(MainActivity.activity, message, Toast.LENGTH_SHORT).show();
                             }
-
                         });
                     }
                     break;

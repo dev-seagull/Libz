@@ -34,6 +34,7 @@ public class TimerService extends Service {
     private TimerTask timerTask;
     private  Notification notification;
     public static boolean isAppinForeGround;
+    public static boolean isServiceAndroidTimerRunning = false;
     @Override
     public void onCreate() {
         super.onCreate();
@@ -77,9 +78,9 @@ public class TimerService extends Service {
                 @Override
                 public void run() {
                     try{
-                        Log.d("service", "Android timer is running: " + MainActivity.isAndroidTimerRunning);
-                        Log.d("service", "Is any process on: " + MainActivity.isAnyProccessOn);
-                        Log.d("service","isTimer Running : " + isTimerRunning);
+//                        Log.d("service", "Android timer is running: " + MainActivity.isAndroidTimerRunning);
+//                        Log.d("service", "Is any process on: " + MainActivity.isAnyProccessOn);
+//                        Log.d("service","isTimer Running : " + isTimerRunning);
                         isAppinForeGround = isAppInForeground();
                         if (isTimerRunning || MainActivity.isAnyProccessOn) {
                             return;
@@ -92,15 +93,17 @@ public class TimerService extends Service {
                                 //if database needed to upload do it here
                                 
                                 if(!MainActivity.isAndroidTimerRunning){
+                                    isServiceAndroidTimerRunning = true;
                                     Android.startThreads(MainActivity.activity);
+                                    isServiceAndroidTimerRunning = false;
                                 }
 
                                 GoogleDrive.startThreads();
-
-                                Sync.syncAndroidFiles(getApplicationContext(), MainActivity.activity);
-
+                                Log.d("serviceStatus","start sync android files");
+                                Sync.syncAndroidFiles(MainActivity.activity);
+                                Log.d("serviceStatus","finish sync android files");
                             }catch (Exception e) {
-                                FirebaseCrashlytics.getInstance().recordException(e);
+                                LogHandler.crashLog(e,"Service");
                             } finally{
                                 isTimerRunning = false; // end of timer service
                             }
