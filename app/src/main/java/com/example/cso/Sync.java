@@ -1,7 +1,6 @@
 package com.example.cso;
 
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
@@ -11,8 +10,6 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class Sync {
 //    private static boolean isAllOfAccountsFull = true;
@@ -23,6 +20,8 @@ public class Sync {
     public static long lastToastTime = 0;
     public static boolean isAllOfAccountsFull = true;
     public static long toastInterval = 10000;
+    public static double amountToFreeUp;
+    public static double currentDriveFreeSpace;
     public static void syncAndroidFiles(Activity activity){
         Log.d("Threads","startSyncThread started");
         Thread syncThread =  new Thread( () -> {
@@ -36,13 +35,11 @@ public class Sync {
                     }
                     String type = account_row[1];
                     if(type.equals("backup")) {
-                        double freeSpace = GoogleDrive.calculateDriveFreeSpace(account_row);
-                        Log.d("service","free space of " + account_row[0] + " : " + freeSpace);
-                        boolean isAccountFull = (freeSpace < 50);
-                        if(!isAccountFull){
+                        currentDriveFreeSpace = GoogleDrive.calculateDriveFreeSpace(account_row);
+                        Log.d("service","free space of " + account_row[0] + " : " + currentDriveFreeSpace);
+                        if(currentDriveFreeSpace > 50){
                             isAllOfAccountsFull = false;
-                            syncAndroidToBackupAccount(freeSpace,account_row[0], account_row[4],
-                                    activity);
+                            syncAndroidToBackupAccount(account_row[0], account_row[4], activity);
                         }
                     }
                 }
@@ -72,8 +69,7 @@ public class Sync {
         Log.d("Threads","startSyncThread finished");
     }
 
-    private static void syncAndroidToBackupAccount(double driveFreeSpace, String userEmail,
-                                                   String refreshToken, Activity activity){
+    private static void syncAndroidToBackupAccount(String userEmail, String refreshToken, Activity activity){
         Log.d("Threads","syncAndroidToBackupAccount  method started");
         try{
             String folderName = GoogleDriveFolders.assetsFolderName;
@@ -84,10 +80,11 @@ public class Sync {
             }
 
             List<String[]> sortedAndroidFiles = getSortedAndroidFiles();
-            double amountSpaceToFreeUp = StorageHandler.getAmountSpaceToFreeUp();
+            amountToFreeUp = StorageHandler.getAmountSpaceToFreeUp();
+            Log.d("service","init amount space to free up : " + amountToFreeUp);
 
-            int syncedFilesCount = 0 ;
-            double syncedFilesSpace = 0 ;
+            int checkedLimitFilesCount = 0 ;
+            double checkedLimitFilesSize = 0 ;
 
             new Thread( () -> checkForStatusChanges(activity)).start();
 
@@ -96,71 +93,63 @@ public class Sync {
                     Log.d("service","sync Stopped suddenly");
                     break;
                 }
-                String internetConnectionStatus = getInternetStatusForSync(activity);
-                boolean anyBackUpaAccountExists = DBHelper.anyBackupAccountExists();
-//                Log.d("service","isAllOfAccountsFull : " + isAllOfAccountsFull);
-                long currentTime = System.currentTimeMillis();
-                if (currentTime - lastToastTime >= toastInterval) {
-                    lastToastTime = currentTime;
-                    isAnyBackUpAccountExistsToastShown = false;
-                    isInternetConnectionToastShown = false;
-                }
-                if (!anyBackUpaAccountExists) {
-                    isInternetConnectionToastShown = false;
-                    String message = "There is no backup account to sync!";
-                    if(!isAnyBackUpAccountExistsToastShown) {
-                        MainActivity.activity.runOnUiThread(() -> {
-                            isAnyBackUpAccountExistsToastShown = true;
-                            if (TimerService.isAppinForeGround){
-                                Toast.makeText(MainActivity.activity, message, Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
-                    break;
-                }
-                if(!internetConnectionStatus.equals("wifi") && !internetConnectionStatus.equals("data")) {
-                    isAnyBackUpAccountExistsToastShown = false;
-                    String message = internetConnectionStatus;
-                    if (!isInternetConnectionToastShown) {
-                        MainActivity.activity.runOnUiThread(() -> {
-                            isInternetConnectionToastShown = true;
-                            if (TimerService.isAppinForeGround){
-                                Toast.makeText(MainActivity.activity, message, Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
-                    break;
-                }
-                isAnyBackUpAccountExistsToastShown = false;
-                isInternetConnectionToastShown = false;
 
-                Log.d("service","amountSpaceToFreeUp : " + amountSpaceToFreeUp);
                 double fileSize = Double.parseDouble(androidRow[4]);
-                amountSpaceToFreeUp  = amountSpaceToFreeUp - fileSize;
-                syncedFilesSpace += fileSize;
-                syncedFilesCount ++;
-
-                if (syncedFilesSpace >= 1000 || syncedFilesCount >= 40){
-                    syncedFilesSpace = 0;
-                    syncedFilesCount = 0;
+                checkedLimitFilesSize += fileSize;
+                checkedLimitFilesCount ++;
+                if (checkedLimitFilesSize >= 1000 || checkedLimitFilesCount >= 40){
+                    checkedLimitFilesSize = 0;
+                    checkedLimitFilesCount = 0;
                     new Thread( () -> checkForStatusChanges(activity)).start();
+                    String internetConnectionStatus = getInternetStatusForSync(activity);
+                    boolean anyBackUpaAccountExists = DBHelper.anyBackupAccountExists();
+                    long currentTime = System.currentTimeMillis();
+                    if (currentTime - lastToastTime >= toastInterval) {
+                        lastToastTime = currentTime;
+                        isAnyBackUpAccountExistsToastShown = false;
+                        isInternetConnectionToastShown = false;
+                    }
+                    if (!anyBackUpaAccountExists) {
+                        isInternetConnectionToastShown = false;
+                        String message = "There is no backup account to sync!";
+                        if(!isAnyBackUpAccountExistsToastShown) {
+                            MainActivity.activity.runOnUiThread(() -> {
+                                isAnyBackUpAccountExistsToastShown = true;
+                                if (TimerService.isAppinForeGround){
+                                    Toast.makeText(MainActivity.activity, message, Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                        break;
+                    }
+                    if(!internetConnectionStatus.equals("wifi") && !internetConnectionStatus.equals("data")) {
+                        isAnyBackUpAccountExistsToastShown = false;
+                        String message = internetConnectionStatus;
+                        if (!isInternetConnectionToastShown) {
+                            MainActivity.activity.runOnUiThread(() -> {
+                                isInternetConnectionToastShown = true;
+                                if (TimerService.isAppinForeGround){
+                                    Toast.makeText(MainActivity.activity, message, Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                        break;
+                    }
+                    isAnyBackUpAccountExistsToastShown = false;
+                    isInternetConnectionToastShown = false;
                 }
-                syncAndroidFile(androidRow, userEmail, refreshToken, syncedAssetsSubFolderId,
-                        driveFreeSpace,amountSpaceToFreeUp , activity);
+
+                syncAndroidFile(androidRow, userEmail, refreshToken, syncedAssetsSubFolderId, activity);
             }
         }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
     }
 
 
     private static void syncAndroidFile(String[] androidRow, String userEmail, String refreshToken,
-                                        String syncedAssetsFolderId, double driveFreeSpace,
-                                        double amountSpaceToFreeUp, Activity activity){
-        final double[] finalAmountSpaceToFreeUp = {amountSpaceToFreeUp};
-        final double[] finalDriveFreeSpace = {driveFreeSpace};
+                                        String syncedAssetsFolderId,Activity activity){
         Thread syncAndroidFileThread = new Thread( () -> {
             try{
                 Log.d("Threads","syncAndroidFileThread started");
-
                 String fileName = androidRow[1];
                 String filePath = androidRow[2];
                 String fileSize = androidRow[4];
@@ -168,21 +157,21 @@ public class Sync {
                 Long assetId = Long.valueOf(androidRow[8]);
 
                 if (!DBHelper.androidFileExistsInDrive(assetId, fileHash)){
-                    if(finalDriveFreeSpace[0] > Double.parseDouble(fileSize)) {
+                    if(currentDriveFreeSpace > Double.parseDouble(fileSize) + 10) {
                         String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
                         boolean isBackedUp = uploadAndroidToDrive(androidRow, userEmail, accessToken, syncedAssetsFolderId);
                         if (isBackedUp) {
                             Log.d("service" ,fileName + " is backedup");
                             GoogleDrive.startUpdateDriveFilesThread();
-                            finalDriveFreeSpace[0] -= Double.parseDouble(fileSize);
+                            currentDriveFreeSpace -= Double.parseDouble(fileSize);
 
-                            if(finalAmountSpaceToFreeUp[0] > 0){
+                            if(amountToFreeUp > 0){
                                 GoogleDrive.deleteRedundantDriveFilesFromAccount(userEmail);
                                 if (DBHelper.androidFileExistsInDrive(assetId, fileHash)) {
                                     boolean isDeleted = Android.deleteAndroidFile(filePath, String.valueOf(assetId), fileHash
                                             , fileSize, fileName, activity);
                                     if (isDeleted) {
-                                        finalAmountSpaceToFreeUp[0] -= Double.parseDouble(fileSize);
+                                        amountToFreeUp -= Double.parseDouble(fileSize);
                                         Log.d("service" ,fileName + " is deleted");
                                     }
                                 }
@@ -190,18 +179,19 @@ public class Sync {
                         }
                     }
                 }else {
-                    if (finalAmountSpaceToFreeUp[0] > 0) {
+                    if (amountToFreeUp > 0) {
                         GoogleDrive.deleteRedundantDriveFilesFromAccount(userEmail);
                         if (DBHelper.androidFileExistsInDrive(assetId, fileHash)) {
                             boolean isDeleted = Android.deleteAndroidFile(filePath, androidRow[8], fileHash
                                     , fileSize, androidRow[1], activity);
                             if (isDeleted) {
                                 Log.d("service" ,fileName + " is deleted");
-                                finalAmountSpaceToFreeUp[0] -= Double.parseDouble(fileSize);
+                                amountToFreeUp -= Double.parseDouble(fileSize);
                             }
                         }
                     }
                 }
+                Log.d("service","amount needed to free up after sync one file : " + amountToFreeUp);
             }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
         });
 
@@ -312,7 +302,7 @@ public class Sync {
             Log.d("service","is deActivated : " + isDeactivated);
             if (isDeactivated){ UI.handleDeactivatedUser(); }
             Log.d("service","checkSupportBackupRequired");
-            Support.checkSupportBackupRequired(activity);
+            Support.backupDatabase(activity);
             if (isJsonChangeCheckRunning){
                 return;
             }

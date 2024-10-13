@@ -22,7 +22,6 @@
     import com.example.cso.UI.Accounts;
     import com.example.cso.UI.ColorSelectionDialogFragment;
     import com.example.cso.UI.Dialogs;
-    import com.example.cso.UI.PagerAdapter;
     import com.example.cso.UI.Theme;
     import com.example.cso.UI.UI;
     import com.google.android.material.navigation.NavigationView;
@@ -188,7 +187,7 @@
         new Thread(() -> {
             if (Deactivation.isDeactivationFileExists()){ UI.handleDeactivatedUser(); }
 
-            Support.checkSupportBackupRequired(activity);
+            Support.backupDatabase(activity);
             boolean hasJsonChanged = Profile.hasJsonChanged();
             Log.d("jsonChange","hasJsonChanged on start of app: " + hasJsonChanged);
             if (hasJsonChanged){

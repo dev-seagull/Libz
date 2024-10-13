@@ -32,6 +32,7 @@ public class Support {
 
         Thread downloadThread = new Thread(() -> {
             try {
+                Log.d("backupDatabase","search for backup database file");
                 String accessToken = GoogleCloud.updateAccessToken(Support.getSupportRefreshToken()).getAccessToken();
                 Drive service = GoogleDrive.initializeDrive(accessToken);
 
@@ -44,6 +45,9 @@ public class Support {
 
                 if (!result.getFiles().isEmpty()) {
                     Log.d("backupDatabase","File found: " + fileName);
+                    //delete the backup database
+                    service.files().delete(result.getFiles().get(0).getId()).execute();
+                    Log.d("backupDatabase","File deleted: " + fileName);
                     fileExists[0] = true;
                 }else{
                     Log.d("backupDatabase","File not found: " + fileName);
@@ -57,7 +61,7 @@ public class Support {
         return fileExists[0];
     }
 
-    public static void checkSupportBackupRequired(Activity activity) {
+    public static void backupDatabase(Activity activity) {
         if (backupDBFileExists()){
             backUpDataBaseToDrive(activity);
         }
