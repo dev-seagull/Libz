@@ -279,7 +279,7 @@ public class Accounts {
     }
 
     public static LinearLayout createChartForStorageStatus(Context context, String userEmail){
-        LinearLayout layout = Details.createInnerDetailsLayout(context);
+        LinearLayout layout = Details.createInnerDetailsLayout(context, "Storage");
         ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
         new Thread(() -> {
             MainActivity.activity.runOnUiThread(() -> {
@@ -304,7 +304,7 @@ public class Accounts {
     }
 
     public static LinearLayout createChartForSyncAndSourceStatus(Context context, String userEmail){
-        LinearLayout layout = Details.createInnerDetailsLayout(context);
+        LinearLayout layout = Details.createInnerDetailsLayout(context, "Devices");
         new Thread(() -> {
             ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
             MainActivity.activity.runOnUiThread(() -> {

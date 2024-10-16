@@ -6,6 +6,7 @@ import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -37,13 +38,7 @@ public class DetailsViewPager {
 
     private static void setupViewPager(Context context, ViewPager2 viewPager, String buttonId, String type) {
         try{
-            int page = 0;
-            if (type.equals("device")){
-                page = PagerAdapter.totalPagesForDevice * 10 + 1 ;
-            }else if(type.equals("account")){
-                page = PagerAdapter.totalPagesForAccount * 10 + 1 ;
-            }
-            PagerAdapter adapter = new PagerAdapter(context,page,type,buttonId);
+            PagerAdapter adapter = new PagerAdapter(context,type,buttonId);
             viewPager.setAdapter(adapter);
         }catch (Exception e){
             LogHandler.crashLog(e,"ui");

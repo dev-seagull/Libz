@@ -73,7 +73,7 @@ public class Details {
         return layout;
     }
 
-    public static LinearLayout createInnerDetailsLayout(Context context) {
+    public static LinearLayout createInnerDetailsLayout(Context context, String title) {
         LinearLayout layout = new LinearLayout(context);
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -86,6 +86,7 @@ public class Details {
 
         layout.setPadding(8, 8, 8, 8);
         layout.setElevation(4f);
+        layout.addView(createTitleTextView(context,title));
         GradientDrawable gradientDrawable = UI.createBorderInnerLayoutDrawable(context);
         layout.setBackground(gradientDrawable);
         return layout;
@@ -108,18 +109,6 @@ public class Details {
             }
         }
         return null;
-    }
-
-    public static void configurePieChartDimensions(PieChart pieChart, Context context) {
-        int width =(int) (UI.getDeviceWidth(context) * 0.35);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, width);
-        params.setMargins(0,10,0,10);
-        pieChart.setLayoutParams(params);
-    }
-
-    public static void configurePieChartLegend(PieChart pieChart) {
-        Legend legend = pieChart.getLegend();
-        legend.setEnabled(false);
     }
 
     public static ImageButton createRightArrowButton(Context context){
@@ -175,8 +164,11 @@ public class Details {
         frameLayout.setElevation(4f);
         frameLayout.setVisibility(View.GONE);
 
+
         ViewPager2 viewPager = DetailsViewPager.createViewerPage(context, buttonId, type);
         frameLayout.addView(viewPager);
+
+        viewPager.setOffscreenPageLimit(ViewPager2.OFFSCREEN_PAGE_LIMIT_DEFAULT);  // Only keep one page on either side of the current one
 
         ImageButton leftArrowButton = createLeftArrowButton(context);
         leftArrowButton.setOnClickListener(v -> {
@@ -195,6 +187,28 @@ public class Details {
         return frameLayout;
 
     }
+
+    public static TextView createTitleTextView(Context context, String text) {
+        TextView title = new TextView(context);
+        title.setBackgroundColor(Color.TRANSPARENT);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        title.setPadding(0,25,0,25);
+        title.setLayoutParams(params);
+        FrameLayout.LayoutParams titleParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        titleParams.gravity = Gravity.CENTER | Gravity.TOP;
+        title.setLayoutParams(titleParams);
+        title.setText(text);
+        return title;
+    }
+
+
+
 
     public static TextView getErrorAsChartAlternative(Context context){
         TextView view = new TextView(context);

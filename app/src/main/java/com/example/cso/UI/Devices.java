@@ -277,7 +277,7 @@ public class Devices {
     } // for more data
 
     public static LinearLayout createChartForStorageStatus(Context context, String deviceId) {
-        LinearLayout layout = Details.createInnerDetailsLayout(context);
+        LinearLayout layout = Details.createInnerDetailsLayout(context, "Storage");
 
         new Thread(() -> {
             ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
@@ -324,7 +324,7 @@ public class Devices {
     }
 
     public static LinearLayout createChartForSyncedAssetsLocationStatus(Context context, String deviceId){
-        LinearLayout layout = Details.createInnerDetailsLayout(context);
+        LinearLayout layout = Details.createInnerDetailsLayout(context, "Synced Files");
 
         new Thread(() -> {
             ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
@@ -371,8 +371,7 @@ public class Devices {
     }
 
     public static LinearLayout createChartForSourceStatus(Context context, String deviceId){
-        LinearLayout layout = Details.createInnerDetailsLayout(context);
-        layout.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout layout = Details.createInnerDetailsLayout(context, "Local Files");
 
         new Thread(() -> {
             ImageView[] loadingImage = new ImageView[]{new ImageView(context)};

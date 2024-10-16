@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -17,16 +18,14 @@ import java.util.ArrayList;
 public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHolder> {
 
     private Context context;
-    public int pageNumber;
     public String buttonType;
     public String buttonId;
     public static int totalPagesForAccount = 2 ;
     public static int totalPagesForDevice = 3 ;
-    public static ArrayList<PagerAdapter> pagerAdapters = new ArrayList<PagerAdapter>();
+    public static ArrayList<PagerAdapter> pagerAdapters = new ArrayList<>();
 
-    public PagerAdapter(Context context, int pageNumber, String buttonType, String buttonId) {
+    public PagerAdapter(Context context, String buttonType, String buttonId) {
         this.context = context;
-        this.pageNumber = pageNumber;
         this.buttonType = buttonType;
         this.buttonId = buttonId;
         pagerAdapters.add(this);
@@ -52,29 +51,59 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
 
     @Override
     public void onBindViewHolder(@NonNull PageViewHolder holder, int position) {
-        Log.d("viewPager", "onBindViewHolder");
+        Log.d("viewPager", "onBindViewHolder : " + position);
+        Log.d("viewPager", "onBindViewHolder : " + holder.getAdapterPosition());
+        Log.d("viewPager", "onBindViewHolder : " + holder.getLayoutPosition());
+        Log.d("viewPager", "onBindViewHolder : " + holder.getOldPosition());
+        Log.d("viewPager", "onBindViewHolder : " + holder.getPosition());
+
+
+//        if (holder.currentPage.getChildCount() > 0) {
+//            if (buttonType.equals("account")){
+//                position = position % totalPagesForAccount ;
+//                Log.d("viewPager", "Reusing existing view for position: " + position);
+//                if (position == 0){
+//                    title.setText("Storage");
+//                } else if (position == 1){
+//                    title.setText("Assets Device");
+//                }
+//            }else if (buttonType.equals("device")){
+//                position = position % totalPagesForDevice ;
+//                Log.d("viewPager", "Reusing existing view for position: " + position);
+//                if (position == 0){
+//                    title.setText("Storage");
+//                } else if (position == 1) {
+//                    title.setText("Synced Assets");
+//                } else if (position == 2) {
+//                    title.setText("Files");
+//                }
+//            }
+//            return;
+//        }
+
         holder.currentPage.removeAllViews();
         LinearLayout newPage = null;
+        int pos = 0;
         if (buttonType.equals("account")){
-            position = position % totalPagesForAccount ;
-            if (position == 0){
+            pos = position % totalPagesForAccount ;
+            if (pos == 0){
                 newPage = Accounts.createChartForStorageStatus(context, buttonId);
-                Log.d("viewPager", "page number : " + position + " type : " + buttonType + " buttonId : " + buttonId);
-            } else if (position == 1){
+                Log.d("viewPager", "page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
+            } else if (pos == 1){
                 newPage = Accounts.createChartForSyncAndSourceStatus(context, buttonId);
-                Log.d("viewPager", "page number : " + position + " type : " + buttonType + " buttonId : " + buttonId);
+                Log.d("viewPager", "page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
             }
         }else if (buttonType.equals("device")){
-            position = position % totalPagesForDevice ;
-            if (position == 0){
+            pos = position % totalPagesForDevice ;
+            if (pos == 0){
                 newPage = Devices.createChartForStorageStatus(context, buttonId);
-                Log.d("viewPager", "StorageStatus = page number : " + position + " type : " + buttonType + " buttonId : " + buttonId);
-            } else if (position == 1) {
+                Log.d("viewPager", "StorageStatus = page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
+            } else if (pos == 1) {
                 newPage = Devices.createChartForSyncedAssetsLocationStatus(context, buttonId);
-                Log.d("viewPager", "SyncedAssetsLocationStatus = page number : " + position + " type : " + buttonType + " buttonId : " + buttonId);
-            } else if (position == 2) {
+                Log.d("viewPager", "SyncedAssetsLocationStatus = page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
+            } else if (pos == 2) {
                 newPage = Devices.createChartForSourceStatus(context, buttonId);
-                Log.d("viewPager", "SourceStatus = page number : " + position + " type : " + buttonType + " buttonId : " + buttonId);
+                Log.d("viewPager", "SourceStatus = page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
             }
         }
         holder.currentPage.addView(newPage);

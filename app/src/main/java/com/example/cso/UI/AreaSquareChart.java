@@ -21,7 +21,7 @@ import java.util.ConcurrentModificationException;
 
 public class AreaSquareChart {
     public static int columnCount = 14;
-    public static View createStorageChart(Context context, JsonObject data) {
+    public static LinearLayout createStorageChart(Context context, JsonObject data) {
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.HORIZONTAL);
         layout.setGravity(Gravity.CENTER);
