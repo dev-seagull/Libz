@@ -172,7 +172,7 @@ public class SyncDetailsPieChart {
             stackedBarChart.setLayoutParams(layoutParams);
 
 
-            float[] stackedValues = new float[]{(float) unsynced, (float) synced};
+            float[] stackedValues = new float[]{(float) synced, (float) unsynced};
 
             List<BarEntry> entries = new ArrayList<>();
             entries.add(new BarEntry(0f, stackedValues));
@@ -182,7 +182,7 @@ public class SyncDetailsPieChart {
             BarDataSet dataSet = new BarDataSet(entries, "Storage Usage");
             dataSet.setColors(colors);
 
-            String[] stackLabels = new String[]{"unsynced", "synced"};
+            String[] stackLabels = new String[]{"synced", "unsynced"};
             dataSet.setStackLabels(stackLabels);
 
             BarData barData = new BarData(dataSet);
@@ -207,8 +207,8 @@ public class SyncDetailsPieChart {
             legendLayout.setOrientation(LinearLayout.VERTICAL);
             legendLayout.setGravity(Gravity.CENTER);
 
-            legendLayout.addView(createLegendItem(context, "Unsynced", colors[0], unsynced));
-            legendLayout.addView(createLegendItem(context, "Synced", colors[1], synced));
+            legendLayout.addView(createLegendItem(context, "Synced", colors[0], unsynced));
+            legendLayout.addView(createLegendItem(context, "Unsynced", colors[1], synced));
 
             layout.addView(legendLayout);
 
