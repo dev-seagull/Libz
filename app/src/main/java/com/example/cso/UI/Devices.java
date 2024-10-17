@@ -337,9 +337,9 @@ public class Devices {
             });
             JsonObject data = getSyncedAssetsLocationStatus(deviceId);
             Log.d("DeviceStatusSync", "assets of "+deviceId+" location data : " + data);
-            LinearLayout treeMapChartLayout = CustomTreeMapChart.createChart(context, data);
 
             MainActivity.activity.runOnUiThread(() -> {
+                LinearLayout treeMapChartLayout = CustomTreeMapChart.createStackedBarChart(context, data);
                 layout.addView(treeMapChartLayout);
                 layout.removeView(loadingImage[0]);
             });
