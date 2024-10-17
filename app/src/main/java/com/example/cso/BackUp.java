@@ -1,6 +1,7 @@
 package com.example.cso;
 
 
+import android.os.FileUtils;
 import android.util.Log;
 
 import com.google.api.client.googleapis.media.MediaHttpUploader;
@@ -51,13 +52,22 @@ public class BackUp {
 
 //                if(!Media.isVideoBackUp(mimeTypeToUpload)) {
                     Log.d("service", "Uploading file " + fileName + " to " +driveEmailAccount +" started");
-                    com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
-                            .setFields("id")
-                            .execute();
+                    com.google.api.services.drive.model.File uploadedFile;
+                    if(androidFileSize > 50.0){
+                        Drive.Files.Create createRequest = service.files().create(fileMetadata, mediaContent)
+                                .setFields("id");
+                        MediaHttpUploader uploader = createRequest.getMediaHttpUploader();
+                        uploader.setChunkSize(MediaHttpUploader.MINIMUM_CHUNK_SIZE);
+
+                        uploadedFile = createRequest.execute();
+                        Log.d("service", "Uploaded File ID: " + uploadedFile.getId());
+                    }else{
+                        uploadedFile = service.files().create(fileMetadata, mediaContent)
+                                .setFields("id")
+                                .execute();
+                    }
+
                     String uploadFileId = uploadedFile.getId();
-                    //                while (uploadedFile == null){
-                    //                    wait();
-                    //                }
                     if (uploadedFile == null | uploadFileId.isEmpty()) {
                         Log.d("service", "Failed to upload " + fileName + " from Android to backup " +
                                 driveEmailAccount);
