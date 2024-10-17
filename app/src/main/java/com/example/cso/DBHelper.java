@@ -1749,16 +1749,16 @@ public class DBHelper extends SQLiteOpenHelper {
         return backupAccountsInDevice;
     }
 
-    public static int getNumberOfAssets() {
-        int count = 0;
-        String query = "SELECT COUNT(*) as result FROM ASSET;" ;
+    public static double getNumberOfAssets() {
+        double count = 0;
+        String query = "SELECT SUM(fileSize) as result FROM ANDROID;" ;
         Cursor cursor = null;
         try {
             cursor = dbReadable.rawQuery(query, null);
             if (cursor.moveToFirst()) {
                 int column = cursor.getColumnIndex("result");
                 if(column >= 0){
-                    count = cursor.getInt(column);
+                    count = cursor.getDouble(column);
                 }
             }
         } catch (Exception e) {
@@ -1771,17 +1771,18 @@ public class DBHelper extends SQLiteOpenHelper {
         return count;
     }
 
-    public static int getNumberOfSyncedAssets() {
-        int count = 0;
-        String query = "SELECT COUNT(*) as result FROM DRIVE d " +
-                "INNER JOIN ASSET a ON d.fileHash = a.fileHash";
+    public static double getNumberOfSyncedAssets() {
+        double count = 0;
+        String query =
+                "SELECT SUM(a.fileSize) as totalCount FROM ANDROID a WHERE a.fileHash IN (SELECT d.fileHash FROM DRIVE d)";
+
         Cursor cursor = null;
         try {
             cursor = dbReadable.rawQuery(query, null);
             if (cursor.moveToFirst()) {
-                int columnIndex = cursor.getColumnIndex("result");
+                int columnIndex = cursor.getColumnIndex("totalCount");
                 if(columnIndex >= 0){
-                    count = cursor.getInt(columnIndex);
+                    count = cursor.getDouble(columnIndex);
                 }
                 count = cursor.getInt(0);
             }
@@ -1796,15 +1797,20 @@ public class DBHelper extends SQLiteOpenHelper {
         return count;
     }
 
-    public static double getPercentageOfSyncedAssets() {
-        int totalAssets = getNumberOfAssets();
-        int syncedAssets = getNumberOfSyncedAssets();
+    public static int getPercentageOfSyncedAssets() {
+        double totalAssets = getNumberOfAssets();
+        double syncedAssets = getNumberOfSyncedAssets();
         Log.d("ui","total assets: " + totalAssets);
         Log.d("ui","synced assets: " + syncedAssets);
         if (totalAssets == 0) {
-            return 0.0;
+            return 0;
         }
-        double percentage = ((double) syncedAssets / totalAssets) * 100;
+        int percentage = (int) ((syncedAssets / totalAssets) * 100);
+//        System.out.println("mest: ");
+        if(percentage == 100 && syncedAssets != totalAssets){
+            percentage = 99;
+        }
+
         return percentage;
     }
     

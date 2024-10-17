@@ -7,6 +7,7 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,27 +16,37 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.cso.DBHelper;
+import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
+import com.github.mikephil.charting.charts.HorizontalBarChart;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class SyncDetailsPieChart {
 
     public static View createPieChartView(PieChart pieChart, Activity activity){
-        int totalAssets = DBHelper.getNumberOfAssets();
-        int syncedAssets = DBHelper.getNumberOfSyncedAssets();
-        SyncDetailsPieChart.configurePieChartDimensions(pieChart, activity);
-        SyncDetailsPieChart.configurePieChartDataForSyncDetails(pieChart,syncedAssets,totalAssets - syncedAssets);
-        SyncDetailsPieChart.configurePieChartLegend(pieChart);
-        pieChart.invalidate();
+        double totalAssets = DBHelper.getNumberOfAssets();
+        double syncedAssets = DBHelper.getNumberOfSyncedAssets();
+//        SyncDetailsPieChart.configurePieChartDimensions(pieChart, activity);
+//        SyncDetailsPieChart.configurePieChartDataForSyncDetails(pieChart,syncedAssets,totalAssets - syncedAssets);
+//        SyncDetailsPieChart.configurePieChartLegend(pieChart);
+//        pieChart.invalidate();
 
         return pieChart;
     }
@@ -43,7 +54,7 @@ public class SyncDetailsPieChart {
     public static void configurePieChartDataForSyncDetails(PieChart pieChart,double synced,double unsyncedMediaSize) {
         ArrayList<PieEntry> entries = new ArrayList<>();
         if (synced != 0){
-            entries.add(new PieEntry((int) synced, "Synced"));
+            entries.add(new PieEntry((float) synced, "Synced"));
         }
         if (unsyncedMediaSize != 0){
             entries.add(new PieEntry((int) unsyncedMediaSize, "UnSynced"));
@@ -53,6 +64,7 @@ public class SyncDetailsPieChart {
 
     public static void configurePieChartDataFormatForDeviceSyncedAssetsLocationStatus(PieChart pieChart, ArrayList<PieEntry> entries) {
         PieDataSet dataSet = new PieDataSet(entries, null);
+        dataSet.setValueFormatter(new PieChartValueFormatter());
 
         int[] colors = MainActivity.currentTheme.syncDetailsPieChartColors;
         dataSet.setColors(colors);
@@ -62,16 +74,6 @@ public class SyncDetailsPieChart {
         dataSet.setDrawValues(false);
         dataSet.setYValuePosition(PieDataSet.ValuePosition.INSIDE_SLICE);
         dataSet.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
-
-        dataSet.setValueFormatter(new ValueFormatter() {
-            @Override
-            public String getFormattedValue(float value) {
-                if (value >= 100) {
-                    return String.format("%.2f GB",value / 1024);
-                }
-                return String.format("%.2f MB", value);
-            }
-        });
 
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
@@ -141,17 +143,105 @@ public class SyncDetailsPieChart {
                 loadingImage[0].setLayoutParams(params);
                 syncDetailsStatisticsLayout.addView(loadingImage[0]);
             });
-            View pieChartView = SyncDetailsPieChart.createPieChartView(pieChart,activity);
             activity.runOnUiThread(() -> {
+                HorizontalBarChart stackedBarChart = new HorizontalBarChart(activity);
+                View pieChartView = SyncDetailsPieChart.createStackedBarChart(activity, stackedBarChart);
                 syncDetailsStatisticsLayout.addView(pieChartView);
 
-                if(pieChartView instanceof PieChart){
-                    SyncDetailsPieChart.createTextAreaForSyncDetailsPieChart(pieChartView,syncDetailsStatisticsLayout,activity);
-                }
+//                if(pieChartView instanceof HorizontalBarChart){
+//                    SyncDetailsPieChart.createTextAreaForSyncDetailsPieChart(pieChartView,syncDetailsStatisticsLayout,activity);
+//                }
 
                 syncDetailsStatisticsLayout.removeView(loadingImage[0]);
             });
         }).start();
+    }
+
+    public static LinearLayout createStackedBarChart(Context context, HorizontalBarChart stackedBarChart) {
+        LinearLayout layout = new LinearLayout(context);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setGravity(Gravity.CENTER);
+        double total =  DBHelper.getNumberOfAssets();
+        double synced = DBHelper.getNumberOfSyncedAssets();
+        double unsynced = total - synced;
+
+        try {
+            int width = (int) (UI.getDeviceWidth(context) * 0.8);
+            int height = (int) (UI.getDeviceWidth(context) * 0.15);
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(width, height);
+            stackedBarChart.setLayoutParams(layoutParams);
+
+
+            float[] stackedValues = new float[]{(float) unsynced, (float) synced};
+
+            List<BarEntry> entries = new ArrayList<>();
+            entries.add(new BarEntry(0f, stackedValues));
+
+            int[] colors = MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors;
+
+            BarDataSet dataSet = new BarDataSet(entries, "Storage Usage");
+            dataSet.setColors(colors);
+
+            String[] stackLabels = new String[]{"unsynced", "synced"};
+            dataSet.setStackLabels(stackLabels);
+
+            BarData barData = new BarData(dataSet);
+            stackedBarChart.setData(barData);
+
+            stackedBarChart.getDescription().setEnabled(false);
+            stackedBarChart.getLegend().setEnabled(false);
+            XAxis xAxis = stackedBarChart.getXAxis();
+            xAxis.setDrawGridLines(false);
+            xAxis.setDrawLabels(false);
+            xAxis.setDrawAxisLine(false);
+            YAxis leftAxis = stackedBarChart.getAxisLeft();
+            leftAxis.setDrawGridLines(false);
+            stackedBarChart.getAxisRight().setEnabled(false);
+            leftAxis.setDrawLabels(false);
+            leftAxis.setDrawAxisLine(false);
+            dataSet.setDrawValues(false);
+
+            layout.addView(stackedBarChart);
+
+            LinearLayout legendLayout = new LinearLayout(context);
+            legendLayout.setOrientation(LinearLayout.VERTICAL);
+            legendLayout.setGravity(Gravity.CENTER);
+
+            legendLayout.addView(createLegendItem(context, "Unsynced", colors[0], unsynced));
+            legendLayout.addView(createLegendItem(context, "Synced", colors[1], synced));
+
+            layout.addView(legendLayout);
+
+        } catch (Exception e) {
+            LogHandler.crashLog(e, "createStackedBarChart");
+            layout.removeAllViews();
+            layout.addView(Details.getErrorAsChartAlternative(context));
+        }
+
+        return layout;
+    }
+    private static LinearLayout createLegendItem(Context context, String label, int color, double value) {
+        LinearLayout legendItem = new LinearLayout(context);
+        legendItem.setOrientation(LinearLayout.HORIZONTAL);
+        legendItem.setGravity(Gravity.CENTER);
+
+        View colorBox = new View(context);
+        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams(50, 50);
+        colorBoxParams.setMargins(10, 0, 10, 0);
+        colorBox.setLayoutParams(colorBoxParams);
+        colorBox.setBackgroundColor(color);
+
+        TextView labelText = new TextView(context);
+        labelText.setText(label+" : ");
+
+        TextView valueText = new TextView(context);
+        valueText.setText(new PieChartValueFormatter().getFormattedValue((float) value));
+
+        legendItem.addView(colorBox);
+        legendItem.addView(labelText);
+        legendItem.addView(valueText);
+
+        return legendItem;
     }
 
 }

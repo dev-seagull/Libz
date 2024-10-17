@@ -18,6 +18,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
 import com.example.cso.UI.SyncButton;
+import com.example.cso.UI.WifiOnlyButton;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.util.List;
@@ -55,7 +57,9 @@ public class TimerService extends Service {
             Log.d("service", "Service stop request received");
             stopTimer();
             if(isAppInForeground()){
-                SyncButton.handleRotateSyncButtonClick(MainActivity.activity);
+                SwitchMaterial syncSwitch = MainActivity.activity.findViewById(SyncButton.syncButtonId);
+                WifiOnlyButton.updateSyncAndWifiButtonBackground(syncSwitch,false);
+//                SyncButton.handleRotateSyncButtonClick(MainActivity.activity);
             }else{
                 SyncButton.toggleSyncState();
             }

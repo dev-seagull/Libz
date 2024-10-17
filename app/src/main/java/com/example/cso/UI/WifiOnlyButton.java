@@ -124,7 +124,7 @@ public class WifiOnlyButton {
                 UI.dpToPx(100),
                 UI.dpToPx(100)
         );
-        frameParams.setMargins(UI.dpToPx(8), UI.dpToPx(8), UI.dpToPx(8), UI.dpToPx(8));
+        frameParams.setMargins(UI.dpToPx(2), UI.dpToPx(8), UI.dpToPx(2), UI.dpToPx(8));
         frameLayout.setLayoutParams(frameParams);
 
         SwitchMaterial wifiSwitch = new SwitchMaterial(context);
