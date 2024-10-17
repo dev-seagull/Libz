@@ -157,21 +157,26 @@ public class Sync {
                 Long assetId = Long.valueOf(androidRow[8]);
 
                 if (!DBHelper.androidFileExistsInDrive(assetId, fileHash)){
+                    Log.d("file","file was not in drive : "  + fileName);
                     if(currentDriveFreeSpace > Double.parseDouble(fileSize) + 10) {
+                        Log.d("file","has enough space to upload to drive : "  + fileName);
                         String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
                         boolean isBackedUp = uploadAndroidToDrive(androidRow, userEmail, accessToken, syncedAssetsFolderId);
                         if (isBackedUp) {
+                            Log.d("file","backed up : "  + fileName);
                             Log.d("service" ,fileName + " is backedup");
                             GoogleDrive.startUpdateDriveFilesThread();
                             currentDriveFreeSpace -= Double.parseDouble(fileSize);
 
                             if(amountToFreeUp > 0){
+                                Log.d("file","should delete after backup : "  + fileName);
                                 GoogleDrive.deleteRedundantDriveFilesFromAccount(userEmail);
                                 if (DBHelper.androidFileExistsInDrive(assetId, fileHash)) {
                                     boolean isDeleted = Android.deleteAndroidFile(filePath, String.valueOf(assetId), fileHash
                                             , fileSize, fileName, activity);
                                     if (isDeleted) {
                                         amountToFreeUp -= Double.parseDouble(fileSize);
+                                        Log.d("file","deleted after backup : "  + fileName);
                                         Log.d("service" ,fileName + " is deleted");
                                     }
                                 }
@@ -179,12 +184,16 @@ public class Sync {
                         }
                     }
                 }else {
+                    Log.d("file","already in drive : "  + fileName);
                     if (amountToFreeUp > 0) {
+                        Log.d("file","have to delete : "  + fileName);
                         GoogleDrive.deleteRedundantDriveFilesFromAccount(userEmail);
                         if (DBHelper.androidFileExistsInDrive(assetId, fileHash)) {
+                            Log.d("file","file already in drive and have to delete : "  + fileName);
                             boolean isDeleted = Android.deleteAndroidFile(filePath, androidRow[8], fileHash
                                     , fileSize, androidRow[1], activity);
                             if (isDeleted) {
+                                Log.d("file","file deleted : "  + fileName);
                                 Log.d("service" ,fileName + " is deleted");
                                 amountToFreeUp -= Double.parseDouble(fileSize);
                             }
@@ -236,9 +245,15 @@ public class Sync {
                 String mimeType = androidRow[7];
                 String assetId = androidRow[8];
                 MainActivity.syncDetailsStatus = "Syncing " + fileName + " to " + userEmail + " ...";
+                if(TimerService.isAppinForeGround){
+                    MainActivity.activity.runOnUiThread(() -> {
+                        try{
+                            Toast.makeText(MainActivity.activity,"Syncing " + fileName + " to " + userEmail + " ...", Toast.LENGTH_SHORT).show();
+                        }catch (Exception e) { LogHandler.crashLog(e,"ui"); }
+                    });
+                }
 //                SyncDetails.setSyncStatusDetailsTextView(activity, false);
-                BackUp backUp = new BackUp();
-                isBackedUp[0] = backUp.backupAndroidToDrive(fileId,fileName, filePath,fileHash,mimeType,assetId,
+                isBackedUp[0] = BackUp.backupAndroidToDrive(fileId,fileName, filePath,fileHash,mimeType,assetId,
                         accessToken,userEmail,syncedAssetsFolderId);
                 MainActivity.syncDetailsStatus = "";
             });

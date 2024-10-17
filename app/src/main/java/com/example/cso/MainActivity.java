@@ -83,6 +83,7 @@
             UI.initAppUI(activity);
             NavigationView navigationView = findViewById(R.id.navigationView);
             navigationView.setNavigationItemSelectedListener(this);
+//            DBHelper.printDriveTable();
 
 //            boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
 //            if(isFirstTime){

@@ -1771,6 +1771,28 @@ public class DBHelper extends SQLiteOpenHelper {
         return count;
     }
 
+    public static double getSizeOfAssetsOnThisDevice() {
+        double count = 0;
+        String query = "SELECT SUM(fileSize) as result FROM ANDROID where device = ?;" ;
+        Cursor cursor = null;
+        try {
+            cursor = dbReadable.rawQuery(query, new String[]{MainActivity.androidUniqueDeviceIdentifier});
+            if (cursor.moveToFirst()) {
+                int column = cursor.getColumnIndex("result");
+                if(column >= 0){
+                    count = cursor.getDouble(column);
+                }
+            }
+        } catch (Exception e) {
+            FirebaseCrashlytics.getInstance().recordException(e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return count;
+    }
+
     public static double getNumberOfSyncedAssets() {
         double count = 0;
         String query =
@@ -1784,7 +1806,30 @@ public class DBHelper extends SQLiteOpenHelper {
                 if(columnIndex >= 0){
                     count = cursor.getDouble(columnIndex);
                 }
-                count = cursor.getInt(0);
+            }
+            Log.d("ui","synced assets: " + count);
+        } catch (Exception e) {
+            FirebaseCrashlytics.getInstance().recordException(e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return count;
+    }
+
+    public static double getSizeOfSyncedAssetsFromAccount(String userEmail) {
+        double count = 0;
+        String query = "SELECT SUM(a.fileSize) as totalCount FROM ANDROID a WHERE a.fileHash IN (SELECT d.fileHash FROM DRIVE d WHERE d.userEmail = ?) AND a.device = ?";
+
+        Cursor cursor = null;
+        try {
+            cursor = dbReadable.rawQuery(query, new String[]{userEmail,MainActivity.androidUniqueDeviceIdentifier});
+            if (cursor.moveToFirst()) {
+                int columnIndex = cursor.getColumnIndex("totalCount");
+                if(columnIndex >= 0){
+                    count = cursor.getDouble(columnIndex);
+                }
             }
             Log.d("ui","synced assets: " + count);
         } catch (Exception e) {
@@ -1815,8 +1860,9 @@ public class DBHelper extends SQLiteOpenHelper {
     }
     
     public static void printDriveTable(){
-        String query = "SELECT * " +
-                "FROM DRIVE;";
+//        String query = "SELECT * " +
+//                "FROM DRIVE where fileName = 'Screenshot_2024-10-18-00-01-55-850_org.telegram.messenger.jpg';";
+        String query = "SELECT * FROM ANDROID a WHERE a.fileHash NOT IN (SELECT d.fileHash FROM DRIVE d)";
 
         Cursor cursor = null;
         try {

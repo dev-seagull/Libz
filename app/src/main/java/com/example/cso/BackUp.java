@@ -27,7 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class BackUp {
-    public boolean backupAndroidToDrive(Long fileId, String fileName, String filePath,
+    public static boolean backupAndroidToDrive(Long fileId, String fileName, String filePath,
                                         String fileHash, String mimeType, String assetId,
                                         String driveBackupAccessToken, String driveEmailAccount, String syncAssetsFolderId){
         boolean[] isUploadValid = {false};
@@ -53,7 +53,7 @@ public class BackUp {
 //                if(!Media.isVideoBackUp(mimeTypeToUpload)) {
                     Log.d("service", "Uploading file " + fileName + " to " +driveEmailAccount +" started");
                     com.google.api.services.drive.model.File uploadedFile;
-//                    if(androidFileSize > 50.0){
+                    if(androidFileSize > 10.0){
                         Drive.Files.Create createRequest = service.files().create(fileMetadata, mediaContent)
                                 .setFields("id");
                         MediaHttpUploader uploader = createRequest.getMediaHttpUploader();
@@ -61,11 +61,11 @@ public class BackUp {
 
                         uploadedFile = createRequest.execute();
                         Log.d("service", "Uploaded File ID: " + uploadedFile.getId());
-//                    }else{
-//                        uploadedFile = service.files().create(fileMetadata, mediaContent)
-//                                .setFields("id")
-//                                .execute();
-//                    }
+                    }else{
+                        uploadedFile = service.files().create(fileMetadata, mediaContent)
+                                .setFields("id")
+                                .execute();
+                    }
 
                     String uploadFileId = uploadedFile.getId();
                     if (uploadedFile == null | uploadFileId.isEmpty()) {

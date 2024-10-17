@@ -292,6 +292,7 @@ public class GoogleDrive {
                         for (DriveAccountInfo.MediaItem driveMediaItem : driveMediaItems) {
                             driveFileIds.add(driveMediaItem.getId());
                         }
+                        Log.d("deleteredundantdrive" , String.valueOf(driveMediaItems.size()));
                         DBHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
                     }
                 }

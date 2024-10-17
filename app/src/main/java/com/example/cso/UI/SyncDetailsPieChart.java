@@ -132,7 +132,7 @@ public class SyncDetailsPieChart {
         }
     }
 
-    public static void addPieChartToSyncDetailsStatisticsLayout(PieChart pieChart, Activity activity,
+    public static void addPieChartToSyncDetailsStatisticsLayout(Activity activity,
                                                                 LinearLayout syncDetailsStatisticsLayout){
         new Thread(() -> {
             ImageView[] loadingImage = new ImageView[]{new ImageView(activity)};
@@ -207,8 +207,8 @@ public class SyncDetailsPieChart {
             legendLayout.setOrientation(LinearLayout.VERTICAL);
             legendLayout.setGravity(Gravity.CENTER);
 
-            legendLayout.addView(createLegendItem(context, "Synced", colors[0], unsynced));
-            legendLayout.addView(createLegendItem(context, "Unsynced", colors[1], synced));
+            legendLayout.addView(createLegendItem(context, "UnSynced", colors[0], unsynced));
+            legendLayout.addView(createLegendItem(context, "Synced", colors[1], synced));
 
             layout.addView(legendLayout);
 

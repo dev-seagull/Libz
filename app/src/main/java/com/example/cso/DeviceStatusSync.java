@@ -162,34 +162,42 @@ public class DeviceStatusSync {
             }
             HashMap<String, Double> locationSizes = new HashMap<>();
             List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","type"});
+            double totalAccSize = 0.0;
             for (String[] account : accounts){
                 String userEmail = account[0];
                 String type = account[1];
                 if (type.equals("backup")){
                     locationSizes.put(userEmail,0.0);
-                    List<String[]> driveFiles = DBHelper.getDriveTable(new String[]{"assetId"},userEmail);
-                    for (String[] driveFile : driveFiles){
-                        String driveFileAssetId = driveFile[0];
-                        for (String[] androidFile : files){
-                            String androidFileAssetId = androidFile[0];
-                            if (androidFileAssetId.equals(driveFileAssetId)){
-                                Double fileSize = Double.parseDouble(androidFile[1]);
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                                    locationSizes.put(userEmail,locationSizes.getOrDefault(userEmail,0.0) + fileSize);
-                                }
-                                files.remove(androidFile);
-                                break;
-                            }
-                        }
-                    }
+//                    List<String[]> driveFiles = DBHelper.getDriveTable(new String[]{"assetId"},userEmail);
+//                    for (String[] driveFile : driveFiles){
+//                        String driveFileAssetId = driveFile[0];
+//                        for (String[] androidFile : files){
+//                            String androidFileAssetId = androidFile[0];
+//                            if (androidFileAssetId.equals(driveFileAssetId)){
+//                                Double fileSize = Double.parseDouble(androidFile[1]);
+//                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+//                                    locationSizes.put(userEmail,locationSizes.getOrDefault(userEmail,0.0) + fileSize);
+//                                }
+////                                files.remove(androidFile);
+//                                break;
+//                            }
+//                        }
+//                    }
+                    double accSize = DBHelper.getSizeOfSyncedAssetsFromAccount(userEmail);
+                    Log.d("UserEmailSize", userEmail + ": " + accSize);
+                    totalAccSize = totalAccSize + accSize;
+                    locationSizes.put(userEmail,accSize);
                 }
             }
-            for (String[] file : files){
-                Double fileSize = Double.parseDouble(file[1]);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    locationSizes.put("UnSynced",locationSizes.getOrDefault("UnSynced", 0.0) + fileSize);
-                }
-            }
+//            for (String[] file : files){
+//                Double fileSize = Double.parseDouble(file[1]);
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+//                    locationSizes.put("UnSynced",locationSizes.getOrDefault("UnSynced", 0.0) + fileSize);
+//                }
+//            }
+            double total =  DBHelper.getSizeOfAssetsOnThisDevice();
+            double unsynced = total - totalAccSize;
+            locationSizes.put("UnSynced", unsynced);
             JsonObject assetsLocationSize = new JsonObject();
             for (Map.Entry<String, Double> entry : locationSizes.entrySet()){
                 assetsLocationSize.addProperty(entry.getKey(), entry.getValue());

@@ -142,8 +142,7 @@ public class SyncDetails {
         ImageButton syncDetailsButton = activity.findViewById(syncDetailsButtonId);
         syncDetailsButton.setOnClickListener(view -> {
             if(syncDetailsStatisticsLayout.getVisibility() == View.GONE){
-                PieChart pieChart  = new PieChart(activity);
-                SyncDetailsPieChart.addPieChartToSyncDetailsStatisticsLayout(pieChart,activity,syncDetailsStatisticsLayout);
+                SyncDetailsPieChart.addPieChartToSyncDetailsStatisticsLayout(activity,syncDetailsStatisticsLayout);
                 syncDetailsStatisticsLayout.setVisibility(View.VISIBLE);
             }else{
                 syncDetailsStatisticsLayout.setVisibility(View.GONE);
