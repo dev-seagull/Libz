@@ -162,7 +162,7 @@ public class CustomTreeMapChart {
 
         try {
             int width = (int) (UI.getDeviceWidth(context) * 0.8);
-            int height = (int) (UI.getDeviceWidth(context) * 0.20);
+            int height = (int) (UI.getDeviceWidth(context) * 0.15);
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(width, height);
             stackedBarChart.setLayoutParams(layoutParams);
 

@@ -387,10 +387,10 @@ public class Devices {
             Log.d("DeviceStatusSync", "assets source data : " + data);
 
             activity.runOnUiThread(() -> {
-                View chartLayout = AssetsSourcePieChart.createPieChartForDeviceSourceStatus(context, data);
+                View chartLayout = AssetsSourcePieChart.createStackedBarChartForDeviceSourceStatus(context, data);
                 layout.addView(chartLayout);
 
-                AssetsSourcePieChart.createTextAreaForAssetSourcePieChart(chartLayout,layout,context);
+                AssetsSourcePieChart.createTextAreaForAssetSourceBarChart(chartLayout,layout,context, data);
 
                 layout.removeView(loadingImage[0]);
             });
