@@ -53,7 +53,7 @@ public class BackUp {
 //                if(!Media.isVideoBackUp(mimeTypeToUpload)) {
                     Log.d("service", "Uploading file " + fileName + " to " +driveEmailAccount +" started");
                     com.google.api.services.drive.model.File uploadedFile;
-                    if(androidFileSize > 50.0){
+//                    if(androidFileSize > 50.0){
                         Drive.Files.Create createRequest = service.files().create(fileMetadata, mediaContent)
                                 .setFields("id");
                         MediaHttpUploader uploader = createRequest.getMediaHttpUploader();
@@ -61,11 +61,11 @@ public class BackUp {
 
                         uploadedFile = createRequest.execute();
                         Log.d("service", "Uploaded File ID: " + uploadedFile.getId());
-                    }else{
-                        uploadedFile = service.files().create(fileMetadata, mediaContent)
-                                .setFields("id")
-                                .execute();
-                    }
+//                    }else{
+//                        uploadedFile = service.files().create(fileMetadata, mediaContent)
+//                                .setFields("id")
+//                                .execute();
+//                    }
 
                     String uploadFileId = uploadedFile.getId();
                     if (uploadedFile == null | uploadFileId.isEmpty()) {
