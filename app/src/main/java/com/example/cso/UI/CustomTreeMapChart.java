@@ -259,11 +259,9 @@ public class CustomTreeMapChart {
 
         TextView labelText = new TextView(context);
         labelText.setText(label+" : ");
-        labelText.setGravity(Gravity.LEFT);
 
         TextView valueText = new TextView(context);
         valueText.setText(new PieChartValueFormatter().getFormattedValue((float) value));
-        valueText.setGravity(Gravity.CENTER);
 
         legendItem.addView(colorBox);
         legendItem.addView(labelText);

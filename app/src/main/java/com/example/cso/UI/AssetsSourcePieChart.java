@@ -305,12 +305,10 @@ public class AssetsSourcePieChart {
         TextView labelText = new TextView(context);
         labelText.setText(label+" : ");
         labelText.setTextSize((int) (UI.getDeviceWidth(context) * 0.01));
-        labelText.setGravity(Gravity.LEFT);
 
         TextView valueText = new TextView(context);
         valueText.setText(new PieChartValueFormatter().getFormattedValue((float) value));
         valueText.setTextSize((int) (UI.getDeviceWidth(context) * 0.01));
-        valueText.setGravity(Gravity.CENTER);
 
         legendItem.addView(colorBox);
         legendItem.addView(labelText);
