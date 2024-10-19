@@ -117,9 +117,6 @@ public class Unlink {
         Log.d("Unlink", "unlinkAccountThread finished");
     }
 
-    public static void moveFilesBetweenAccounts(){
-
-    }
 
     public static double getTotalLinkedCloudsFreeSpace(String userEmail){
         int totalFreeSpace = 0;

@@ -417,8 +417,8 @@ public class GoogleDrive {
                         Log.d("Unlink", "Failed to get asset for fileId: " + fileId);
                         return;
                     }
-//                    DBHelper.insertTransactionsData(sourceUserEmail, fileMetadata.getName(), destinationUserEmail
-//                            ,asset[0], "Transfer", asset[1]);
+                    DBHelper.insertTransactionsData(sourceUserEmail, fileMetadata.getName(), destinationUserEmail
+                            ,asset[0], "Transfer", asset[1]);
 
 
                     sourceAccount.files().delete(fileId).execute();

@@ -152,6 +152,7 @@ public class Sync {
                 Log.d("Threads","syncAndroidFileThread started");
                 String fileName = androidRow[1];
                 String filePath = androidRow[2];
+                String device = androidRow[3];
                 String fileSize = androidRow[4];
                 String fileHash = androidRow[5];
                 Long assetId = Long.valueOf(androidRow[8]);
@@ -172,8 +173,8 @@ public class Sync {
                                 Log.d("file","should delete after backup : "  + fileName);
                                 GoogleDrive.deleteRedundantDriveFilesFromAccount(userEmail);
                                 if (DBHelper.androidFileExistsInDrive(assetId, fileHash)) {
-                                    boolean isDeleted = Android.deleteAndroidFile(filePath, String.valueOf(assetId), fileHash
-                                            , fileSize, fileName, activity);
+                                    boolean isDeleted = Android.deleteAndroidFile(device,filePath, String.valueOf(assetId)
+                                            , fileHash, fileSize, fileName, activity);
                                     if (isDeleted) {
                                         amountToFreeUp -= Double.parseDouble(fileSize);
                                         Log.d("file","deleted after backup : "  + fileName);
@@ -190,7 +191,7 @@ public class Sync {
                         GoogleDrive.deleteRedundantDriveFilesFromAccount(userEmail);
                         if (DBHelper.androidFileExistsInDrive(assetId, fileHash)) {
                             Log.d("file","file already in drive and have to delete : "  + fileName);
-                            boolean isDeleted = Android.deleteAndroidFile(filePath, androidRow[8], fileHash
+                            boolean isDeleted = Android.deleteAndroidFile(device, filePath, androidRow[8], fileHash
                                     , fileSize, androidRow[1], activity);
                             if (isDeleted) {
                                 Log.d("file","file deleted : "  + fileName);
