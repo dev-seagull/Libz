@@ -67,6 +67,8 @@ public class SyncButton {
             WifiOnlyButton.updateSyncAndWifiButtonBackground(syncButton,currentSyncState);
             if(currentSyncState){
                 Sync.startSync(activity);
+            }else{
+                Sync.stopSync(activity);
             }
         }catch (Exception e){
             LogHandler.crashLog(e,"ui");
