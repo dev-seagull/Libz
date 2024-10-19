@@ -133,9 +133,9 @@ public class SyncButton {
         FrameLayout frameLayout = new FrameLayout(context);
         FrameLayout.LayoutParams frameParams = new FrameLayout.LayoutParams(
                 UI.dpToPx(100),
-                UI.dpToPx(100)
+                UI.dpToPx(50)
         );
-        frameParams.setMargins(UI.dpToPx(2), UI.dpToPx(8), UI.dpToPx(2), UI.dpToPx(8));
+        frameParams.setMargins(UI.dpToPx(10), 0, UI.dpToPx(2), 0);
         frameLayout.setLayoutParams(frameParams);
 
 //        LiquidFillButton syncButton = new LiquidFillButton(context,null);
@@ -186,9 +186,9 @@ public class SyncButton {
         syncSwitch.setId(syncButtonId);
         FrameLayout.LayoutParams switchParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
+                ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        switchParams.gravity = Gravity.CENTER;
+        switchParams.gravity = Gravity.LEFT;
         syncSwitch.setLayoutParams(switchParams);
         syncSwitch.setText("Sync");
         syncSwitch.setTextColor(ContextCompat.getColor(context, R.color.textColor));
@@ -206,9 +206,20 @@ public class SyncButton {
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
         syncButtonsParentLayout.setLayoutParams(params);
+
+        LinearLayout majorButtonsContainer = new LinearLayout(activity);
+        majorButtonsContainer.setOrientation(LinearLayout.VERTICAL);
+        majorButtonsContainer.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams containerParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        majorButtonsContainer.setLayoutParams(containerParams);
+        majorButtonsContainer.addView(createCircularButtonContainer(activity));
+        majorButtonsContainer.addView(WifiOnlyButton.createCircularWifiButtonContainer(activity));
+
         syncButtonsParentLayout.addView(SyncDetails.createCircularSyncDetailsButtonContainer(activity));
-        syncButtonsParentLayout.addView(createCircularButtonContainer(activity));
-        syncButtonsParentLayout.addView(WifiOnlyButton.createCircularWifiButtonContainer(activity));
+        syncButtonsParentLayout.addView(majorButtonsContainer);
 
         return syncButtonsParentLayout;
     }

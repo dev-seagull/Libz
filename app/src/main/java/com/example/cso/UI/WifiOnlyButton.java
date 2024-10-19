@@ -122,9 +122,9 @@ public class WifiOnlyButton {
         FrameLayout frameLayout = new FrameLayout(context);
         FrameLayout.LayoutParams frameParams = new FrameLayout.LayoutParams(
                 UI.dpToPx(100),
-                UI.dpToPx(100)
+                UI.dpToPx(50)
         );
-        frameParams.setMargins(UI.dpToPx(2), UI.dpToPx(8), UI.dpToPx(2), UI.dpToPx(8));
+        frameParams.setMargins(UI.dpToPx(10), 0, UI.dpToPx(2), 0);
         frameLayout.setLayoutParams(frameParams);
 
         SwitchMaterial wifiSwitch = new SwitchMaterial(context);
@@ -133,7 +133,7 @@ public class WifiOnlyButton {
         FrameLayout.LayoutParams switchParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT,
-                Gravity.CENTER
+                Gravity.LEFT
         );
         wifiSwitch.setLayoutParams(switchParams);
         wifiSwitch.setText("Wifi only");
