@@ -252,7 +252,7 @@ public class CustomTreeMapChart {
         legendItem.setGravity(Gravity.CENTER);
 
         View colorBox = new View(context);
-        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams(50, 50);
+        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceWidth(context) * 0.02), (int) (UI.getDeviceWidth(context) * 0.02));
         colorBoxParams.setMargins(10, 0, 10, 0);
         colorBox.setLayoutParams(colorBoxParams);
         colorBox.setBackgroundColor(color);
