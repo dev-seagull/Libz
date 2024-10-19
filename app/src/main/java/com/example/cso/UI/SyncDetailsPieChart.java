@@ -226,16 +226,20 @@ public class SyncDetailsPieChart {
         legendItem.setGravity(Gravity.CENTER);
 
         View colorBox = new View(context);
-        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams(50, 50);
+        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams(50, (int) (UI.getDeviceWidth(context) * 0.01));
         colorBoxParams.setMargins(10, 0, 10, 0);
         colorBox.setLayoutParams(colorBoxParams);
         colorBox.setBackgroundColor(color);
 
         TextView labelText = new TextView(context);
         labelText.setText(label+" : ");
+        labelText.setTextSize((int) (UI.getDeviceWidth(context) * 0.01));
+        labelText.setTextColor(MainActivity.currentTheme.primaryTextColor);
 
         TextView valueText = new TextView(context);
         valueText.setText(new PieChartValueFormatter().getFormattedValue((float) value));
+        valueText.setTextSize((int) (UI.getDeviceWidth(context) * 0.01));
+        valueText.setTextColor(MainActivity.currentTheme.primaryTextColor);
 
         legendItem.addView(colorBox);
         legendItem.addView(labelText);

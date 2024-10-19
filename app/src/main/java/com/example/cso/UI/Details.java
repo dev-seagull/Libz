@@ -204,6 +204,7 @@ public class Details {
         titleParams.gravity = Gravity.CENTER | Gravity.TOP;
         title.setLayoutParams(titleParams);
         title.setText(text);
+        title.setTextColor(MainActivity.currentTheme.primaryTextColor);
         return title;
     }
 

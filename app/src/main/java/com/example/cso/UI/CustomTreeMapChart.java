@@ -246,7 +246,7 @@ public class CustomTreeMapChart {
 
         return layout;
     }
-    private static LinearLayout createLegendItem(Context context, String label, int color, double value) {
+    public static LinearLayout createLegendItem(Context context, String label, int color, double value) {
         LinearLayout legendItem = new LinearLayout(context);
         legendItem.setOrientation(LinearLayout.HORIZONTAL);
         legendItem.setGravity(Gravity.CENTER);
@@ -259,9 +259,14 @@ public class CustomTreeMapChart {
 
         TextView labelText = new TextView(context);
         labelText.setText(label+" : ");
+        int textColor = MainActivity.currentTheme.primaryTextColor;
+        labelText.setTextColor(textColor);
+        labelText.setTextSize((int) (UI.getDeviceWidth(context) * 0.009));
 
         TextView valueText = new TextView(context);
         valueText.setText(new PieChartValueFormatter().getFormattedValue((float) value));
+        valueText.setTextColor(textColor);
+        valueText.setTextSize((int) (UI.getDeviceWidth(context) * 0.009));
 
         legendItem.addView(colorBox);
         legendItem.addView(labelText);
