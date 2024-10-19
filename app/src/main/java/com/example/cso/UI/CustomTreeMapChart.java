@@ -162,7 +162,7 @@ public class CustomTreeMapChart {
 
         try {
             int width = (int) (UI.getDeviceWidth(context) * 0.8);
-            int height = (int) (UI.getDeviceWidth(context) * 0.15);
+            int height = (int) (UI.getDeviceHeight(context) * 0.06);
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(width, height);
             stackedBarChart.setLayoutParams(layoutParams);
 
@@ -252,7 +252,7 @@ public class CustomTreeMapChart {
         legendItem.setGravity(Gravity.CENTER);
 
         View colorBox = new View(context);
-        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceWidth(context) * 0.02), (int) (UI.getDeviceWidth(context) * 0.02));
+        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceHeight(context) * 0.008), (int) (UI.getDeviceHeight(context) * 0.008));
         colorBoxParams.setMargins(10, 0, 10, 0);
         colorBox.setLayoutParams(colorBoxParams);
         colorBox.setBackgroundColor(color);
@@ -261,12 +261,12 @@ public class CustomTreeMapChart {
         labelText.setText(label+" : ");
         int textColor = MainActivity.currentTheme.primaryTextColor;
         labelText.setTextColor(textColor);
-        labelText.setTextSize((int) (UI.getDeviceWidth(context) * 0.009));
+        labelText.setTextSize((int) (UI.getDeviceHeight(context) * 0.004));
 
         TextView valueText = new TextView(context);
         valueText.setText(new PieChartValueFormatter().getFormattedValue((float) value));
         valueText.setTextColor(textColor);
-        valueText.setTextSize((int) (UI.getDeviceWidth(context) * 0.009));
+        valueText.setTextSize((int) (UI.getDeviceHeight(context) * 0.004));
 
         legendItem.addView(colorBox);
         legendItem.addView(labelText);

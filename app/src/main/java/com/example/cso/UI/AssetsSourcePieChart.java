@@ -214,7 +214,7 @@ public class AssetsSourcePieChart {
 
     public static void configureBarChartDimensions(HorizontalBarChart barChart, Context context) {
         int width = (int) (UI.getDeviceWidth(context) * 0.8);
-        int height = (int) (UI.getDeviceWidth(context) * 0.15);
+        int height = (int) (UI.getDeviceHeight(context) * 0.06);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(width, height);
         params.setMargins(0, 0, 0, 0);
         barChart.setLayoutParams(params);
@@ -289,19 +289,19 @@ public class AssetsSourcePieChart {
         legendItem.setGravity(Gravity.CENTER);
 
         View colorBox = new View(context);
-        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceWidth(context) * 0.02), (int) (UI.getDeviceWidth(context) * 0.02));
+        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceHeight(context) * 0.008), (int) (UI.getDeviceHeight(context) * 0.008));
         colorBoxParams.setMargins(0, 0, 10, 0);
         colorBox.setLayoutParams(colorBoxParams);
         colorBox.setBackgroundColor(color);
 
         TextView labelText = new TextView(context);
         labelText.setText(label+" : ");
-        labelText.setTextSize((int) (UI.getDeviceWidth(context) * 0.009));
+        labelText.setTextSize((int) (UI.getDeviceHeight(context) * 0.004));
         labelText.setTextColor(MainActivity.currentTheme.primaryTextColor);
 
         TextView valueText = new TextView(context);
         valueText.setText(new PieChartValueFormatter().getFormattedValue((float) value));
-        valueText.setTextSize((int) (UI.getDeviceWidth(context) * 0.009));
+        valueText.setTextSize((int) (UI.getDeviceHeight(context) * 0.004));
         valueText.setTextColor(MainActivity.currentTheme.primaryTextColor);
 
         legendItem.addView(colorBox);
