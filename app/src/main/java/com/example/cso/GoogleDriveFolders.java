@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 public class GoogleDriveFolders {
     public static String TAG = "GoogleDriveFolder";
@@ -18,6 +19,7 @@ public class GoogleDriveFolders {
     public static String assetsFolderName = "assets";
     public static String profileFolderName = "profile";
     public static String databaseFolderName = "database";
+    public static String unlinkedFolderName = "unlinked";
     public static String oldParentFolderName = "stash_synced_assets";
     public static String oldProfileFolderName = "stash_user_profile";
     public static String oldDatabaseFolderName = "libz_database";
@@ -27,7 +29,7 @@ public class GoogleDriveFolders {
         Thread initializeParentFolderThread = new Thread(() -> {
             try{
                 Drive service = GoogleDrive.initializeDrive(accessToken);
-                String parentFolderId = getParentFolderIdFromDrive(service);
+                String parentFolderId = getParentFolderIdFromDrive(service, "initializeParentFolder");
 
                 Log.d(TAG, "parent folder id:" + parentFolderId);
 
@@ -50,13 +52,13 @@ public class GoogleDriveFolders {
                         initializeSubFolder(service,parentFolderId,subFolder,userEmail);
                     }
                 }
-            } catch (Exception e) { LogHandler.crashLog(e,TAG); }
+            } catch (Exception e) { LogHandler.crashLog(e,TAG + "1"); }
         });
 
         initializeParentFolderThread.start();
         try{
             initializeParentFolderThread.join();
-        }catch (Exception e) { LogHandler.crashLog(e,TAG); }
+        }catch (Exception e) { LogHandler.crashLog(e,TAG+ "2"); }
     }
 
     private static void initializeSubFolder(Drive service, String parentFolderId, String folderName, String userEmail){
@@ -84,7 +86,7 @@ public class GoogleDriveFolders {
         initializeSubFoldersThread.start();
         try{
             initializeSubFoldersThread.join();
-        }catch (Exception e) { LogHandler.crashLog(e,TAG); }
+        }catch (Exception e) { LogHandler.crashLog(e,TAG + "3"); }
     }
 
     private static String createSubFolder(Drive service, String parentFolderId, String subFolderName){
@@ -102,7 +104,7 @@ public class GoogleDriveFolders {
 
                folderId[0] = subfolder.getId();
            }catch (Exception e) {
-               LogHandler.crashLog(e,TAG);
+               LogHandler.crashLog(e,TAG + "4");
            }
         });
 
@@ -110,7 +112,7 @@ public class GoogleDriveFolders {
         try{
             createSubFolderThread.join();
         }catch (Exception e) {
-            LogHandler.crashLog(e,TAG);
+            LogHandler.crashLog(e,TAG + "5");
         }
 
         return folderId[0];
@@ -131,13 +133,13 @@ public class GoogleDriveFolders {
                 if (!result.getFiles().isEmpty()) {
                     folderId[0] = result.getFiles().get(0).getId();
                 }
-            }catch (Exception e) { LogHandler.crashLog(e,TAG); }
+            }catch (Exception e) { LogHandler.crashLog(e,TAG + "6"); }
         });
 
         getSubFolderIdFromDriveThread.start();
         try{
             getSubFolderIdFromDriveThread.join();
-        }catch (Exception e) { LogHandler.crashLog(e,TAG); }
+        }catch (Exception e) { LogHandler.crashLog(e,TAG + "7"); }
 
         return folderId[0];
     }
@@ -155,29 +157,29 @@ public class GoogleDriveFolders {
                         .execute();
 
                 folderId[0] = folder.getId();
-            }catch (Exception e){LogHandler.crashLog(e,TAG);}
+            }catch (Exception e){LogHandler.crashLog(e,TAG + "17");}
         });
 
         createParentFolderThread.start();
         try{
             createParentFolderThread.join();
-        }catch (Exception e)  { LogHandler.crashLog(e,TAG); }
+        }catch (Exception e)  { LogHandler.crashLog(e,TAG + "8"); }
 
         return folderId[0];
     }
 
-    public static String getParentFolderIdFromDrive(Drive service){
+    public static String getParentFolderIdFromDrive(Drive service, String task){
         final String[] folderId = {null};
         Thread getParentFolderThread = new Thread( () -> {
             try{
-                Drive.Files.List request = service.files().list();
+                Drive.Files.List request = service.files().list().setOrderBy("createdTime asc");
                 FileList result;
-
+                Log.d(TAG,"search parent folder Id for : " + task);
                 do {
                     result = request.execute();
 
                     for (File file : result.getFiles()) {
-                        Log.d(TAG,"drive file name : " + file.getName());
+
                         if (file.getName().equals(parentFolderName)){
                             folderId[0] = file.getId();
                             break;
@@ -187,13 +189,13 @@ public class GoogleDriveFolders {
                 } while (result.getNextPageToken() != null && folderId[0] == null);
 
 
-            }catch (Exception e){LogHandler.crashLog(e,TAG);}
+            }catch (Exception e){LogHandler.crashLog(e,TAG+ "9");}
         });
 
         getParentFolderThread.start();
         try{
             getParentFolderThread.join();
-        }catch (Exception e)  { LogHandler.crashLog(e,TAG); }
+        }catch (Exception e)  { LogHandler.crashLog(e,TAG + "10"); }
 
         return folderId[0];
     }
@@ -204,7 +206,7 @@ public class GoogleDriveFolders {
             try{
                 if(isLogin){
                     Drive service = GoogleDrive.initializeDrive(accessToken);
-                    syncAssetsFolderId[0] = getParentFolderIdFromDrive(service);
+                    syncAssetsFolderId[0] = getParentFolderIdFromDrive(service, "getParentFolderId in is login");
                 }else{
                     syncAssetsFolderId[0] = DBHelper.getParentFolderIdFromDB(userEmail);
                     if(syncAssetsFolderId[0] == null){
@@ -212,13 +214,13 @@ public class GoogleDriveFolders {
                         syncAssetsFolderId[0] = DBHelper.getParentFolderIdFromDB(userEmail);
                     }
                 }
-            }catch (Exception e) { LogHandler.crashLog(e,TAG); }
+            }catch (Exception e) { LogHandler.crashLog(e,TAG + "11"); }
         });
 
         getParentFolderIdThread.start();
         try{
             getParentFolderIdThread.join();
-        }catch (Exception e) {LogHandler.crashLog(e,TAG);}
+        }catch (Exception e) {LogHandler.crashLog(e,TAG + "12");}
 
         return syncAssetsFolderId[0];
     }
@@ -230,26 +232,27 @@ public class GoogleDriveFolders {
                 Drive service;
 
                 if(isLogin){
+                    Log.d(TAG,"accessToken for get sub folder is : " + accessToken);
                     service = GoogleDrive.initializeDrive(accessToken);
-                    String parentFolderId = getParentFolderIdFromDrive(service);
+                    String parentFolderId = getParentFolderIdFromDrive(service,"for get "+folderName+" id when is login");
                     folderId[0] = getSubFolderIdFromDrive(service,folderName,parentFolderId);
                 }else{
                     folderId[0] = DBHelper.getSubFolderIdFromDB(userEmail,folderName);
                     if (folderId[0] == null){
                         String finalAccessToken = DBHelper.getDriveBackupAccessToken(userEmail);
                         service = GoogleDrive.initializeDrive(finalAccessToken);
-                        String parentFolderId = getParentFolderIdFromDrive(service);
+                        String parentFolderId = getParentFolderIdFromDrive(service,"Error : for get "+folderName+" id and this is because of bug");
                         initializeSubFolder(service, parentFolderId,folderName,userEmail);
                         folderId[0] = DBHelper.getSubFolderIdFromDB(userEmail,folderName);
                     }
                 }
-            }catch (Exception e) { LogHandler.crashLog(e,TAG);}
+            }catch (Exception e) { LogHandler.crashLog(e,TAG + "13");}
         });
 
         getSubFolderIdThread.start();
         try{
             getSubFolderIdThread.join();
-        }catch (Exception e) { LogHandler.crashLog(e,TAG); }
+        }catch (Exception e) { LogHandler.crashLog(e,TAG + "14"); }
 
         return folderId[0];
     }
@@ -268,14 +271,45 @@ public class GoogleDriveFolders {
                 service.files().delete(folderId).execute();
 
             }catch (Exception e){
-                LogHandler.crashLog(e,TAG);
+                LogHandler.crashLog(e,TAG + "15");
             }
         });
 
         deleteSubFolderThread.start();
         try{
             deleteSubFolderThread.join();
-        }catch (Exception e) { LogHandler.crashLog(e,TAG); }
+        }catch (Exception e) { LogHandler.crashLog(e,TAG + "16"); }
     }
+
+    public static List<com.google.api.services.drive.model.File> getUnlinkedDevicesFile(String userEmail, Drive service, String accessToken){
+        final List<com.google.api.services.drive.model.File>[] existingFiles = new List[]{new ArrayList<>()};
+        Thread getFilesInProfileFolderThread = new Thread(() -> {
+            try {
+                String folderName = GoogleDriveFolders.unlinkedFolderName;
+                String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName, accessToken, true);
+                Log.d("unlinkNotify","searching for unlinked files in folder : " + profileFolderId);
+                if (profileFolderId != null && !profileFolderId.isEmpty()) {
+                    FileList fileList = service.files().list()
+                            .setQ("name contains 'unlinked_' and '" + profileFolderId + "' in parents")
+                            .setSpaces("drive")
+                            .setFields("files(id,name)")
+                            .execute();
+                    List<File> files = fileList.getFiles();
+                    existingFiles[0].addAll(files);
+                    Log.d("unlinkNotify","size of founded file : " + existingFiles[0].size());
+                }
+            }catch (Exception e){
+                LogHandler.crashLog(e,"unlinkNotify");
+            }
+        });
+
+        getFilesInProfileFolderThread.start();
+        try {
+            getFilesInProfileFolderThread.join();
+        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+
+        return existingFiles[0];
+    }
+
 
 }

@@ -594,8 +594,9 @@ public class DBHelper extends SQLiteOpenHelper {
     public static void deleteAccountFromDriveTable(String userEmail) {
         dbWritable.beginTransaction();
         try {
-            String sqlQuery = "DELETE FROM DRIVE WHERE userEmail = ?";
-            dbWritable.execSQL(sqlQuery, new Object[]{userEmail});
+            String type = "backup";
+            String sqlQuery = "DELETE FROM DRIVE WHERE userEmail = ? and type = ?";
+            dbWritable.execSQL(sqlQuery, new Object[]{userEmail,type});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
             FirebaseCrashlytics.getInstance().recordException(e);
@@ -1535,6 +1536,9 @@ public class DBHelper extends SQLiteOpenHelper {
     public static void deleteAccountAndRelatedAssets(String userEmail){
         Thread deleteAccountAndRelatedAssetsThread = new Thread(() -> {
             Log.d("Unlink", "deleteAccountAndRelatedAssetsThread started");
+
+            dbWritable.execSQL("PRAGMA foreign_keys = OFF;");
+
             deleteFromAccountsTable(userEmail,"backup");
             deleteAccountFromDriveTable(userEmail);
             deleteRedundantAsset();

@@ -72,7 +72,6 @@ public class Accounts {
                 MainActivity.activity.runOnUiThread(() ->backupAccountsLinearLayout.addView(addABackupAccountButtonView));
             }
         });
-
     }
 
     public static boolean accountButtonDoesNotExistsInUI(String userEmail){
@@ -175,10 +174,12 @@ public class Accounts {
     public static void setListenerToAccountButton(Button button, Activity activity) {
         button.setOnClickListener(
             view -> {
+                String buttonText = button.getText().toString().toLowerCase();
                 if (MainActivity.isAnyProccessOn) { // make clickable false
+                    RelativeLayout parent = (RelativeLayout) view.getParent();
+                    reInitializeAccountButtonsLayout(parent,activity,buttonText);
                     return;
                 }
-                String buttonText = button.getText().toString().toLowerCase();
                 if (buttonText.equals("add a backup account")) {
                     MainActivity.isAnyProccessOn = true; // add a backup account
                     button.setText("Adding in progress ...");
@@ -202,7 +203,7 @@ public class Accounts {
         Button newThreeDotButton = new Button(context);
         newThreeDotButton.setContentDescription(userEmail + "threeDot");
         addEffectsToThreeDotButton(newThreeDotButton,context);
-        setListenerToAccountThreeDotButtons(newThreeDotButton, userEmail);
+        setListenerToAccountThreeDotButtons(newThreeDotButton, userEmail, accountButton);
 
         accountButton.getHeight();
         int buttonSize =Math.min(UI.getDeviceHeight(context) / 20, 84);
@@ -233,14 +234,17 @@ public class Accounts {
         threeDotButton.setLayoutParams(layoutParams);
     }
 
-    public static void setListenerToAccountThreeDotButtons(Button button, String userEmail) {
+    public static void setListenerToAccountThreeDotButtons(Button button, String userEmail, Button accountButton) {
         button.setOnClickListener(view -> {
             try {
                 PopupMenu popupMenu = setPopUpMenuOnButton(activity, (Button) view, "account");
                 popupMenu.setOnMenuItemClickListener(item -> {
+                    if (MainActivity.isAnyProccessOn) { // make clickable false
+                        return true;
+                    }
                     if (item.getItemId() == R.id.unlink) {
                         MainActivity.isAnyProccessOn = true; //unlink
-                        button.setText("Unlink in progress ...");
+                        accountButton.setText("Unlink in progress ...");
                         new Thread(() -> GoogleCloud.unlink(userEmail, activity)).start();
                     }
                     return true;

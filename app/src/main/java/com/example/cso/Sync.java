@@ -348,7 +348,7 @@ public class Sync {
                     }
                     Log.d("jsonChange","after upload complete");
                     DBHelper.updateDatabaseBasedOnJson();
-                    UI.update(); // after json has changed
+                    UI.update("after json has changed in Sync checkStatusChange");
                 } catch (Exception e) {
                     FirebaseCrashlytics.getInstance().recordException(e);
                 }

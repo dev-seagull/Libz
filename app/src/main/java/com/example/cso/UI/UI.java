@@ -42,7 +42,8 @@ import java.util.ArrayList;
 public class UI{
 
 
-    public static void update(){
+    public static void update(String task){
+        Log.d("UI.update","UI.update() called for : " + task);
         Accounts.setupAccountButtons(MainActivity.activity);
         Devices.setupDeviceButtons(MainActivity.activity);
         MainActivity.isAnyProccessOn = false; // UI.update() is called
@@ -55,7 +56,7 @@ public class UI{
         SyncButton.initializeSyncButton(activity);
         WifiOnlyButton.initializeWifiOnlyButton(activity);
         SyncDetails.handleSyncDetailsButton(activity);
-        update();
+        update("init App Ui");
     }
 
     public static void initPrimaryBackground(Activity activity){

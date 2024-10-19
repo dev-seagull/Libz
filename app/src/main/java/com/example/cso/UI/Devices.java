@@ -61,14 +61,17 @@ public class Devices {
     }
 
     public static void setupDeviceButtons(Activity activity){
-        LinearLayout deviceButtons = activity.findViewById(deviceButtonsId);
-        ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromDB();
-        for (DeviceHandler device : devices) {
-            if (!deviceButtonExistsInUI(device.getDeviceId(), activity)) {
-                View newDeviceButtonView = createNewDeviceMainView(activity, device);
-                MainActivity.activity.runOnUiThread(() -> deviceButtons.addView(newDeviceButtonView));
+        activity.runOnUiThread(() -> {
+            LinearLayout deviceButtons = activity.findViewById(deviceButtonsId);
+            deviceButtons.removeAllViews();
+            ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromDB();
+            for (DeviceHandler device : devices) {
+                if (!deviceButtonExistsInUI(device.getDeviceId(), activity)) {
+                    View newDeviceButtonView = createNewDeviceMainView(activity, device);
+                    MainActivity.activity.runOnUiThread(() -> deviceButtons.addView(newDeviceButtonView));
+                }
             }
-        }
+        });
     }
 
     public static boolean deviceButtonExistsInUI(String deviceId, Activity activity){
@@ -172,6 +175,8 @@ public class Devices {
         button.setOnClickListener( view -> {
             try{
                 if (MainActivity.isAnyProccessOn) {// clickable false
+                    RelativeLayout parent = (RelativeLayout) view.getParent();
+                    reInitializeDeviceButtonsLayout(parent,activity,device);
                     return;
                 }
                 FrameLayout detailsView = Details.getDetailsView(button);
@@ -234,6 +239,9 @@ public class Devices {
             try{
                 PopupMenu popupMenu = setPopUpMenuOnButton(activity, button,type);
                 popupMenu.setOnMenuItemClickListener(item -> {
+                    if (MainActivity.isAnyProccessOn) { // make clickable false
+                        return true;
+                    }
                     if (item.getItemId() == R.id.unlink) {
 
                     }

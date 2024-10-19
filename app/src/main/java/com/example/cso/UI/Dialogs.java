@@ -36,7 +36,7 @@ public class Dialogs {
                         .setNegativeButton("Cancel", (dialog, id) -> {
                             Log.d("signInToBackUpLauncher","Cancel pressed");
 
-                            UI.update();
+                            UI.update("Cancel Link profile Dialog");
                             dialog.dismiss();
                         }).setCancelable(false);
 
@@ -74,7 +74,7 @@ public class Dialogs {
                                 String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
                                 Drive service = GoogleDrive.initializeDrive(accessToken);
                                 Log.d("Unlink", "Drive and access token : " + accessToken + service);
-                                Unlink.unlinkSingleAccount(userEmail, service,false);
+                                Unlink.unlinkSingleAccount(userEmail, service,false,true);
                             }).start();
                         }else{
                             new Thread( () -> {
@@ -82,7 +82,7 @@ public class Dialogs {
                             }).start();
                         }
                     }).setNegativeButton("Cancel", (dialog, id) -> {
-                        UI.update();// cancel unlink
+                        UI.update("cancel unlink Dialog");
                         Log.d("Unlink", "end of unlink: canceled");
                         dialog.dismiss();
                     });
@@ -103,7 +103,8 @@ public class Dialogs {
         try{
             if (isSingleAccountUnlink){
                 builder.setTitle("No other available account");
-                builder.setMessage("Caution : All of your assets in " + userEmail + " will be out of sync.");
+                builder.setMessage("Caution : All of your assets in " + userEmail + " will be out of sync.\n" +
+                        "Also You will Disconnect from Other Devices !!!");
             }else{
                 if (totalFreeSpace < assetsSize) {
                     builder.setTitle("Not enough space");

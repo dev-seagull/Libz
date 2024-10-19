@@ -143,12 +143,12 @@
                                     }
                                 }catch (Exception e){
                                     FirebaseCrashlytics.getInstance().recordException(e);
-                                    UI.update(); // failed to login steps
+                                    UI.update("failed to login steps");
                                 }
                             });
                             signInToBackUpThread.start();
                         }else{
-                            UI.update(); // failed login request
+                            UI.update("failed login request");
                         }
                     });
 
@@ -194,7 +194,7 @@
             Log.d("jsonChange","hasJsonChanged on start of app: " + hasJsonChanged);
             if (hasJsonChanged){
                 DBHelper.updateDatabaseBasedOnJson();
-                UI.update(); // after json has changed
+                UI.update("after json has changed in MainActivity OnStart");
             }
         }).start();
 

@@ -89,7 +89,6 @@ public class Profile {
         }
     }
 
-
     public static JsonObject readProfileMapContent(String userEmail, String accessToken) {
         JsonObject[] resultJson = {null};
         Thread readProdileMapContentThread = new Thread(() -> {
@@ -419,7 +418,6 @@ public class Profile {
                     JsonObject initialContent = createProfileMapContentBasedOnDB();
                     String unlinkedEmail = (String) attachedFile;
                     content[0] = Profile.removeAccountFromJson(initialContent, unlinkedEmail);
-
                 } else if(loginStatus.equals("profile")){
                     JsonObject resultJson = (JsonObject) attachedFile;
                     content[0] = addDeviceInfoToJson(resultJson);
@@ -530,10 +528,28 @@ public class Profile {
         boolean hasChanged = true;
         try{
             List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","type","refreshToken"});
-            Date lastModifiedDateOfPreferences =  SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
+            if (accounts.isEmpty()){
+                return false;
+            }
+            Date lastModifiedDateOfPreferences = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
+            if (new Date(0).equals(lastModifiedDateOfPreferences)){
+                return false;
+            }
             for (String[] account : accounts) {
                 if (account[1].equals("backup")) {
                     String accessToken = GoogleCloud.updateAccessToken(account[2]).getAccessToken();
+                    Log.d("jsonChange", account[0] +" = AccessToken: " + accessToken);
+                    boolean isUnlinkedDeviceFilesExists = Unlink.isUnlinkedFolderExists(account[0],accessToken);
+                    Log.d("jsonChange","check for need to unlink this device ? " + isUnlinkedDeviceFilesExists);
+                    if (isUnlinkedDeviceFilesExists) {
+                        Log.d("jsonChange","delete other devices from this device");
+                        Unlink.unlinkDevices();
+                        Log.d("jsonChange","delete last account from this device");
+                        DBHelper.deleteAccountAndRelatedAssets(account[0]);
+                        return true;
+                    }
+
+                    accessToken = GoogleCloud.updateAccessToken(account[2]).getAccessToken();
                     String resultJsonName = readProfileMapName(account[0],accessToken);
 
                     if (resultJsonName == null || resultJsonName.isEmpty()){
@@ -614,7 +630,7 @@ public class Profile {
                 ArrayList<GoogleCloud.SignInResult> linkedAccounts = GoogleCloud.signInLinkedAccounts(resultJson, signInResult.getUserEmail());
                 if(linkedAccounts != null) {
                     linkedAccounts.add(signInResult);
-                    Log.d("signInToBackUpLauncher", "Handling backups started");
+                    Log.d("signInToBackUpLauncher", "Handling backups started : " + linkedAccounts.toString());
                     boolean isAllBackedUp = handleBackups(resultJson, linkedAccounts);
                     Log.d("signInToBackUpLauncher", "isAllBackedUp: " + isAllBackedUp);
                     if (isAllBackedUp) {
@@ -639,7 +655,7 @@ public class Profile {
         try{
             addingLinkedAccountsThread.join();
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
-        UI.update(); // end of login to linked account
+        UI.update("end of login to linked account");
     }
 
     private static void handleDeviceInsertion(JsonObject resultJson){
@@ -766,7 +782,7 @@ public class Profile {
         try {
             loginSingleAccountThread.join();
         }catch (InterruptedException e) { FirebaseCrashlytics.getInstance().recordException(e); }
-        UI.update(); // end of login single account
+        UI.update("end of login single account");
     }
 
     private static void handleLoginToSingleAccountSuccess(List<String[]> backedUpAccounts,GoogleCloud.SignInResult signInResult){

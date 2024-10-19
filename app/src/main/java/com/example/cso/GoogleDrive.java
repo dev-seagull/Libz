@@ -502,7 +502,6 @@ public class GoogleDrive {
                     FirebaseCrashlytics.getInstance().recordException(e);
                 }
             }
-
         });
         deleteDriveFoldersThread.start();
         try{

@@ -89,7 +89,9 @@ public class SharedPreferencesHandler {
         String timeStamp = sharedPreferences.getString("jsonModifiedTime", "0");
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
         try {
-            return dateFormat.parse(timeStamp);
+            Date date =dateFormat.parse(timeStamp);
+            Log.d("jsonChange","getJsonModifiedTime, timeStamp : " + timeStamp + "Date : " + date);
+            return date;
         } catch (ParseException e) {
             LogHandler.saveLog("failed to parse stored date to timestamp");
             return null;
