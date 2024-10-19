@@ -1,10 +1,7 @@
 package com.example.cso.UI;
 
-import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -12,14 +9,10 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
 
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
@@ -56,7 +49,7 @@ public class SyncButton {
 
         }
         WifiOnlyButton.updateSyncAndWifiButtonBackground(syncButton,syncState);
-        
+
         syncButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             handleSyncButtonClick(activity);
         });

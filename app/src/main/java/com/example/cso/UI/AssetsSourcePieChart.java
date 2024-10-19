@@ -194,26 +194,18 @@ public class AssetsSourcePieChart {
 
         int[] colors = MainActivity.currentTheme.deviceAppStorageChartColors;
         dataSet.setColors(colors);
-        dataSet.setValueTextColor(Color.WHITE);
-        dataSet.setValueTextSize(10f);
-
-//        dataSet.setValueFormatter(new StorageValueFormatter());
 
         BarData data = new BarData(dataSet);
         barChart.setData(data);
         barChart.getDescription().setEnabled(false);
-
         YAxis rightAxis = barChart.getAxisRight();
         rightAxis.setEnabled(false);
-
         YAxis leftAxis = barChart.getAxisLeft();
         leftAxis.setDrawGridLines(false);
         leftAxis.setDrawLabels(false);
         leftAxis.setDrawAxisLine(false);
         leftAxis.setEnabled(false);
-
         XAxis xAxis = barChart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawAxisLine(false);
         xAxis.setDrawGridLines(false);
         xAxis.setDrawLabels(false);
@@ -224,7 +216,7 @@ public class AssetsSourcePieChart {
         int width = (int) (UI.getDeviceWidth(context) * 0.8);
         int height = (int) (UI.getDeviceWidth(context) * 0.15);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(width, height);
-        params.setMargins(0, 5, 0, 1);
+        params.setMargins(0, 0, 0, 0);
         barChart.setLayoutParams(params);
     }
 
@@ -297,18 +289,18 @@ public class AssetsSourcePieChart {
         legendItem.setGravity(Gravity.CENTER);
 
         View colorBox = new View(context);
-        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams(15, (int) (UI.getDeviceWidth(context) * 0.01));
-        colorBoxParams.setMargins(10, 0, 10, 0);
+        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams(15, (int) (UI.getDeviceWidth(context) * 0.009));
+        colorBoxParams.setMargins(0, 0, 10, 0);
         colorBox.setLayoutParams(colorBoxParams);
         colorBox.setBackgroundColor(color);
 
         TextView labelText = new TextView(context);
         labelText.setText(label+" : ");
-        labelText.setTextSize((int) (UI.getDeviceWidth(context) * 0.01));
+        labelText.setTextSize((int) (UI.getDeviceWidth(context) * 0.009));
 
         TextView valueText = new TextView(context);
         valueText.setText(new PieChartValueFormatter().getFormattedValue((float) value));
-        valueText.setTextSize((int) (UI.getDeviceWidth(context) * 0.01));
+        valueText.setTextSize((int) (UI.getDeviceWidth(context) * 0.009));
 
         legendItem.addView(colorBox);
         legendItem.addView(labelText);
