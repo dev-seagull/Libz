@@ -86,13 +86,10 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
         int pos = 0;
         if (buttonType.equals("account")){
             pos = position % totalPagesForAccount ;
-            if (pos == 0){
+//            if (pos == 0){
                 newPage = Accounts.createChartForStorageStatus(context, buttonId);
                 Log.d("viewPager", "page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
-            } else if (pos == 1){
-                newPage = Accounts.createChartForSyncAndSourceStatus(context, buttonId);
-                Log.d("viewPager", "page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
-            }
+//            }
         }else if (buttonType.equals("device")){
             pos = position % totalPagesForDevice ;
             if (pos == 0){

@@ -36,14 +36,15 @@ public class AreaSquareChart {
             double used = data.get("usedSpace").getAsDouble() / total * 100;
             double media = data.get("mediaStorage").getAsDouble() / total * 100;
             double synced = data.get("syncedAssetsStorage").getAsDouble()  / total * 100;
+
             RelativeLayout stackedSquaresLayout = new RelativeLayout(context);
             stackedSquaresLayout.setGravity(Gravity.CENTER);
-
             RelativeLayout.LayoutParams stackedParams = new RelativeLayout.LayoutParams(
                     300,
                     300
             );
             stackedSquaresLayout.setLayoutParams(stackedParams);
+
             createStackedSquares(context,synced,media,used, stackedSquaresLayout);
             drawGridLines(stackedSquaresLayout, context);
             layout.addView(stackedSquaresLayout);

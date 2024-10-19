@@ -150,29 +150,6 @@ public class SyncDetails {
         });
     }
 
-    public static double getTotalLibzFolderSizes(){
-        double[] libzFolderSize = {0};
-
-        Thread getTotalLibzFolderSizesThread = new Thread(() -> {
-            List<String[]> accounts = DBHelper.getAccounts(new String[]{"type","userEmail"});
-
-            for (String[] account: accounts){
-                if (account[0].equals("backup")){
-                    double folderSize = GoogleDriveFolders.getSizeOfAssetsFolder(account[1]);
-                    libzFolderSize[0] += folderSize;
-                    Log.d("SyncDetails","size of " + account[1] + " is " + folderSize);
-                }
-            }
-        });
-        getTotalLibzFolderSizesThread.start();
-        try {
-            getTotalLibzFolderSizesThread.join();
-        }catch (Exception e){
-            LogHandler.crashLog(e,"SyncDetails");
-        }
-        return libzFolderSize[0];
-    }
-
     public static double getTotalUnsyncedAssetsOfDevices(){ // fix it
         double unsyncedAssetsOfDevicesSize = 0;
         ArrayList<DeviceHandler> devices = DBHelper.getDevicesFromDB();

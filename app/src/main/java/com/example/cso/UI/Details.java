@@ -167,7 +167,6 @@ public class Details {
 
         ViewPager2 viewPager = DetailsViewPager.createViewerPage(context, buttonId, type);
         frameLayout.addView(viewPager);
-
         viewPager.setOffscreenPageLimit(ViewPager2.OFFSCREEN_PAGE_LIMIT_DEFAULT);  // Only keep one page on either side of the current one
 
         ImageButton leftArrowButton = createLeftArrowButton(context);
