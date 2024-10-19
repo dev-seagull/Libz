@@ -232,13 +232,13 @@ public class GoogleDriveFolders {
                         folderId[0] = DBHelper.getSubFolderIdFromDB(userEmail,folderName);
                     }
                 }
-            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e);}
+            }catch (Exception e) { LogHandler.crashLog(e,"folders");}
         });
 
         getSubFolderIdThread.start();
         try{
             getSubFolderIdThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.crashLog(e,"folders"); }
 
         return folderId[0];
     }

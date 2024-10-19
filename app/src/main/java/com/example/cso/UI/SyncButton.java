@@ -46,12 +46,17 @@ public class SyncButton {
         boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
 
         if(!(syncState && isServiceRunning)){
-            SharedPreferencesHandler.setSwitchState("syncSwitchState",false, MainActivity.preferences);
-            syncState = false;
+            if(!syncState && isServiceRunning){
+                Sync.stopSync(activity);
+            }
+            if(syncState && !isServiceRunning){
+                SharedPreferencesHandler.setSwitchState("syncSwitchState",false, MainActivity.preferences);
+                syncState = false;
+            }
+
         }
         WifiOnlyButton.updateSyncAndWifiButtonBackground(syncButton,syncState);
-
-
+        
         syncButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             handleSyncButtonClick(activity);
         });
