@@ -30,6 +30,7 @@
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
 
+    import java.sql.Time;
     import java.util.Date;
     import java.util.List;
     import java.util.Timer;
@@ -312,7 +313,7 @@
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
     }
 
-    private static void setupUITimer(){
+    private static void setupUITimer(Context context){
         try{
             if (MainActivity.UITimer == null){
                 MainActivity.UITimer = new Timer();
@@ -321,6 +322,14 @@
                     public void run() {
                         try{
                             UI.startUpdateUIThread(activity);
+                            if(!TimerService.isMyServiceRunning(context,TimerService.class).equals("on")){
+                                long currentTime = System.currentTimeMillis();
+                                if(currentTime - GoogleDrive.lastThreadTime  > GoogleDrive.ThreadInterval){
+                                    new Thread(() -> {
+                                        GoogleDrive.startThreads();
+                                    }).start();
+                                }
+                            }
                         }catch (Exception e){
                             LogHandler.crashLog(e,"UITimer");
                         }

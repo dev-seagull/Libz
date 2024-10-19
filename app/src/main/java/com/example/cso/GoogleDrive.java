@@ -28,8 +28,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class GoogleDrive {
-
-    public static int CURRENT_DRIVE_ACCOUNT_INDEX = 0;
+    public static long lastThreadTime = 0;
+    public static long ThreadInterval = 300000;
 
     public GoogleDrive() {}
 
