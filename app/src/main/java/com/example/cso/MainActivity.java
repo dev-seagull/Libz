@@ -223,7 +223,7 @@
             boolean hasCreated = LogHandler.createLogFile();
             Log.d("logFile","Log file is created :"  + hasCreated);
 
-            setupTimers();
+            setupTimers(getApplicationContext());
 
             updatesDriveFolders();
 
@@ -287,9 +287,9 @@
         }
     }
 
-    public void setupTimers(){
+    public void setupTimers(Context context){
         setupAndroidTimer();
-        setupUITimer();
+        setupUITimer(context);
     }
 
     private static void setupAndroidTimer(){
