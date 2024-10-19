@@ -57,7 +57,6 @@ public class SyncDetails {
         syncDetailsStatisticsLayout.setVisibility(View.GONE);
         syncDetailsStatisticsLayoutId = View.generateViewId();
         syncDetailsStatisticsLayout.setId(syncDetailsStatisticsLayoutId);
-        syncDetailsStatisticsLayout.setOrientation(LinearLayout.HORIZONTAL);
 
         return syncDetailsStatisticsLayout;
     }

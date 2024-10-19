@@ -146,6 +146,7 @@ public class SyncDetailsPieChart {
             activity.runOnUiThread(() -> {
                 HorizontalBarChart stackedBarChart = new HorizontalBarChart(activity);
                 View pieChartView = SyncDetailsPieChart.createStackedBarChart(activity, stackedBarChart);
+                syncDetailsStatisticsLayout.addView(Details.createTitleTextView(activity,"Sync Details"));
                 syncDetailsStatisticsLayout.addView(pieChartView);
 
 //                if(pieChartView instanceof HorizontalBarChart){

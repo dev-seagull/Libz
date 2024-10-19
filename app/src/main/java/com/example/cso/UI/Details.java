@@ -63,7 +63,7 @@ public class Details {
         );
         params.setMargins(40,16,40,0);
         layout.setLayoutParams(params);
-        layout.setOrientation(LinearLayout.HORIZONTAL);
+        layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
 
         layout.setElevation(4f);
