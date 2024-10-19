@@ -20,8 +20,7 @@ import com.google.gson.JsonObject;
 import java.util.ConcurrentModificationException;
 
 public class AreaSquareChart {
-    public static int columnCount = 14;
-    public static LinearLayout createStorageChart(Context context, JsonObject data) {
+    public static LinearLayout createStorageChart(Context context, JsonObject data, LinearLayout parentLayout) {
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.HORIZONTAL);
         layout.setGravity(Gravity.CENTER);
@@ -33,68 +32,22 @@ public class AreaSquareChart {
         layout.setLayoutParams(layoutParams);
 
         try{
-            int width =(int) (UI.getDeviceWidth(context) * 0.35);
             double total = data.get("totalStorage").getAsDouble();
-            double used = ( data.get("usedSpace").getAsDouble() * width / total);
-            double media = ( data.get("mediaStorage").getAsDouble() * width / total);
-            double synced =  ( data.get("syncedAssetsStorage").getAsDouble()  * width / total);
+            double used = data.get("usedSpace").getAsDouble() / total * 100;
+            double media = data.get("mediaStorage").getAsDouble() / total * 100;
+            double synced = data.get("syncedAssetsStorage").getAsDouble()  / total * 100;
+            RelativeLayout stackedSquaresLayout = new RelativeLayout(context);
+            stackedSquaresLayout.setGravity(Gravity.CENTER);
 
-            Log.d("AreaSquareChart", "area chart total value: " + total);
-            Log.d("AreaSquareChart", "area chart used value: " + used);
-            Log.d("AreaSquareChart", "area chart media value: " + media);
-            Log.d("AreaSquareChart", "area chart synced value: " + synced);
-
-            total = Math.sqrt(total) * width / Math.sqrt(total);
-            used = Math.sqrt(used)  * width / Math.sqrt(total);
-            media = Math.sqrt(media) * width / Math.sqrt(total);
-            synced = Math.sqrt(synced) * width / Math.sqrt(total);
-
-            Log.d("AreaSquareChart", "after2 area chart total value: " + total);
-            Log.d("AreaSquareChart", "after2 area chart used value: " + used);
-            Log.d("AreaSquareChart", "after2 area chart media value: " + media);
-            Log.d("AreaSquareChart", "after2 area chart synced value: " + synced);
-
-            total = Math.sqrt(total) * width / Math.sqrt(total);
-            used = Math.sqrt(used)  * width / Math.sqrt(total);
-            media = Math.sqrt(media) * width / Math.sqrt(total);
-            synced = Math.sqrt(synced) * width / Math.sqrt(total);
-
-            Log.d("AreaSquareChart", "after area chart total value: " + total);
-            Log.d("AreaSquareChart", "after area chart used value: " + used);
-            Log.d("AreaSquareChart", "after area chart media value: " + media);
-            Log.d("AreaSquareChart", "after area chart synced value: " + synced);
-            Log.d("AreaSquareChart", "total before cast to int :  " + total);
-            total = ((int)(total / columnCount)) * columnCount;
-            Log.d("AreaSquareChart", "total after cast to int :  " + total);
-            RelativeLayout temp = new RelativeLayout(context);
-            temp.setGravity(Gravity.CENTER);
-
-            RelativeLayout stackedSquaresLayout = createStackedSquares(context,(int) synced,(int) media,(int) used,(int) total);
             RelativeLayout.LayoutParams stackedParams = new RelativeLayout.LayoutParams(
-                    (int) total,
-                    (int) total
+                    300,
+                    300
             );
+            stackedSquaresLayout.setLayoutParams(stackedParams);
+            createStackedSquares(context,synced,media,used, stackedSquaresLayout);
+            drawGridLines(stackedSquaresLayout, context);
+            layout.addView(stackedSquaresLayout);
 
-            stackedParams.addRule(RelativeLayout.CENTER_IN_PARENT);
-            temp.addView(stackedSquaresLayout, stackedParams);
-
-            LinearLayout linesLayout = new LinearLayout(context);
-            linesLayout.setOrientation(LinearLayout.HORIZONTAL);
-            RelativeLayout.LayoutParams linesParams = new RelativeLayout.LayoutParams(
-                    (int) total,
-                    (int) total
-            );
-            linesParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-            linesParams.addRule(RelativeLayout.CENTER_IN_PARENT);
-
-            linesLayout.setLayoutParams(linesParams);
-
-
-            Log.d("AreaSquareChart", "area square chart column count: " + columnCount);
-            drawGridLines(linesLayout, context, columnCount, columnCount);
-
-            layout.addView(temp);
-            stackedSquaresLayout.addView(linesLayout);
             LinearLayout labelsLayout = createLabels(context,data.get("totalStorage").getAsDouble()
                     ,data.get("usedSpace").getAsDouble(),data.get("mediaStorage").getAsDouble(),
                     data.get("syncedAssetsStorage").getAsDouble());
@@ -107,76 +60,99 @@ public class AreaSquareChart {
         return layout;
     }
 
-    public static RelativeLayout createStackedSquares(Context context, int square1Size, int square2Size, int square3Size, int square4Size) {
-        RelativeLayout relativeLayout = new RelativeLayout(context);
+    public static void createStackedSquares(Context context, double synced, double media, double used, RelativeLayout layout) {
         ImageView square1 = new ImageView(context);
         ImageView square2 = new ImageView(context);
         ImageView square3 = new ImageView(context);
         ImageView square4 = new ImageView(context);
 
-        square1.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
-        square2.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
-        square3.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
-        square4.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
-        int width = square4Size;
-        int distance = square4Size / columnCount;
-        boolean isSquare1SizeSet = false;
-        boolean isSquare2SizeSet = false;
-        boolean isSquare3SizeSet = false;
+        square1.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
+        square2.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
+        square3.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
+        square4.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
+        Log.d("AreaSquareChart","0: " +  String.valueOf(used));
+        Log.d("AreaSquareChart", "0: " + String.valueOf(media));
+        Log.d("AreaSquareChart", "0: " + String.valueOf(synced));
+        try{
+            boolean isSquare3Zero = (media == 0.0);
+            boolean isSquare4Zero = (synced == 0.0);
+            boolean isSquare2EqualToSquare3 = (used == media);
+            boolean isSquare3EqualToSquare4 = (media == synced);
 
-        for (int i = 0; i <= square4Size + (3 * distance); i = i + distance ){
-            if (i >= square1Size && !isSquare1SizeSet){
-                square1Size = i;
-                isSquare1SizeSet = true;
+            used = (int) Math.round(used / 10);
+            used = used * 10;
+            media = (int) Math.round(media / 10);
+            media = media * 10;
+            synced = (int) Math.round(synced / 10);
+            synced = synced * 10;
+
+            if(!isSquare2EqualToSquare3 && media == used){
+                media = media - 10;
+                synced = synced - 10;
+                Log.d("AreaSquareChart","change: " + media + " " + synced);
             }
-            if (i >= square2Size && !isSquare2SizeSet){
-                square2Size = i;
-                isSquare2SizeSet = true;
+
+            if(!isSquare3EqualToSquare4 && synced == media){
+                synced = synced - 10;
+                Log.d("AreaSquareChart","change2: " + media + " " + synced);
             }
-            if (i >= square3Size && !isSquare3SizeSet){
-                square3Size = i;
-                isSquare3SizeSet = true;
+
+            if(!isSquare4Zero && synced < 10){
+                synced = 10;
+                if(isSquare3EqualToSquare4){
+                    media = 10;
+                    if(isSquare2EqualToSquare3){
+                        used = 10;
+                    }else{
+                        if(used <= media){
+                            used = 20;
+                        }
+                    }
+                }else{
+                    if(media <= 10){
+                        media = 20;
+                        if(isSquare2EqualToSquare3){
+                            used = 20;
+                        }else{
+                            if(used <= media){
+                                used = 30;
+                            }
+                        }
+                    }
+                }
+            }else{
+                if(!isSquare3Zero && media < 10 && isSquare4Zero){
+                    media = 10;
+                    if(isSquare3EqualToSquare4){
+                        used = 10;
+                    }else{
+                        if(used <= 10){
+                            used = 20;
+                        }
+                    }
+                }
             }
-            if (i >= square4Size){
-                square4Size = i;
-                break;
-            }
-        }
-        Log.d("AreaSquareChart", "after round area chart total value: " + square4Size);
-        Log.d("AreaSquareChart", "after round area chart used value: " + square3Size);
-        Log.d("AreaSquareChart", "after round area chart media value: " + square2Size);
-        Log.d("AreaSquareChart", "after round area chart synced value: " + square1Size);
 
+            //total
+            addSquareToLayout(layout,square1, 100);
+            addSquareToLayout(layout,square2, (int) used);
+            addSquareToLayout(layout,square3,(int) media);
+            addSquareToLayout(layout,square4,(int) synced);
 
-
-        square4Size = square4Size - (square4Size - width);
-        square3Size = square3Size - (square4Size - width);
-        square2Size = square2Size - (square4Size - width);
-        square1Size = square1Size - (square4Size - width);
-
-        Log.d("AreaSquareChart", "after round and scale area chart total value: " + square4Size);
-        Log.d("AreaSquareChart", "after round and scale area chart used value: " + square3Size);
-        Log.d("AreaSquareChart", "after round and scale area chart media value: " + square2Size);
-        Log.d("AreaSquareChart", "after round and scale area chart synced value: " + square1Size);
-
-
-
-        addSquareToLayout(relativeLayout, square4, square4Size);
-        addSquareToLayout(relativeLayout, square3, square3Size);
-        addSquareToLayout(relativeLayout, square2, square2Size);
-        addSquareToLayout(relativeLayout, square1, square1Size);
-
-        return relativeLayout;
+            Log.d("AreaSquareChart", String.valueOf(used));
+            Log.d("AreaSquareChart", String.valueOf(media));
+            Log.d("AreaSquareChart", String.valueOf(synced));
+        }catch (Exception e) { LogHandler.crashLog(e,"AreaSquareChart"); }
     }
 
     private static void addSquareToLayout(RelativeLayout layout, ImageView square, int size) {
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(size, size);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(size * 3, size * 3);
         params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
         params.addRule(RelativeLayout.ALIGN_PARENT_END);
         layout.addView(square, params);
     }
 
-    public static void drawGridLines(LinearLayout layout, Context context, int colNum, int rowNum) {
+    public static void drawGridLines(RelativeLayout layout, Context context) {
 
         View gridView = new View(context) {
             @Override
@@ -189,6 +165,8 @@ public class AreaSquareChart {
 
                 int width = getWidth();
                 int height = getHeight();
+                int colNum = 10;
+                int rowNum = 10;
 
                 float cellWidth = (float) width / colNum;
                 float cellHeight = (float) height / rowNum;
@@ -206,11 +184,11 @@ public class AreaSquareChart {
         };
 
         RelativeLayout.LayoutParams gridParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.MATCH_PARENT,
-                RelativeLayout.LayoutParams.MATCH_PARENT
+                300,
+                300
         );
-        gridParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-        gridParams.addRule(RelativeLayout.ALIGN_PARENT_START);
+        gridParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        gridParams.addRule(RelativeLayout.ALIGN_PARENT_END);
 
         layout.addView(gridView, gridParams);
     }
@@ -244,9 +222,9 @@ public class AreaSquareChart {
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
 
-        String formattedTotal = formatStorageSize(total);
-        String formattedUsed = formatStorageSize(used);
-        String formattedMedia = formatStorageSize(media);
+        String formattedTotal = formatStorageSize(total - used);
+        String formattedUsed = formatStorageSize(used - media);
+        String formattedMedia = formatStorageSize(media - synced);
         String formattedSynced = formatStorageSize(synced);
 
         RelativeLayout.LayoutParams totalParams = new RelativeLayout.LayoutParams(
@@ -267,14 +245,14 @@ public class AreaSquareChart {
         );
 
         TextView totalText = new TextView(context);
-        totalText.setText("Total: " + formattedTotal);
+        totalText.setText("Free: " + formattedTotal);
         totalText.setTextSize(10f);
         totalText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
         totalParams.setMargins(30, 0,0,0);
         totalText.setLayoutParams(totalParams);
 
         TextView usedText = new TextView(context);
-        usedText.setText("Used: " + formattedUsed);
+        usedText.setText("Others: " + formattedUsed);
         usedText.setTextSize(10f);
         usedText.getHeight();
         usedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
@@ -282,14 +260,14 @@ public class AreaSquareChart {
         usedText.setLayoutParams(usedParams);
 
         TextView mediaText = new TextView(context);
-        mediaText.setText("Media: " + formattedMedia);
+        mediaText.setText("Lagging behind: " + formattedMedia);
         mediaText.setTextSize(10f);
         mediaText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
         mediaParams.setMargins(30,0,0,0);
         mediaText.setLayoutParams(mediaParams);
 
         TextView syncedText = new TextView(context);
-        syncedText.setText("Synced: " + formattedSynced);
+        syncedText.setText("Buzzing Along: " + formattedSynced);
         syncedText.setTextSize(10f);
         syncedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
         syncedParams.setMargins(30,0 ,0,0);

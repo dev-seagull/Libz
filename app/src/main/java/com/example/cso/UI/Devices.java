@@ -290,7 +290,7 @@ public class Devices {
             });
             JsonObject data = getStorageStatus(deviceId);
             Log.d("DeviceSyncStatus","starage for device " + deviceId +" is " + data);
-            View areaSquareChart = AreaSquareChart.createStorageChart(context,data);
+            View areaSquareChart = AreaSquareChart.createStorageChart(context,data,layout);
 
             MainActivity.activity.runOnUiThread(() -> {
                 layout.addView(areaSquareChart);
