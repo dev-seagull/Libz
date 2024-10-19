@@ -24,6 +24,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class DeviceStatusSync {
+    public static String TAG  = "DeviceStatusSync";
     public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
     public static long timeInterval = 8 * 60 * 60 * 1000;
 
@@ -54,35 +55,35 @@ public class DeviceStatusSync {
             Drive service = GoogleDrive.initializeDrive(accessToken);
             String folderName = GoogleDriveFolders.profileFolderName;
             String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName, accessToken, true);
-            Log.d("DeviceStatusSync","profileFolderId: " + profileFolderId);
+            Log.d(TAG,"profileFolderId: " + profileFolderId);
             String uploadFileId ;
             try{
                 com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
                 fileMetadata.setName(fileName);
 
                 String contentString = deviceStatus.toString();
-                Log.d("DeviceStatusSync","deviceStatus Content : " + contentString);
+                Log.d(TAG,"deviceStatus Content : " + contentString);
                 ByteArrayContent mediaContent = ByteArrayContent.fromString("application/json", contentString);
 
                 uploadFileId = searchForExistingFile(service,fileName,profileFolderId);
-                Log.d("DeviceStatusSync","searching for older file result : " + uploadFileId);
+                Log.d(TAG,"searching for older file result : " + uploadFileId);
                 if (uploadFileId == null || uploadFileId.isEmpty()) {
-                    Log.d("DeviceStatusSync","upload file start");
+                    Log.d(TAG,"upload file start");
                     fileMetadata.setParents(java.util.Collections.singletonList(profileFolderId));
                     com.google.api.services.drive.model.File uploadedFile = service.files().create(fileMetadata, mediaContent)
                             .setFields("id")
                             .execute();
                     uploadFileId = uploadedFile.getId();
-                    Log.d("DeviceStatusSync","upload file finished : " + uploadFileId);
+                    Log.d(TAG,"upload file finished : " + uploadFileId);
                 }else{
-                    Log.d("DeviceStatusSync","updating file start");
+                    Log.d(TAG,"updating file start");
                     service.files().update(uploadFileId, fileMetadata, mediaContent).execute();
-                    Log.d("DeviceStatusSync","updating file finished");
+                    Log.d(TAG,"updating file finished");
                 }
 
-                Log.d("DeviceStatusSync" , "Upload file is : "+ uploadFileId);
+                Log.d(TAG , "Upload file is : "+ uploadFileId);
             }catch (Exception e){
-                Log.d("DeviceStatusSync","failed to upload file : " + e.getLocalizedMessage());
+                Log.d(TAG,"failed to upload file : " + e.getLocalizedMessage());
                 FirebaseCrashlytics.getInstance().recordException(e);
             }
         });
@@ -109,7 +110,7 @@ public class DeviceStatusSync {
             deviceStatusJson.add("assetsLocationStatus", createAssetsLocationStatusJson());
             deviceStatusJson.add("assetsSourceStatus", createAssetsSourceStatusJson());
             deviceStatusJson.addProperty("updateTime", dateString);
-            Log.d("DeviceStatusSync","Full device status : " + deviceStatusJson);
+            Log.d(TAG,"Full device status : " + deviceStatusJson);
             jsonObjects[0] = deviceStatusJson;
         });
         createDeviceStatusJsonThread.start();
@@ -202,7 +203,7 @@ public class DeviceStatusSync {
             for (Map.Entry<String, Double> entry : locationSizes.entrySet()){
                 assetsLocationSize.addProperty(entry.getKey(), entry.getValue());
             }
-            Log.d("DeviceStatusSync","assetsLocationStatus : " + assetsLocationSize);
+            Log.d(TAG,"assetsLocationStatus : " + assetsLocationSize);
             jsonObjects[0] = assetsLocationSize;
         });
         createAssetsLocationStatusJsonThread.start();
@@ -250,7 +251,7 @@ public class DeviceStatusSync {
                 assetsSourceSizeJson[0].addProperty("Root", folderSize);
             }
 
-            Log.d("DeviceStatusSync", "assetsSourceSize : " + assetsSourceSizeJson[0]);
+            Log.d(TAG, "assetsSourceSize : " + assetsSourceSizeJson[0]);
         });
 
         createAssetsSourceStatusJsonThread.start();
@@ -270,13 +271,13 @@ public class DeviceStatusSync {
             String fileName = "DeviceStatus_" + deviceId + ".json";
             jsonObjects[0] = SharedPreferencesHandler.getDeviceStatus(fileName);
             if (jsonObjects[0] != null) {
-                Log.d("DeviceStatusSync", "data already have saved ;Reading content from " + fileName);
+                Log.d(TAG, "data already have saved ;Reading content from " + fileName);
                 if (shouldDownloadBasedOnUpdateTime(fileName)) {
-                    Log.d("DeviceStatusSync", "File needs to be updated");
+                    Log.d(TAG, "File needs to be updated");
                     jsonObjects[0] = downloadDeviceStatusJsonFromAccounts(fileName);
                 }
             }else{
-                Log.d("DeviceStatusSync", "File does not exist. Downloading from accounts");
+                Log.d(TAG, "File does not exist. Downloading from accounts");
                 jsonObjects[0] = downloadDeviceStatusJsonFromAccounts(fileName);
             }
         });
@@ -299,11 +300,11 @@ public class DeviceStatusSync {
                 String refreshToken = account[1];
                 String type = account[2];
                 if (type.equals("backup")) {
-                    Log.d("DeviceStatusSync","downloading from " + userEmail);
+                    Log.d(TAG,"downloading from " + userEmail);
                     String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
-                    Log.d("DeviceStatusSync","downloading from " + userEmail + "with access token : " + accessToken);
+                    Log.d(TAG,"downloading from " + userEmail + "with access token : " + accessToken);
                     jsonObjects[0] = downloadDeviceStatusJson(userEmail,accessToken,fileName);
-                    Log.d("DeviceStatusSync","download result of account " + userEmail + " : " +  jsonObjects[0]);
+                    Log.d(TAG,"download result of account " + userEmail + " : " +  jsonObjects[0]);
                     if (jsonObjects[0] != null) {
                         SharedPreferencesHandler.setDeviceStatus(fileName, jsonObjects[0]);
                         break;
@@ -327,10 +328,10 @@ public class DeviceStatusSync {
 
             String folderName = GoogleDriveFolders.profileFolderName;
             String profileFolderId = GoogleDriveFolders.getSubFolderId(userEmail, folderName, accessToken, true);
-            Log.d("DeviceStatusSync","downloading -- profileFolderId: " + profileFolderId);
+            Log.d(TAG,"downloading -- profileFolderId: " + profileFolderId);
             try {
                 String fileId = searchForExistingFile(service, fileName,profileFolderId);
-                Log.d("DeviceStatusSync","searching for file result : " + fileId);
+                Log.d(TAG,"searching for file result : " + fileId);
                 if (fileId != null) {
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                     try {
@@ -339,7 +340,7 @@ public class DeviceStatusSync {
 
                         String jsonString = outputStream.toString();
                         jsonObjects[0] = JsonParser.parseString(jsonString).getAsJsonObject();
-                        Log.d("DeviceStatusSync", "Downloaded storage JSON file: " + jsonString);
+                        Log.d(TAG, "Downloaded storage JSON file: " + jsonString);
                     }catch (Exception e){
                         LogHandler.crashLog(e,"DeviceStatusSync");
                     }finally {
@@ -362,7 +363,7 @@ public class DeviceStatusSync {
     public static String searchForExistingFile(Drive service, String fileName, String folderId){
         String[] fileId = {null};
         Thread searchForExistingFileThread = new Thread(() -> {
-            Log.d("DeviceStatusSync", "searchForExistingFile");
+            Log.d(TAG, "searchForExistingFile");
             try {
                 List<File> files = service.files().list()
                         .setQ("name='" + fileName + "' and '" + folderId + "' in parents")
@@ -372,9 +373,9 @@ public class DeviceStatusSync {
 
                 if (!files.isEmpty()) {
                     fileId[0] = files.get(0).getId();
-                    Log.d("DeviceStatusSync", "older device status file found");
+                    Log.d(TAG, "older device status file found");
                 }else{
-                    Log.d("DeviceStatusSync", "older device status file not found");
+                    Log.d(TAG, "older device status file not found");
                 }
             } catch (IOException e) {
                 LogHandler.crashLog(e,"DeviceStatusSync");

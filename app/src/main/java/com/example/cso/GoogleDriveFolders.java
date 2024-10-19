@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 
 public class GoogleDriveFolders {
+    public static String TAG = "GoogleDriveFolder";
     public static String parentFolderName = "libz_app";
     public static String assetsFolderName = "assets";
     public static String profileFolderName = "profile";
@@ -28,13 +29,13 @@ public class GoogleDriveFolders {
                 Drive service = GoogleDrive.initializeDrive(accessToken);
                 String parentFolderId = getParentFolderIdFromDrive(service);
 
-                Log.d("folders", "parent folder id:" + parentFolderId);
+                Log.d(TAG, "parent folder id:" + parentFolderId);
 
                 if(parentFolderId == null){
                     parentFolderId = createParentFolder(service);
                 }
 
-                Log.d("folders", "parent folder id:" + parentFolderId);
+                Log.d(TAG, "parent folder id:" + parentFolderId);
 
                 String finalParentFolderId = parentFolderId;
                 HashMap<String, Object> updatedValues = new HashMap<String, Object>() {{
@@ -49,19 +50,19 @@ public class GoogleDriveFolders {
                         initializeSubFolder(service,parentFolderId,subFolder,userEmail);
                     }
                 }
-            } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+            } catch (Exception e) { LogHandler.crashLog(e,TAG); }
         });
 
         initializeParentFolderThread.start();
         try{
             initializeParentFolderThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.crashLog(e,TAG); }
     }
 
     private static void initializeSubFolder(Drive service, String parentFolderId, String folderName, String userEmail){
         Thread initializeSubFoldersThread = new Thread( () -> {
             String folderId = getSubFolderIdFromDrive(service,folderName,parentFolderId);
-            Log.d("folders", "Folder :" + folderName + " and id: " + folderId);
+            Log.d(TAG, "Folder :" + folderName + " and id: " + folderId);
 
             if(folderId == null){
                 folderId = createSubFolder(service,parentFolderId,folderName);
@@ -77,13 +78,13 @@ public class GoogleDriveFolders {
             }
             DBHelper.updateAccounts(userEmail, updatedValues, "backup");
 
-            Log.d("folders", "Folder :" + folderName + " and id: " + folderId);
+            Log.d(TAG, "Folder :" + folderName + " and id: " + folderId);
         });
 
         initializeSubFoldersThread.start();
         try{
             initializeSubFoldersThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.crashLog(e,TAG); }
     }
 
     private static String createSubFolder(Drive service, String parentFolderId, String subFolderName){
@@ -101,7 +102,7 @@ public class GoogleDriveFolders {
 
                folderId[0] = subfolder.getId();
            }catch (Exception e) {
-               FirebaseCrashlytics.getInstance().recordException(e);
+               LogHandler.crashLog(e,TAG);
            }
         });
 
@@ -109,7 +110,7 @@ public class GoogleDriveFolders {
         try{
             createSubFolderThread.join();
         }catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.crashLog(e,TAG);
         }
 
         return folderId[0];
@@ -130,13 +131,13 @@ public class GoogleDriveFolders {
                 if (!result.getFiles().isEmpty()) {
                     folderId[0] = result.getFiles().get(0).getId();
                 }
-            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+            }catch (Exception e) { LogHandler.crashLog(e,TAG); }
         });
 
         getSubFolderIdFromDriveThread.start();
         try{
             getSubFolderIdFromDriveThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.crashLog(e,TAG); }
 
         return folderId[0];
     }
@@ -154,13 +155,13 @@ public class GoogleDriveFolders {
                         .execute();
 
                 folderId[0] = folder.getId();
-            }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
+            }catch (Exception e){LogHandler.crashLog(e,TAG);}
         });
 
         createParentFolderThread.start();
         try{
             createParentFolderThread.join();
-        }catch (Exception e)  { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e)  { LogHandler.crashLog(e,TAG); }
 
         return folderId[0];
     }
@@ -169,19 +170,30 @@ public class GoogleDriveFolders {
         final String[] folderId = {null};
         Thread getParentFolderThread = new Thread( () -> {
             try{
-                FileList files = service.files().list().execute();
-                for (File file : files.getFiles()) {
-                    if (file.getName().equals(parentFolderName)){
-                        folderId[0] = file.getId();
+                Drive.Files.List request = service.files().list();
+                FileList result;
+
+                do {
+                    result = request.execute();
+
+                    for (File file : result.getFiles()) {
+                        Log.d(TAG,"drive file name : " + file.getName());
+                        if (file.getName().equals(parentFolderName)){
+                            folderId[0] = file.getId();
+                            break;
+                        }
                     }
-                }
-            }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
+                    request.setPageToken(result.getNextPageToken());
+                } while (result.getNextPageToken() != null && folderId[0] == null);
+
+
+            }catch (Exception e){LogHandler.crashLog(e,TAG);}
         });
 
         getParentFolderThread.start();
         try{
             getParentFolderThread.join();
-        }catch (Exception e)  { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e)  { LogHandler.crashLog(e,TAG); }
 
         return folderId[0];
     }
@@ -200,13 +212,13 @@ public class GoogleDriveFolders {
                         syncAssetsFolderId[0] = DBHelper.getParentFolderIdFromDB(userEmail);
                     }
                 }
-            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+            }catch (Exception e) { LogHandler.crashLog(e,TAG); }
         });
 
         getParentFolderIdThread.start();
         try{
             getParentFolderIdThread.join();
-        }catch (Exception e) {FirebaseCrashlytics.getInstance().recordException(e);}
+        }catch (Exception e) {LogHandler.crashLog(e,TAG);}
 
         return syncAssetsFolderId[0];
     }
@@ -231,13 +243,13 @@ public class GoogleDriveFolders {
                         folderId[0] = DBHelper.getSubFolderIdFromDB(userEmail,folderName);
                     }
                 }
-            }catch (Exception e) { LogHandler.crashLog(e,"folders");}
+            }catch (Exception e) { LogHandler.crashLog(e,TAG);}
         });
 
         getSubFolderIdThread.start();
         try{
             getSubFolderIdThread.join();
-        }catch (Exception e) { LogHandler.crashLog(e,"folders"); }
+        }catch (Exception e) { LogHandler.crashLog(e,TAG); }
 
         return folderId[0];
     }
@@ -246,24 +258,24 @@ public class GoogleDriveFolders {
         Thread deleteSubFolderThread = new Thread( () -> {
             try{
 
-                Log.d("unlink", "deleteSubFolder" + subFolderName + "from  :" + userEmail);
+                Log.d(TAG, "deleteSubFolder" + subFolderName + "from  :" + userEmail);
                 String folderId = getSubFolderId(userEmail,subFolderName,null,false);
 
-                Log.d("unlink", "Deleting folder " + subFolderName + " : " + folderId);
+                Log.d(TAG, "Deleting folder " + subFolderName + " : " + folderId);
                 String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
 
                 Drive service = GoogleDrive.initializeDrive(accessToken);
                 service.files().delete(folderId).execute();
 
             }catch (Exception e){
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.crashLog(e,TAG);
             }
         });
 
         deleteSubFolderThread.start();
         try{
             deleteSubFolderThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.crashLog(e,TAG); }
     }
 
 }

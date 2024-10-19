@@ -784,7 +784,12 @@ public class GoogleDrive {
             String query = "'" + sourceFolderId + "' in parents and trashed = false";
             Drive.Files.List request = service.files().list().setQ(query).setFields("files(id, parents,mimeType, name, permissions),nextPageToken");
 
+            String nextPageToken = null;
             do {
+                if (nextPageToken != null) {
+                    request.setPageToken(nextPageToken);
+                }
+
                 FileList fileList = request.execute();
 
                 for (File file : fileList.getFiles()) {
@@ -799,8 +804,8 @@ public class GoogleDrive {
                                 .execute();
                     }
                 }
-                request.setPageToken(fileList.getNextPageToken());
-            } while (request.getPageToken() != null && !request.getPageToken().isEmpty());
+                nextPageToken = fileList.getNextPageToken();
+            } while (nextPageToken != null && !nextPageToken.isEmpty());
         } catch (Exception e) {
             LogHandler.saveLog("Failed to move files between folders in drive: " + e.getLocalizedMessage());
         }
