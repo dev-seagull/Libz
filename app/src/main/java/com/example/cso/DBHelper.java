@@ -1120,7 +1120,8 @@ public class DBHelper extends SQLiteOpenHelper {
         Cursor cursor = dbReadable.rawQuery(sqlQuery, null);
         if(cursor.moveToFirst()){
             do{
-                String filePath = "";String assetId = "";String device = "";String fileHash = "";String fileName = "";
+                String filePath = "";String assetId = "";String device = "";String fileHash = "";
+                String fileName = "";
                 int filePathColumnIndex = cursor.getColumnIndex("filePath");
                 int deviceColumnIndex = cursor.getColumnIndex("device");
                 int assetIdColumnIndex = cursor.getColumnIndex("assetId");
@@ -1135,7 +1136,17 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
 
                 File androidFile = new File(filePath);
-                if (!androidFile.exists() && device.equals(MainActivity.androidUniqueDeviceIdentifier)){
+                boolean isHashChanged = false;
+                try{
+                    String hashForRecheck = Hash.calculateHash(androidFile);
+                    if (!hashForRecheck.equals(fileHash)){
+                        isHashChanged = true;
+                    }
+                }catch (Exception e){
+                    isHashChanged = true;
+                }
+
+                if ((!androidFile.exists() && device.equals(MainActivity.androidUniqueDeviceIdentifier)) || isHashChanged){
                     deleteFromAndroidTable(filePath, assetId);
                     insertTransactionsData(filePath,fileName,device,assetId,"deletedInDevice",fileHash);
 
@@ -1997,6 +2008,20 @@ public class DBHelper extends SQLiteOpenHelper {
         }
 
         return totalSize;
+    }
+
+    public static void deleteFromAndroidTable(){
+        String sqlQuery = "DELETE FROM ANDROID ";
+        dbWritable.beginTransaction();
+        try {
+            dbWritable.execSQL(sqlQuery, null);
+            dbWritable.setTransactionSuccessful();
+        } catch (Exception e) {
+            LogHandler.saveLog("Failed to delete from the database in deleteFromAndroidTable method. "
+                    + e.getLocalizedMessage(), true);
+        } finally {
+            dbWritable.endTransaction();
+        }
     }
 
 }
