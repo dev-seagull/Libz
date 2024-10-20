@@ -190,7 +190,7 @@ public class SyncButton {
         );
         switchParams.gravity = Gravity.LEFT;
         syncSwitch.setLayoutParams(switchParams);
-        syncSwitch.setText("Sync                       ");
+        syncSwitch.setText("Sync");
         syncSwitch.setTextColor(ContextCompat.getColor(context, R.color.textColor));
         frameLayout.addView(syncSwitch);
 
