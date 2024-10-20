@@ -104,9 +104,7 @@ public class Upgrade {
 
 
     public static void lastVersion() {
-            SharedPreferencesHandler.setSwitchState("syncSwitchState",false,MainActivity.preferences);
-            DBHelper.deleteFromAndroidTable();
-            UI.makeToast("Your Upgraded to last version, 49 to 50");
+        SharedPreferencesHandler.setSwitchState("syncSwitchState",false,MainActivity.preferences);
     }
 
     public static void upgrade_49_to_50(){
