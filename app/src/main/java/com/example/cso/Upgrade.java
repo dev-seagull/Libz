@@ -75,6 +75,9 @@ public class Upgrade {
                    case 35 :
                        upgrade_35_to_36();
                        break;
+                   case 49:
+                        upgrade_49_to_50();
+                        break;
                    default:
                        lastVersion();
                        break;
@@ -101,7 +104,15 @@ public class Upgrade {
 
 
     public static void lastVersion() {
+            SharedPreferencesHandler.setSwitchState("syncSwitchState",false,MainActivity.preferences);
+            DBHelper.deleteFromAndroidTable();
+            UI.makeToast("Your Upgraded to last version, 49 to 50");
+    }
 
+    public static void upgrade_49_to_50(){
+        SharedPreferencesHandler.setSwitchState("syncSwitchState",false,MainActivity.preferences);
+        DBHelper.deleteFromAndroidTable();
+        UI.makeToast("Your Upgraded to last version, 49 to 50");
     }
 
 
@@ -181,6 +192,7 @@ public class Upgrade {
 
 //        new Thread(GoogleDrive::cleanDriveFolders).start();
     }
+
 
 
 }
