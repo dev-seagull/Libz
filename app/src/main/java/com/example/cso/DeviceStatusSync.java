@@ -5,6 +5,7 @@ import android.os.Build;
 import android.provider.Settings;
 import android.util.Log;
 
+import com.example.cso.UI.Devices;
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
@@ -117,7 +118,7 @@ public class DeviceStatusSync {
         try{
             createDeviceStatusJsonThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,"DeviceStatusSync");
+            LogHandler.crashLog(e,TAG);
         }
         return jsonObjects[0];
     }
@@ -210,7 +211,7 @@ public class DeviceStatusSync {
         try{
             createAssetsLocationStatusJsonThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,"DeviceStatusSync");
+            LogHandler.crashLog(e,TAG);
         }
         return jsonObjects[0];
     }
@@ -259,7 +260,7 @@ public class DeviceStatusSync {
         try {
             createAssetsSourceStatusJsonThread.join();
         } catch (Exception e) {
-            LogHandler.crashLog(e, "deviceStatusSync");
+            LogHandler.crashLog(e,TAG);
         }
 
         return assetsSourceSizeJson[0];
@@ -285,7 +286,7 @@ public class DeviceStatusSync {
         try{
             getDeviceStatusJsonFileThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,"DeviceStatusSync");
+            LogHandler.crashLog(e,TAG);
         }
         return jsonObjects[0];
     }
@@ -316,7 +317,7 @@ public class DeviceStatusSync {
         try{
             downloadDeviceStatusJsonFromAccountsThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,"DeviceStatusSync");
+            LogHandler.crashLog(e,TAG);
         }
         return jsonObjects[0];
     }
@@ -342,20 +343,20 @@ public class DeviceStatusSync {
                         jsonObjects[0] = JsonParser.parseString(jsonString).getAsJsonObject();
                         Log.d(TAG, "Downloaded storage JSON file: " + jsonString);
                     }catch (Exception e){
-                        LogHandler.crashLog(e,"DeviceStatusSync");
+                        LogHandler.crashLog(e,TAG);
                     }finally {
                         outputStream.close();
                     }
                 }
             } catch (Exception e) {
-                LogHandler.crashLog(e,"DeviceStatusSync");
+                LogHandler.crashLog(e,TAG);
             }
         });
         downloadDeviceStatusJsonThread.start();
         try{
             downloadDeviceStatusJsonThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,"DeviceStatusSync");
+            LogHandler.crashLog(e,TAG);
         }
         return jsonObjects[0];
     }
@@ -378,14 +379,14 @@ public class DeviceStatusSync {
                     Log.d(TAG, "older device status file not found");
                 }
             } catch (IOException e) {
-                LogHandler.crashLog(e,"DeviceStatusSync");
+                LogHandler.crashLog(e,TAG);
             }
         });
         searchForExistingFileThread.start();
         try{
             searchForExistingFileThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,"DeviceStatusSync");
+            LogHandler.crashLog(e,TAG);
         }
         return fileId[0];
     }
@@ -404,16 +405,35 @@ public class DeviceStatusSync {
                     shouldDownload[0] = false;
                 }
             }catch (Exception e){
-                LogHandler.crashLog(e,"DeviceStatusSync");
+                LogHandler.crashLog(e,TAG);
             }
         });
         shouldDownloadBasedOnUpdateTimeThread.start();
         try{
             shouldDownloadBasedOnUpdateTimeThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,"DeviceStatusSync");
+            LogHandler.crashLog(e,TAG);
         }
         return shouldDownload[0];
+    }
+
+    public static String getDeviceStatusLastUpdateTime(String deviceId){
+        SimpleDateFormat showDateFormat = new SimpleDateFormat("MM/dd HH:mm",Locale.getDefault());
+        try{
+            Log.d(TAG,"getDeviceStatusLastUpdateTime Started");
+            if (Devices.isCurrentDevice(deviceId)){
+                Date now = new Date();
+                return "Updated at : " + showDateFormat.format(now);
+            }
+            JsonObject deviceStatus = getDeviceStatusJsonFile(deviceId);
+            String updateTime = deviceStatus.get("updateTime").getAsString();
+            Log.d(TAG,"for device : " + deviceId + " update time is : " + updateTime);
+            Date updateTimeDate = sdf.parse(updateTime);
+            return "Updated at : " + showDateFormat.format(updateTimeDate);
+        }catch (Exception e){
+            LogHandler.crashLog(e,TAG);
+        }
+        return "Updated Long time ago";
     }
 
 }

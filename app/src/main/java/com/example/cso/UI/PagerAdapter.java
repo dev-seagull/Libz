@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.drawable.GradientDrawable;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -11,6 +12,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.cso.DeviceStatusSync;
 import com.example.cso.R;
 
 import java.util.ArrayList;
@@ -52,35 +54,6 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
     @Override
     public void onBindViewHolder(@NonNull PageViewHolder holder, int position) {
         Log.d("viewPager", "onBindViewHolder : " + position);
-        Log.d("viewPager", "onBindViewHolder : " + holder.getAdapterPosition());
-        Log.d("viewPager", "onBindViewHolder : " + holder.getLayoutPosition());
-        Log.d("viewPager", "onBindViewHolder : " + holder.getOldPosition());
-        Log.d("viewPager", "onBindViewHolder : " + holder.getPosition());
-
-
-//        if (holder.currentPage.getChildCount() > 0) {
-//            if (buttonType.equals("account")){
-//                position = position % totalPagesForAccount ;
-//                Log.d("viewPager", "Reusing existing view for position: " + position);
-//                if (position == 0){
-//                    title.setText("Storage");
-//                } else if (position == 1){
-//                    title.setText("Assets Device");
-//                }
-//            }else if (buttonType.equals("device")){
-//                position = position % totalPagesForDevice ;
-//                Log.d("viewPager", "Reusing existing view for position: " + position);
-//                if (position == 0){
-//                    title.setText("Storage");
-//                } else if (position == 1) {
-//                    title.setText("Synced Assets");
-//                } else if (position == 2) {
-//                    title.setText("Files");
-//                }
-//            }
-//            return;
-//        }
-
         holder.currentPage.removeAllViews();
         LinearLayout newPage = null;
         int pos = 0;
@@ -91,7 +64,7 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
                 Log.d("viewPager", "page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
 //            }
         }else if (buttonType.equals("device")){
-            pos = position % totalPagesForDevice ;
+            pos = position % totalPagesForDevice;
             if (pos == 0){
                 newPage = Devices.createChartForStorageStatus(context, buttonId);
                 Log.d("viewPager", "StorageStatus = page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
@@ -102,6 +75,7 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
                 newPage = Devices.createChartForSourceStatus(context, buttonId);
                 Log.d("viewPager", "SourceStatus = page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
             }
+            Details.addUpdateTimeTextView(context,newPage,buttonId);
         }
         holder.currentPage.addView(newPage);
     }

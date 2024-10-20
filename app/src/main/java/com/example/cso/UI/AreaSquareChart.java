@@ -20,7 +20,7 @@ import com.google.gson.JsonObject;
 import java.util.ConcurrentModificationException;
 
 public class AreaSquareChart {
-    public static LinearLayout createStorageChart(Context context, JsonObject data, LinearLayout parentLayout) {
+    public static LinearLayout createStorageChart(Context context, JsonObject data) {
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.HORIZONTAL);
         layout.setGravity(Gravity.CENTER);
@@ -28,7 +28,7 @@ public class AreaSquareChart {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         );
-        layoutParams.setMargins(10, 10, 10, 10);
+        layoutParams.setMargins(10, 10, 10, 30);
         layout.setLayoutParams(layoutParams);
 
         try{

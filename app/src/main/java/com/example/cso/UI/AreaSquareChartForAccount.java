@@ -40,7 +40,7 @@ public class AreaSquareChartForAccount {
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
             );
-            layoutParams.setMargins(10, 10, 10, 10);
+            layoutParams.setMargins(10, 30, 10, 30);
             layout.setLayoutParams(layoutParams);
 
             RelativeLayout stackedSquaresLayout = new RelativeLayout(context);

@@ -32,6 +32,7 @@ import com.anychart.data.Set;
 import com.anychart.enums.TooltipPositionMode;
 import com.example.cso.DBHelper;
 import com.example.cso.DeviceHandler;
+import com.example.cso.DeviceStatusSync;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.example.cso.StorageHandler;
@@ -194,7 +195,7 @@ public class Details {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        title.setPadding(0,25,0,25);
+        title.setPadding(0,10,0,0);
         title.setLayoutParams(params);
         FrameLayout.LayoutParams titleParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -205,6 +206,46 @@ public class Details {
         title.setText(text);
         title.setTextColor(MainActivity.currentTheme.primaryTextColor);
         return title;
+    }
+
+    public static TextView createUpdateTimeTextView(Context context, String deviceId) {
+        String updateTime = DeviceStatusSync.getDeviceStatusLastUpdateTime(deviceId);
+        TextView title = new TextView(context);
+        title.setBackgroundColor(Color.TRANSPARENT);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        title.setPadding(0,0,0,10);
+        title.setLayoutParams(params);
+        FrameLayout.LayoutParams titleParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        titleParams.gravity = Gravity.CENTER | Gravity.BOTTOM;
+        title.setLayoutParams(titleParams);
+        title.setText(updateTime);
+        title.setTextColor(MainActivity.currentTheme.primaryTextColor);
+        title.setContentDescription("updateTime");
+        title.setScaleX(0.75f);
+        title.setScaleY(0.75f);
+        return title;
+    }
+
+    public static void addUpdateTimeTextView(Context context, LinearLayout layout, String deviceId){
+        int childCount = layout.getChildCount();
+        for (int i = 0; i < childCount; i++){
+            View child = layout.getChildAt(i);
+            CharSequence contentDescription = child.getContentDescription();
+            if(contentDescription != null){
+                if(contentDescription.toString().equalsIgnoreCase("updateTime")) {
+                    layout.removeView(child);
+                    break;
+                }
+            }
+        }
+        TextView updateTimeView = createUpdateTimeTextView(context,deviceId);
+        layout.addView(updateTimeView);
     }
 
 

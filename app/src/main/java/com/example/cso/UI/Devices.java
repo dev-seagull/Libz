@@ -286,7 +286,6 @@ public class Devices {
 
     public static LinearLayout createChartForStorageStatus(Context context, String deviceId) {
         LinearLayout layout = Details.createInnerDetailsLayout(context, "Storage");
-
         new Thread(() -> {
             ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
             MainActivity.activity.runOnUiThread(() -> {
@@ -297,16 +296,14 @@ public class Devices {
                 layout.addView(loadingImage[0]);
             });
             JsonObject data = getStorageStatus(deviceId);
-            Log.d("DeviceSyncStatus","starage for device " + deviceId +" is " + data);
-            View areaSquareChart = AreaSquareChart.createStorageChart(context,data,layout);
+            Log.d(DeviceStatusSync.TAG,"storage for device " + deviceId +" is " + data);
+            View areaSquareChart = AreaSquareChart.createStorageChart(context,data);
 
             MainActivity.activity.runOnUiThread(() -> {
                 layout.addView(areaSquareChart);
                 layout.removeView(loadingImage[0]);
             });
-
         }).start();
-
         return layout;
     }
 
@@ -333,7 +330,6 @@ public class Devices {
 
     public static LinearLayout createChartForSyncedAssetsLocationStatus(Context context, String deviceId){
         LinearLayout layout = Details.createInnerDetailsLayout(context, "Synced Files");
-
         new Thread(() -> {
             ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
             MainActivity.activity.runOnUiThread(() -> {
@@ -344,16 +340,13 @@ public class Devices {
                 layout.addView(loadingImage[0]);
             });
             JsonObject data = getSyncedAssetsLocationStatus(deviceId);
-            Log.d("DeviceStatusSync", "assets of "+deviceId+" location data : " + data);
-
+            Log.d(DeviceStatusSync.TAG, "assets of "+deviceId+" location data : " + data);
             MainActivity.activity.runOnUiThread(() -> {
                 LinearLayout treeMapChartLayout = CustomTreeMapChart.createStackedBarChart(context, data);
                 layout.addView(treeMapChartLayout);
                 layout.removeView(loadingImage[0]);
             });
-
         }).start();
-
         return layout;
     }
 
@@ -380,7 +373,6 @@ public class Devices {
 
     public static LinearLayout createChartForSourceStatus(Context context, String deviceId){
         LinearLayout layout = Details.createInnerDetailsLayout(context, "Local Files");
-
         new Thread(() -> {
             ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
             activity.runOnUiThread(() -> {
@@ -392,19 +384,14 @@ public class Devices {
             });
 
             JsonObject data = getAssetsSourceStatus(deviceId);
-            Log.d("DeviceStatusSync", "assets source data : " + data);
-
+            Log.d(DeviceStatusSync.TAG, "assets source data : " + data);
             activity.runOnUiThread(() -> {
                 View chartLayout = AssetsSourcePieChart.createStackedBarChartForDeviceSourceStatus(context, data);
                 layout.addView(chartLayout);
-
                 AssetsSourcePieChart.createTextAreaForAssetSourceBarChart(chartLayout,layout,context, data);
-
                 layout.removeView(loadingImage[0]);
             });
-
         }).start();
-
         return layout;
     }
 
