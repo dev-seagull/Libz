@@ -25,7 +25,8 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
             DeviceStatusSync.uploadDeviceStatusJsonFileToAccounts(context);
             long timeInMillis = new Date().getTime() + DeviceStatusSync.timeInterval;
             setAlarm(context,timeInMillis, requestCode);
-        }else if (requestCode == MyAlarmManager.syncStatusCheckRequestId ||requestCode == MyAlarmManager.syncStatusCheckRequestId2) {
+        }
+//        else if (requestCode == MyAlarmManager.syncStatusCheckRequestId ||requestCode == MyAlarmManager.syncStatusCheckRequestId2) {
 //            Log.d(MyAlarmManager.TAG,"alarm for syncStatusCheck received at : " + new Date().getTime() + " code : " + requestCode);
 //            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 //            Log.d(MyAlarmManager.TAG,"SharedPreferences prefs : " +prefs);
@@ -48,7 +49,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
 //            long timeInMillis = new Date().getTime() + syncStatusCheckTimeInterval;
 //            setAlarm(context,timeInMillis,requestCode);
 //            Log.d(MyAlarmManager.TAG,"after try to set alarm for next sync status check");
-        }
+//        }
     }
 
     public static void setAlarm(Context context, long timeInMillis, int requestCode) {

@@ -418,18 +418,18 @@ public class DeviceStatusSync {
     }
 
     public static String getDeviceStatusLastUpdateTime(String deviceId){
-        SimpleDateFormat showDateFormat = new SimpleDateFormat("MM/dd HH:mm",Locale.getDefault());
+        SimpleDateFormat showDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm",Locale.getDefault());
         try{
             Log.d(TAG,"getDeviceStatusLastUpdateTime Started");
             if (Devices.isCurrentDevice(deviceId)){
                 Date now = new Date();
-                return "Updated at : " + showDateFormat.format(now);
+                return "as of " + showDateFormat.format(now);
             }
             JsonObject deviceStatus = getDeviceStatusJsonFile(deviceId);
             String updateTime = deviceStatus.get("updateTime").getAsString();
             Log.d(TAG,"for device : " + deviceId + " update time is : " + updateTime);
             Date updateTimeDate = sdf.parse(updateTime);
-            return "Updated at : " + showDateFormat.format(updateTimeDate);
+            return "as of " + showDateFormat.format(updateTimeDate);
         }catch (Exception e){
             LogHandler.crashLog(e,TAG);
         }

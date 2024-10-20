@@ -278,6 +278,7 @@ public class AreaSquareChart {
         layout.addView(usedText);
         layout.addView(mediaText);
         layout.addView(syncedText);
+        layout.setPadding(0,60,0,0);
         return layout;
     }
 

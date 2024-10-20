@@ -201,9 +201,10 @@ public class Details {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        titleParams.gravity = Gravity.CENTER | Gravity.TOP;
+        titleParams.gravity = Gravity.RIGHT | Gravity.TOP;
         title.setLayoutParams(titleParams);
         title.setText(text);
+        title.setContentDescription("title");
         title.setTextColor(MainActivity.currentTheme.primaryTextColor);
         return title;
     }
@@ -222,7 +223,7 @@ public class Details {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        titleParams.gravity = Gravity.CENTER | Gravity.BOTTOM;
+        titleParams.gravity = Gravity.LEFT | Gravity.BOTTOM;
         title.setLayoutParams(titleParams);
         title.setText(updateTime);
         title.setTextColor(MainActivity.currentTheme.primaryTextColor);
@@ -233,19 +234,19 @@ public class Details {
     }
 
     public static void addUpdateTimeTextView(Context context, LinearLayout layout, String deviceId){
+        String updateTime = DeviceStatusSync.getDeviceStatusLastUpdateTime(deviceId);
         int childCount = layout.getChildCount();
         for (int i = 0; i < childCount; i++){
             View child = layout.getChildAt(i);
             CharSequence contentDescription = child.getContentDescription();
             if(contentDescription != null){
-                if(contentDescription.toString().equalsIgnoreCase("updateTime")) {
-                    layout.removeView(child);
+                if(contentDescription.toString().equalsIgnoreCase("title")) {
+                    TextView title = (TextView) child;
+                    title.setText(title.getText() + " " +  updateTime);
                     break;
                 }
             }
         }
-        TextView updateTimeView = createUpdateTimeTextView(context,deviceId);
-        layout.addView(updateTimeView);
     }
 
 
