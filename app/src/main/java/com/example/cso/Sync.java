@@ -2,6 +2,7 @@ package com.example.cso;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 
 import com.example.cso.UI.UI;
@@ -286,13 +287,22 @@ public class Sync {
         }catch (Exception e) {  LogHandler.crashLog(e,"Service"); }
     }
 
-    public static void startSync(Activity activity){
+    public static void startSync(Context context){
         try{
-            if (TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("off")){
-                activity.getApplicationContext().startService(MainActivity.serviceIntent);
+            if (TimerService.isMyServiceRunning(context, TimerService.class).equals("off")){
+                context.startService(MainActivity.serviceIntent);
             }
         }catch (Exception e) { LogHandler.crashLog(e,"Service"); }
     }
+
+    public static void startSync(Context context, Intent serviceIntent){
+        try{
+            if (TimerService.isMyServiceRunning(context, TimerService.class).equals("off")){
+                context.startService(serviceIntent);
+            }
+        }catch (Exception e) { LogHandler.crashLog(e,"Service"); }
+    }
+
 
 
     public static void checkForStatusChanges(Activity activity){

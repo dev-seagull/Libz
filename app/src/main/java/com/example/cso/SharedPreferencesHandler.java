@@ -22,6 +22,10 @@ public class SharedPreferencesHandler {
         return MainActivity.preferences.getBoolean("syncSwitchState", false);
     }
 
+    public static boolean getSyncSwitchState(SharedPreferences sharedPreferences){
+        return sharedPreferences.getBoolean("syncSwitchState", false);
+    }
+
     public static boolean getCurrentDeviceClickedState(){
         return MainActivity.preferences.getBoolean("currentDeviceClicked", false);
     }

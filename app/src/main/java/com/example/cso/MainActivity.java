@@ -198,7 +198,9 @@
             }
         }).start();
 
-        MyAlarmManager.setAlarmForDeviceStatusSync(getApplicationContext(), 172839,new Date().getTime() + 5000);
+        MyAlarmManager.setAlarmForDeviceStatusSync(getApplicationContext(), MyAlarmManager.deviceStatusSyncRequestId,new Date().getTime() + 5000);
+        MyAlarmManager.setAlarmForSyncStatusCheck(getApplicationContext(), MyAlarmManager.syncStatusCheckRequestId,new Date().getTime() + 10000);
+        MyAlarmManager.setAlarmForSyncStatusCheck(getApplicationContext(), MyAlarmManager.syncStatusCheckRequestId2,new Date().getTime() + 310000);
         Log.d("state","end of onStart");
     }
 

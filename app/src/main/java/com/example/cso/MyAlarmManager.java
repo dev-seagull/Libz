@@ -14,12 +14,14 @@ import java.util.Locale;
 
 public class MyAlarmManager {
 
+    public static int deviceStatusSyncRequestId = 172839;
+    public static int syncStatusCheckRequestId = 172840;
+    public static int syncStatusCheckRequestId2 = 172841;
+    public static String TAG = "MyAlarmManager";
+
     public static void setAlarmForDeviceStatusSync(Context context, int requestCode , long timeInMillis) {
-        Log.d("DeviceStatusSync","starting to set alarm for storage upload");
+        Log.d(TAG,"starting to set alarm for storage upload");
         try {
-//            if (hasAlarmSet(context,requestCode)){
-//                cancelAlarmForDeviceStatusSync(context,requestCode);
-//            }
             if (hasAlarmSet(context,requestCode)){
                 return;
             }
@@ -30,9 +32,28 @@ public class MyAlarmManager {
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_MUTABLE);
             alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
             SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
-            Log.d("DeviceStatusSync","upload alarm set at " + formatter.format(timeInMillis));
+            Log.d(TAG,"upload alarm set at " + formatter.format(timeInMillis));
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to set alarm: " + e.getLocalizedMessage(), true);
+            LogHandler.crashLog(e,TAG);
+        }
+    }
+
+    public static void setAlarmForSyncStatusCheck(Context context, int requestCode , long timeInMillis) {
+        Log.d(TAG,"starting to set alarm for sync status check");
+        try {
+            if (hasAlarmSet(context,requestCode)){
+                return;
+            }
+            AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            Intent intent = new Intent(context, MyBroadcastReceiver.class);
+            intent.putExtra("requestCode", requestCode);
+
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_MUTABLE);
+            alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
+            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
+            Log.d(TAG,"sync status check alarm set at " + formatter.format(timeInMillis));
+        } catch (Exception e) {
+            LogHandler.crashLog(e,TAG);
         }
     }
 
@@ -40,7 +61,7 @@ public class MyAlarmManager {
         Intent intent = new Intent(context, MyBroadcastReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_MUTABLE);
         boolean alarmExists = (pendingIntent != null);
-        Log.d("DeviceStatusSync", "alarm with request code " + requestCode + " exists : " + alarmExists);
+        Log.d(TAG, "alarm with request code " + requestCode + " exists : " + alarmExists);
         return alarmExists;
     }
 
@@ -49,12 +70,12 @@ public class MyAlarmManager {
         Intent intent = new Intent(context, MyBroadcastReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_MUTABLE);
         if (pendingIntent!= null) {
-            Log.d("DeviceStatusSync","cancelling alarm with request code " + requestCode);
+            Log.d(TAG,"cancelling alarm with request code " + requestCode);
             alarmManager.cancel(pendingIntent);
             pendingIntent.cancel(); // to avoid memory leaks and potential crashes in some cases.
             pendingIntent = null; // to ensure the reference is removed from memory.
         } else {
-            Log.d("DeviceStatusSync","no alarm found with request code " + requestCode);
+            Log.d(TAG,"no alarm found with request code " + requestCode);
         }
     }
 }
