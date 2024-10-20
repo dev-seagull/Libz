@@ -147,8 +147,7 @@ public class UI{
 
     public static void handleDeactivatedUser(){
         try{
-            MainActivity.activity.runOnUiThread(() -> Toast.makeText(MainActivity.activity.getApplicationContext(),
-                    "you're deActivated, Call support", Toast.LENGTH_SHORT).show());
+            UI.makeToast("you're deActivated, Call support");
             MainActivity.activity.finish();
         }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
     }
@@ -255,6 +254,14 @@ public class UI{
         drawable.setCornerRadius(cornerRadius);
 
         return drawable;
+    }
+
+    public static void makeToast(String message){
+        MainActivity.activity.runOnUiThread(() -> {
+            if(TimerService.isAppinForeGround){
+                Toast.makeText(MainActivity.activity, message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
 

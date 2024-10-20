@@ -125,9 +125,9 @@ public class Unlink {
                 }
             }else{
                 if (InternetManager.getInternetStatus(activity).equals("noInternet")){
-                    activity.runOnUiThread(() -> Toast.makeText(activity, "Failed To Unlink, Check your Internet Connection !!! ", Toast.LENGTH_LONG).show());
+                    UI.makeToast("Failed To Unlink, Check your Internet Connection !!! ");
                 }else{
-                    activity.runOnUiThread(() -> Toast.makeText(activity, "Failed To Unlink, Try Again !!! ", Toast.LENGTH_LONG).show());
+                    UI.makeToast("Failed To Unlink, Try Again !!! ");
                 }
             }
         });

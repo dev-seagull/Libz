@@ -9,6 +9,7 @@
     import androidx.appcompat.app.AppCompatActivity;
 
     import com.example.cso.UI.Dialogs;
+    import com.example.cso.UI.UI;
     import com.google.android.gms.auth.api.signin.GoogleSignIn;
     import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
     import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -218,10 +219,7 @@
                 for (String[] row : userAccounts) {
                     if (row.length > 0 && row[0] != null && row[0].equals(userEmail)) {
                         isInAccounts = true;
-                        runOnUiThread(() -> {
-                            CharSequence text = "This Primary Account Already Exists !";
-                            Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
-                        });
+                        UI.makeToast("This Primary Account Already Exists !");
                     }
                 }
                 if (!isInAccounts){
@@ -298,10 +296,7 @@
                         storage[0] = getStorage(tokens[0]);
                         isHandled[0] = true;
                     }else {
-                        MainActivity.activity.runOnUiThread(() -> {
-                            CharSequence text = "This Account Already Exists !";
-                            Toast.makeText(MainActivity.activity, text, Toast.LENGTH_SHORT).show();
-                        });
+                        UI.makeToast("This Account Already Exists !");
                     }
 
                 }catch (Exception e){

@@ -230,7 +230,7 @@
 
         }else{
             if(!isReadAndWritePermissionGranted && isStoragePermissionGranted){
-                Toast.makeText(getApplicationContext(),"Read and Write Permissions Required", Toast.LENGTH_LONG).show();
+                UI.makeToast("Read and Write Permissions Required");
             }
         }
         Log.d("state","end of onResume");

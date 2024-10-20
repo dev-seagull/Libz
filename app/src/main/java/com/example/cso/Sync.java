@@ -3,7 +3,6 @@ package com.example.cso;
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.example.cso.UI.UI;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
@@ -52,8 +51,7 @@ public class Sync {
                     if (!isAllOfAccountsFullToastShown){
                         isAllOfAccountsFullToastShown = true;
                         MainActivity.activity.runOnUiThread(()->{
-                            Toast.makeText(MainActivity.activity,"Sync failed! You are running out of space." +
-                                    " Add more back up accounts.", Toast.LENGTH_SHORT).show();
+
                         });
                     }
                 }
@@ -113,12 +111,8 @@ public class Sync {
                         isInternetConnectionToastShown = false;
                         String message = "There is no backup account to sync!";
                         if(!isAnyBackUpAccountExistsToastShown) {
-                            MainActivity.activity.runOnUiThread(() -> {
-                                isAnyBackUpAccountExistsToastShown = true;
-                                if (TimerService.isAppinForeGround){
-                                    Toast.makeText(MainActivity.activity, message, Toast.LENGTH_SHORT).show();
-                                }
-                            });
+                            isAnyBackUpAccountExistsToastShown = true;
+                            UI.makeToast(message);
                         }
                         break;
                     }
@@ -126,12 +120,8 @@ public class Sync {
                         isAnyBackUpAccountExistsToastShown = false;
                         String message = internetConnectionStatus;
                         if (!isInternetConnectionToastShown) {
-                            MainActivity.activity.runOnUiThread(() -> {
-                                isInternetConnectionToastShown = true;
-                                if (TimerService.isAppinForeGround){
-                                    Toast.makeText(MainActivity.activity, message, Toast.LENGTH_SHORT).show();
-                                }
-                            });
+                            isInternetConnectionToastShown = true;
+                            UI.makeToast(message);
                         }
                         break;
                     }
@@ -246,13 +236,7 @@ public class Sync {
                 String mimeType = androidRow[7];
                 String assetId = androidRow[8];
                 MainActivity.syncDetailsStatus = "Syncing " + fileName + " to " + userEmail + " ...";
-                if(TimerService.isAppinForeGround){
-                    MainActivity.activity.runOnUiThread(() -> {
-                        try{
-                            Toast.makeText(MainActivity.activity,"Syncing " + fileName + " to " + userEmail + " ...", Toast.LENGTH_SHORT).show();
-                        }catch (Exception e) { LogHandler.crashLog(e,"ui"); }
-                    });
-                }
+                UI.makeToast("Syncing " + fileName + " to " + userEmail + " ...");
 //                SyncDetails.setSyncStatusDetailsTextView(activity, false);
                 isBackedUp[0] = BackUp.backupAndroidToDrive(fileId,fileName, filePath,fileHash,mimeType,assetId,
                         accessToken,userEmail,syncedAssetsFolderId);

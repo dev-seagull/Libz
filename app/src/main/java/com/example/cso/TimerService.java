@@ -35,7 +35,7 @@ public class TimerService extends Service {
     public static boolean isTimerRunning = false; // init
     private TimerTask timerTask;
     private  Notification notification;
-    public static boolean isAppinForeGround;
+    public static boolean isAppinForeGround = true; //
     public static boolean isServiceAndroidTimerRunning = false;
     @Override
     public void onCreate() {

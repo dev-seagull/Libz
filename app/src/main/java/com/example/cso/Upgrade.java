@@ -6,6 +6,8 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.widget.Toast;
 
+import com.example.cso.UI.UI;
+
 import kotlin.text._OneToManyTitlecaseMappingsKt;
 
 public class Upgrade {
@@ -78,7 +80,7 @@ public class Upgrade {
                        break;
                }
            } else if (savedVersionCode > currentVersionCode) {
-               Toast.makeText(MainActivity.activity, "Please install last version of App", Toast.LENGTH_SHORT).show();
+               UI .makeToast("Please install last version of App");
            }
            SharedPreferences.Editor editor = preferences.edit();
            editor.putInt("currentVersionCode", currentVersionCode);
@@ -92,9 +94,6 @@ public class Upgrade {
 
 
     public static void upgrade_17_to_18() {
-        MainActivity.activity.runOnUiThread(() -> {
-            Toast.makeText(MainActivity.activity, "you are upgraded from version 17 to version 18 by Upgrader", Toast.LENGTH_SHORT).show();
-        });
         DBHelper.deleteTableContent("DEVICE");
         DBHelper.deleteTableContent("ACCOUNTS");
         upgrade_18_to_19();
@@ -102,32 +101,16 @@ public class Upgrade {
 
 
     public static void lastVersion() {
-//        MainActivity.activity.runOnUiThread(() -> {
-//            try {
-//                PackageInfo pInfo = MainActivity.activity.getApplicationContext()
-//                        .getPackageManager().getPackageInfo(MainActivity.activity.getApplicationContext()
-//                                .getPackageName(), 0);
-//                Toast.makeText(MainActivity.activity, "You are Using last version : " + pInfo.versionCode, Toast.LENGTH_SHORT).show();
-//            } catch (Exception e) { }
-//        });
-        upgrade_35_to_36();
-//        MainActivity.dbHelper.deleteFromAccountsTable("stashdevteam","support");
-//        DBHelper.deleteTableContent("ACCOUNTS");
+
     }
 
 
     public static void upgrade_16_to_17() {
-        MainActivity.activity.runOnUiThread(() -> {
-            Toast.makeText(MainActivity.activity, "you are upgraded from version 16 to version 17 by Upgrader", Toast.LENGTH_SHORT).show();
-            DBHelper.deleteTableContent("DEVICE");
-        });
+        DBHelper.deleteTableContent("DEVICE");
         upgrade_17_to_18();
     }
 
     public static void upgrade_15_to_16() {
-        MainActivity.activity.runOnUiThread(() -> {
-            Toast.makeText(MainActivity.activity, "you are upgraded from version 15 to version 16 by Upgrader", Toast.LENGTH_SHORT).show();
-        });
         upgrade_16_to_17();
     }
 
@@ -170,13 +153,6 @@ public class Upgrade {
 
     public static void upgrade_23_to_24(){
         DBHelper.alterAccountsTableConstraint();
-    }
-
-    public static void upgrade_24_to_25() {
-        MainActivity.activity.runOnUiThread(() -> {
-            Toast.makeText(MainActivity.activity, "You are upgraded to last version (0.0.25)", Toast.LENGTH_SHORT).show();
-        });
-//        Support.sendEmail("Some one installed last version of apk, Device ID : " + MainActivity.androidUniqueDeviceIdentifier);
     }
 
     public static void upgrade_33_to_34(){
