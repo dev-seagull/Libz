@@ -107,14 +107,14 @@ public class TimerService extends Service {
                                 Sync.syncAndroidFiles(MainActivity.activity);
                                 Log.d("serviceStatus","finish sync android files");
                             }catch (Exception e) {
-                                LogHandler.crashLog(e,"Service");
+                                LogHandler.crashLog(e,"Service3");
                             } finally{
                                 isTimerRunning = false; // end of timer service
                             }
 
                         }).start();
 
-                    }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+                    }catch (Exception e){LogHandler.crashLog(e,"service1"); }
                 }
             };
 
@@ -229,7 +229,7 @@ public class TimerService extends Service {
                     return true;
                 }
             }
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) {LogHandler.crashLog(e,"service2");}
 
         return false;
     }

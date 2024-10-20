@@ -15,8 +15,8 @@ import java.util.Locale;
 public class MyAlarmManager {
 
     public static int deviceStatusSyncRequestId = 172839;
-    public static int syncStatusCheckRequestId = 172840;
-    public static int syncStatusCheckRequestId2 = 172841;
+    public static int syncStatusCheckRequestId = 172842;
+    public static int syncStatusCheckRequestId2 = 172843;
     public static String TAG = "MyAlarmManager";
 
     public static void setAlarmForDeviceStatusSync(Context context, int requestCode , long timeInMillis) {
@@ -42,7 +42,10 @@ public class MyAlarmManager {
         Log.d(TAG,"starting to set alarm for sync status check");
         try {
             if (hasAlarmSet(context,requestCode)){
-                return;
+                cancelAlarmForDeviceStatusSync(context,requestCode);
+            }
+            if (hasAlarmSet(context,requestCode)){
+                cancelAlarmForDeviceStatusSync(context,requestCode);
             }
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
             Intent intent = new Intent(context, MyBroadcastReceiver.class);

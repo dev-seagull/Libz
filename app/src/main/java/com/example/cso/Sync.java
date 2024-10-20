@@ -3,6 +3,7 @@ package com.example.cso;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.util.Log;
 
 import com.example.cso.UI.UI;
@@ -274,7 +275,7 @@ public class Sync {
                 }
             }
         }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
-        Log.d("service","getSortedAndroidFiles finished");
+        Log.d("service7","getSortedAndroidFiles finished");
         return unique_android_rows;
     }
 
@@ -284,7 +285,7 @@ public class Sync {
             if (TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on")) {
                 MainActivity.activity.getApplicationContext().stopService(MainActivity.serviceIntent);
             }
-        }catch (Exception e) {  LogHandler.crashLog(e,"Service"); }
+        }catch (Exception e) {  LogHandler.crashLog(e,"Service4"); }
     }
 
     public static void startSync(Context context){
@@ -292,15 +293,19 @@ public class Sync {
             if (TimerService.isMyServiceRunning(context, TimerService.class).equals("off")){
                 context.startService(MainActivity.serviceIntent);
             }
-        }catch (Exception e) { LogHandler.crashLog(e,"Service"); }
+        }catch (Exception e) { LogHandler.crashLog(e,"Service5"); }
     }
 
     public static void startSync(Context context, Intent serviceIntent){
         try{
             if (TimerService.isMyServiceRunning(context, TimerService.class).equals("off")){
-                context.startService(serviceIntent);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(serviceIntent);
+                }else{
+                    context.startService(serviceIntent);
+                }
             }
-        }catch (Exception e) { LogHandler.crashLog(e,"Service"); }
+        }catch (Exception e) { LogHandler.crashLog(e,"Service6"); }
     }
 
 
