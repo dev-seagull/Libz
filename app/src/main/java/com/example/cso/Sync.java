@@ -238,7 +238,7 @@ public class Sync {
                 String mimeType = androidRow[7];
                 String assetId = androidRow[8];
                 MainActivity.syncDetailsStatus = "Syncing " + fileName + " to " + userEmail + " ...";
-                UI.makeToast("Syncing " + fileName + " to " + userEmail + " ...");
+//                UI.makeToast("Syncing " + fileName + " to " + userEmail + " ...");
 //                SyncDetails.setSyncStatusDetailsTextView(activity, false);
                 isBackedUp[0] = BackUp.backupAndroidToDrive(fileId,fileName, filePath,fileHash,mimeType,assetId,
                         accessToken,userEmail,syncedAssetsFolderId);

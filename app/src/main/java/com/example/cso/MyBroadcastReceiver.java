@@ -31,7 +31,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
             Log.d(MyAlarmManager.TAG,"SharedPreferences prefs : " +prefs);
             boolean syncState = SharedPreferencesHandler.getSyncSwitchState(prefs);
             Log.d(MyAlarmManager.TAG,"sync state based on shared preferences before set : " + syncState);
-            SharedPreferencesHandler.setSwitchState("syncSwitchState",true,prefs);
+//            SharedPreferencesHandler.setSwitchState("syncSwitchState",true,prefs);
             Log.d(MyAlarmManager.TAG,"set sync state true on shared preferences : " + syncState);
             syncState = SharedPreferencesHandler.getSyncSwitchState(prefs);
             Log.d(MyAlarmManager.TAG,"sync state based on shared preferences after set : " + syncState);

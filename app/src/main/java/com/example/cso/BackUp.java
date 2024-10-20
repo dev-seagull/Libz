@@ -47,7 +47,7 @@ public class BackUp {
                 String mimeTypeToUpload = Media.getMimeType(fileName);
                 FileContent mediaContent = handleMediaFileContent(mimeTypeToUpload,androidFile, fileName);
                 if (mediaContent == null) {
-                    LogHandler.saveLog("media content is null in syncAndroidToDrive", true);
+                    LogHandler.crashLog(new Exception("media content is null in syncAndroidToDrive"), "backup");
                 }
 
 //                if(!Media.isVideoBackUp(mimeTypeToUpload)) {
@@ -69,25 +69,26 @@ public class BackUp {
 
                     String uploadFileId = uploadedFile.getId();
                     if (uploadedFile == null | uploadFileId.isEmpty()) {
-                        Log.d("service", "Failed to upload " + fileName + " from Android to backup " +
-                                driveEmailAccount);
+                        LogHandler.crashLog(new Exception("Failed to upload: " + fileName), "backup");
                     } else {
                         if (isUploadHashEqual(fileHash, uploadFileId, driveBackupAccessToken)) {
                             Log.d("service", "Uploading file " + fileName + " to " +driveEmailAccount +" finished : " + uploadFileId);
                             isUploadValid[0] = true;
                             DBHelper.insertTransactionsData(String.valueOf(fileId), fileName,
                                     driveEmailAccount, assetId, "sync", fileHash);
+                        }else{
+                            LogHandler.crashLog(new Exception("Failed to detect same file hash: " + fileName + " " + fileHash), "backup");
                         }
                     }
 //                }
 
-            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+            }catch (Exception e) { LogHandler.crashLog(e,"backup"); }
         });
 
         backupAndroidToDriveThread.start();
         try{
             backupAndroidToDriveThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.crashLog(e,"backup"); }
 
         Log.d("Threads","backupAndroidToDriveThread finished");
         return isUploadValid[0];
