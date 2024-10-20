@@ -3,6 +3,7 @@ package com.example.cso.UI;
 import android.content.Context;
 import android.graphics.Color;
 import android.util.Log;
+import android.util.Pair;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -174,6 +175,8 @@ public class CustomTreeMapChart {
             List<Double> syncedValues = new ArrayList<>();
             List<String> syncedLabels = new ArrayList<>();
 
+            List<Pair<String, Double>> syncedValuePairs = new ArrayList<>();
+
             for (Map.Entry<String, JsonElement> entry : jsonData.entrySet()) {
                 if (!entry.getKey().equals("UnSynced")) {
                     double size = entry.getValue().getAsDouble();
@@ -184,6 +187,15 @@ public class CustomTreeMapChart {
                 }
             }
 
+            syncedValuePairs.sort((p1, p2) -> Double.compare(p2.second, p1.second));
+
+
+            for (Pair<String, Double> pair : syncedValuePairs) {
+                syncedLabels.add(pair.first);
+                syncedValues.add(pair.second);
+            }
+
+
             float[] stackedValues = new float[syncedValues.size() + 1];
             for (int i = 0; i < syncedValues.size(); i++) {
                 stackedValues[i] = syncedValues.get(i).floatValue();
@@ -193,7 +205,10 @@ public class CustomTreeMapChart {
             List<BarEntry> entries = new ArrayList<>();
             entries.add(new BarEntry(0f, stackedValues));
 
-            int[] colors = MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors;
+            int[] colors = new int[syncedLabels.size() + 1];
+            int colorsToCopy = Math.min(syncedLabels.size(), MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors.length);
+            System.arraycopy(MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors, 0, colors, 0, colorsToCopy);
+            colors[syncedLabels.size()] = Color.parseColor("#FAB34B");
 
             BarDataSet dataSet = new BarDataSet(entries, "Storage Usage");
             dataSet.setColors(colors);
@@ -232,7 +247,7 @@ public class CustomTreeMapChart {
                 legendLayout.addView(createLegendItem(context, syncedLabels.get(i), color, syncedValues.get(i)));
                 if(i + 1 == syncedLabels.size()){
                     color = colors[(i+1) % colors.length];
-                    legendLayout.addView(createLegendItem(context, "Unsynced", color, unsynced));
+                    legendLayout.addView(createLegendItem(context, "Unsynced", Color.parseColor("#FAB34B"), unsynced));
                 }
             }
 

@@ -7,6 +7,7 @@ import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import android.util.Pair;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -173,14 +174,21 @@ public class AssetsSourcePieChart {
         List<String> labels = new ArrayList<>();
         List<Double> values = new ArrayList<>();
 
+        List<Pair<String, Double>> sourceValuePairs = new ArrayList<>();
         for (String source : sourcesData.keySet()) {
             double size = sourcesData.get(source).getAsDouble();
-            if(size != 0.0){
-                values.add(size);
-                labels.add(source);
+            if (size != 0.0) {
+                sourceValuePairs.add(new Pair<>(source, size));
             }
         }
-        float[] stackedValues = new float[values.size() + 1];
+        sourceValuePairs.sort((p1, p2) -> Double.compare(p2.second, p1.second));
+
+        for (Pair<String, Double> pair : sourceValuePairs) {
+            values.add(pair.second);
+            labels.add(pair.first);
+        }
+
+        float[] stackedValues = new float[values.size()];
         for (int i = 0; i < values.size(); i++) {
             stackedValues[i] = values.get(i).floatValue();
         }
@@ -228,12 +236,18 @@ public class AssetsSourcePieChart {
             List<String> labels = new ArrayList<>();
             List<Double> values = new ArrayList<>();
 
+            List<Pair<String, Double>> sourceValuePairs = new ArrayList<>();
             for (String source : sourcesData.keySet()) {
                 double size = sourcesData.get(source).getAsDouble();
-                if(size != 0.0){
-                    values.add(size);
-                    labels.add(source);
+                if (size != 0.0) {
+                    sourceValuePairs.add(new Pair<>(source, size));
                 }
+            }
+            sourceValuePairs.sort((p1, p2) -> Double.compare(p2.second, p1.second));
+
+            for (Pair<String, Double> pair : sourceValuePairs) {
+                values.add(pair.second);
+                labels.add(pair.first);
             }
 
             LinearLayout legendLayout = new LinearLayout(context);

@@ -97,7 +97,7 @@ public class AreaSquareChartForAccount {
         TextView totalText = new TextView(context);
         totalText.setText("Free: " + formattedTotal);
         totalText.setTextSize(10f);
-        totalText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
+        totalText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
         totalParams.setMargins(30, 0,0,0);
         totalText.setLayoutParams(totalParams);
 
@@ -105,14 +105,14 @@ public class AreaSquareChartForAccount {
         usedText.setText("Others: " + formattedUsed);
         usedText.setTextSize(10f);
         usedText.getHeight();
-        usedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
+        usedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
         usedParams.setMargins(30,0,0,0);
         usedText.setLayoutParams(usedParams);
 
         TextView syncedText = new TextView(context);
         syncedText.setText("Libz: " + formattedSynced);
         syncedText.setTextSize(10f);
-        syncedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
+        syncedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
         syncedParams.setMargins(30,0 ,0,0);
         syncedText.setLayoutParams(syncedParams);
 
@@ -136,9 +136,9 @@ public class AreaSquareChartForAccount {
         ImageView square2 = new ImageView(context);
         ImageView square3 = new ImageView(context);
 
-        square1.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
-        square2.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
-        square3.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
+        square1.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
+        square2.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
+        square3.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
 
         total = total / 1024;
         used = used / 1024;

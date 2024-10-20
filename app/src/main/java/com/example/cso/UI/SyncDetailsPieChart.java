@@ -178,7 +178,7 @@ public class SyncDetailsPieChart {
             List<BarEntry> entries = new ArrayList<>();
             entries.add(new BarEntry(0f, stackedValues));
 
-            int[] colors = MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors;
+            int[] colors = MainActivity.currentTheme.syncDetailsPieChartColors;
 
             BarDataSet dataSet = new BarDataSet(entries, "Storage Usage");
             dataSet.setColors(colors);

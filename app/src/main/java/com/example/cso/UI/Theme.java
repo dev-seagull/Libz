@@ -101,25 +101,33 @@ public class Theme {
                         Color.parseColor("#6D5F9C"),
                 },
                 new int[] {
-                    Color.parseColor("#B0BEC5"), //deviceStorageChartColors , total
-                    Color.parseColor("#BBDEFB"), // used
-                    Color.parseColor("#72098E"), //media
-                    Color.parseColor("#FAB34B") // synced
+                    Color.parseColor("#BBDEFB"), //free
+                    Color.parseColor("#B0BEC5"), // others
+                    Color.parseColor("#FFD166"), //lagging behind
+                    Color.parseColor("#80CBC4") // buzzing along
                 },
                 new int[] {
-                        //                        Color.parseColor("#00796B"),
+                        Color.parseColor("#FFD166"),
+                        Color.parseColor("#FF5733"),
                         Color.GRAY,
-                        Color.parseColor("#388E3C"),
-                        Color.parseColor("#80CBC4")
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY
                 },
                 new int[] {
-                        Color.parseColor("#00796B"),
+                        Color.parseColor("#81C784"),
                         Color.parseColor("#388E3C"),
-                        Color.parseColor("#80CBC4")
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY
                 },
                 new int[] {
-                        Color.parseColor("#1E88E5"),
-                        Color.parseColor("#304194")
+                        Color.parseColor("#FAB34B"),
+                        Color.parseColor("#80CBC4")
                 },
                 Color.parseColor("#202124"),
                 Color.WHITE,  //primaryTextColor
@@ -134,9 +142,9 @@ public class Theme {
                 R.drawable.white_device,
                 R.drawable.three_dot_white,
                 R.drawable.yellow_loading,
-                new int[]{
-                Color.parseColor("#80CBC4"), //synced color for details chart
-                Color.parseColor("#B0BEC5"), //unsynced color for details chart
+                new int[] {
+                        Color.parseColor("#FFD166"),
+                        Color.parseColor("#80CBC4")
                 }
         );
     }
