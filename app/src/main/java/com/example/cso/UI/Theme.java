@@ -41,6 +41,9 @@ public class Theme {
     public int[] syncDetailsPieChartColors;
 
     public static void initializeThemes(){
+        if (!themes.isEmpty()){
+            return;
+        }
         purpleTheme();
         grayTheme();
         darkTheme();
