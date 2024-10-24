@@ -286,26 +286,26 @@ public class AreaSquareChart {
 
         TextView totalText = new TextView(context);
         totalText.setText("Free: " + formattedTotal);
-        totalText.setTextSize(10f);
+        totalText.setTextSize(11f);
         totalText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
         totalText.setLayoutParams(totalParams);
 
         TextView usedText = new TextView(context);
         usedText.setText("Others: " + formattedUsed);
-        usedText.setTextSize(10f);
+        usedText.setTextSize(11f);
         usedText.getHeight();
         usedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
         usedText.setLayoutParams(usedParams);
 
         TextView mediaText = new TextView(context);
         mediaText.setText("Lagging behind: " + formattedMedia);
-        mediaText.setTextSize(10f);
+        mediaText.setTextSize(11f);
         mediaText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
         mediaText.setLayoutParams(mediaParams);
 
         TextView syncedText = new TextView(context);
         syncedText.setText("Buzzing Along: " + formattedSynced);
-        syncedText.setTextSize(10f);
+        syncedText.setTextSize(11f);
         syncedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
         syncedText.setLayoutParams(syncedParams);
 
@@ -322,7 +322,7 @@ public class AreaSquareChart {
 
         TextView totalText = new TextView(context);
         totalText.setText(updateDate);
-        totalText.setTextSize(10f);
+        totalText.setTextSize(11f);
         totalText.setTextColor(MainActivity.currentTheme.primaryTextColor);
 
         layout.addView(totalText);

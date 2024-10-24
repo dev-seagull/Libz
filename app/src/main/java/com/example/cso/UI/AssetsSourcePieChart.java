@@ -15,6 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.example.cso.DeviceStatusSync;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.github.mikephil.charting.charts.HorizontalBarChart;
@@ -222,14 +223,14 @@ public class AssetsSourcePieChart {
 
     public static void configureBarChartDimensions(HorizontalBarChart barChart, Context context) {
         int width = (int) (UI.getDeviceWidth(context) * 0.8);
-        int height = (int) (UI.getDeviceHeight(context) * 0.06);
+        int height = (int) (UI.getDeviceHeight(context) * 0.085);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(width, height);
         params.setMargins(0, 0, 0, 0);
         barChart.setLayoutParams(params);
     }
 
 
-    public static void createTextAreaForAssetSourceBarChart(View chartLayout, LinearLayout layout, Context context, JsonObject sourcesData) {
+    public static void createTextAreaForAssetSourceBarChart(View chartLayout, LinearLayout layout, Context context, JsonObject sourcesData, String deviceId) {
         if (chartLayout instanceof HorizontalBarChart) {
             int[] colors = MainActivity.currentTheme.deviceAppStorageChartColors;
 
@@ -250,77 +251,95 @@ public class AssetsSourcePieChart {
                 labels.add(pair.first);
             }
 
-            LinearLayout legendLayout = new LinearLayout(context);
-            legendLayout.setOrientation(LinearLayout.VERTICAL);
-            legendLayout.setGravity(Gravity.CENTER);
-            legendLayout.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout mainLegendLayout = new LinearLayout(context);
+            mainLegendLayout.setOrientation(LinearLayout.VERTICAL);
+            mainLegendLayout.setLayoutParams(new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            ));
+                    LinearLayout.LayoutParams.WRAP_CONTENT)
+            );
+            LinearLayout legendLayout = new LinearLayout(context);
+            legendLayout.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams legendParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+            legendLayout.setGravity(Gravity.LEFT);
+            legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.1),0,(int) (UI.getDeviceWidth(context) * 0.1),0);
+            legendLayout.setLayoutParams(legendParams);
+
+            int parentWidth = (int) (UI.getDeviceWidth(context) * 0.80);
+
             for (int i = 0; i < labels.size(); i++) {
                 int color = colors[i % colors.length];
-                legendLayout.addView(createLegendItemForAssetSourceBarChart(context, labels.get(i), color, values.get(i)));
+                View legendItem = createLegendItemForAssetSourceBarChart(context, labels.get(i), color, values.get(i));
+
+                legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+
+                int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + (int) (UI.getDeviceWidth(context) * 0.1) + (int) (UI.getDeviceWidth(context) * 0.1);
+
+                if (totalWidth > parentWidth) {
+                    mainLegendLayout.addView(legendLayout);
+                    legendLayout = new LinearLayout(context);
+                    legendLayout.setOrientation(LinearLayout.HORIZONTAL);
+                    legendParams = new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                    );
+                    legendLayout.setGravity(Gravity.LEFT);
+                    legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.1),0,(int) (UI.getDeviceWidth(context) * 0.1),0);
+                    legendLayout.setLayoutParams(legendParams);
+                }
+
+                legendLayout.addView(legendItem);
             }
-            layout.addView(legendLayout);
 
-//            SpannableStringBuilder coloredText = new SpannableStringBuilder();
-//
-//            for (int i = 0; i < entries.size(); i++) {
-//                BarEntry entry = entries.get(i);
-//                String label = dataSet.getStackLabels()[i];
-//                String value = String.valueOf(entry.getY());
-//                if (Double.valueOf(value) >= 100) {
-//                    value = String.format("%.1f GB", Double.valueOf(value) / 1024);
-//                } else {
-//                    value = String.format("%.1f MB", Double.valueOf(value));
-//                }
-//
-//                int colorIndex = i % colors.length;
-//                SpannableString entryText = new SpannableString(label + ": " + value + "\n");
-//                entryText.setSpan(new ForegroundColorSpan(colors[colorIndex]), 0, entryText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-//                coloredText.append(entryText);
-//            }
-//
-//            TextView statusTextView = new TextView(context);
-//            statusTextView.setText(coloredText);
-//            statusTextView.setTextSize(10);
-//            statusTextView.setPadding(32, 0, 0, 0);
-//            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-//                    LinearLayout.LayoutParams.WRAP_CONTENT,
-//                    LinearLayout.LayoutParams.WRAP_CONTENT
-//            );
-//            layoutParams.gravity = Gravity.CENTER;
-//            layoutParams.setMargins(0, 10, 0, 10);
-//            statusTextView.setLayoutParams(layoutParams);
+            if (legendLayout.getChildCount() > 0) {
+                mainLegendLayout.addView(legendLayout);
+            }
 
-//            layout.addView(legendItem);
+            String updateDate = DeviceStatusSync.getDeviceStatusLastUpdateTime(deviceId);
+            LinearLayout updateDateLabelsLayout = AreaSquareChart.createUpdateDateLabel(context, updateDate);
+            LinearLayout.LayoutParams updateDateLabelsParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            updateDateLabelsParams.setMargins((int) ((UI.getDeviceWidth(context) * 0.10) + 20),30,(int) (UI.getDeviceWidth(context) * 0.1),0);
+            updateDateLabelsLayout.setLayoutParams(updateDateLabelsParams);
+            mainLegendLayout.addView(updateDateLabelsLayout);
+
+            layout.addView(mainLegendLayout);
         }
     }
 
     public static LinearLayout createLegendItemForAssetSourceBarChart(Context context, String label, int color, double value){
         LinearLayout legendItem = new LinearLayout(context);
         legendItem.setOrientation(LinearLayout.HORIZONTAL);
-        legendItem.setGravity(Gravity.CENTER);
+        legendItem.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        legendItem.setGravity(Gravity.LEFT);
 
         View colorBox = new View(context);
         LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceHeight(context) * 0.008), (int) (UI.getDeviceHeight(context) * 0.008));
-        colorBoxParams.setMargins(0, 0, 10, 0);
+        colorBoxParams.setMargins(20, 10, 10, 0);
         colorBox.setLayoutParams(colorBoxParams);
         colorBox.setBackgroundColor(color);
 
         TextView labelText = new TextView(context);
-        labelText.setText(label+" : ");
-        labelText.setTextSize((int) (UI.getDeviceHeight(context) * 0.004));
+        labelText.setText(label);
+        labelText.setTextSize((int) (UI.getDeviceHeight(context) * 0.005));
         labelText.setTextColor(MainActivity.currentTheme.primaryTextColor);
 
-        TextView valueText = new TextView(context);
-        valueText.setText(new PieChartValueFormatter().getFormattedValue((float) value));
-        valueText.setTextSize((int) (UI.getDeviceHeight(context) * 0.004));
-        valueText.setTextColor(MainActivity.currentTheme.primaryTextColor);
+//        TextView valueText = new TextView(context);
+//        valueText.setText(new PieChartValueFormatter().getFormattedValue((float) value));
+//        valueText.setTextSize((int) (UI.getDeviceHeight(context) * 0.004));
+//        valueText.setTextColor(MainActivity.currentTheme.primaryTextColor);
 
         legendItem.addView(colorBox);
         legendItem.addView(labelText);
-        legendItem.addView(valueText);
+//        legendItem.addView(valueText);
 
         return legendItem;
     }

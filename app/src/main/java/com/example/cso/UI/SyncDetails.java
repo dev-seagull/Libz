@@ -51,7 +51,7 @@ public class SyncDetails {
     }
 
     public static LinearLayout createSyncDetailsStatisticsLayout(Activity activity){
-        LinearLayout syncDetailsStatisticsLayout = Details.createDetailsLayout(activity);
+        LinearLayout syncDetailsStatisticsLayout = Details.createInnerDetailsLayout(activity,"Sync Details");
         syncDetailsStatisticsLayout.setPadding(0,15,0,15);
 
         syncDetailsStatisticsLayout.setVisibility(View.GONE);

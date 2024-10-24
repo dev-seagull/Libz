@@ -103,14 +103,14 @@ public class AreaSquareChartForAccount {
 
         TextView totalText = new TextView(context);
         totalText.setText("Free: " + formattedTotal);
-        totalText.setTextSize(10f);
+        totalText.setTextSize(11f);
         totalText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
         totalParams.setMargins(30, 0,0,0);
         totalText.setLayoutParams(totalParams);
 
         TextView usedText = new TextView(context);
         usedText.setText("Others: " + formattedUsed);
-        usedText.setTextSize(10f);
+        usedText.setTextSize(11f);
         usedText.getHeight();
         usedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
         usedParams.setMargins(30,0,0,0);
@@ -118,7 +118,7 @@ public class AreaSquareChartForAccount {
 
         TextView syncedText = new TextView(context);
         syncedText.setText("Libz: " + formattedSynced);
-        syncedText.setTextSize(10f);
+        syncedText.setTextSize(11f);
         syncedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
         syncedParams.setMargins(30,0 ,0,0);
         syncedText.setLayoutParams(syncedParams);

@@ -30,13 +30,9 @@ import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.formatter.ValueFormatter;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class SyncDetailsPieChart {
 
@@ -134,28 +130,11 @@ public class SyncDetailsPieChart {
 
     public static void addPieChartToSyncDetailsStatisticsLayout(Activity activity,
                                                                 LinearLayout syncDetailsStatisticsLayout){
-        new Thread(() -> {
-            ImageView[] loadingImage = new ImageView[]{new ImageView(activity)};
-            MainActivity.activity.runOnUiThread(() -> {
-                loadingImage[0].setBackgroundResource(R.drawable.yellow_loading);
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(128,128);
-                params.setMargins(0,64,0,64);
-                loadingImage[0].setLayoutParams(params);
-                syncDetailsStatisticsLayout.addView(loadingImage[0]);
-            });
             activity.runOnUiThread(() -> {
                 HorizontalBarChart stackedBarChart = new HorizontalBarChart(activity);
                 View pieChartView = SyncDetailsPieChart.createStackedBarChart(activity, stackedBarChart);
-                syncDetailsStatisticsLayout.addView(Details.createTitleTextView(activity,"Sync Details"));
                 syncDetailsStatisticsLayout.addView(pieChartView);
-
-//                if(pieChartView instanceof HorizontalBarChart){
-//                    SyncDetailsPieChart.createTextAreaForSyncDetailsPieChart(pieChartView,syncDetailsStatisticsLayout,activity);
-//                }
-
-                syncDetailsStatisticsLayout.removeView(loadingImage[0]);
             });
-        }).start();
     }
 
     public static LinearLayout createStackedBarChart(Context context, HorizontalBarChart stackedBarChart) {
@@ -168,10 +147,9 @@ public class SyncDetailsPieChart {
 
         try {
             int width = (int) (UI.getDeviceWidth(context) * 0.8);
-            int height = (int) (UI.getDeviceWidth(context) * 0.15);
+            int height = (int) (UI.getDeviceHeight(context) * 0.085);
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(width, height);
             stackedBarChart.setLayoutParams(layoutParams);
-
 
             float[] stackedValues = new float[]{(float) synced, (float) unsynced};
 
@@ -204,15 +182,62 @@ public class SyncDetailsPieChart {
 
             layout.addView(stackedBarChart);
 
+            LinearLayout mainLegendLayout = new LinearLayout(context);
+            mainLegendLayout.setOrientation(LinearLayout.VERTICAL);
+            mainLegendLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT)
+            );
             LinearLayout legendLayout = new LinearLayout(context);
-            legendLayout.setOrientation(LinearLayout.VERTICAL);
+            legendLayout.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams legendParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            );
             legendLayout.setGravity(Gravity.CENTER);
+            legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.25),0,(int) (UI.getDeviceWidth(context) * 0.25),0);
+            legendLayout.setLayoutParams(legendParams);
 
-            legendLayout.addView(createLegendItem(context, "UnSynced", colors[0], unsynced));
-            legendLayout.addView(createLegendItem(context, "Synced", colors[1], synced));
+            int parentWidth = (int) UI.getDeviceWidth(context) ;
 
-            layout.addView(legendLayout);
+            Log.d("details", "synced: " + synced);
+            Log.d("details", "UnSynced: " + unsynced);
 
+            View legendItem = createLegendItem(context, "Buzzing along", colors[0], unsynced);
+            legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + (int) (UI.getDeviceWidth(context) * 0.15) + (int) (UI.getDeviceWidth(context) * 0.15);
+
+            Log.d("details", "total width: " + totalWidth);
+            Log.d("details", "parent width: " + parentWidth);
+            legendLayout.addView(legendItem);
+
+            legendItem = createLegendItem(context, "Lagging behind", colors[1], synced);
+            legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + (int) (UI.getDeviceWidth(context) * 0.15) + (int) (UI.getDeviceWidth(context) * 0.15);
+
+            Log.d("details", "total width: " + totalWidth);
+            Log.d("details", "parent width: " + parentWidth);
+            if (totalWidth > parentWidth) {
+                mainLegendLayout.addView(legendLayout);
+                legendLayout = new LinearLayout(context);
+                legendLayout.setOrientation(LinearLayout.HORIZONTAL);
+                legendParams = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+                legendLayout.setGravity(Gravity.CENTER);
+                legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.25),0,(int) (UI.getDeviceWidth(context) * 0.25),0);
+                legendLayout.setLayoutParams(legendParams);
+            }
+
+            legendLayout.addView(legendItem);
+
+            mainLegendLayout.addView(legendLayout);
+            layout.addView(mainLegendLayout);
         } catch (Exception e) {
             LogHandler.crashLog(e, "createStackedBarChart");
             layout.removeAllViews();
@@ -224,28 +249,26 @@ public class SyncDetailsPieChart {
     private static LinearLayout createLegendItem(Context context, String label, int color, double value) {
         LinearLayout legendItem = new LinearLayout(context);
         legendItem.setOrientation(LinearLayout.HORIZONTAL);
+        legendItem.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
         legendItem.setGravity(Gravity.CENTER);
 
         View colorBox = new View(context);
-        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceWidth(context) * 0.02), (int) (UI.getDeviceWidth(context) * 0.02));
-        colorBoxParams.setMargins(10, 0, 10, 0);
+        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceHeight(context) * 0.008), (int) (UI.getDeviceHeight(context) * 0.008));
+        colorBoxParams.setMargins(20, 0, 10, 0);
         colorBox.setLayoutParams(colorBoxParams);
         colorBox.setBackgroundColor(color);
 
         TextView labelText = new TextView(context);
-        labelText.setText(label+" : ");
-        labelText.setTextSize((int) (UI.getDeviceWidth(context) * 0.01));
-        labelText.setTextColor(MainActivity.currentTheme.primaryTextColor);
-
-        TextView valueText = new TextView(context);
-        valueText.setText(new PieChartValueFormatter().getFormattedValue((float) value));
-        valueText.setTextSize((int) (UI.getDeviceWidth(context) * 0.01));
-        valueText.setTextColor(MainActivity.currentTheme.primaryTextColor);
+        labelText.setText(label);
+        int textColor = MainActivity.currentTheme.primaryTextColor;
+        labelText.setTextColor(textColor);
+        labelText.setTextSize((int) (UI.getDeviceHeight(context) * 0.005));
 
         legendItem.addView(colorBox);
         legendItem.addView(labelText);
-        legendItem.addView(valueText);
-
         return legendItem;
     }
 

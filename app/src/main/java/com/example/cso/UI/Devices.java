@@ -388,7 +388,7 @@ public class Devices {
             activity.runOnUiThread(() -> {
                 View chartLayout = AssetsSourcePieChart.createStackedBarChartForDeviceSourceStatus(context, data);
                 layout.addView(chartLayout);
-                AssetsSourcePieChart.createTextAreaForAssetSourceBarChart(chartLayout,layout,context, data);
+                AssetsSourcePieChart.createTextAreaForAssetSourceBarChart(chartLayout,layout,context, data, deviceId);
                 layout.removeView(loadingImage[0]);
             });
         }).start();

@@ -159,7 +159,7 @@ public class CustomTreeMapChart {
     public static LinearLayout createStackedBarChart(Context context, JsonObject jsonData, String deviceId) {
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setGravity(Gravity.CENTER);
+        layout.setGravity(Gravity.CENTER_HORIZONTAL);
         HorizontalBarChart stackedBarChart = new HorizontalBarChart(context);
 
         try {
@@ -269,9 +269,8 @@ public class CustomTreeMapChart {
             legendLayout.setGravity(Gravity.LEFT);
             legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.1),0,(int) (UI.getDeviceWidth(context) * 0.1),0);
             legendLayout.setLayoutParams(legendParams);
-            layout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-            int parentWidth = (int) (UI.getDeviceWidth(context) * 0.80);
+
+            int parentWidth = (int) (UI.getDeviceWidth(context) * 0.80) ;
 
             for (int i = 0; i < syncedLabels.size(); i++) {
                 int color = colors[i % colors.length];
@@ -282,42 +281,46 @@ public class CustomTreeMapChart {
                 legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                         View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
 
-                int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + legendLayout.getPaddingLeft() + legendLayout.getPaddingRight();
+                int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + (int) (UI.getDeviceWidth(context) * 0.1) + (int) (UI.getDeviceWidth(context) * 0.1);
 
                 if (totalWidth > parentWidth) {
                     mainLegendLayout.addView(legendLayout);
                     legendLayout = new LinearLayout(context);
                     legendLayout.setOrientation(LinearLayout.HORIZONTAL);
-                    legendLayout.setGravity(Gravity.CENTER);
-                    legendLayout.setLayoutParams(new LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT)
+                    legendParams = new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
                     );
+                    legendLayout.setGravity(Gravity.LEFT);
+                    legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.1),0,(int) (UI.getDeviceWidth(context) * 0.1),0);
+                    legendLayout.setLayoutParams(legendParams);
                 }
 
                 legendLayout.addView(legendItem);
 
                 if(i + 1 == syncedLabels.size()){
-                    legendItem = createLegendItem(context, "Unsynced", Color.parseColor("#FFD166"), unsynced);
-                    legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-                    legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+//                    for(int j =0 ; j < 13; j++){
+                        legendItem = createLegendItem(context, "Lagging behind", Color.parseColor("#FFD166"), unsynced);
+                        legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                        legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
 
-                    totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + legendLayout.getPaddingLeft() + legendLayout.getPaddingRight();
+                        totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + (int) (UI.getDeviceWidth(context) * 0.1) + (int) (UI.getDeviceWidth(context) * 0.1);
 
-                    if (totalWidth > parentWidth) {
-                        mainLegendLayout.addView(legendLayout);
-                        legendLayout = new LinearLayout(context);
-                        legendLayout.setOrientation(LinearLayout.HORIZONTAL);
-                        legendLayout.setGravity(Gravity.CENTER);
-                        legendLayout.setLayoutParams(new LinearLayout.LayoutParams(
-                                ViewGroup.LayoutParams.WRAP_CONTENT,
-                                ViewGroup.LayoutParams.WRAP_CONTENT)
-                        );
-                    }
+                        if (totalWidth > parentWidth) {
+                            mainLegendLayout.addView(legendLayout);
+                            legendLayout = new LinearLayout(context);
+                            legendLayout.setOrientation(LinearLayout.HORIZONTAL);
+                            legendParams = new LinearLayout.LayoutParams(
+                                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                            );
+                            legendLayout.setGravity(Gravity.LEFT);
+                            legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.1),0,(int) (UI.getDeviceWidth(context) * 0.1),0);
+                            legendLayout.setLayoutParams(legendParams);
+                        }
 
-                    legendLayout.addView(legendItem);
+                        legendLayout.addView(legendItem);
+//                    }
                 }
             }
 
@@ -364,7 +367,7 @@ public class CustomTreeMapChart {
         labelText.setText(label);
         int textColor = MainActivity.currentTheme.primaryTextColor;
         labelText.setTextColor(textColor);
-        labelText.setTextSize((int) (UI.getDeviceHeight(context) * 0.004));
+        labelText.setTextSize((int) (UI.getDeviceHeight(context) * 0.005));
 
         legendItem.addView(colorBox);
         legendItem.addView(labelText);

@@ -114,21 +114,22 @@ public class Theme {
                 new int[] {
                         Color.parseColor("#FFD166"),
                         Color.parseColor("#FF5733"),
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY
+                        Color.parseColor("#858F95"),
+                        Color.parseColor("#858F95"),
+                        Color.parseColor("#858F95"),
+                        Color.parseColor("#858F95"),
+                        Color.parseColor("#858F95"),
+                        Color.parseColor("#858F95")
                 },
                 new int[] {
                         Color.parseColor("#80CBC4"),
                         Color.parseColor("#388E3C"),
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY
+                        Color.parseColor("#858F95"),
+                        Color.parseColor("#858F95"),
+                        Color.parseColor("#858F95"),
+                        Color.parseColor("#858F95"),
+                        Color.parseColor("#858F95"),
+                        Color.parseColor("#858F95")
                 },
                 new int[] {
                         Color.parseColor("#FAB34B"),
@@ -148,8 +149,8 @@ public class Theme {
                 R.drawable.three_dot_white,
                 R.drawable.yellow_loading,
                 new int[] {
-                        Color.parseColor("#FFD166"),
-                        Color.parseColor("#80CBC4")
+                        Color.parseColor("#80CBC4"),
+                        Color.parseColor("#FFD166")
                 }
         );
     }
