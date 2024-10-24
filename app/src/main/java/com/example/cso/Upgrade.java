@@ -107,7 +107,6 @@ public class Upgrade {
     }
 
     public static void upgrade_49_to_50(){
-        DBHelper.deleteFromAndroidTable();
         UI.makeToast("Your Upgraded to last version, 49 to 50");
     }
 

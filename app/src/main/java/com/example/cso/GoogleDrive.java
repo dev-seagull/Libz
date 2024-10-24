@@ -74,7 +74,6 @@ public class GoogleDrive {
                     }
                     if (!result.getFiles().isEmpty()) {
                         for (File file : files) {
-                            System.out.println("mimetype given to isVideo or isimage :" + Media.getMimeType(file.getName()));
                             if (Media.isVideo(Media.getMimeType(file.getName())) ||
                                     Media.isImage(Media.getMimeType(file.getName()))){
                                 DriveAccountInfo.MediaItem mediaItem = new DriveAccountInfo.MediaItem(file.getName(),
@@ -89,7 +88,7 @@ public class GoogleDrive {
                 }while (nextPageToken != null);
 
                 LogHandler.saveLog(mediaItems.size() + " files were found in Google Drive back up account",false);
-                Log.d("GoogleDrive","media Items is not null : " + mediaItems.size() + " files were found in Google Drive");
+                Log.d("GoogleDrive","media Items is not null : " + mediaItems.size() + " files were found in " + userEmail);
                 return mediaItems;
             }catch (Exception e) {
                 LogHandler.saveLog("Error when trying to get files from google drive: " + e.getLocalizedMessage());

@@ -55,7 +55,7 @@ public class BackUp {
                     com.google.api.services.drive.model.File uploadedFile;
                     if(androidFileSize > 10.0){
                         Drive.Files.Create createRequest = service.files().create(fileMetadata, mediaContent)
-                                .setFields("id");
+                                .setFields("id, name");
                         MediaHttpUploader uploader = createRequest.getMediaHttpUploader();
                         uploader.setChunkSize(MediaHttpUploader.MINIMUM_CHUNK_SIZE);
 
@@ -63,7 +63,7 @@ public class BackUp {
                         Log.d("service", "Uploaded File ID: " + uploadedFile.getId());
                     }else{
                         uploadedFile = service.files().create(fileMetadata, mediaContent)
-                                .setFields("id")
+                                .setFields("id, name")
                                 .execute();
                     }
 
@@ -74,8 +74,10 @@ public class BackUp {
                         if (isUploadHashEqual(fileHash, uploadFileId, driveBackupAccessToken)) {
                             Log.d("service", "Uploading file " + fileName + " to " +driveEmailAccount +" finished : " + uploadFileId);
                             isUploadValid[0] = true;
-                            DBHelper.insertTransactionsData(String.valueOf(fileId), fileName,
-                                    driveEmailAccount, assetId, "sync", fileHash);
+                            try{
+                                DBHelper.insertTransactionsData(String.valueOf(fileId), fileName,
+                                        driveEmailAccount, assetId, "sync", fileHash);
+                            }catch (Exception e) { }
                         }else{
                             LogHandler.crashLog(new Exception("Failed to detect same file hash: " + fileName + " " + fileHash), "backup");
                         }
@@ -93,33 +95,6 @@ public class BackUp {
         Log.d("Threads","backupAndroidToDriveThread finished");
         return isUploadValid[0];
     }
-
-    private static class FileUploadProgressListener implements MediaHttpUploaderProgressListener {
-        @Override
-        public void progressChanged(MediaHttpUploader uploader) {
-            try{
-                switch (uploader.getUploadState()) {
-                    case INITIATION_STARTED:
-                        LogHandler.saveLog("Initiation Started", false);
-                        break;
-                    case INITIATION_COMPLETE:
-                        LogHandler.saveLog("Initiation Completed", false);
-                        break;
-                    case MEDIA_IN_PROGRESS:
-                        LogHandler.saveLog("Upload in progress", false);
-                        break;
-                    case MEDIA_COMPLETE:
-                        LogHandler.saveLog("Upload Completed", false);
-                        break;
-                    default:
-                        break;
-                }
-            }catch (Exception e){
-                LogHandler.saveLog("Failed in http progress listener: " + e.getLocalizedMessage(), true);
-            }
-        }
-    }
-
     private static FileContent handleMediaFileContent(String mimeTypeToUpload, java.io.File androidFile, String fileName) {
         FileContent mediaContent = null;
         try {

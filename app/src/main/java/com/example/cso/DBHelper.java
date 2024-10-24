@@ -450,6 +450,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 Object[] values = new Object[]{assetId,fileId,fileName,userEmail,fileHash};
                 dbWritable.execSQL(sqlQuery, values);
                 dbWritable.setTransactionSuccessful();
+                Log.d("drive","inserted : " + fileName);
             }catch (Exception e){
                 LogHandler.saveLog("Failed to save into the database" +
                         " in insertIntoDriveTable method. "+e.getLocalizedMessage());
@@ -1136,17 +1137,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
 
                 File androidFile = new File(filePath);
-                boolean isHashChanged = false;
-                try{
-                    String hashForRecheck = Hash.calculateHash(androidFile);
-                    if (!hashForRecheck.equals(fileHash)){
-                        isHashChanged = true;
-                    }
-                }catch (Exception e){
-                    isHashChanged = true;
-                }
-
-                if ((!androidFile.exists() && device.equals(MainActivity.androidUniqueDeviceIdentifier)) || isHashChanged){
+                if ((!androidFile.exists() && device.equals(MainActivity.androidUniqueDeviceIdentifier))){
                     deleteFromAndroidTable(filePath, assetId);
                     insertTransactionsData(filePath,fileName,device,assetId,"deletedInDevice",fileHash);
 

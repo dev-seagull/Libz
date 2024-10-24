@@ -84,7 +84,7 @@
             UI.initAppUI(activity);
             NavigationView navigationView = findViewById(R.id.navigationView);
             navigationView.setNavigationItemSelectedListener(this);
-//            DBHelper.printDriveTable();
+            GoogleDrive.startThreads();
 
 //            boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);
 //            if(isFirstTime){
@@ -326,6 +326,7 @@
                                 long currentTime = System.currentTimeMillis();
                                 if(currentTime - GoogleDrive.lastThreadTime  > GoogleDrive.ThreadInterval){
                                     new Thread(() -> {
+                                        GoogleDrive.lastThreadTime = currentTime;
                                         GoogleDrive.startThreads();
                                     }).start();
                                 }

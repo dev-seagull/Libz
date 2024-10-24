@@ -242,6 +242,12 @@ public class Sync {
 //                SyncDetails.setSyncStatusDetailsTextView(activity, false);
                 isBackedUp[0] = BackUp.backupAndroidToDrive(fileId,fileName, filePath,fileHash,mimeType,assetId,
                         accessToken,userEmail,syncedAssetsFolderId);
+                if(isBackedUp[0]){
+//                    Long last_insertId = DBHelper.insertAssetData(fileHash);
+//                    if (last_insertId != -1) {
+//                        DBHelper.insertIntoDriveTable(Long.valueOf(assetId), String.valueOf(fileId),fileName,fileHash,userEmail);
+//                    }
+                }
                 MainActivity.syncDetailsStatus = "";
             });
 

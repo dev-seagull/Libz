@@ -9,14 +9,14 @@ public class Media {
         ArrayList<String> imageExtensions = new ArrayList<>(
                 Arrays.asList("jpeg", "jpg", "png", "gif", "bmp", "webp")
         );
-        return imageExtensions.contains(mimeType);
+        return imageExtensions.contains(mimeType.toLowerCase());
     }
 
     public static boolean isVideo(String mimeType) {
         ArrayList<String> videoExtensions = new ArrayList<>(
                 Arrays.asList("mkv", "mp4", "mov", "avi")
         );
-        return videoExtensions.contains(mimeType);
+        return videoExtensions.contains(mimeType.toLowerCase());
     }
 
     private static String getExtensionFromMimeType(String mimeType) {
