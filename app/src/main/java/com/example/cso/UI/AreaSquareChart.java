@@ -47,7 +47,7 @@ public class AreaSquareChart {
             createStackedSquares(context,synced,media,used, stackedSquaresLayout);
             drawGridLines(stackedSquaresLayout, context);
             layoutParams.gravity = Gravity.LEFT;
-            layoutParams.setMargins(5, 30, 0, 30);
+            layoutParams.setMargins(5, 50, 0, 50);
             layout.addView(stackedSquaresLayout);
 
             String updateDate = DeviceStatusSync.getDeviceStatusLastUpdateTime(deviceId);
@@ -317,13 +317,13 @@ public class AreaSquareChart {
         return layout;
     }
 
-    private static LinearLayout createUpdateDateLabel(Context context, String updateDate){
+    public static LinearLayout createUpdateDateLabel(Context context, String updateDate){
         LinearLayout layout = new LinearLayout(context);
 
         TextView totalText = new TextView(context);
-        totalText.setText("As of: " + updateDate);
+        totalText.setText(updateDate);
         totalText.setTextSize(10f);
-        totalText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
+        totalText.setTextColor(MainActivity.currentTheme.primaryTextColor);
 
         layout.addView(totalText);
         return layout;

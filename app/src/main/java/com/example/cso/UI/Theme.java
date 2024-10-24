@@ -122,7 +122,7 @@ public class Theme {
                         Color.GRAY
                 },
                 new int[] {
-                        Color.parseColor("#81C784"),
+                        Color.parseColor("#80CBC4"),
                         Color.parseColor("#388E3C"),
                         Color.GRAY,
                         Color.GRAY,

@@ -201,7 +201,7 @@ public class Details {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        titleParams.gravity = Gravity.RIGHT | Gravity.TOP;
+        titleParams.gravity = Gravity.TOP;
         title.setLayoutParams(titleParams);
         title.setText(text);
         title.setContentDescription("title");

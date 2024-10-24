@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.example.cso.DeviceStatusSync;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.github.mikephil.charting.charts.HorizontalBarChart;
@@ -155,7 +156,7 @@ public class CustomTreeMapChart {
 //        return layout;
 //    }
 
-    public static LinearLayout createStackedBarChart(Context context, JsonObject jsonData) {
+    public static LinearLayout createStackedBarChart(Context context, JsonObject jsonData, String deviceId) {
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
@@ -163,10 +164,11 @@ public class CustomTreeMapChart {
 
         try {
             int width = (int) (UI.getDeviceWidth(context) * 0.8);
-            int height = (int) (UI.getDeviceHeight(context) * 0.06);
+            int height = (int) (UI.getDeviceHeight(context) * 0.085);
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(width, height);
             stackedBarChart.setLayoutParams(layoutParams);
 
+            double total = 0.0;
             double unsynced = 0.0;
             if (jsonData.has("UnSynced")) {
                 unsynced = jsonData.get("UnSynced").getAsDouble();
@@ -181,6 +183,7 @@ public class CustomTreeMapChart {
                 if (!entry.getKey().equals("UnSynced")) {
                     double size = entry.getValue().getAsDouble();
                     if(size != 0.0){
+                        total = total + size;
                         syncedValues.add(size);
                         syncedLabels.add(entry.getKey());
                     }
@@ -202,6 +205,18 @@ public class CustomTreeMapChart {
             }
             stackedValues[syncedValues.size()] = (float) unsynced; // Unsynced goes at the end
 
+            boolean isAllZero = true;
+            for (float stackedValue: stackedValues){
+                if(stackedValue != 0){
+                    isAllZero = false;
+                    break;
+                }
+            }
+            if(isAllZero){
+                layout.addView(Details.getErrorAsChartAlternative(context));
+                return layout;
+            }
+
             List<BarEntry> entries = new ArrayList<>();
             entries.add(new BarEntry(0f, stackedValues));
 
@@ -212,13 +227,16 @@ public class CustomTreeMapChart {
 
             BarDataSet dataSet = new BarDataSet(entries, "Storage Usage");
             dataSet.setColors(colors);
-            
+            dataSet.setDrawValues(false);
+//            dataSet.setValueFormatter(new BarChartValueFormatter((float) total));
+
             String[] stackLabels = new String[syncedValues.size() + 1];
             for (int i = 0; i < syncedLabels.size(); i++) {
                 stackLabels[i] = syncedLabels.get(i);
             }
             stackLabels[syncedLabels.size()] = "Unsynced";
             dataSet.setStackLabels(stackLabels);
+
 
             BarData barData = new BarData(dataSet);
             stackedBarChart.setData(barData);
@@ -234,24 +252,90 @@ public class CustomTreeMapChart {
             stackedBarChart.getAxisRight().setEnabled(false);
             leftAxis.setDrawLabels(false);
             leftAxis.setDrawAxisLine(false);
-            dataSet.setDrawValues(false);
 
             layout.addView(stackedBarChart);
 
+            LinearLayout mainLegendLayout = new LinearLayout(context);
+            mainLegendLayout.setOrientation(LinearLayout.VERTICAL);
+            mainLegendLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT)
+            );
             LinearLayout legendLayout = new LinearLayout(context);
-            legendLayout.setOrientation(LinearLayout.VERTICAL);
-            legendLayout.setGravity(Gravity.CENTER);
+            legendLayout.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams legendParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+            legendLayout.setGravity(Gravity.LEFT);
+            legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.1),0,(int) (UI.getDeviceWidth(context) * 0.1),0);
+            legendLayout.setLayoutParams(legendParams);
+            layout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            int parentWidth = (int) (UI.getDeviceWidth(context) * 0.80);
 
             for (int i = 0; i < syncedLabels.size(); i++) {
                 int color = colors[i % colors.length];
-                legendLayout.addView(createLegendItem(context, syncedLabels.get(i), color, syncedValues.get(i)));
+                View legendItem = createLegendItem(context, syncedLabels.get(i), color, syncedValues.get(i));
+
+                legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+
+                int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + legendLayout.getPaddingLeft() + legendLayout.getPaddingRight();
+
+                if (totalWidth > parentWidth) {
+                    mainLegendLayout.addView(legendLayout);
+                    legendLayout = new LinearLayout(context);
+                    legendLayout.setOrientation(LinearLayout.HORIZONTAL);
+                    legendLayout.setGravity(Gravity.CENTER);
+                    legendLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT)
+                    );
+                }
+
+                legendLayout.addView(legendItem);
+
                 if(i + 1 == syncedLabels.size()){
-                    color = colors[(i+1) % colors.length];
-                    legendLayout.addView(createLegendItem(context, "Unsynced", Color.parseColor("#FAB34B"), unsynced));
+                    legendItem = createLegendItem(context, "Unsynced", Color.parseColor("#FFD166"), unsynced);
+                    legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                    legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+
+                    totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + legendLayout.getPaddingLeft() + legendLayout.getPaddingRight();
+
+                    if (totalWidth > parentWidth) {
+                        mainLegendLayout.addView(legendLayout);
+                        legendLayout = new LinearLayout(context);
+                        legendLayout.setOrientation(LinearLayout.HORIZONTAL);
+                        legendLayout.setGravity(Gravity.CENTER);
+                        legendLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                                ViewGroup.LayoutParams.WRAP_CONTENT,
+                                ViewGroup.LayoutParams.WRAP_CONTENT)
+                        );
+                    }
+
+                    legendLayout.addView(legendItem);
                 }
             }
 
-            layout.addView(legendLayout);
+            if (legendLayout.getChildCount() > 0) {
+                mainLegendLayout.addView(legendLayout);
+            }
+
+            String updateDate = DeviceStatusSync.getDeviceStatusLastUpdateTime(deviceId);
+            LinearLayout updateDateLabelsLayout = AreaSquareChart.createUpdateDateLabel(context, updateDate);
+            LinearLayout.LayoutParams updateDateLabelsParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            updateDateLabelsParams.setMargins((int) ((UI.getDeviceWidth(context) * 0.10) + 20),30,(int) (UI.getDeviceWidth(context) * 0.1),0);
+            updateDateLabelsLayout.setLayoutParams(updateDateLabelsParams);
+            mainLegendLayout.addView(updateDateLabelsLayout);
+
+            layout.addView(mainLegendLayout);
 
         } catch (Exception e) {
             LogHandler.crashLog(e, "createStackedBarChart");
@@ -264,28 +348,27 @@ public class CustomTreeMapChart {
     public static LinearLayout createLegendItem(Context context, String label, int color, double value) {
         LinearLayout legendItem = new LinearLayout(context);
         legendItem.setOrientation(LinearLayout.HORIZONTAL);
-        legendItem.setGravity(Gravity.CENTER);
+        legendItem.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        legendItem.setGravity(Gravity.LEFT);
 
         View colorBox = new View(context);
         LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceHeight(context) * 0.008), (int) (UI.getDeviceHeight(context) * 0.008));
-        colorBoxParams.setMargins(10, 0, 10, 0);
+        colorBoxParams.setMargins(20, 10, 10, 0);
         colorBox.setLayoutParams(colorBoxParams);
         colorBox.setBackgroundColor(color);
 
         TextView labelText = new TextView(context);
-        labelText.setText(label+" : ");
+        labelText.setText(label);
         int textColor = MainActivity.currentTheme.primaryTextColor;
         labelText.setTextColor(textColor);
         labelText.setTextSize((int) (UI.getDeviceHeight(context) * 0.004));
 
-        TextView valueText = new TextView(context);
-        valueText.setText(new PieChartValueFormatter().getFormattedValue((float) value));
-        valueText.setTextColor(textColor);
-        valueText.setTextSize((int) (UI.getDeviceHeight(context) * 0.004));
-
         legendItem.addView(colorBox);
         legendItem.addView(labelText);
-        legendItem.addView(valueText);
+//        legendItem.addView(valueText);
 
         return legendItem;
     }

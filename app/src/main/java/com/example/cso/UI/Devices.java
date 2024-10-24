@@ -342,7 +342,7 @@ public class Devices {
             JsonObject data = getSyncedAssetsLocationStatus(deviceId);
             Log.d(DeviceStatusSync.TAG, "assets of "+deviceId+" location data : " + data);
             MainActivity.activity.runOnUiThread(() -> {
-                LinearLayout treeMapChartLayout = CustomTreeMapChart.createStackedBarChart(context, data);
+                LinearLayout treeMapChartLayout = CustomTreeMapChart.createStackedBarChart(context, data, deviceId);
                 layout.addView(treeMapChartLayout);
                 layout.removeView(loadingImage[0]);
             });
@@ -372,7 +372,7 @@ public class Devices {
     }
 
     public static LinearLayout createChartForSourceStatus(Context context, String deviceId){
-        LinearLayout layout = Details.createInnerDetailsLayout(context, "Local Files");
+        LinearLayout layout = Details.createInnerDetailsLayout(context, "Files");
         new Thread(() -> {
             ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
             activity.runOnUiThread(() -> {
