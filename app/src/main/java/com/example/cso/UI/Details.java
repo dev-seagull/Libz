@@ -233,7 +233,7 @@ public class Details {
         return title;
     }
 
-    public static void addUpdateTimeTextView(Context context, LinearLayout layout, String deviceId){
+    public static void addUpdateTimeTextView(LinearLayout layout, String deviceId){
         String updateTime = DeviceStatusSync.getDeviceStatusLastUpdateTime(deviceId);
         int childCount = layout.getChildCount();
         for (int i = 0; i < childCount; i++){

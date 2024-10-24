@@ -75,7 +75,6 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
                 newPage = Devices.createChartForSourceStatus(context, buttonId);
                 Log.d("viewPager", "SourceStatus = page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
             }
-            Details.addUpdateTimeTextView(context,newPage,buttonId);
         }
         holder.currentPage.addView(newPage);
     }

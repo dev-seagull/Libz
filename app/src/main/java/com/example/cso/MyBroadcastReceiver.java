@@ -15,8 +15,6 @@ import java.util.Locale;
 
 public class MyBroadcastReceiver extends BroadcastReceiver {
 
-    public static long syncStatusCheckTimeInterval = (20 * 60 * 1000);
-
     @Override
     public void onReceive(Context context, Intent intent){
         int requestCode = intent.getIntExtra("requestCode", 0);

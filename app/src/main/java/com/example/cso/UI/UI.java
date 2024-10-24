@@ -149,65 +149,8 @@ public class UI{
         try{
             UI.makeToast("you're deActivated, Call support");
             MainActivity.activity.finish();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.crashLog(e,"deactivate"); }
     }
-
-//    public static void pieChartHandler(){
-//        if(uiHelper.pieChart.getVisibility() == View.VISIBLE){
-//            UIHandler.configurePieChartData();
-//            uiHelper.pieChart.invalidate();
-//            if(uiHelper.directoryUsages.getVisibility() == View.VISIBLE){
-//                UIHandler.displayDirectoryUsage();
-//            }
-//        }
-//    }
-//
-//    public static void displayDirectoryUsage() {
-//        directoryUsages.setVisibility(View.VISIBLE);
-//        HashMap<String, String> dirHashMap = StorageHandler.directoryUIDisplay();
-//        StringBuilder usageText = new StringBuilder();
-//
-//        for (Map.Entry<String, String> entry : dirHashMap.entrySet()) {
-//            usageText.append(String.format("%-10s: %s GB\n", entry.getKey(), entry.getValue()));
-//        }
-//        directoryUsages.setText(usageText.toString());
-//        directoryUsages.setTextColor(Color.parseColor("#212121"));
-//    }
-//
-//
-//    public static void configurePieChartData(PieChart pieChart) {
-//        StorageHandler storageHandler = new StorageHandler();
-//
-//        double freeSpace = storageHandler.getFreeSpace();
-//        double totalStorage = storageHandler.getTotalStorage();
-//        double mediaStorage = Double.parseDouble(MainActivity.dbHelper.getPhotosAndVideosStorage());
-//        double usedSpaceExcludingMedia = totalStorage - freeSpace - mediaStorage;
-//
-//        ArrayList<PieEntry> entries = new ArrayList<>();
-//        entries.add(new PieEntry((float) freeSpace, "Free Space(GB)"));
-//        entries.add(new PieEntry((float) mediaStorage, "Media(GB)"));
-//        entries.add(new PieEntry((float) usedSpaceExcludingMedia, "Others(GB)"));
-//
-//        PieDataSet dataSet = new PieDataSet(entries, null);
-//        int[] colors = {
-//                Color.parseColor("#1E88E5"),
-//                Color.parseColor("#64B5F6"),
-//                Color.parseColor("#B3E5FC")
-//        };
-//        dataSet.setColors(colors);
-//        dataSet.setValueTextColor(Color.parseColor("#212121"));
-//        dataSet.setValueTextSize(14f);
-//
-//        PieData data = new PieData(dataSet);
-//        pieChart.setData(data);
-//        pieChart.getDescription().setEnabled(false);
-//        pieChart.setDrawEntryLabels(true);
-//        pieChart.setDrawHoleEnabled(true);
-//        pieChart.setDrawHoleEnabled(false);
-//    }
-
-
-    //---------------------------------- //---------------------------------- //---------------------------------- //----------------------------------
 
     public static int dpToPx(float dp) {
         try{
@@ -248,7 +191,6 @@ public class UI{
                 TypedValue.COMPLEX_UNIT_DIP, 2, context.getResources().getDisplayMetrics());
         drawable.setStroke(strokeWidth, Color.BLACK);
 
-        // Set the corner radius
         float cornerRadius = TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, 8, context.getResources().getDisplayMetrics());
         drawable.setCornerRadius(cornerRadius);

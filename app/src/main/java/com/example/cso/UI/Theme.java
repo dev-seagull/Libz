@@ -107,7 +107,7 @@ public class Theme {
                 },
                 new int[] {
                     Color.parseColor("#B0BEC5"), //free
-                    Color.parseColor("#9CA8AE"), // others
+                    Color.parseColor("#858F95"), // others
                     Color.parseColor("#FFD166"), //lagging behind
                     Color.parseColor("#80CBC4") // buzzing along
                 },

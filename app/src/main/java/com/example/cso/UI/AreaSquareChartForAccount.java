@@ -13,8 +13,12 @@ import android.widget.TextView;
 import com.example.cso.DBHelper;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
+import com.google.gson.JsonObject;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class AreaSquareChartForAccount {
     public static View createStorageChart(Context context, String userEmail) {
@@ -26,6 +30,7 @@ public class AreaSquareChartForAccount {
             synced = DBHelper.getSizeOfSyncedAssetsFromAccount(userEmail);
             String[] columns = new String[] {"totalStorage","usedStorage","userEmail","type"};
             List<String[]> account_rows = DBHelper.getAccounts(columns);
+
             for (String[] account : account_rows){
                 if (account[2].equals(userEmail) && account[3].equals("backup")){
                     total = Double.parseDouble(account[0]);
@@ -35,12 +40,12 @@ public class AreaSquareChartForAccount {
             }
 
             layout.setOrientation(LinearLayout.HORIZONTAL);
-            layout.setGravity(Gravity.CENTER);
+            layout.setGravity(Gravity.LEFT);
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
             );
-            layoutParams.setMargins(10, 30, 10, 30);
+            layoutParams.setMargins(100, 30, 0, 30);
             layout.setLayoutParams(layoutParams);
 
             RelativeLayout stackedSquaresLayout = new RelativeLayout(context);
@@ -55,6 +60,8 @@ public class AreaSquareChartForAccount {
 
             layout.addView(stackedSquaresLayout);
             LinearLayout labelsLayout = createLabels(context,total, used, synced);
+            layout.setGravity(Gravity.BOTTOM);
+            layout.setPadding(10,0,0,50);
             layout.addView(labelsLayout);
             
         }catch (Exception e){
