@@ -29,43 +29,40 @@ public class SyncButton {
     public static int syncButtonsParentLayoutId;
     public static void initializeSyncButton(Activity activity){
         SwitchMaterial syncButton = activity.findViewById(syncButtonId);
-//        ImageView rotateSyncButton = activity.findViewById(rotateSyncButtonId);
-
-//        rotateSyncButton.setOnClickListener(view -> {
-//            handleRotateSyncButtonClick(activity);
-//        });
-
         boolean syncState = SharedPreferencesHandler.getSyncSwitchState();
         boolean isServiceRunning = TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on");
 
+        Log.d("syncstat", String.valueOf(syncState));
+        Log.d("syncstat", String.valueOf(isServiceRunning));
         if(!(syncState && isServiceRunning)){
             if(!syncState && isServiceRunning){
                 Sync.stopSync(activity);
+                WifiOnlyButton.updateSyncAndWifiButtonBackground(syncButton,false);
             }
             if(syncState && !isServiceRunning){
                 SharedPreferencesHandler.setSwitchState("syncSwitchState",false, MainActivity.preferences);
-                syncState = false;
+                WifiOnlyButton.updateSyncAndWifiButtonBackground(syncButton,false);
             }
-
+        }else{
+            WifiOnlyButton.updateSyncAndWifiButtonBackground(syncButton,true);
         }
-        WifiOnlyButton.updateSyncAndWifiButtonBackground(syncButton,syncState);
 
         syncButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            handleSyncButtonClick(activity);
+            boolean changeState = SyncButton.setSyncState(!SharedPreferencesHandler.getSyncSwitchState());
+            handleSyncButtonClick(activity, changeState);
         });
     }
 
-    public static void handleSyncButtonClick(Activity activity){
+    public static void handleSyncButtonClick(Activity activity, boolean state){
         try{
             Vibrator vibrator = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && vibrator.hasVibrator()) {
                 vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE));
             }
-            boolean currentSyncState = toggleSyncState();
-            Log.d("ui","Sync state after button click: " + currentSyncState);
+            Log.d("ui","Sync state after button click: " + state);
             SwitchMaterial syncButton = activity.findViewById(syncButtonId);
-            WifiOnlyButton.updateSyncAndWifiButtonBackground(syncButton,currentSyncState);
-            if(currentSyncState){
+            WifiOnlyButton.updateSyncAndWifiButtonBackground(syncButton,state);
+            if(state){
                 Sync.startSync(activity);
             }else{
                 Sync.stopSync(activity);
@@ -90,11 +87,10 @@ public class SyncButton {
 //        }
 //    }
 
-    public static boolean toggleSyncState() {
+    public static boolean setSyncState(boolean state) {
         try{
-            boolean state = SharedPreferencesHandler.getSyncSwitchState();
-            SharedPreferencesHandler.setSwitchState("syncSwitchState",!state,MainActivity.preferences);
-            return !state;
+            SharedPreferencesHandler.setSwitchState("syncSwitchState",state,MainActivity.preferences);
+            return state;
         }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
         return false;
     }

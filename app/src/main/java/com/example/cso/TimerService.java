@@ -59,9 +59,9 @@ public class TimerService extends Service {
             if(isAppInForeground()){
                 SwitchMaterial syncSwitch = MainActivity.activity.findViewById(SyncButton.syncButtonId);
                 WifiOnlyButton.updateSyncAndWifiButtonBackground(syncSwitch,false);
-//                SyncButton.handleRotateSyncButtonClick(MainActivity.activity);
+                SyncButton.setSyncState(false);
             }else{
-                SyncButton.toggleSyncState();
+                SyncButton.setSyncState(false);
             }
 
             stopForeground(true);
