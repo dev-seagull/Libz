@@ -9,6 +9,7 @@ import android.util.Log;
 import com.example.cso.UI.UI;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -152,27 +153,38 @@ public class Sync {
                 if (!DBHelper.androidFileExistsInDrive(assetId, fileHash)){
                     Log.d("file","file was not in drive : "  + fileName);
                     if(currentDriveFreeSpace > Double.parseDouble(fileSize) + 10) {
-                        Log.d("file","has enough space to upload to drive : "  + fileName);
-                        String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
-                        boolean isBackedUp = uploadAndroidToDrive(androidRow, userEmail, accessToken, syncedAssetsFolderId);
-                        if (isBackedUp) {
-                            Log.d("file","backed up : "  + fileName);
-                            Log.d("service" ,fileName + " is backedup");
-                            GoogleDrive.startUpdateDriveFilesThread();
-                            currentDriveFreeSpace -= Double.parseDouble(fileSize);
+                        File file = new File(filePath);
+                        if(Hash.calculateHash(file).equals(fileHash)){
+                            Log.d("file","has enough space to upload to drive : "  + fileName);
+                            String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
+                            boolean isBackedUp = uploadAndroidToDrive(androidRow, userEmail, accessToken, syncedAssetsFolderId);
+                            if (isBackedUp) {
+                                Log.d("file","backed up : "  + fileName);
+                                Log.d("service" ,fileName + " is backedup");
+                                GoogleDrive.startUpdateDriveFilesThread();
+                                currentDriveFreeSpace -= Double.parseDouble(fileSize);
 
-                            if(amountToFreeUp > 0){
-                                Log.d("file","should delete after backup : "  + fileName);
-                                GoogleDrive.deleteRedundantDriveFilesFromAccount(userEmail);
-                                if (DBHelper.androidFileExistsInDrive(assetId, fileHash)) {
-                                    boolean isDeleted = Android.deleteAndroidFile(device,filePath, String.valueOf(assetId)
-                                            , fileHash, fileSize, fileName, activity);
-                                    if (isDeleted) {
-                                        amountToFreeUp -= Double.parseDouble(fileSize);
-                                        Log.d("file","deleted after backup : "  + fileName);
-                                        Log.d("service" ,fileName + " is deleted");
+                                if(amountToFreeUp > 0){
+                                    Log.d("file","should delete after backup : "  + fileName);
+                                    GoogleDrive.deleteRedundantDriveFilesFromAccount(userEmail);
+                                    if (DBHelper.androidFileExistsInDrive(assetId, fileHash)) {
+                                        boolean isDeleted = Android.deleteAndroidFile(device,filePath, String.valueOf(assetId)
+                                                , fileHash, fileSize, fileName, activity);
+                                        if (isDeleted) {
+                                            amountToFreeUp -= Double.parseDouble(fileSize);
+                                            Log.d("file","deleted after backup : "  + fileName);
+                                            Log.d("service" ,fileName + " is deleted");
+                                        }
                                     }
                                 }
+                            }
+                        }else{
+                            boolean isDeleted = Android.deleteAndroidFile(device,filePath, String.valueOf(assetId)
+                                    , fileHash, fileSize, fileName, activity);
+                            if (isDeleted) {
+                                amountToFreeUp -= Double.parseDouble(fileSize);
+                                Log.d("file","deleted after backup : "  + fileName);
+                                Log.d("service" ,fileName + " is deleted");
                             }
                         }
                     }

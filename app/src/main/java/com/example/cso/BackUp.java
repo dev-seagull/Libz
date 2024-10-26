@@ -100,6 +100,7 @@ public class BackUp {
         try {
             if (androidFile.exists()) {
                 String lowerMimeType = mimeTypeToUpload.toLowerCase();
+                Log.d("AreaSquareChart","media is image: "  + Media.isImage(lowerMimeType) + " " + fileName );
                 if (Media.isImage(lowerMimeType)) {
                     if (lowerMimeType.equals("jpg") || lowerMimeType.equals("jpeg")) {
                         mediaContent = new FileContent("image/jpeg", androidFile);

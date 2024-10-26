@@ -1976,8 +1976,9 @@ public class DBHelper extends SQLiteOpenHelper {
         double totalSize = 0.0;
         String query = "SELECT SUM(a.fileSize) AS totalSize " +
                 "FROM ANDROID a " +
-                "INNER JOIN DRIVE d ON a.assetId = d.assetId " +
+                "INNER JOIN (SELECT DISTINCT assetId FROM DRIVE) d ON a.assetId = d.assetId " +
                 "WHERE a.device = ?";
+
 
         Cursor cursor = null;
         try {
