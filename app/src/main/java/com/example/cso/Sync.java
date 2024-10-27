@@ -179,13 +179,9 @@ public class Sync {
                                 }
                             }
                         }else{
-                            boolean isDeleted = Android.deleteAndroidFile(device,filePath, String.valueOf(assetId)
-                                    , fileHash, fileSize, fileName, activity);
-                            if (isDeleted) {
-                                amountToFreeUp -= Double.parseDouble(fileSize);
-                                Log.d("file","deleted after backup : "  + fileName);
-                                Log.d("service" ,fileName + " is deleted");
-                            }
+                            DBHelper.deleteFromAndroidTable(String.valueOf(assetId), fileSize, filePath, fileName, fileHash);
+                            Log.d("file","deleted unknown file : "  + fileName);
+                            Log.d("service" ,fileName + " is deleted (unknown file)");
                         }
                     }
                 }else {

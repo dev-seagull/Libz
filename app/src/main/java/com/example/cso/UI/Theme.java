@@ -172,25 +172,32 @@ public class Theme {
                         Color.parseColor("#455A64")
                 },
                 new int[]{
-                        Color.parseColor("#009688"),
-                        Color.parseColor("#00BFAE"),
-                        Color.parseColor("#1DE9B6"),
-                        Color.parseColor("#A7FFEB")
+                        Color.parseColor("#CFD8DC"), // Device storage chart colors (gray)
+                        Color.parseColor("#B0BEC5"),
+                        Color.parseColor("#FFCA28"),
+                        Color.parseColor("#80CBC4")
                 },
                 new int[]{
-                        Color.parseColor("#BB86FC"), // Light Purple
-                        Color.parseColor("#03DAC6"), // Teal
-                        Color.parseColor("#FFAB40"), // Amber
-                        Color.parseColor("#FF5252"), // Red
-                        Color.parseColor("#FF4081"), // Pink
-                        Color.parseColor("#64FFDA"), // Aqua
-                        Color.parseColor("#FFEA00"), // Bright Yellow
-                        Color.parseColor("#00E676")  // Green
+                        Color.parseColor("#FFD166"),
+                        Color.parseColor("#FF5733"),
+                        Color.parseColor("#90A4AE"),
+                        Color.parseColor("#90A4AE"),
+                        Color.parseColor("#90A4AE"),
+                        Color.parseColor("#90A4AE"),
+                        Color.parseColor("#90A4AE"),
+                        Color.parseColor("#90A4AE")
                 },
                 new int[]{
-                        Color.parseColor("#212121"), // Device assets synced status chart colors
-                        Color.parseColor("#424242"),
-                        Color.parseColor("#757575")
+                        Color.parseColor("#80CBC4"), // Device assets synced status chart colors
+                        Color.parseColor("#53817D"),
+                        Color.WHITE,
+                        Color.WHITE,
+                        Color.WHITE,
+                        Color.WHITE,
+                        Color.WHITE,
+                        Color.WHITE,
+                        Color.WHITE,
+                        Color.WHITE
                 },
                 new int[]{
                         Color.parseColor("#1E88E5"), // Account storage data chart colors (blue for contrast)
@@ -198,20 +205,20 @@ public class Theme {
                 },
                 Color.BLACK, // Menu text color (light gray)
                 Color.WHITE, // Primary text color (white)
-                Color.parseColor("#388E3C"), // onSyncButtonGradientStart (for sync progress)
-                Color.parseColor("#80CBC4"), // onSyncButtonGradientEnd (for sync progress)
-                Color.parseColor("#90A4AE"), // Off sync button gradient start (gray)
+                Color.parseColor("#5A7B7D"), // onSyncButtonGradientStart (for sync progress)
+                Color.parseColor("#5A7B7D"), // onSyncButtonGradientEnd (for sync progress)
+                Color.parseColor("#455A64"), // Off sync button gradient start (gray)
                 Color.parseColor("#B0BEC5"), // Off sync button gradient end (lighter gray)
                 Color.parseColor("#00E5FF"), // syncProgressTextColor
                 Color.parseColor("#FF5722"), // Warning text color (orange)
-                Color.parseColor("#333333"), // Toolbar background (dark)
+                Color.parseColor("#455A64"), // Toolbar background (dark)
                 Color.parseColor("#FFFFFF"), // Toolbar elements (white)
                 R.drawable.white_device, // Device icon
                 R.drawable.three_dot_white,
                 R.drawable.yellow_loading,
                 new int[]{
-                        Color.parseColor("#388E3C"), //synced color for details chart
-                        Color.parseColor("#80CBC4"), //unsynced color for details chart
+                        Color.parseColor("#80CBC4"),
+                        Color.parseColor("#FFCA28") //unsynced color for details chart
                 }
         );
     }
@@ -221,32 +228,44 @@ public class Theme {
                 "teal",
                 Color.parseColor("#E0F7FA"), // Primary background color (light cyan)
                 new int[]{
-                        Color.parseColor("#26A69A"), // Device button colors (vibrant teal)
-                        Color.parseColor("#00897B")  // Slightly darker teal for contrast
+                        Color.parseColor("#00897B"), // Device button colors (vibrant teal)
+                        Color.parseColor("#04A692")  // Slightly darker teal for contrast
                 },
                 new int[]{
                         Color.parseColor("#00897B"), // Account button colors (dark teal)
-                        Color.parseColor("#00695C")  // Darker teal for stronger contrast
+                        Color.parseColor("#04A692")  // Darker teal for stronger contrast
                 },
                 new int[]{
                         Color.parseColor("#00897B"), // Add backup account button colors
                         Color.parseColor("#00695C")
                 },
                 new int[]{
-                        Color.parseColor("#B0BEC5"), // Device storage chart colors (total storage, light gray for balance)
-                        Color.parseColor("#BBDEFB"), // Used storage (light blue for clarity)
-                        Color.parseColor("#00796B"), // Media (teal, consistent with the theme)
-                        Color.parseColor("#FAB34B")  // Synced (bright yellow for strong contrast)
+                        Color.parseColor("#A7FFEB"), // Device storage chart colors (total storage, light gray for balance)
+                        Color.parseColor("#80CBC4"), // Used storage (light blue for clarity)
+                        Color.parseColor("#FF8A65"), // Media (teal, consistent with the theme)
+                        Color.parseColor("#004D40")  // Synced (bright yellow for strong contrast)
                 },
                 new int[]{
-                        Color.parseColor("#1E88E5"), // Device app storage chart colors (blue for distinct contrast)
-                        Color.parseColor("#304194"), // Dark blue for consistency
-                        Color.parseColor("#BBDEFB")  // Light blue for clarity
+                        Color.parseColor("#FFD166"),
+                        Color.parseColor("#FF5733"),
+                        Color.parseColor("#A7FFEB"),
+                        Color.parseColor("#A7FFEB"),
+                        Color.parseColor("#A7FFEB"),
+                        Color.parseColor("#A7FFEB"),
+                        Color.parseColor("#A7FFEB"),
+                        Color.parseColor("#A7FFEB")
                 },
                 new int[]{
-                        Color.parseColor("#1E88E5"), // Device assets synced status chart colors (blue for contrast)
-                        Color.parseColor("#304194"), // Dark blue
-                        Color.parseColor("#FAB34B")  // Bright yellow for synced status
+                        Color.parseColor("#004D40"), // Device assets synced status chart colors
+                        Color.parseColor("#7FC1BB"),
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY
                 },
                 new int[]{
                         Color.parseColor("#1E88E5"), // Account storage data chart colors (strong blue)
@@ -254,9 +273,9 @@ public class Theme {
                 },
                 Color.parseColor("#004D40"), // Menu text color (dark teal)
                 Color.BLACK,  // Primary text color (black for readability on lighter backgrounds)
-                Color.parseColor("#00796B"), // On sync button gradient start (teal)
-                Color.parseColor("#004D40"), // On sync button gradient end (dark teal)
-                Color.parseColor("#90A4AE"), // Off sync button gradient start (grayish tone)
+                Color.parseColor("#008D7B"), // On sync button gradient start (teal)
+                Color.parseColor("#008D7B"), // On sync button gradient end (dark teal)
+                Color.parseColor("#009688"), // Off sync button gradient start (grayish tone)
                 Color.parseColor("#B0BEC5"), // Off sync button gradient end (light gray)
                 Color.parseColor("#00B8D4"), // Sync progress text color (bright cyan for visibility)
                 Color.parseColor("#FF5722"), // Warning text color (orange remains unchanged)
@@ -266,8 +285,8 @@ public class Theme {
                 R.drawable.three_dot_black, // Three dot button
                 R.drawable.yellow_loading,
                 new int[]{
-                        Color.parseColor("#388E3C"), //synced color for details chart
-                        Color.parseColor("#80CBC4"), //unsynced color for details chart
+                        Color.parseColor("#004D40"), // Media (teal, consistent with the theme)
+                        Color.parseColor("#FF8A65"), //unsynced color for details chart
                 }
         );
     }
@@ -277,8 +296,8 @@ public class Theme {
                 "gray",
                 Color.parseColor("#F0F0F0"), // Primary background color (light gray)
                 new int[]{
-                        Color.parseColor("#D6D6D6"), // Device button colors
-                        Color.parseColor("#BDBDBD")
+                        Color.parseColor("#B0BEC5"), // Device button colors
+                        Color.parseColor("#78909C")
                 },
                 new int[]{
                         Color.parseColor("#B0BEC5"), // Account button colors (gray)
@@ -289,20 +308,32 @@ public class Theme {
                         Color.parseColor("#78909C")
                 },
                 new int[]{
-                        Color.parseColor("#757575"), // Device storage chart colors (gray)
-                        Color.parseColor("#616161"),
-                        Color.parseColor("#BDBDBD"),
-                        Color.parseColor("#BDBDBD")
+                        Color.parseColor("#607D8B"), // Device storage chart colors (gray)
+                        Color.parseColor("#374850"),
+                        Color.parseColor("#FFC107"),
+                        Color.parseColor("#05A694")
                 },
                 new int[]{
-                        Color.parseColor("#757575"), // Device app storage chart colors
-                        Color.parseColor("#616161"),
-                        Color.parseColor("#BDBDBD")
+                        Color.parseColor("#FFD166"),
+                        Color.parseColor("#FF5733"),
+                        Color.parseColor("#B0BEC5"),
+                        Color.parseColor("#B0BEC5"),
+                        Color.parseColor("#B0BEC5"),
+                        Color.parseColor("#B0BEC5"),
+                        Color.parseColor("#B0BEC5"),
+                        Color.parseColor("#B0BEC5")
                 },
                 new int[]{
-                        Color.parseColor("#757575"), // Device assets synced status chart colors
-                        Color.parseColor("#616161"),
-                        Color.parseColor("#BDBDBD")
+                        Color.parseColor("#05A694"), // Device assets synced status chart colors
+                        Color.parseColor("#057C6F"),
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY,
+                        Color.GRAY
                 },
                 new int[]{
                         Color.parseColor("#546E7A"), // Account storage data chart colors
@@ -310,20 +341,20 @@ public class Theme {
                 },
                 Color.parseColor("#424242"), // Menu text color (dark gray)
                 Color.BLACK, // Primary text color (black)
-                Color.parseColor("#616161"), // On sync button gradient start
-                Color.parseColor("#757575"), // On sync button gradient end
-                Color.parseColor("#90A4AE"), // Off sync button gradient start
+                Color.parseColor("#6A8E93"), // On sync button gradient start
+                Color.parseColor("#6A8E93"), // On sync button gradient end
+                Color.parseColor("#B0BEC5"), // Off sync button gradient start
                 Color.parseColor("#B0BEC5"), // Off sync button gradient end
                 Color.parseColor("#00E5FF"), // syncProgressTextColor
                 Color.parseColor("#FF5722"), // Warning text color (orange)
-                Color.parseColor("#E0E0E0"), // Toolbar background (light gray)
-                Color.parseColor("#424242"), // Toolbar elements (dark gray)
+                Color.parseColor("#78909C"), // Toolbar background (light gray)
+                Color.WHITE, // Toolbar elements (dark gray)
                 R.drawable.black_device, // Device icon
-                R.drawable.three_dot_blue,
+                R.drawable.three_dot_black,
                 R.drawable.yellow_loading,
                 new int[]{
-                        Color.parseColor("#388E3C"), //synced color for details chart
-                        Color.parseColor("#80CBC4"), //unsynced color for details chart
+                        Color.parseColor("#05A694"),
+                        Color.parseColor("#FFC107") //unsynced color for details chart
                 }
         );
     }

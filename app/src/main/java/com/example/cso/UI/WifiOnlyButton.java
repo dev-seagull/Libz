@@ -137,7 +137,7 @@ public class WifiOnlyButton {
         );
         wifiSwitch.setLayoutParams(switchParams);
         wifiSwitch.setText("Wifi only");
-        wifiSwitch.setTextColor(ContextCompat.getColor(context, R.color.textColor));
+        wifiSwitch.setTextColor(MainActivity.currentTheme.primaryTextColor);
 
         frameLayout.addView(wifiSwitch);
 
