@@ -64,7 +64,7 @@ public class Dialogs {
                 try {
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
                     boolean isAbleToMoveAllAssets = handleUnlinkBuilderTitleAndMessage(builder,userEmail,
-                            isSingleAccountUnlink,assetsSize);
+                            isSingleAccountUnlink,assetsSize, totalFreeSpace);
 
                     builder.setPositiveButton("Proceed", (dialog, id) -> {
                         Log.d("Unlink", "Proceed pressed");
@@ -98,10 +98,11 @@ public class Dialogs {
     }
 
     public static boolean handleUnlinkBuilderTitleAndMessage(AlertDialog.Builder builder,String userEmail,
-                                                              boolean isSingleAccountUnlink, double assetsSize){
+                                                              boolean isSingleAccountUnlink, double assetsSize,
+                                                             double totalFreeSpace){
         boolean isAbleToMoveAllAssets = false;
         try{
-            double totalFreeSpace = assetsSize - 50;
+            Log.d("debug",String.valueOf(totalFreeSpace));
             if (isSingleAccountUnlink){
                 builder.setTitle("No other available account");
                 builder.setMessage("Caution : All of your assets in " + userEmail + " will be out of sync.\n" +

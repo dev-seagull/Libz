@@ -141,20 +141,21 @@ public class Unlink {
     }
 
     public static double getTotalLinkedCloudsFreeSpace(String userEmail){
-        int totalFreeSpace = 0;
+        double totalFreeSpace = 0;
         try{
             List<String[]> accounts = DBHelper.getAccounts(new String[]{"userEmail","totalStorage","usedStorage","type"});
 
             for (String[] account : accounts) {
                 String type = account[3];
                 if (!account[0].equals(userEmail) && type.equals("backup")){
-                    int totalStorage = Integer.parseInt(account[1]);
-                    int usedStorage = Integer.parseInt(account[2]);
+                    double totalStorage = Double.valueOf(account[1]);
+                    double usedStorage = Double.valueOf(account[2]);
+                    Log.d("debug",String.valueOf(totalStorage - usedStorage));
                     totalFreeSpace += totalStorage - usedStorage;
                 }
             }
         }catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.crashLog(e,"unlink");
         }
         return totalFreeSpace;
     }
