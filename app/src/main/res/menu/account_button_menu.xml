@@ -3,16 +3,4 @@
         android:id="@+id/unlink"
         android:title="Unlink"
         />
-    <item
-        android:id="@+id/reportStolen"
-        android:title="Report Stolen"
-        />
-    <item
-        android:id="@+id/unlinkThisDevice"
-        android:title="I Don't Use this Device Anymore"
-        />
-    <item
-        android:id="@+id/unlinkAnotherDevice"
-        android:title="I Won't Use this Device"
-        />
 </menu>

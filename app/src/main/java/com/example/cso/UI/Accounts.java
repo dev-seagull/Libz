@@ -270,9 +270,7 @@ public class Accounts {
         // Remove items based on the type
         if (type.equals("ownDevice")) {
             menu.removeItem(menu.getItem(unlink).getItemId());
-            menu.removeItem(menu.getItem(reportStolen - 1 ).getItemId());
         } else if (type.equals("account")) {
-            menu.removeItem(menu.getItem(reportStolen).getItemId());
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
