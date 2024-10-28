@@ -223,12 +223,11 @@ public class CustomTreeMapChart {
             int[] colors = new int[syncedLabels.size() + 1];
             int colorsToCopy = Math.min(syncedLabels.size(), MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors.length);
             System.arraycopy(MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors, 0, colors, 0, colorsToCopy);
-            colors[syncedLabels.size()] = Color.parseColor("#FAB34B");
+            colors[syncedValues.size()] = Color.parseColor("#FAB34B");
 
             BarDataSet dataSet = new BarDataSet(entries, "Storage Usage");
             dataSet.setColors(colors);
             dataSet.setDrawValues(false);
-//            dataSet.setValueFormatter(new BarChartValueFormatter((float) total));
 
             String[] stackLabels = new String[syncedValues.size() + 1];
             for (int i = 0; i < syncedLabels.size(); i++) {
@@ -357,9 +356,10 @@ public class CustomTreeMapChart {
         ));
         legendItem.setGravity(Gravity.LEFT);
 
+
         View colorBox = new View(context);
         LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceHeight(context) * 0.008), (int) (UI.getDeviceHeight(context) * 0.008));
-        colorBoxParams.setMargins(20, 10, 10, 0);
+        colorBoxParams.setMargins(20, 15, 10, 0);
         colorBox.setLayoutParams(colorBoxParams);
         colorBox.setBackgroundColor(color);
 
@@ -367,7 +367,7 @@ public class CustomTreeMapChart {
         labelText.setText(label);
         int textColor = MainActivity.currentTheme.primaryTextColor;
         labelText.setTextColor(textColor);
-        labelText.setTextSize((int) (UI.getDeviceHeight(context) * 0.005));
+        labelText.setTextSize(12f);
 
         legendItem.addView(colorBox);
         legendItem.addView(labelText);

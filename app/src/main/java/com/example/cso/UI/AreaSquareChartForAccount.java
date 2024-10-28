@@ -101,35 +101,72 @@ public class AreaSquareChartForAccount {
                 RelativeLayout.LayoutParams.WRAP_CONTENT
         );
 
+        View colorBox = new View(context);
+        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceHeight(context) * 0.008), (int) (UI.getDeviceHeight(context) * 0.008));
+        colorBoxParams.setMargins(20, 15, 10, 0);
+        colorBox.setLayoutParams(colorBoxParams);
+
         TextView totalText = new TextView(context);
         totalText.setText("Free: " + formattedTotal);
-        totalText.setTextSize(11f);
-        totalText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
-        totalParams.setMargins(30, 0,0,0);
+        totalText.setTextSize(12f);
+        totalText.setTextColor(MainActivity.currentTheme.primaryTextColor);
         totalText.setLayoutParams(totalParams);
 
         TextView usedText = new TextView(context);
         usedText.setText("Others: " + formattedUsed);
-        usedText.setTextSize(11f);
+        usedText.setTextSize(12f);
+        usedText.setTextColor(MainActivity.currentTheme.primaryTextColor);
         usedText.getHeight();
-        usedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
-        usedParams.setMargins(30,0,0,0);
         usedText.setLayoutParams(usedParams);
 
         TextView syncedText = new TextView(context);
         syncedText.setText("Libz: " + formattedSynced);
-        syncedText.setTextSize(11f);
-        syncedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
-        syncedParams.setMargins(30,0 ,0,0);
+        syncedText.setTextColor(MainActivity.currentTheme.primaryTextColor);
+        syncedText.setTextSize(12f);
         syncedText.setLayoutParams(syncedParams);
 
-        layout.addView(totalText);
-        layout.addView(usedText);
-        layout.addView(syncedText);
+        LinearLayout legendItem = new LinearLayout(context);
+        legendItem.setOrientation(LinearLayout.HORIZONTAL);
+        legendItem.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+        colorBox.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
+        legendItem.addView(colorBox);
+        legendItem.addView(totalText);
+        layout.addView(legendItem);
+
+        colorBox = new View(context);
+        colorBox.setLayoutParams(colorBoxParams);
+        colorBox.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
+        legendItem = new LinearLayout(context);
+        legendItem.setOrientation(LinearLayout.HORIZONTAL);
+        legendItem.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        legendItem.addView(colorBox);
+        legendItem.addView(usedText);
+        layout.addView(legendItem);
+
+        colorBox = new View(context);
+        colorBox.setLayoutParams(colorBoxParams);
+        colorBox.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
+        legendItem = new LinearLayout(context);
+        legendItem.setOrientation(LinearLayout.HORIZONTAL);
+        legendItem.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        legendItem.addView(colorBox);
+        legendItem.addView(syncedText);
+        layout.addView(legendItem);
+
         return layout;
     }
 
-    private static String formatStorageSize(double sizeInMB) {
+    public static String formatStorageSize(double sizeInMB) {
         if (sizeInMB >= 100) {
             double sizeInGB = sizeInMB / 1024;
             return String.format("%.1f GB", sizeInGB);
@@ -143,8 +180,8 @@ public class AreaSquareChartForAccount {
         ImageView square2 = new ImageView(context);
         ImageView square3 = new ImageView(context);
 
-        square1.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
-        square2.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
+        square1.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
+        square2.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
         square3.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
 
         total = total / 1024;

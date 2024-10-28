@@ -134,8 +134,6 @@ public class DeviceStatusSync {
             double mediaStorage = DBHelper.getPhotosAndVideosStorageOnThisDevice();
             double syncedAssetsStorage = DBHelper.getSizeOfSyncedAssetsOnThisDevice();
 
-
-
             JsonObject jsonObject = new JsonObject();
             jsonObject.addProperty("totalStorage", totalStorage);
             jsonObject.addProperty("freeSpace", freeSpace);
@@ -170,35 +168,16 @@ public class DeviceStatusSync {
                 String type = account[1];
                 if (type.equals("backup")){
                     locationSizes.put(userEmail,0.0);
-//                    List<String[]> driveFiles = DBHelper.getDriveTable(new String[]{"assetId"},userEmail);
-//                    for (String[] driveFile : driveFiles){
-//                        String driveFileAssetId = driveFile[0];
-//                        for (String[] androidFile : files){
-//                            String androidFileAssetId = androidFile[0];
-//                            if (androidFileAssetId.equals(driveFileAssetId)){
-//                                Double fileSize = Double.parseDouble(androidFile[1]);
-//                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-//                                    locationSizes.put(userEmail,locationSizes.getOrDefault(userEmail,0.0) + fileSize);
-//                                }
-////                                files.remove(androidFile);
-//                                break;
-//                            }
-//                        }
-//                    }
-                    double accSize = DBHelper.getSizeOfSyncedAssetsFromAccount(userEmail);
-                    Log.d("UserEmailSize", userEmail + ": " + accSize);
-                    totalAccSize = totalAccSize + accSize;
-                    locationSizes.put(userEmail,accSize);
+                    double accSizeOnDevice = DBHelper.getSizeOfSyncedAssetsFromAccountWithoutDistinctAndroid(userEmail);
+                    Log.d("UserEmailSize", userEmail + ": " + accSizeOnDevice);
+                    totalAccSize = totalAccSize + accSizeOnDevice;
+                    locationSizes.put(userEmail,accSizeOnDevice);
                 }
             }
-//            for (String[] file : files){
-//                Double fileSize = Double.parseDouble(file[1]);
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-//                    locationSizes.put("UnSynced",locationSizes.getOrDefault("UnSynced", 0.0) + fileSize);
-//                }
-//            }
-            double total =  DBHelper.getSizeOfAssetsOnThisDevice();
-            double unsynced = total - totalAccSize;
+
+            double mediaStorage = DBHelper.getPhotosAndVideosStorageOnThisDevice();
+            double syncedAssetsStorage = DBHelper.getSizeOfSyncedAssetsOnThisDevice();
+            double unsynced = ( mediaStorage - syncedAssetsStorage ) * 1024;
             locationSizes.put("UnSynced", unsynced);
             JsonObject assetsLocationSize = new JsonObject();
             for (Map.Entry<String, Double> entry : locationSizes.entrySet()){

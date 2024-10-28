@@ -7,6 +7,7 @@ import android.util.Log;
 import com.example.cso.DBHelper;
 import com.example.cso.GoogleCloud;
 import com.example.cso.GoogleDrive;
+import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.Profile;
 import com.example.cso.Unlink;
@@ -56,14 +57,14 @@ public class Dialogs {
             Log.d("Unlink", "Free storage of accounts except " + userEmail + " is " + totalFreeSpace);
             Log.d("Unlink", "Is single account unlink: " + isSingleAccountUnlink);
 
-            int assetsSize = GoogleDrive.getAssetsSizeOfDriveAccount(userEmail);
+            double assetsSize = DBHelper.getSizeOfSyncedAssetsFromAccount(userEmail);
             Log.d("Unlink", "getAssetsSizeOfDriveAccountThread finished for " + userEmail + ":" + assetsSize);
 
             MainActivity.activity.runOnUiThread(() -> {
                 try {
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
                     boolean isAbleToMoveAllAssets = handleUnlinkBuilderTitleAndMessage(builder,userEmail,
-                            isSingleAccountUnlink,assetsSize,totalFreeSpace);
+                            isSingleAccountUnlink,assetsSize);
 
                     builder.setPositiveButton("Proceed", (dialog, id) -> {
                         Log.d("Unlink", "Proceed pressed");
@@ -97,29 +98,33 @@ public class Dialogs {
     }
 
     public static boolean handleUnlinkBuilderTitleAndMessage(AlertDialog.Builder builder,String userEmail,
-                                                              boolean isSingleAccountUnlink, double assetsSize,
-                                                              double totalFreeSpace){
+                                                              boolean isSingleAccountUnlink, double assetsSize){
         boolean isAbleToMoveAllAssets = false;
         try{
+            double totalFreeSpace = assetsSize - 50;
             if (isSingleAccountUnlink){
                 builder.setTitle("No other available account");
                 builder.setMessage("Caution : All of your assets in " + userEmail + " will be out of sync.\n" +
-                        "Also You will Disconnect from Other Devices !!!");
-            }else{
+                        "Also You will Disconnect from Other Devices!");
+            }
+//            else if(){
+//
+//            }
+            else{
                 if (totalFreeSpace < assetsSize) {
                     builder.setTitle("Not enough space");
-                    builder.setMessage("Approximately " + totalFreeSpace / 1024 + " GB out of " + assetsSize / 1024 + " GB of your assets in " + userEmail + " will be moved to other available accounts." +
-                            (assetsSize - totalFreeSpace) / 1024 + " GB of your assets will be out of sync.\n" +
-                            "This process may take several minutes or hours depending on the size of your assets. ");
+                    builder.setMessage("Approximately " + AreaSquareChartForAccount.formatStorageSize(totalFreeSpace) + " out of " + AreaSquareChartForAccount.formatStorageSize(assetsSize) + " of your assets in " + userEmail + " will be moved to other available accounts. So " +
+                            AreaSquareChartForAccount.formatStorageSize(assetsSize - totalFreeSpace) + " of your assets will be out of sync.\n" +
+                            "This process may take several minutes or hours depending on the size of your assets.");
 
                 } else {
                     builder.setTitle("Unlink Backup Account");
                     builder.setMessage("All of your assets in " + userEmail + " will be moved to your other available accounts.\n" +
-                            "This process may take several minutes or hours depending on the size of your assets. ");
+                            "This process may take several minutes or hours depending on the size of your assets.");
                     isAbleToMoveAllAssets = true;
                 }
             }
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.crashLog(e,"unlink"); }
 
         return isAbleToMoveAllAssets;
     }

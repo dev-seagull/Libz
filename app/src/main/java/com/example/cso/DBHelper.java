@@ -1777,28 +1777,6 @@ public class DBHelper extends SQLiteOpenHelper {
         return count;
     }
 
-    public static double getSizeOfAssetsOnThisDevice() {
-        double count = 0;
-        String query = "SELECT SUM(fileSize) as result FROM ANDROID where device = ?;" ;
-        Cursor cursor = null;
-        try {
-            cursor = dbReadable.rawQuery(query, new String[]{MainActivity.androidUniqueDeviceIdentifier});
-            if (cursor.moveToFirst()) {
-                int column = cursor.getColumnIndex("result");
-                if(column >= 0){
-                    count = cursor.getDouble(column);
-                }
-            }
-        } catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-        return count;
-    }
-
     public static double getNumberOfSyncedAssets() {
         double count = 0;
         String query =
@@ -1826,6 +1804,29 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public static double getSizeOfSyncedAssetsFromAccount(String userEmail) {
         double count = 0;
+        String query = "SELECT SUM(a.fileSize) as totalCount FROM (SELECT DISTINCT assetId, fileSize, fileHash,device FROM ANDROID) a WHERE a.fileHash IN (SELECT d.fileHash FROM DRIVE d WHERE d.userEmail = ?) AND a.device = ?";
+
+        Cursor cursor = null;
+        try {
+            cursor = dbReadable.rawQuery(query, new String[]{userEmail,MainActivity.androidUniqueDeviceIdentifier});
+            if (cursor.moveToFirst()) {
+                int columnIndex = cursor.getColumnIndex("totalCount");
+                if(columnIndex >= 0){
+                    count = cursor.getDouble(columnIndex);
+                }
+            }
+        } catch (Exception e) {
+            LogHandler.crashLog(e,"AccountAreaChart");
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return count;
+    }
+
+    public static double getSizeOfSyncedAssetsFromAccountWithoutDistinctAndroid(String userEmail) {
+        double count = 0;
         String query = "SELECT SUM(a.fileSize) as totalCount FROM ANDROID a WHERE a.fileHash IN (SELECT d.fileHash FROM DRIVE d WHERE d.userEmail = ?) AND a.device = ?";
 
         Cursor cursor = null;
@@ -1837,9 +1838,8 @@ public class DBHelper extends SQLiteOpenHelper {
                     count = cursor.getDouble(columnIndex);
                 }
             }
-            Log.d("ui","synced assets: " + count);
         } catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.crashLog(e,"AccountAreaChart");
         } finally {
             if (cursor != null) {
                 cursor.close();

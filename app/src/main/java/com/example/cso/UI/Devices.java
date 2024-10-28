@@ -329,7 +329,7 @@ public class Devices {
     }
 
     public static LinearLayout createChartForSyncedAssetsLocationStatus(Context context, String deviceId){
-        LinearLayout layout = Details.createInnerDetailsLayout(context, "Landing Zone");
+        LinearLayout layout = Details.createInnerDetailsLayout(context, "Landing Zone(s)");
         new Thread(() -> {
             ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
             MainActivity.activity.runOnUiThread(() -> {

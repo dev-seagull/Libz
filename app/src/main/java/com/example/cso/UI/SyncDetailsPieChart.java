@@ -257,7 +257,7 @@ public class SyncDetailsPieChart {
 
         View colorBox = new View(context);
         LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceHeight(context) * 0.008), (int) (UI.getDeviceHeight(context) * 0.008));
-        colorBoxParams.setMargins(20, 0, 10, 0);
+        colorBoxParams.setMargins(20, 2, 10, 0);
         colorBox.setLayoutParams(colorBoxParams);
         colorBox.setBackgroundColor(color);
 
@@ -265,7 +265,7 @@ public class SyncDetailsPieChart {
         labelText.setText(label);
         int textColor = MainActivity.currentTheme.primaryTextColor;
         labelText.setTextColor(textColor);
-        labelText.setTextSize((int) (UI.getDeviceHeight(context) * 0.005));
+        labelText.setTextSize(12f);
 
         legendItem.addView(colorBox);
         legendItem.addView(labelText);

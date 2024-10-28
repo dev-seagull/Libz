@@ -323,13 +323,13 @@ public class AssetsSourcePieChart {
 
         View colorBox = new View(context);
         LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceHeight(context) * 0.008), (int) (UI.getDeviceHeight(context) * 0.008));
-        colorBoxParams.setMargins(20, 10, 10, 0);
+        colorBoxParams.setMargins(20, 15, 10, 0);
         colorBox.setLayoutParams(colorBoxParams);
         colorBox.setBackgroundColor(color);
 
         TextView labelText = new TextView(context);
         labelText.setText(label);
-        labelText.setTextSize((int) (UI.getDeviceHeight(context) * 0.005));
+        labelText.setTextSize(12f);
         labelText.setTextColor(MainActivity.currentTheme.primaryTextColor);
 
 //        TextView valueText = new TextView(context);

@@ -117,7 +117,7 @@ public class SyncDetails {
         syncDetailsButtonTextId = View.generateViewId();
         syncDetailsText.setId(syncDetailsButtonTextId);
         syncDetailsText.setText("Sync Details");
-        syncDetailsText.setTextSize(28);
+        syncDetailsText.setTextSize(30);
         syncDetailsText.setTextColor(ContextCompat.getColor(activity, R.color.textColor));
         syncDetailsText.setScaleX(0.9f);
         syncDetailsText.setPadding(UI.dpToPx(4), UI.dpToPx(4), UI.dpToPx(4), UI.dpToPx(4));

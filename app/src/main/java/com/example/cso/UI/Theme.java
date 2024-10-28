@@ -138,7 +138,7 @@ public class Theme {
                 Color.parseColor("#202124"),
                 Color.WHITE,  //primaryTextColor
                 Color.parseColor("#388E3C"), // onSyncButtonGradientStart (for sync progress)
-                Color.parseColor("#80CBC4"), // onSyncButtonGradientEnd (for sync progress)
+                Color.parseColor("#388E3C"), // onSyncButtonGradientEnd (for sync progress)
                 Color.parseColor("#90A4AE"),
                 Color.parseColor("#B0BEC5"),
                 Color.parseColor("#00FFB3"), // syncProgressTextColor

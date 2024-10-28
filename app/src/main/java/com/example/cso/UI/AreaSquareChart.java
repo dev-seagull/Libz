@@ -284,36 +284,88 @@ public class AreaSquareChart {
                 RelativeLayout.LayoutParams.WRAP_CONTENT
         );
 
+        View colorBox = new View(context);
+        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceHeight(context) * 0.008), (int) (UI.getDeviceHeight(context) * 0.008));
+        colorBoxParams.setMargins(5, 15, 10, 0);
+        colorBox.setLayoutParams(colorBoxParams);
+
         TextView totalText = new TextView(context);
         totalText.setText("Free: " + formattedTotal);
-        totalText.setTextSize(11f);
-        totalText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
+        totalText.setTextSize(12f);
+        totalText.setTextColor(MainActivity.currentTheme.primaryTextColor);
         totalText.setLayoutParams(totalParams);
 
         TextView usedText = new TextView(context);
         usedText.setText("Others: " + formattedUsed);
-        usedText.setTextSize(11f);
+        usedText.setTextColor(MainActivity.currentTheme.primaryTextColor);
+        usedText.setTextSize(12f);
         usedText.getHeight();
-        usedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
         usedText.setLayoutParams(usedParams);
 
         TextView mediaText = new TextView(context);
         mediaText.setText("Lagging behind: " + formattedMedia);
-        mediaText.setTextSize(11f);
-        mediaText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
+        mediaText.setTextColor(MainActivity.currentTheme.primaryTextColor);
+        mediaText.setTextSize(12f);
         mediaText.setLayoutParams(mediaParams);
 
         TextView syncedText = new TextView(context);
         syncedText.setText("Buzzing Along: " + formattedSynced);
-        syncedText.setTextSize(11f);
-        syncedText.setTextColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
+        syncedText.setTextColor(MainActivity.currentTheme.primaryTextColor);
+        syncedText.setTextSize(12f);
         syncedText.setLayoutParams(syncedParams);
 
+        LinearLayout legendItem = new LinearLayout(context);
+        legendItem.setOrientation(LinearLayout.HORIZONTAL);
+        legendItem.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
         layout.setGravity(Gravity.BOTTOM);
-        layout.addView(totalText);
-        layout.addView(usedText);
-        layout.addView(mediaText);
-        layout.addView(syncedText);
+        colorBox.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
+        legendItem.addView(colorBox);
+        legendItem.addView(totalText);
+        layout.addView(legendItem);
+
+        colorBox = new View(context);
+        colorBox.setLayoutParams(colorBoxParams);
+        colorBox.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
+        legendItem = new LinearLayout(context);
+        legendItem.setOrientation(LinearLayout.HORIZONTAL);
+        legendItem.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        legendItem.addView(colorBox);
+        legendItem.addView(usedText);
+        layout.addView(legendItem);
+
+
+        colorBox = new View(context);
+        colorBox.setLayoutParams(colorBoxParams);
+        colorBox.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
+        legendItem = new LinearLayout(context);
+        legendItem.setOrientation(LinearLayout.HORIZONTAL);
+        legendItem.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        legendItem.addView(colorBox);
+        legendItem.addView(mediaText);
+        layout.addView(legendItem);
+
+        colorBox = new View(context);
+        colorBox.setLayoutParams(colorBoxParams);
+        colorBox.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
+        legendItem = new LinearLayout(context);
+        legendItem.setOrientation(LinearLayout.HORIZONTAL);
+        legendItem.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        legendItem.addView(colorBox);
+        legendItem.addView(syncedText);
+        layout.addView(legendItem);
         return layout;
     }
 
