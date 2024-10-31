@@ -35,99 +35,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SyncDetailsPieChart {
-
-    public static View createPieChartView(PieChart pieChart, Activity activity){
-        double totalAssets = DBHelper.getNumberOfAssets();
-        double syncedAssets = DBHelper.getNumberOfSyncedAssets();
-//        SyncDetailsPieChart.configurePieChartDimensions(pieChart, activity);
-//        SyncDetailsPieChart.configurePieChartDataForSyncDetails(pieChart,syncedAssets,totalAssets - syncedAssets);
-//        SyncDetailsPieChart.configurePieChartLegend(pieChart);
-//        pieChart.invalidate();
-
-        return pieChart;
-    }
-
-    public static void configurePieChartDataForSyncDetails(PieChart pieChart,double synced,double unsyncedMediaSize) {
-        ArrayList<PieEntry> entries = new ArrayList<>();
-        if (synced != 0){
-            entries.add(new PieEntry((float) synced, "Synced"));
-        }
-        if (unsyncedMediaSize != 0){
-            entries.add(new PieEntry((int) unsyncedMediaSize, "UnSynced"));
-        }
-        configurePieChartDataFormatForDeviceSyncedAssetsLocationStatus(pieChart, entries);
-    }
-
-    public static void configurePieChartDataFormatForDeviceSyncedAssetsLocationStatus(PieChart pieChart, ArrayList<PieEntry> entries) {
-        PieDataSet dataSet = new PieDataSet(entries, null);
-        dataSet.setValueFormatter(new PieChartValueFormatter());
-
-        int[] colors = MainActivity.currentTheme.syncDetailsPieChartColors;
-        dataSet.setColors(colors);
-        dataSet.setValueTextColor(Color.WHITE);
-        dataSet.setValueTextSize(14f);
-
-        dataSet.setDrawValues(false);
-        dataSet.setYValuePosition(PieDataSet.ValuePosition.INSIDE_SLICE);
-        dataSet.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
-
-        PieData data = new PieData(dataSet);
-        pieChart.setData(data);
-        pieChart.getDescription().setEnabled(false);
-        pieChart.setDrawEntryLabels(false);
-        pieChart.setDrawHoleEnabled(true);
-        pieChart.setDrawHoleEnabled(false);
-    }
-
-    public static void configurePieChartDimensions(PieChart pieChart, Context context) {
-        int width = (int) (UI.getDeviceWidth(context) * 0.35);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(width, width);
-        params.setMargins(0,10,0,10);
-        pieChart.setLayoutParams(params);
-    }
-
-    public static void configurePieChartLegend(PieChart pieChart) {
-        Legend legend = pieChart.getLegend();
-        legend.setEnabled(false);
-    }
-
-    public static void createTextAreaForSyncDetailsPieChart(View chartLayout, LinearLayout layout, Context context){
-        if(chartLayout instanceof PieChart){
-            PieChart pieChart = (PieChart) chartLayout;
-            PieData chartData = pieChart.getData();
-            PieDataSet dataSet = (PieDataSet) chartData.getDataSet();
-            List<PieEntry> entries = dataSet.getValues();
-            int[] colors = MainActivity.currentTheme.syncDetailsPieChartColors;
-
-            SpannableStringBuilder coloredText = new SpannableStringBuilder();
-
-            for (int i = 0; i < entries.size(); i++) {
-                PieEntry entry = entries.get(i);
-                String label = entry.getLabel();
-                int value = (int) entry.getValue();
-
-                int colorIndex = i % colors.length;
-                SpannableString entryText = new SpannableString(label + " assets count : " + value + "\n\n");
-                entryText.setSpan(new ForegroundColorSpan(colors[colorIndex]), 0, entryText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                coloredText.append(entryText);
-            }
-
-            TextView statusTextView = new TextView(context);
-            statusTextView.setText(coloredText);
-            statusTextView.setTextSize(10);
-//            statusTextView.setPadding(32, 0, 0, 0);
-            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            );
-            layoutParams.gravity = Gravity.CENTER_VERTICAL;
-            layoutParams.setMargins(0,10,0,10);
-            statusTextView.setLayoutParams(layoutParams);
-
-            layout.addView(statusTextView);
-        }
-    }
-
     public static void addPieChartToSyncDetailsStatisticsLayout(Activity activity,
                                                                 LinearLayout syncDetailsStatisticsLayout){
             activity.runOnUiThread(() -> {
@@ -141,6 +48,7 @@ public class SyncDetailsPieChart {
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
+
         double total =  DBHelper.getNumberOfAssets();
         double synced = DBHelper.getNumberOfSyncedAssets();
         double unsynced = total - synced;
@@ -148,7 +56,11 @@ public class SyncDetailsPieChart {
         try {
             int width = (int) (UI.getDeviceWidth(context) * 0.8);
             int height = (int) (UI.getDeviceHeight(context) * 0.085);
-            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(width, height);
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    height
+            );
+            layoutParams.setMargins(45,0,0,0);
             stackedBarChart.setLayoutParams(layoutParams);
 
             float[] stackedValues = new float[]{(float) synced, (float) unsynced};

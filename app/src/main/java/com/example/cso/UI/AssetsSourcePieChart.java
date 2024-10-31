@@ -39,117 +39,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class AssetsSourcePieChart {
-//    public static View createPieChartForDeviceSourceStatus(Context context, JsonObject data) {
-//        try{
-//            PieChart pieChart = new PieChart(context);
-//
-//            configurePieChartDimensions(pieChart, context);
-//            if (data != null && data.size() > 0){
-//                configurePieChartDataForDeviceSourceStatus(pieChart, data);
-//                configurePieChartLegend(pieChart);
-//            }else{
-//                return Details.getErrorAsChartAlternative(context);
-//            }
-//            pieChart.invalidate();
-//            return pieChart;
-//        }catch (Exception e){
-//            LogHandler.crashLog(e,"AssetsSourceChart");
-//            return Details.getErrorAsChartAlternative(context);
-//        }
-//    }
-//
-//    public static void configurePieChartDataForDeviceSourceStatus(PieChart pieChart, JsonObject sourcesData) {
-//        ArrayList<PieEntry> entries = new ArrayList<>();
-//        for (String source : sourcesData.keySet()){
-//            double size = sourcesData.get(source).getAsDouble();
-//            entries.add(new PieEntry((float) size, source));
-//        }
-//        configurePieChartDataFormatForDeviceSourceStatus(pieChart, entries);
-//    }
-//
-//    public static void configurePieChartDataFormatForDeviceSourceStatus(PieChart pieChart, ArrayList<PieEntry> entries) {
-//        Collections.sort(entries, (e1, e2) -> Float.compare(e2.getValue(), e1.getValue()));
-//
-//        PieDataSet dataSet = new PieDataSet(entries, null);
-//
-//        int[] colors = MainActivity.currentTheme.deviceAppStorageChartColors;
-//        dataSet.setColors(colors);
-//        dataSet.setValueTextColor(Color.WHITE);
-//        dataSet.setValueTextSize(10f);
-//
-//        dataSet.setValueFormatter(new PieChartValueFormatter());
-//
-//        dataSet.setDrawValues(false);
-//        dataSet.setValueLinePart1OffsetPercentage(200f);
-//        dataSet.setValueLinePart1Length(0.5f);
-//        dataSet.setValueLinePart2Length(0.8f);
-//        dataSet.setValueLineWidth(2f);
-//        dataSet.setYValuePosition(PieDataSet.ValuePosition.INSIDE_SLICE);
-//        dataSet.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
-//        dataSet.setValueLinePart1OffsetPercentage(100f);
-//        dataSet.setValueLineVariableLength(true);
-//
-//
-//        PieData data = new PieData(dataSet);
-//        pieChart.setData(data);
-//        pieChart.getDescription().setEnabled(false);
-//        pieChart.setDrawEntryLabels(false);
-//        pieChart.setDrawHoleEnabled(false);
-//    }
-//
-//    public static void configurePieChartDimensions(PieChart pieChart, Context context) {
-//        int width =(int) (UI.getDeviceWidth(context) * 0.35);
-//        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(width, width);
-//        params.setMargins(0,10,0,10);
-//        pieChart.setLayoutParams(params);
-//    }
-//
-//    public static void configurePieChartLegend(PieChart pieChart) {
-//        Legend legend = pieChart.getLegend();
-//        legend.setEnabled(false);
-//    }
-//
-//    public static void createTextAreaForAssetSourcePieChart(View chartLayout, LinearLayout layout, Context context){
-//        if(chartLayout instanceof PieChart){
-//            PieChart pieChart = (PieChart) chartLayout;
-//            PieData chartData = pieChart.getData();
-//            PieDataSet dataSet = (PieDataSet) chartData.getDataSet();
-//            List<PieEntry> entries = dataSet.getValues();
-//            int[] colors = MainActivity.currentTheme.deviceAppStorageChartColors;
-//
-//            SpannableStringBuilder coloredText = new SpannableStringBuilder();
-//
-//            for (int i = 0; i < entries.size(); i++) {
-//                PieEntry entry = entries.get(i);
-//                String label = entry.getLabel();
-//                String value = String.valueOf(entry.getValue());
-//                if (Double.valueOf(value) >= 100){
-//                    value =  String.format("%.1f GB", Double.valueOf(value) / 1024);
-//                }else{
-//                    value =  String.format("%.1f MB", Double.valueOf(value));
-//                }
-//
-//                int colorIndex = i % colors.length;
-//                SpannableString entryText = new SpannableString(label + ": " + value + "\n");
-//                entryText.setSpan(new ForegroundColorSpan(colors[colorIndex]), 0, entryText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-//                coloredText.append(entryText);
-//            }
-//
-//            TextView statusTextView = new TextView(context);
-//            statusTextView.setText(coloredText);
-//            statusTextView.setTextSize(10);
-//            statusTextView.setPadding(32, 0, 0, 0);
-//            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-//                    LinearLayout.LayoutParams.WRAP_CONTENT,
-//                    LinearLayout.LayoutParams.WRAP_CONTENT
-//            );
-//            layoutParams.gravity = Gravity.CENTER_VERTICAL;
-//            layoutParams.setMargins(0,10,0,10);
-//            statusTextView.setLayoutParams(layoutParams);
-//
-//            layout.addView(statusTextView);
-//        }
-//    }
+
     public static View createStackedBarChartForDeviceSourceStatus(Context context, JsonObject data) {
         try {
             HorizontalBarChart barChart = new HorizontalBarChart(context);
@@ -224,9 +114,12 @@ public class AssetsSourcePieChart {
     public static void configureBarChartDimensions(HorizontalBarChart barChart, Context context) {
         int width = (int) (UI.getDeviceWidth(context) * 0.8);
         int height = (int) (UI.getDeviceHeight(context) * 0.085);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(width, height);
-        params.setMargins(0, 0, 0, 0);
-        barChart.setLayoutParams(params);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                height
+        );
+        layoutParams.setMargins(45,0,20,0);
+        barChart.setLayoutParams(layoutParams);
     }
 
 
@@ -306,6 +199,7 @@ public class AssetsSourcePieChart {
             );
             updateDateLabelsParams.setMargins((int) ((UI.getDeviceWidth(context) * 0.10) + 20),30,(int) (UI.getDeviceWidth(context) * 0.1),0);
             updateDateLabelsLayout.setLayoutParams(updateDateLabelsParams);
+            mainLegendLayout.setPadding(60,0,20,75);
             mainLegendLayout.addView(updateDateLabelsLayout);
 
             layout.addView(mainLegendLayout);
@@ -332,14 +226,8 @@ public class AssetsSourcePieChart {
         labelText.setTextSize(12f);
         labelText.setTextColor(MainActivity.currentTheme.primaryTextColor);
 
-//        TextView valueText = new TextView(context);
-//        valueText.setText(new PieChartValueFormatter().getFormattedValue((float) value));
-//        valueText.setTextSize((int) (UI.getDeviceHeight(context) * 0.004));
-//        valueText.setTextColor(MainActivity.currentTheme.primaryTextColor);
-
         legendItem.addView(colorBox);
         legendItem.addView(labelText);
-//        legendItem.addView(valueText);
 
         return legendItem;
     }

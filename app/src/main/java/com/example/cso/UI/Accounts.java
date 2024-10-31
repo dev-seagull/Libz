@@ -281,7 +281,7 @@ public class Accounts {
     }
 
     public static LinearLayout createChartForStorageStatus(Context context, String userEmail){
-        LinearLayout layout = Details.createInnerDetailsLayout(context, "Storage");
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
         ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
         MainActivity.activity.runOnUiThread(() -> {
             loadingImage[0].setBackgroundResource(R.drawable.yellow_loading);
@@ -294,6 +294,7 @@ public class Accounts {
         View chart = AreaSquareChartForAccount.createStorageChart(context,userEmail);
 
         MainActivity.activity.runOnUiThread(() -> {
+            Details.createTitleTextView(context, layout,"Storage");
             layout.addView(chart);
             layout.removeView(loadingImage[0]);
 

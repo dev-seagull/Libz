@@ -2,8 +2,10 @@ package com.example.cso.UI;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.media.Image;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -23,6 +25,7 @@ import com.example.cso.GoogleDriveFolders;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
+import com.example.cso.Sync;
 import com.github.mikephil.charting.charts.PieChart;
 import com.google.gson.JsonObject;
 
@@ -40,8 +43,10 @@ public class SyncDetails {
     public static void handleSyncDetailsButton(Activity activity){
         double percentageOfSyncedAssets = DBHelper.getPercentageOfSyncedAssets();
         TextView syncDetailsButtonTextView = activity.findViewById(syncDetailsButtonTextId);
+        ImageButton syncDetailsButton = activity.findViewById(syncDetailsButtonId);
         activity.runOnUiThread( () -> {
             syncDetailsButtonTextView.setText(String.format("%d%%", Math.round(percentageOfSyncedAssets)));
+            SyncDetails.addGradientOnToSyncDetailsButton(syncDetailsButton, percentageOfSyncedAssets);
             Typeface dseg7classic_regular = ResourcesCompat.getFont(activity,R.font.ptsansnarrowwebregular);
             syncDetailsButtonTextView.setTypeface(dseg7classic_regular);
             syncDetailsButtonTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
@@ -51,44 +56,36 @@ public class SyncDetails {
     }
 
     public static LinearLayout createSyncDetailsStatisticsLayout(Activity activity){
-        LinearLayout syncDetailsStatisticsLayout = Details.createInnerDetailsLayout(activity,"Sync Details");
+        LinearLayout syncDetailsStatisticsLayout = Details.createInnerDetailsLayout(activity);
         syncDetailsStatisticsLayout.setPadding(0,15,0,15);
 
         syncDetailsStatisticsLayout.setVisibility(View.GONE);
         syncDetailsStatisticsLayoutId = View.generateViewId();
         syncDetailsStatisticsLayout.setId(syncDetailsStatisticsLayoutId);
 
+        Details.createTitleTextView(activity, syncDetailsStatisticsLayout,"Sync Details");
+
         return syncDetailsStatisticsLayout;
     }
 
-    public static void addGradientOnToSyncDetailsButton(ImageButton actionButton){
+    public static void addGradientOnToSyncDetailsButton(ImageButton actionButton, double percentage){
+        int colorStart = MainActivity.currentTheme.deviceStorageChartColors[3];
+        int colorEnd = MainActivity.currentTheme.deviceStorageChartColors[2];
+
+        final float inverseRatio = 1 - (float) percentage / 100;
+        float r = Color.red(colorStart) * (float) percentage / 100 + Color.red(colorEnd) * inverseRatio;
+        float g = Color.green(colorStart) * (float) percentage / 100 + Color.green(colorEnd) * inverseRatio;
+        float b = Color.blue(colorStart) * (float) percentage / 100 + Color.blue(colorEnd) * inverseRatio;
+        int blendedColor =  Color.rgb((int) r, (int) g, (int) b);
+
         GradientDrawable firstLayer = new GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[] {MainActivity.currentTheme.OnSyncButtonGradientStart,
-                        MainActivity.currentTheme.OnSyncButtonGradientEnd}
+                new int[] {colorStart,
+                        blendedColor, colorEnd}
         );
         firstLayer.setShape(GradientDrawable.OVAL);
         firstLayer.setSize(UI.dpToPx(104), UI.dpToPx(104));
         firstLayer.setCornerRadius(UI.dpToPx(52));
-
-//        ShapeDrawable secondLayer = new ShapeDrawable(new OvalShape());
-//        secondLayer.getPaint().setColor(android.graphics.Color.parseColor("#B0BEC5"));
-//        secondLayer.setPadding((int) UI.dpToPx(4), (int) UI.dpToPx(4), (int) UI.dpToPx(4), (int) UI.dpToPx(4));
-//
-//        GradientDrawable secondLayerStroke = new GradientDrawable();
-//        secondLayerStroke.setShape(GradientDrawable.OVAL);
-//        secondLayerStroke.setStroke((int) UI.dpToPx(2), android.graphics.Color.parseColor("#90A4AE"));
-//        secondLayerStroke.setCornerRadius(UI.dpToPx(50));
-//
-//        GradientDrawable thirdLayer = new GradientDrawable(
-//                GradientDrawable.Orientation.BOTTOM_TOP,
-//                new int[]{android.graphics.Color.parseColor("#B0BEC5"), android.graphics.Color.parseColor("#90A4AE")}
-//        );
-//        thirdLayer.setShape(GradientDrawable.OVAL);
-//        thirdLayer.setCornerRadius(UI.dpToPx(50));
-
-//        Drawable[] layers = {firstLayer, secondLayerStroke, thirdLayer};
-//        LayerDrawable layerDrawable = new LayerDrawable(layers);
 
         actionButton.setBackground(firstLayer);
     }
@@ -116,7 +113,8 @@ public class SyncDetails {
         TextView syncDetailsText = new TextView(activity);
         syncDetailsButtonTextId = View.generateViewId();
         syncDetailsText.setId(syncDetailsButtonTextId);
-        syncDetailsText.setText("Sync Details");
+        double percentageOfSyncedAssets = DBHelper.getPercentageOfSyncedAssets();
+        syncDetailsText.setText(String.format("%d%%", Math.round(percentageOfSyncedAssets)));
         syncDetailsText.setTextSize(30);
         syncDetailsText.setTextColor(ContextCompat.getColor(activity, R.color.textColor));
         syncDetailsText.setScaleX(0.9f);
@@ -129,7 +127,7 @@ public class SyncDetails {
         );
         syncDetailsText.setLayoutParams(textParams);
 
-        addGradientOnToSyncDetailsButton(syncDetailsButton);
+        addGradientOnToSyncDetailsButton(syncDetailsButton, percentageOfSyncedAssets);
         frameLayout.addView(syncDetailsButton);
         frameLayout.addView(syncDetailsText);
 

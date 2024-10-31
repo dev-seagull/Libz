@@ -29,7 +29,6 @@ public class Media {
     }
 
     public static String getMimeType(String fileName){
-        System.out.println("Filename given to mimetype is: " + fileName);
         int dotIndex = fileName.lastIndexOf(".");
         String mimeType="";
         try{

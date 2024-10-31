@@ -285,7 +285,7 @@ public class Devices {
     } // for more data
 
     public static LinearLayout createChartForStorageStatus(Context context, String deviceId) {
-        LinearLayout layout = Details.createInnerDetailsLayout(context, "Storage");
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
         new Thread(() -> {
             ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
             MainActivity.activity.runOnUiThread(() -> {
@@ -300,6 +300,7 @@ public class Devices {
             View areaSquareChart = AreaSquareChart.createStorageChart(context,data, deviceId);
 
             MainActivity.activity.runOnUiThread(() -> {
+                Details.createTitleTextView(context, layout,"Storage");
                 layout.addView(areaSquareChart);
                 layout.removeView(loadingImage[0]);
             });
@@ -329,7 +330,7 @@ public class Devices {
     }
 
     public static LinearLayout createChartForSyncedAssetsLocationStatus(Context context, String deviceId){
-        LinearLayout layout = Details.createInnerDetailsLayout(context, "Landing Zone(s)");
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
         new Thread(() -> {
             ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
             MainActivity.activity.runOnUiThread(() -> {
@@ -342,6 +343,7 @@ public class Devices {
             JsonObject data = getSyncedAssetsLocationStatus(deviceId);
             Log.d(DeviceStatusSync.TAG, "assets of "+deviceId+" location data : " + data);
             MainActivity.activity.runOnUiThread(() -> {
+                Details.createTitleTextView(context, layout,"Landing Zone(s)");
                 LinearLayout treeMapChartLayout = CustomTreeMapChart.createStackedBarChart(context, data, deviceId);
                 layout.addView(treeMapChartLayout);
                 layout.removeView(loadingImage[0]);
@@ -372,7 +374,7 @@ public class Devices {
     }
 
     public static LinearLayout createChartForSourceStatus(Context context, String deviceId){
-        LinearLayout layout = Details.createInnerDetailsLayout(context, "Files");
+        LinearLayout layout = Details.createInnerDetailsLayout(context);
         new Thread(() -> {
             ImageView[] loadingImage = new ImageView[]{new ImageView(context)};
             activity.runOnUiThread(() -> {
@@ -386,6 +388,7 @@ public class Devices {
             JsonObject data = getAssetsSourceStatus(deviceId);
             Log.d(DeviceStatusSync.TAG, "assets source data : " + data);
             activity.runOnUiThread(() -> {
+                Details.createTitleTextView(context, layout,"Files");
                 View chartLayout = AssetsSourcePieChart.createStackedBarChartForDeviceSourceStatus(context, data);
                 layout.addView(chartLayout);
                 AssetsSourcePieChart.createTextAreaForAssetSourceBarChart(chartLayout,layout,context, data, deviceId);

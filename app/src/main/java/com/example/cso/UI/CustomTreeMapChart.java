@@ -27,146 +27,15 @@ import java.util.List;
 import java.util.Map;
 
 public class CustomTreeMapChart {
-//    public static LinearLayout createChart(Context context, JsonObject jsonData){
-//        LinearLayout layout = new LinearLayout(context);
-//        layout.setOrientation(LinearLayout.VERTICAL);
-//        layout.setGravity(Gravity.CENTER);
-//        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-//                ViewGroup.LayoutParams.WRAP_CONTENT);
-//        layoutParams.setMargins(0, 10, 0, 10);
-//        layout.setLayoutParams(layoutParams);
-//
-//        try{
-//            int width =(int) (UI.getDeviceWidth(context) * 0.65);
-//            int height = (int) (UI.getDeviceWidth(context) * 0.35);
-//
-//            double unsynced = 0.0;
-//            if (jsonData.has("UnSynced")) {
-//                unsynced = jsonData.get("UnSynced").getAsDouble();
-//            }
-//
-//            List<String> accountKeys = new ArrayList<>();
-//            List<Double> accountSizes = new ArrayList<>();
-//
-//            double total = 0.0;
-//            for (Map.Entry<String, JsonElement> entry : jsonData.entrySet()) {
-//                total += entry.getValue().getAsDouble();
-//                String key = entry.getKey();
-//                double size = entry.getValue().getAsDouble();
-//                if (!key.equals("UnSynced")) {
-//                    accountKeys.add(key);
-//                    accountSizes.add(size);
-//                }
-//            }
-//
-//            layoutParams = new LinearLayout.LayoutParams(width, height);
-//            layoutParams.setMargins(0, 10, 0, 10);
-//            layout.setLayoutParams(layoutParams);
-//
-//            LinearLayout temp = new LinearLayout(context);
-//            temp.setOrientation(LinearLayout.HORIZONTAL);
-//            LinearLayout.LayoutParams tempParams = new LinearLayout.LayoutParams(
-//                    ViewGroup.LayoutParams.MATCH_PARENT,
-//                    ViewGroup.LayoutParams.MATCH_PARENT
-//            );
-//            tempParams.setMargins(0, 10, 0, 10);
-//            temp.setLayoutParams(tempParams);
-//
-//            LinearLayout unsyncedView = createUnsyncedView(context,width,height,total,unsynced);
-//            LinearLayout accountsView = createAccountsView(context,accountKeys,accountSizes,height,
-//                    width - unsyncedView.getWidth(),total-unsynced);
-//            temp.addView(unsyncedView);
-//            temp.addView(accountsView);
-//            layout.addView(temp);
-//        }catch (Exception e){
-//            LogHandler.crashLog(e,"customTreeMapChart");
-//            layout.removeAllViews();
-//            layout.addView(Details.getErrorAsChartAlternative(context));
-//        }
-//        return layout;
-//    }
-//
-//    private static LinearLayout createUnsyncedView(Context context, int width, int height
-//            , double total, double unsynced) {
-//        double relation = Math.min(0.55,(unsynced / total));
-//        width = (int) (relation * width);
-//        LinearLayout layout = new LinearLayout(context);
-//        layout.setOrientation(LinearLayout.VERTICAL);
-//        layout.setBackgroundColor(Color.GRAY);
-//        layout.setGravity(Gravity.CENTER);
-//        if(total == unsynced){
-//            layout.setLayoutParams(new LinearLayout.LayoutParams(
-//                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
-//            ));
-//        }else{
-//            layout.setLayoutParams(new LinearLayout.LayoutParams(
-//                    width, height
-//            ));
-//        }
-//
-//        TextView unsyncedTextView = new TextView(context);
-//        unsyncedTextView.setText("UnSynced\n" + AreaSquareChart.formatStorageSize(unsynced / 1024));
-//        unsyncedTextView.setGravity(Gravity.CENTER);
-//        unsyncedTextView.setTextColor(Color.WHITE);
-//        unsyncedTextView.setLayoutParams(new LinearLayout.LayoutParams(
-//                ViewGroup.LayoutParams.MATCH_PARENT,
-//                ViewGroup.LayoutParams.MATCH_PARENT
-//        ));
-//        layout.addView(unsyncedTextView);
-//
-//        return layout;
-//    }
-//
-//    private static LinearLayout createAccountsView(Context context, List<String> accountKeys,
-//                                                   List<Double> accountSizes,int height
-//                                                    , int remainingWidth, double totalAccountSize) {
-//        LinearLayout layout = new LinearLayout(context);
-//        layout.setOrientation(LinearLayout.VERTICAL);
-//        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(remainingWidth, height);
-//        layoutParams.gravity = Gravity.CENTER;
-//        layout.setLayoutParams(layoutParams);
-//
-//        int[] colors = new int[]{Color.GREEN, Color.RED, Color.BLUE, Color.YELLOW, Color.BLACK};
-//        for (int i = 0; i < accountSizes.size(); i++) {
-//            double accountSize = accountSizes.get(i);
-//
-//            int viewHeight = (int) (Math.log10(accountSize + 1) / Math.log10(totalAccountSize + 1) * height);
-//            LinearLayout parentLayout = new LinearLayout(context);
-//            parentLayout.setOrientation(LinearLayout.VERTICAL);
-//            parentLayout.setBackgroundColor(colors[i % colors.length]);
-//            parentLayout.setLayoutParams(new LinearLayout.LayoutParams(
-//                    remainingWidth, viewHeight
-//            ));
-//            parentLayout.setGravity(Gravity.CENTER);
-//
-//            TextView textView = new TextView(context);
-//            textView.setText(accountKeys.get(i)+ "\n" + AreaSquareChart
-//                    .formatStorageSize(accountSizes.get(i) / 1024));
-//            textView.setGravity(Gravity.CENTER);
-//            textView.setTextColor(Color.WHITE);
-//            textView.setLayoutParams(new LinearLayout.LayoutParams(
-//                    LinearLayout.LayoutParams.MATCH_PARENT,
-//                    LinearLayout.LayoutParams.MATCH_PARENT
-//            ));
-//
-//            parentLayout.addView(textView);
-//            layout.addView(parentLayout);
-//        }
-//
-//        return layout;
-//    }
 
     public static LinearLayout createStackedBarChart(Context context, JsonObject jsonData, String deviceId) {
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setGravity(Gravity.CENTER_HORIZONTAL);
+        layout.setGravity(Gravity.CENTER);
+
         HorizontalBarChart stackedBarChart = new HorizontalBarChart(context);
 
         try {
-            int width = (int) (UI.getDeviceWidth(context) * 0.8);
-            int height = (int) (UI.getDeviceHeight(context) * 0.085);
-            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(width, height);
-            stackedBarChart.setLayoutParams(layoutParams);
 
             double total = 0.0;
             double unsynced = 0.0;
@@ -246,6 +115,7 @@ public class CustomTreeMapChart {
             xAxis.setDrawGridLines(false);
             xAxis.setDrawLabels(false);
             xAxis.setDrawAxisLine(false);
+            xAxis.setCenterAxisLabels(true);
             YAxis leftAxis = stackedBarChart.getAxisLeft();
             leftAxis.setDrawGridLines(false);
             stackedBarChart.getAxisRight().setEnabled(false);
@@ -256,20 +126,18 @@ public class CustomTreeMapChart {
 
             LinearLayout mainLegendLayout = new LinearLayout(context);
             mainLegendLayout.setOrientation(LinearLayout.VERTICAL);
-            mainLegendLayout.setLayoutParams(new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT)
-            );
+            mainLegendLayout.setGravity(Gravity.CENTER);
+            mainLegendLayout.setPadding(0, 10, 0, 0);
+
             LinearLayout legendLayout = new LinearLayout(context);
             legendLayout.setOrientation(LinearLayout.HORIZONTAL);
             LinearLayout.LayoutParams legendParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
             );
-            legendLayout.setGravity(Gravity.LEFT);
-            legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.1),0,(int) (UI.getDeviceWidth(context) * 0.1),0);
+            legendParams.gravity = Gravity.CENTER;
             legendLayout.setLayoutParams(legendParams);
 
-            int parentWidth = (int) (UI.getDeviceWidth(context) * 0.80) ;
+            int parentWidth = (int) (UI.getDeviceWidth(context) * 0.90) ;
 
             for (int i = 0; i < syncedLabels.size(); i++) {
                 int color = colors[i % colors.length];
@@ -280,7 +148,7 @@ public class CustomTreeMapChart {
                 legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                         View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
 
-                int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + (int) (UI.getDeviceWidth(context) * 0.1) + (int) (UI.getDeviceWidth(context) * 0.1);
+                int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + (int) (UI.getDeviceWidth(context) * 0.12) + (int) (UI.getDeviceWidth(context) * 0.12);
 
                 if (totalWidth > parentWidth) {
                     mainLegendLayout.addView(legendLayout);
@@ -290,21 +158,21 @@ public class CustomTreeMapChart {
                             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
                     );
                     legendLayout.setGravity(Gravity.LEFT);
-                    legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.1),0,(int) (UI.getDeviceWidth(context) * 0.1),0);
+                    legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.12),0,(int) (UI.getDeviceWidth(context) * 0.12),0);
                     legendLayout.setLayoutParams(legendParams);
                 }
 
                 legendLayout.addView(legendItem);
 
                 if(i + 1 == syncedLabels.size()){
-//                    for(int j =0 ; j < 13; j++){
+                    for(int j =0 ; j < 13; j++){
                         legendItem = createLegendItem(context, "Lagging behind", Color.parseColor("#FFD166"), unsynced);
                         legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
                         legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
 
-                        totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + (int) (UI.getDeviceWidth(context) * 0.1) + (int) (UI.getDeviceWidth(context) * 0.1);
+                        totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + (int) (UI.getDeviceWidth(context) * 0.12) + (int) (UI.getDeviceWidth(context) * 0.12);
 
                         if (totalWidth > parentWidth) {
                             mainLegendLayout.addView(legendLayout);
@@ -314,12 +182,12 @@ public class CustomTreeMapChart {
                                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
                             );
                             legendLayout.setGravity(Gravity.LEFT);
-                            legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.1),0,(int) (UI.getDeviceWidth(context) * 0.1),0);
+                            legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.12),0,(int) (UI.getDeviceWidth(context) * 0.12),0);
                             legendLayout.setLayoutParams(legendParams);
                         }
 
                         legendLayout.addView(legendItem);
-//                    }
+                    }
                 }
             }
 
@@ -333,11 +201,21 @@ public class CustomTreeMapChart {
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
             );
-            updateDateLabelsParams.setMargins((int) ((UI.getDeviceWidth(context) * 0.10) + 20),30,(int) (UI.getDeviceWidth(context) * 0.1),0);
+            updateDateLabelsParams.gravity = Gravity.CENTER;
             updateDateLabelsLayout.setLayoutParams(updateDateLabelsParams);
             mainLegendLayout.addView(updateDateLabelsLayout);
 
             layout.addView(mainLegendLayout);
+
+            int width = (int) (UI.getDeviceWidth(context) * 0.9);
+            int height = (int) (UI.getDeviceHeight(context) * 0.085);
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                    width ,
+                    height
+            );
+            layoutParams.gravity = Gravity.CENTER | Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL;
+            layoutParams.setMargins(width / 32,0,0,0);
+            stackedBarChart.setLayoutParams(layoutParams);
 
         } catch (Exception e) {
             LogHandler.crashLog(e, "createStackedBarChart");
@@ -371,7 +249,6 @@ public class CustomTreeMapChart {
 
         legendItem.addView(colorBox);
         legendItem.addView(labelText);
-//        legendItem.addView(valueText);
 
         return legendItem;
     }

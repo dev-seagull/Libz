@@ -233,31 +233,6 @@ public class AreaSquareChart {
         layout.addView(gridView, gridParams);
     }
 
-    private static int calculateGreatestCommonDivisor(int a, int b, int c, int d) {
-        try {
-            int gcdAB = calculateGreatestCommonDivisor(a, b);
-            int gcdCD = calculateGreatestCommonDivisor(c, d);
-            int gcdResult = calculateGreatestCommonDivisor(gcdAB, gcdCD);
-            Log.d("AreaChart",a + " " + b + " " + c + " " + d + " : " + gcdResult);
-            return gcdResult;
-        } catch (Exception e) {
-            LogHandler.crashLog(e, "AreaChart");
-        }
-        return 1;
-    }
-
-    private static int calculateGreatestCommonDivisor(int a, int b){
-        try{
-            if(b == 0)
-                return a;
-            else
-                return calculateGreatestCommonDivisor(b, a % b);
-        }catch (Exception e){
-            LogHandler.crashLog(e,"AreaChart");
-        }
-        return a;
-    }
-
     private static LinearLayout createLabels(Context context, double total, double used, double media, double synced){
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
@@ -365,6 +340,7 @@ public class AreaSquareChart {
         ));
         legendItem.addView(colorBox);
         legendItem.addView(syncedText);
+        legendItem.setGravity(Gravity.CENTER_VERTICAL);
         layout.addView(legendItem);
         return layout;
     }

@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.provider.ContactsContract;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -16,6 +17,7 @@ import android.widget.TextView;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 
+import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.example.cso.SharedPreferencesHandler;
@@ -23,14 +25,17 @@ import com.example.cso.Sync;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
+import java.util.Arrays;
+
 public class WifiOnlyButton {
 
     public static int wifiOnlyButtonId ;
 
     public static void initializeWifiOnlyButton(Activity activity){
         SwitchMaterial wifiButton = activity.findViewById(wifiOnlyButtonId);
-        boolean[] wifiOnlyState = {SharedPreferencesHandler.getWifiOnlySwitchState()};
-        updateSyncAndWifiButtonBackground(wifiButton, wifiOnlyState[0]);
+        boolean wifiOnlyState = SharedPreferencesHandler.getWifiOnlySwitchState();
+        Log.d("syncstat", "wifi : "  + String.valueOf(wifiOnlyState));
+        updateSyncAndWifiButtonBackground(wifiButton, wifiOnlyState);
 
         wifiButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             handleWifiOnlyButtonClick(activity);
@@ -39,7 +44,9 @@ public class WifiOnlyButton {
 
     public static void handleWifiOnlyButtonClick(Activity activity){
         boolean currentWifiOnlyState = toggleWifiOnlyOnState();
-        updateSyncAndWifiButtonBackground(activity.findViewById(wifiOnlyButtonId),currentWifiOnlyState);
+        SwitchMaterial wifiButton = activity.findViewById(wifiOnlyButtonId);
+        Log.d("syncstat","current is: " + currentWifiOnlyState) ;
+        updateSyncAndWifiButtonBackground(wifiButton,currentWifiOnlyState);
     }
 
     public static boolean toggleWifiOnlyOnState() {
@@ -50,54 +57,24 @@ public class WifiOnlyButton {
 
     public static void updateSyncAndWifiButtonBackground(View button, Boolean state) {
         try{
-            SwitchMaterial switchButton = (SwitchMaterial) button;
-            if (state){
-                int color =  MainActivity.currentTheme.OnSyncButtonGradientStart;
-                switchButton.setTrackTintList(ColorStateList.valueOf(color));
-                switchButton.setThumbTintList(ColorStateList.valueOf(color));
-                switchButton.setChecked(true);
-//                addGradientOnToWifiButton((SwitchMaterial) button);
-            }else{
-                int color =  MainActivity.currentTheme.OffSyncButtonGradientStart;
-                switchButton.setTrackTintList(ColorStateList.valueOf(color));
-                switchButton.setThumbTintList(ColorStateList.valueOf(color));
-                switchButton.setChecked(false);
-//                addGradientOnToWifiButton(((SwitchMaterial) button));
-            }
+            MainActivity.activity.runOnUiThread(() -> {
+                SwitchMaterial switchButton = (SwitchMaterial) button;
+                if (state){
+                    Log.d("syncstat","here setting it to true");
+                    switchButton.setChecked(true);
+                    int color =  MainActivity.currentTheme.OnSyncButtonGradientStart;
+                    switchButton.setTrackTintList(ColorStateList.valueOf(color));
+                    switchButton.setThumbTintList(ColorStateList.valueOf(color));
+                }else{
+                    Log.d("syncstat","here setting it to false");
+                    switchButton.setChecked(false);
+                    int color =  MainActivity.currentTheme.OffSyncButtonGradientStart;
+                    switchButton.setTrackTintList(ColorStateList.valueOf(color));
+                    switchButton.setThumbTintList(ColorStateList.valueOf(color));
+                }
+            });
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);}
-    }
-
-    public static void addGradientOffToWifiButton(ImageButton actionButton){
-        GradientDrawable firstLayer = new GradientDrawable(
-                GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[] {MainActivity.currentTheme.OffSyncButtonGradientStart,
-                        MainActivity.currentTheme.OffSyncButtonGradientEnd}
-        );
-        firstLayer.setShape(GradientDrawable.OVAL);
-        firstLayer.setSize(UI.dpToPx(104), UI.dpToPx(104));
-        firstLayer.setCornerRadius(UI.dpToPx(52));
-
-//        ShapeDrawable secondLayer = new ShapeDrawable(new OvalShape());
-//        secondLayer.getPaint().setColor(android.graphics.Color.parseColor("#B0BEC5"));
-//        secondLayer.setPadding((int) UI.dpToPx(4), (int) UI.dpToPx(4), (int) UI.dpToPx(4), (int) UI.dpToPx(4));
-//
-//        GradientDrawable secondLayerStroke = new GradientDrawable();
-//        secondLayerStroke.setShape(GradientDrawable.OVAL);
-//        secondLayerStroke.setStroke((int) UI.dpToPx(2), android.graphics.Color.parseColor("#90A4AE"));
-//        secondLayerStroke.setCornerRadius(UI.dpToPx(50));
-//
-//        GradientDrawable thirdLayer = new GradientDrawable(
-//                GradientDrawable.Orientation.BOTTOM_TOP,
-//                new int[]{android.graphics.Color.parseColor("#B0BEC5"), android.graphics.Color.parseColor("#90A4AE")}
-//        );
-//        thirdLayer.setShape(GradientDrawable.OVAL);
-//        thirdLayer.setCornerRadius(UI.dpToPx(50));
-
-//        Drawable[] layers = {firstLayer, secondLayerStroke, thirdLayer};
-//        LayerDrawable layerDrawable = new LayerDrawable(layers);
-
-        actionButton.setBackground(firstLayer);
+            LogHandler.crashLog(e,"ui");}
     }
 
     public static void addGradientOnToWifiButton(SwitchMaterial actionSwitch){

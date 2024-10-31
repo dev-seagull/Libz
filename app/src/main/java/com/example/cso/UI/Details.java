@@ -74,20 +74,17 @@ public class Details {
         return layout;
     }
 
-    public static LinearLayout createInnerDetailsLayout(Context context, String title) {
+    public static LinearLayout createInnerDetailsLayout(Context context) {
         LinearLayout layout = new LinearLayout(context);
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
+                UI.getDeviceWidth(context),
                 LinearLayout.LayoutParams.MATCH_PARENT
         );
         layout.setLayoutParams(params);
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setGravity(Gravity.CENTER);
 
-        layout.setPadding(8, 8, 8, 8);
         layout.setElevation(4f);
-        layout.addView(createTitleTextView(context,title));
         GradientDrawable gradientDrawable = UI.createBorderInnerLayoutDrawable(context);
         layout.setBackground(gradientDrawable);
         return layout;
@@ -188,25 +185,28 @@ public class Details {
 
     }
 
-    public static TextView createTitleTextView(Context context, String text) {
+    public static void createTitleTextView(Context context,LinearLayout layout, String text) {
         TextView title = new TextView(context);
         title.setBackgroundColor(Color.TRANSPARENT);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        title.setPadding(0,10,0,0);
+
         title.setLayoutParams(params);
-        FrameLayout.LayoutParams titleParams = new FrameLayout.LayoutParams(
+
+        layout.addView(title);
+
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        titleParams.gravity = Gravity.TOP;
+        titleParams.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
         title.setLayoutParams(titleParams);
         title.setText(text);
         title.setContentDescription("title");
+        title.setPadding(0,10,0,0);
         title.setTextColor(MainActivity.currentTheme.primaryTextColor);
-        return title;
     }
 
     public static TextView createUpdateTimeTextView(Context context, String deviceId) {

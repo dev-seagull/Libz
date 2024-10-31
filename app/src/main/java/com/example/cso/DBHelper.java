@@ -1791,7 +1791,6 @@ public class DBHelper extends SQLiteOpenHelper {
                     count = cursor.getDouble(columnIndex);
                 }
             }
-            Log.d("ui","synced assets: " + count);
         } catch (Exception e) {
             FirebaseCrashlytics.getInstance().recordException(e);
         } finally {
@@ -1851,8 +1850,6 @@ public class DBHelper extends SQLiteOpenHelper {
     public static int getPercentageOfSyncedAssets() {
         double totalAssets = getNumberOfAssets();
         double syncedAssets = getNumberOfSyncedAssets();
-        Log.d("ui","total assets: " + totalAssets);
-        Log.d("ui","synced assets: " + syncedAssets);
         if (totalAssets == 0) {
             return 0;
         }

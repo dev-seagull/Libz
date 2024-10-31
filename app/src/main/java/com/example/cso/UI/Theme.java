@@ -140,7 +140,7 @@ public class Theme {
                 Color.parseColor("#388E3C"), // onSyncButtonGradientStart (for sync progress)
                 Color.parseColor("#388E3C"), // onSyncButtonGradientEnd (for sync progress)
                 Color.parseColor("#90A4AE"),
-                Color.parseColor("#B0BEC5"),
+                Color.parseColor("#90A4AE"),
                 Color.parseColor("#00FFB3"), // syncProgressTextColor
                 Color.parseColor("#FF5722"), // warningTextColor
                 Color.parseColor("#6A5ACD"), // toolbar background
@@ -207,7 +207,7 @@ public class Theme {
                 Color.WHITE, // Primary text color (white)
                 Color.parseColor("#5A7B7D"), // onSyncButtonGradientStart (for sync progress)
                 Color.parseColor("#5A7B7D"), // onSyncButtonGradientEnd (for sync progress)
-                Color.parseColor("#455A64"), // Off sync button gradient start (gray)
+                Color.RED, // Off sync button gradient start (gray)
                 Color.parseColor("#B0BEC5"), // Off sync button gradient end (lighter gray)
                 Color.parseColor("#00E5FF"), // syncProgressTextColor
                 Color.parseColor("#FF5722"), // Warning text color (orange)
@@ -275,8 +275,8 @@ public class Theme {
                 Color.BLACK,  // Primary text color (black for readability on lighter backgrounds)
                 Color.parseColor("#008D7B"), // On sync button gradient start (teal)
                 Color.parseColor("#008D7B"), // On sync button gradient end (dark teal)
-                Color.parseColor("#009688"), // Off sync button gradient start (grayish tone)
-                Color.parseColor("#B0BEC5"), // Off sync button gradient end (light gray)
+                Color.parseColor("#90A4AE"),
+                Color.parseColor("#90A4AE"),
                 Color.parseColor("#00B8D4"), // Sync progress text color (bright cyan for visibility)
                 Color.parseColor("#FF5722"), // Warning text color (orange remains unchanged)
                 Color.parseColor("#00796B"), // Toolbar background (deep teal)

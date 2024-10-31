@@ -53,7 +53,6 @@ public class UI{
         initPrimaryBackground(activity);
         initializeMainLayouts(activity);
         initializeDrawerLayout(activity);
-        SyncButton.initializeSyncButton(activity);
         WifiOnlyButton.initializeWifiOnlyButton(activity);
         SyncDetails.handleSyncDetailsButton(activity);
         update("init App Ui");
