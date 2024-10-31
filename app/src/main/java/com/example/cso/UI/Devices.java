@@ -297,11 +297,21 @@ public class Devices {
             });
             JsonObject data = getStorageStatus(deviceId);
             Log.d(DeviceStatusSync.TAG,"storage for device " + deviceId +" is " + data);
-            View areaSquareChart = AreaSquareChart.createStorageChart(context,data, deviceId);
+            LinearLayout areaSquareChart = AreaSquareChart.createStorageChart(context,data, deviceId);
 
             MainActivity.activity.runOnUiThread(() -> {
                 Details.createTitleTextView(context, layout,"Storage");
                 layout.addView(areaSquareChart);
+
+                areaSquareChart.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+                Log.d("debug", String.valueOf(UI.getDeviceWidth(context) / 5));
+                areaSquareChart.setPadding(UI.getDeviceWidth(context) / 5,UI.getDeviceWidth(context) / 11,0,UI.getDeviceWidth(context) / 10);
+                LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                );
+                areaSquareChart.setLayoutParams(layoutParams);
+
                 layout.removeView(loadingImage[0]);
             });
         }).start();
@@ -344,8 +354,9 @@ public class Devices {
             Log.d(DeviceStatusSync.TAG, "assets of "+deviceId+" location data : " + data);
             MainActivity.activity.runOnUiThread(() -> {
                 Details.createTitleTextView(context, layout,"Landing Zone(s)");
-                LinearLayout treeMapChartLayout = CustomTreeMapChart.createStackedBarChart(context, data, deviceId);
-                layout.addView(treeMapChartLayout);
+
+                CustomTreeMapChart.createStackedBarChart(context, layout, data, deviceId);
+
                 layout.removeView(loadingImage[0]);
             });
         }).start();
@@ -389,9 +400,9 @@ public class Devices {
             Log.d(DeviceStatusSync.TAG, "assets source data : " + data);
             activity.runOnUiThread(() -> {
                 Details.createTitleTextView(context, layout,"Files");
-                View chartLayout = AssetsSourcePieChart.createStackedBarChartForDeviceSourceStatus(context, data);
-                layout.addView(chartLayout);
-                AssetsSourcePieChart.createTextAreaForAssetSourceBarChart(chartLayout,layout,context, data, deviceId);
+                AssetsSourcePieChart.createStackedBarChartForDeviceSourceStatus(context, layout, data);
+
+//                AssetsSourcePieChart.createTextAreaForAssetSourceBarChart(chartLayout,layout,context, data, deviceId);
                 layout.removeView(loadingImage[0]);
             });
         }).start();

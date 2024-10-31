@@ -254,13 +254,14 @@ public class Details {
 
     public static TextView getErrorAsChartAlternative(Context context){
         TextView view = new TextView(context);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,128);
-        params.setMargins(0,64,0,64);
-        view.setGravity(Gravity.CENTER);
-        view.setLayoutParams(params);
 
         view.setText("Unable to get Data");
         view.setTextColor(MainActivity.currentTheme.warningTextColor);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,128);
+        params.setMargins(0,64,0,64);
+        view.setGravity(Gravity.CENTER);
+        view.setLayoutParams(params);
         return view;
     }
 

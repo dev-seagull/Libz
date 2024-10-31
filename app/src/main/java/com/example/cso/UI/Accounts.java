@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.View;
@@ -294,9 +295,25 @@ public class Accounts {
         View chart = AreaSquareChartForAccount.createStorageChart(context,userEmail);
 
         MainActivity.activity.runOnUiThread(() -> {
+            LinearLayout chartLayout;
             Details.createTitleTextView(context, layout,"Storage");
-            layout.addView(chart);
-            layout.removeView(loadingImage[0]);
+            if(chart instanceof  LinearLayout){
+                chartLayout = (LinearLayout) chart;
+
+                chartLayout.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+                chartLayout.setPadding(UI.getDeviceWidth(context) / 5,UI.getDeviceWidth(context) / 11,0,UI.getDeviceWidth(context) / 10);
+                LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                );
+                chartLayout.setLayoutParams(layoutParams);
+
+                layout.addView(chartLayout);
+                layout.removeView(loadingImage[0]);
+            }else{
+                layout.addView(chart);
+                layout.removeView(loadingImage[0]);
+            }
 
         });
 

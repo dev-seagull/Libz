@@ -41,28 +41,30 @@ public class SyncDetailsPieChart {
                 HorizontalBarChart stackedBarChart = new HorizontalBarChart(activity);
                 View pieChartView = SyncDetailsPieChart.createStackedBarChart(activity, stackedBarChart);
                 syncDetailsStatisticsLayout.addView(pieChartView);
+                if(pieChartView instanceof  LinearLayout){
+                    int width = (int) (UI.getDeviceWidth(activity) * 0.9);
+                    int height = (int) (UI.getDeviceHeight(activity) * 0.085);
+                    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                            width,
+                            height
+                    );
+                    layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
+                    stackedBarChart.setLayoutParams(layoutParams);
+                    LinearLayout chartLayout =  (LinearLayout) pieChartView;
+                    chartLayout.setGravity(Gravity.CENTER);
+                }
             });
     }
 
     public static LinearLayout createStackedBarChart(Context context, HorizontalBarChart stackedBarChart) {
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setGravity(Gravity.CENTER);
 
         double total =  DBHelper.getNumberOfAssets();
         double synced = DBHelper.getNumberOfSyncedAssets();
         double unsynced = total - synced;
 
         try {
-            int width = (int) (UI.getDeviceWidth(context) * 0.8);
-            int height = (int) (UI.getDeviceHeight(context) * 0.085);
-            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    height
-            );
-            layoutParams.setMargins(45,0,0,0);
-            stackedBarChart.setLayoutParams(layoutParams);
-
             float[] stackedValues = new float[]{(float) synced, (float) unsynced};
 
             List<BarEntry> entries = new ArrayList<>();

@@ -24,13 +24,6 @@ public class AreaSquareChart {
     public static LinearLayout createStorageChart(Context context, JsonObject data, String deviceId) {
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.HORIZONTAL);
-        layout.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-        );
-        layout.setLayoutParams(layoutParams);
-
         try{
             double total = data.get("totalStorage").getAsDouble();
             double used = data.get("usedSpace").getAsDouble() / total * 100;
@@ -46,8 +39,8 @@ public class AreaSquareChart {
 
             createStackedSquares(context,synced,media,used, stackedSquaresLayout);
             drawGridLines(stackedSquaresLayout, context);
-            layoutParams.gravity = Gravity.LEFT;
-            layoutParams.setMargins(5, 50, 0, 50);
+//            LinearLayout layoutParams.gravity = Gravity.LEFT;
+//            layoutParams.setMargins(5, 50, 0, 50);
             layout.addView(stackedSquaresLayout);
 
             String updateDate = DeviceStatusSync.getDeviceStatusLastUpdateTime(deviceId);
@@ -91,7 +84,7 @@ public class AreaSquareChart {
 
             temp.addView(labelsLayout);
 
-            layout.addView(temp);
+//            layout.addView(temp);
         }catch (Exception e){
             LogHandler.crashLog(e,"AreaSquareChart");
             layout.removeAllViews();

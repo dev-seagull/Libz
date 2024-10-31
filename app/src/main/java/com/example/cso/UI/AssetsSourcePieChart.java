@@ -1,5 +1,7 @@
 package com.example.cso.UI;
 
+import static com.example.cso.MainActivity.activity;
+
 import android.content.Context;
 import android.graphics.Color;
 import android.text.Spannable;
@@ -40,23 +42,31 @@ import java.util.List;
 
 public class AssetsSourcePieChart {
 
-    public static View createStackedBarChartForDeviceSourceStatus(Context context, JsonObject data) {
+    public static void createStackedBarChartForDeviceSourceStatus(Context context,LinearLayout layout, JsonObject data) {
         try {
-            HorizontalBarChart barChart = new HorizontalBarChart(context);
+            LinearLayout tempLayout = new LinearLayout(context);
+            tempLayout.setOrientation(LinearLayout.VERTICAL);
+            tempLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            ));
 
-            configureBarChartDimensions(barChart, context);
             if (data != null && data.size() > 0) {
+                HorizontalBarChart barChart = new HorizontalBarChart(context);
                 configureStackedBarChartDataForDeviceSourceStatus(barChart, data);
                 Legend legend = barChart.getLegend();
                 legend.setEnabled(false);
+                configureBarChartDimensions(barChart,tempLayout);
+                barChart.invalidate();
             } else {
-                return Details.getErrorAsChartAlternative(context);
+                View view = Details.getErrorAsChartAlternative(context);
+                tempLayout.addView(view);
             }
-            barChart.invalidate();
-            return barChart;
+            layout.addView(tempLayout);
         } catch (Exception e) {
             LogHandler.crashLog(e, "AssetsSourceChart");
-            return Details.getErrorAsChartAlternative(context);
+            View view = Details.getErrorAsChartAlternative(context);
+            layout.addView(view);
         }
 }
 
@@ -111,15 +121,25 @@ public class AssetsSourcePieChart {
         dataSet.setDrawValues(false);
     }
 
-    public static void configureBarChartDimensions(HorizontalBarChart barChart, Context context) {
-        int width = (int) (UI.getDeviceWidth(context) * 0.8);
-        int height = (int) (UI.getDeviceHeight(context) * 0.085);
+    public static void configureBarChartDimensions(HorizontalBarChart barChart,LinearLayout tempLayout) {
+        int width = (int) (UI.getDeviceWidth(activity) * 0.9);
+        int height = (int) (UI.getDeviceHeight(activity) * 0.085);
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
+                width,
                 height
         );
-        layoutParams.setMargins(45,0,20,0);
+        layoutParams.gravity = Gravity.CENTER;
         barChart.setLayoutParams(layoutParams);
+
+        tempLayout.setGravity(Gravity.CENTER);
+        tempLayout.setLayoutParams(layoutParams);
+        tempLayout.addView(barChart);
+        tempLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER_HORIZONTAL
+        ));
+        tempLayout.setPadding(35,0,0,100);
     }
 
 

@@ -40,14 +40,6 @@ public class AreaSquareChartForAccount {
             }
 
             layout.setOrientation(LinearLayout.HORIZONTAL);
-            layout.setGravity(Gravity.LEFT);
-            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-            );
-            layoutParams.setMargins(175, 30, 0, 30);
-            layoutParams.gravity = Gravity.CENTER_VERTICAL;
-            layout.setLayoutParams(layoutParams);
 
             RelativeLayout stackedSquaresLayout = new RelativeLayout(context);
             stackedSquaresLayout.setGravity(Gravity.CENTER);
