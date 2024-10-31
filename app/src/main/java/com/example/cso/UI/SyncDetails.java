@@ -72,6 +72,30 @@ public class SyncDetails {
         int colorStart = MainActivity.currentTheme.deviceStorageChartColors[3];
         int colorEnd = MainActivity.currentTheme.deviceStorageChartColors[2];
 
+        if(percentage == 100){
+            colorEnd = colorStart;
+            GradientDrawable firstLayer = new GradientDrawable(
+                    GradientDrawable.Orientation.TOP_BOTTOM,
+                    new int[] {colorStart, colorEnd}
+            );
+            firstLayer.setShape(GradientDrawable.OVAL);
+            firstLayer.setSize(UI.dpToPx(104), UI.dpToPx(104));
+            firstLayer.setCornerRadius(UI.dpToPx(52));
+
+            actionButton.setBackground(firstLayer);
+        }else if(percentage == 0){
+            colorStart = colorEnd;
+            GradientDrawable firstLayer = new GradientDrawable(
+                    GradientDrawable.Orientation.TOP_BOTTOM,
+                    new int[] {colorStart, colorEnd}
+            );
+            firstLayer.setShape(GradientDrawable.OVAL);
+            firstLayer.setSize(UI.dpToPx(104), UI.dpToPx(104));
+            firstLayer.setCornerRadius(UI.dpToPx(52));
+
+            actionButton.setBackground(firstLayer);
+        }
+
         final float inverseRatio = 1 - (float) percentage / 100;
         float r = Color.red(colorStart) * (float) percentage / 100 + Color.red(colorEnd) * inverseRatio;
         float g = Color.green(colorStart) * (float) percentage / 100 + Color.green(colorEnd) * inverseRatio;
@@ -147,22 +171,5 @@ public class SyncDetails {
             }
         });
     }
-
-    public static double getTotalUnsyncedAssetsOfDevices(){ // fix it
-        double unsyncedAssetsOfDevicesSize = 0;
-        ArrayList<DeviceHandler> devices = DBHelper.getDevicesFromDB();
-        for (DeviceHandler device : devices){
-            JsonObject storageData = Devices.getStorageStatus(device.getDeviceId());
-            double media = storageData.get("mediaStorage").getAsDouble();
-            double synced = 0;
-            if (storageData.has("syncedAssetsStorage")){
-                synced =storageData.get("syncedAssetsStorage").getAsDouble();
-            }
-            Log.d("SyncDetails", "media - sync : " + media + " - " + synced + " = " + (media -synced));
-            unsyncedAssetsOfDevicesSize += (media - synced);
-        }
-        return unsyncedAssetsOfDevicesSize;
-    }
-
 
 }
