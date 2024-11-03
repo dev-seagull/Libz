@@ -183,8 +183,15 @@ public class Devices {
                 if (detailsView.getVisibility() == View.VISIBLE) {
                     detailsView.setVisibility(View.GONE);
                 } else {
+                    PagerAdapter.currentPos = 0;
                     PagerAdapter.getPagerAdapterByButtonId(device.getDeviceId()).notifyDataSetChanged();
-                    detailsView.setVisibility(View.VISIBLE);
+
+                    detailsView.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            detailsView.setVisibility(View.VISIBLE);
+                        }
+                    }, 300);
                 }
 
                 RelativeLayout parent = (RelativeLayout) view.getParent();

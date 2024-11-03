@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.example.cso.DBHelper;
@@ -42,16 +43,17 @@ public class SyncDetailsPieChart {
                 View pieChartView = SyncDetailsPieChart.createStackedBarChart(activity, stackedBarChart);
                 syncDetailsStatisticsLayout.addView(pieChartView);
                 if(pieChartView instanceof  LinearLayout){
-                    int width = (int) (UI.getDeviceWidth(activity) * 0.9);
-                    int height = (int) (UI.getDeviceHeight(activity) * 0.085);
-                    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                            width,
-                            height
-                    );
-                    layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
-                    stackedBarChart.setLayoutParams(layoutParams);
-                    LinearLayout chartLayout =  (LinearLayout) pieChartView;
-                    chartLayout.setGravity(Gravity.CENTER);
+//                    int width = (int) (UI.getDeviceWidth(activity) * 0.9);
+//                    int height = (int) (UI.getDeviceHeight(activity) * 0.085);
+//                    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+//                            width,
+//                            height
+//                    );
+//                    layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
+//                    stackedBarChart.setLayoutParams(layoutParams);
+//                    LinearLayout chartLayout =  (LinearLayout) pieChartView;
+//                    chartLayout.setGravity(Gravity.CENTER);
+//
                 }
             });
     }
@@ -95,6 +97,19 @@ public class SyncDetailsPieChart {
             dataSet.setDrawValues(false);
 
             layout.addView(stackedBarChart);
+            layout.post(new Runnable() {
+                @Override
+                public void run() {
+                    LinearLayout.LayoutParams stackedBarLayoutParams = new LinearLayout.LayoutParams(
+                            900,
+                            230
+                    );
+                    stackedBarLayoutParams.gravity = Gravity.CENTER;
+                    stackedBarLayoutParams.setMargins((layout.getWidth() / 2) - 520,
+                            0,0,0);
+                    stackedBarChart.setLayoutParams(stackedBarLayoutParams);
+                }
+            });
 
             LinearLayout mainLegendLayout = new LinearLayout(context);
             mainLegendLayout.setOrientation(LinearLayout.VERTICAL);
@@ -108,20 +123,17 @@ public class SyncDetailsPieChart {
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
             );
             legendLayout.setGravity(Gravity.CENTER);
-            legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.25),0,(int) (UI.getDeviceWidth(context) * 0.25),0);
+            legendParams.setMargins(250,0,250,0);
             legendLayout.setLayoutParams(legendParams);
 
-            int parentWidth = (int) UI.getDeviceWidth(context) ;
-
-            Log.d("details", "synced: " + synced);
-            Log.d("details", "UnSynced: " + unsynced);
+            int parentWidth = 900;
 
             View legendItem = createLegendItem(context, "Buzzing along", colors[0], unsynced);
             legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                     View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
             legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                     View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-            int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + (int) (UI.getDeviceWidth(context) * 0.15) + (int) (UI.getDeviceWidth(context) * 0.15);
+            int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + 400;
 
             Log.d("details", "total width: " + totalWidth);
             Log.d("details", "parent width: " + parentWidth);

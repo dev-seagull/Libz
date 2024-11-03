@@ -15,6 +15,7 @@ import java.util.ArrayList;
 public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHolder> {
 
     private Context context;
+    public static int currentPos;
     public String buttonType;
     public String buttonId;
     public static int totalPagesForAccount = 1;
@@ -51,13 +52,12 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
         Log.d("viewPager", "onBindViewHolder : " + position);
         holder.currentPage.removeAllViews();
         LinearLayout newPage = null;
-        int pos = 0;
+
+        int pos = currentPos;
         if (buttonType.equals("account")){
             pos = position % totalPagesForAccount ;
-//            if (pos == 0){
-                newPage = Accounts.createChartForStorageStatus(context, buttonId);
-                Log.d("viewPager", "page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
-//            }
+            newPage = Accounts.createChartForStorageStatus(context, buttonId);
+            Log.d("viewPager", "page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
         }else if (buttonType.equals("device")){
             pos = position % totalPagesForDevice;
             if (pos == 0){
