@@ -175,11 +175,13 @@ public class SyncDetailsPieChart {
     private static LinearLayout createLegendItem(Context context, String label, int color, double value) {
         LinearLayout legendItem = new LinearLayout(context);
         legendItem.setOrientation(LinearLayout.HORIZONTAL);
-        legendItem.setLayoutParams(new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams legendParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-        ));
+        );
         legendItem.setGravity(Gravity.CENTER);
+        legendParams.setMargins(0,0,0,10);
+        legendItem.setLayoutParams(legendParams);
 
         View colorBox = new View(context);
         LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceHeight(context) * 0.008), (int) (UI.getDeviceHeight(context) * 0.008));

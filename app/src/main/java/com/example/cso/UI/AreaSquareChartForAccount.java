@@ -11,6 +11,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.example.cso.DBHelper;
+import com.example.cso.DeviceStatusSync;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.google.gson.JsonObject;
@@ -23,6 +24,7 @@ import java.util.Locale;
 public class AreaSquareChartForAccount {
     public static View createStorageChart(Context context, String userEmail) {
         LinearLayout layout = new LinearLayout(context);
+        layout.setOrientation(LinearLayout.HORIZONTAL);
         double total = 15;
         double used = 0;
         double synced;
@@ -39,8 +41,6 @@ public class AreaSquareChartForAccount {
                 }
             }
 
-            layout.setOrientation(LinearLayout.HORIZONTAL);
-
             RelativeLayout stackedSquaresLayout = new RelativeLayout(context);
             stackedSquaresLayout.setGravity(Gravity.CENTER);
             RelativeLayout.LayoutParams stackedParams = new RelativeLayout.LayoutParams(
@@ -48,15 +48,21 @@ public class AreaSquareChartForAccount {
                     300
             );
             stackedSquaresLayout.setLayoutParams(stackedParams);
+
             createStackedSquares(context,synced, used, total,stackedSquaresLayout);
             AreaSquareChart.drawGridLines(stackedSquaresLayout,context);
-
             layout.addView(stackedSquaresLayout);
-            LinearLayout labelsLayout = createLabels(context,total, used, synced);
-            layout.setGravity(Gravity.BOTTOM);
-            layout.setPadding(10,0,0,50);
-            layout.addView(labelsLayout);
-            
+
+            LinearLayout subLayout = new LinearLayout(context);
+            subLayout.setOrientation(LinearLayout.VERTICAL);
+            LinearLayout.LayoutParams subLayoutParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            );
+            subLayout.setLayoutParams(subLayoutParams);
+
+            createLabels(context,total, used, synced, subLayout);
+            layout.addView(subLayout);
         }catch (Exception e){
             LogHandler.crashLog(e,"AccountAreaChart");
             return Details.getErrorAsChartAlternative(context);
@@ -73,10 +79,8 @@ public class AreaSquareChartForAccount {
     }
 
 
-    private static LinearLayout createLabels(Context context, double total, double used, double synced){
-        LinearLayout layout = new LinearLayout(context);
-        layout.setOrientation(LinearLayout.VERTICAL);
-
+    private static void createLabels(Context context, double total, double used
+            , double synced, LinearLayout parentLayout){
         String formattedTotal = formatStorageSize(total - used);
         String formattedUsed = formatStorageSize(used - synced);
         String formattedSynced = formatStorageSize(synced);
@@ -113,10 +117,18 @@ public class AreaSquareChartForAccount {
         usedText.setLayoutParams(usedParams);
 
         TextView syncedText = new TextView(context);
-        syncedText.setText("Libz: " + formattedSynced);
+        syncedText.setText("Buzzing Along: " + formattedSynced);
         syncedText.setTextColor(MainActivity.currentTheme.primaryTextColor);
         syncedText.setTextSize(12f);
         syncedText.setLayoutParams(syncedParams);
+
+        LinearLayout layout = new LinearLayout(context);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+        layout.setGravity(Gravity.BOTTOM);
 
         LinearLayout legendItem = new LinearLayout(context);
         legendItem.setOrientation(LinearLayout.HORIZONTAL);
@@ -126,6 +138,7 @@ public class AreaSquareChartForAccount {
         ));
 
         colorBox.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
+        colorBoxParams.setMargins(20, 15, 10, 0);
         legendItem.addView(colorBox);
         legendItem.addView(totalText);
         layout.addView(legendItem);
@@ -139,6 +152,7 @@ public class AreaSquareChartForAccount {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         ));
+        colorBoxParams.setMargins(20, 15, 10, 0);
         legendItem.addView(colorBox);
         legendItem.addView(usedText);
         layout.addView(legendItem);
@@ -152,11 +166,13 @@ public class AreaSquareChartForAccount {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         ));
+        colorBoxParams.setMargins(20, 15, 10, 0);
         legendItem.addView(colorBox);
         legendItem.addView(syncedText);
         layout.addView(legendItem);
 
-        return layout;
+        parentLayout.addView(layout);
+        layout.setGravity(Gravity.BOTTOM);
     }
 
     public static String formatStorageSize(double sizeInMB) {
