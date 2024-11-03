@@ -4,16 +4,11 @@ import android.content.Context;
 import android.graphics.drawable.GradientDrawable;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.example.cso.DeviceStatusSync;
-import com.example.cso.R;
 
 import java.util.ArrayList;
 
@@ -22,8 +17,8 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
     private Context context;
     public String buttonType;
     public String buttonId;
-    public static int totalPagesForAccount = 2 ;
-    public static int totalPagesForDevice = 3 ;
+    public static int totalPagesForAccount = 1;
+    public static int totalPagesForDevice = 3;
     public static ArrayList<PagerAdapter> pagerAdapters = new ArrayList<>();
 
     public PagerAdapter(Context context, String buttonType, String buttonId) {
@@ -81,7 +76,12 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
 
     @Override
     public int getItemCount() {
-        return 10000;
+        if (buttonType.equals("account")) {
+            return totalPagesForAccount;
+        } else if (buttonType.equals("device")) {
+            return totalPagesForDevice;
+        }
+        return 0;
     }
 
     static class PageViewHolder extends RecyclerView.ViewHolder {

@@ -102,7 +102,6 @@ public class Dialogs {
                                                              double totalFreeSpace){
         boolean isAbleToMoveAllAssets = false;
         try{
-            Log.d("debug",String.valueOf(totalFreeSpace));
             if (isSingleAccountUnlink){
                 builder.setTitle("No other available account");
                 builder.setMessage("Caution : All of your assets in " + userEmail + " will be out of sync.\n" +

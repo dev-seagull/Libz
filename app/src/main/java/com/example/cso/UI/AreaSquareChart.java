@@ -18,8 +18,6 @@ import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.google.gson.JsonObject;
 
-import java.util.ConcurrentModificationException;
-
 public class AreaSquareChart {
     public static LinearLayout createStorageChart(Context context, JsonObject data, String deviceId) {
         LinearLayout layout = new LinearLayout(context);
@@ -39,52 +37,23 @@ public class AreaSquareChart {
 
             createStackedSquares(context,synced,media,used, stackedSquaresLayout);
             drawGridLines(stackedSquaresLayout, context);
-//            LinearLayout layoutParams.gravity = Gravity.LEFT;
-//            layoutParams.setMargins(5, 50, 0, 50);
             layout.addView(stackedSquaresLayout);
 
+            LinearLayout subLayout = new LinearLayout(context);
+            subLayout.setOrientation(LinearLayout.VERTICAL);
+            LinearLayout.LayoutParams subLayoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            );
+            subLayout.setLayoutParams(subLayoutParams);
             String updateDate = DeviceStatusSync.getDeviceStatusLastUpdateTime(deviceId);
-            LinearLayout updateDateLabelsLayout = createUpdateDateLabel(context, updateDate);
-            LinearLayout.LayoutParams updateDateLabelsParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            );
-            updateDateLabelsParams.setMargins(20,0,0,0);
-            updateDateLabelsParams.gravity = Gravity.TOP;
-            updateDateLabelsLayout.setLayoutParams(updateDateLabelsParams);
+            createUpdateDateLabel(context, updateDate, subLayout, stackedSquaresLayout, layout);
 
-            LinearLayout labelsLayout = createLabels(context,data.get("totalStorage").getAsDouble()
+            createLabels(context,data.get("totalStorage").getAsDouble()
                     ,data.get("usedSpace").getAsDouble(),data.get("mediaStorage").getAsDouble(),
-                    data.get("syncedAssetsStorage").getAsDouble());
-            LinearLayout.LayoutParams labelsLayoutParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            );
-            labelsLayoutParams.gravity = Gravity.BOTTOM ;
-            labelsLayoutParams.setMargins(20,0,0,0);
-            labelsLayout.setLayoutParams(labelsLayoutParams);
+                    data.get("syncedAssetsStorage").getAsDouble(), subLayout);
 
-            LinearLayout temp = new LinearLayout(context);
-            temp.setOrientation(LinearLayout.VERTICAL);
-            temp.setLayoutParams(new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-            ));
-
-            temp.addView(updateDateLabelsLayout);
-
-            View spacer = new View(context);
-            LinearLayout.LayoutParams spacerParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    0,
-                    1
-            );
-            spacer.setLayoutParams(spacerParams);
-            temp.addView(spacer);
-
-            temp.addView(labelsLayout);
-
-//            layout.addView(temp);
+            layout.addView(subLayout);
         }catch (Exception e){
             LogHandler.crashLog(e,"AreaSquareChart");
             layout.removeAllViews();
@@ -226,35 +195,33 @@ public class AreaSquareChart {
         layout.addView(gridView, gridParams);
     }
 
-    private static LinearLayout createLabels(Context context, double total, double used, double media, double synced){
-        LinearLayout layout = new LinearLayout(context);
-        layout.setOrientation(LinearLayout.VERTICAL);
-
+    private static void createLabels(Context context, double total, double used,
+                                             double media, double synced, LinearLayout parentLayout){
         String formattedTotal = formatStorageSize(total - used);
         String formattedUsed = formatStorageSize(used - media);
         String formattedMedia = formatStorageSize(media - synced);
         String formattedSynced = formatStorageSize(synced);
 
-        RelativeLayout.LayoutParams totalParams = new RelativeLayout.LayoutParams(
+        LinearLayout.LayoutParams totalParams = new LinearLayout.LayoutParams(
                 RelativeLayout.LayoutParams.WRAP_CONTENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT
         );
-        RelativeLayout.LayoutParams usedParams = new RelativeLayout.LayoutParams(
+        LinearLayout.LayoutParams usedParams = new LinearLayout.LayoutParams(
                 RelativeLayout.LayoutParams.WRAP_CONTENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT
         );
-        RelativeLayout.LayoutParams mediaParams = new RelativeLayout.LayoutParams(
+        LinearLayout.LayoutParams mediaParams = new LinearLayout.LayoutParams(
                 RelativeLayout.LayoutParams.WRAP_CONTENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT
         );
-        RelativeLayout.LayoutParams syncedParams = new RelativeLayout.LayoutParams(
+        LinearLayout.LayoutParams syncedParams = new LinearLayout.LayoutParams(
                 RelativeLayout.LayoutParams.WRAP_CONTENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT
         );
 
         View colorBox = new View(context);
         LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceHeight(context) * 0.008), (int) (UI.getDeviceHeight(context) * 0.008));
-        colorBoxParams.setMargins(5, 15, 10, 0);
+        colorBoxParams.setMargins(20, 15, 10, 0);
         colorBox.setLayoutParams(colorBoxParams);
 
         TextView totalText = new TextView(context);
@@ -282,6 +249,14 @@ public class AreaSquareChart {
         syncedText.setTextSize(12f);
         syncedText.setLayoutParams(syncedParams);
 
+        LinearLayout layout = new LinearLayout(context);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+        layout.setGravity(Gravity.BOTTOM);
+
         LinearLayout legendItem = new LinearLayout(context);
         legendItem.setOrientation(LinearLayout.HORIZONTAL);
         legendItem.setLayoutParams(new LinearLayout.LayoutParams(
@@ -289,8 +264,8 @@ public class AreaSquareChart {
                 ViewGroup.LayoutParams.WRAP_CONTENT
         ));
 
-        layout.setGravity(Gravity.BOTTOM);
         colorBox.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[0]);
+        colorBoxParams.setMargins(20, 15, 10, 0);
         legendItem.addView(colorBox);
         legendItem.addView(totalText);
         layout.addView(legendItem);
@@ -304,10 +279,10 @@ public class AreaSquareChart {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         ));
+        colorBoxParams.setMargins(20, 15, 10, 0);
         legendItem.addView(colorBox);
         legendItem.addView(usedText);
         layout.addView(legendItem);
-
 
         colorBox = new View(context);
         colorBox.setLayoutParams(colorBoxParams);
@@ -318,6 +293,7 @@ public class AreaSquareChart {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         ));
+        colorBoxParams.setMargins(20, 15, 10, 0);
         legendItem.addView(colorBox);
         legendItem.addView(mediaText);
         layout.addView(legendItem);
@@ -331,23 +307,34 @@ public class AreaSquareChart {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         ));
+        colorBoxParams.setMargins(20, 15, 10, 0);
         legendItem.addView(colorBox);
         legendItem.addView(syncedText);
-        legendItem.setGravity(Gravity.CENTER_VERTICAL);
         layout.addView(legendItem);
-        return layout;
+        parentLayout.addView(layout);
+        layout.setGravity(Gravity.BOTTOM);
     }
 
-    public static LinearLayout createUpdateDateLabel(Context context, String updateDate){
-        LinearLayout layout = new LinearLayout(context);
-
+    public static void createUpdateDateLabel(Context context, String updateDate,
+                                                     LinearLayout subLayout,
+                                                     RelativeLayout stackedSquaresLayout, LinearLayout layout){
         TextView totalText = new TextView(context);
         totalText.setText(updateDate);
         totalText.setTextSize(11f);
         totalText.setTextColor(MainActivity.currentTheme.primaryTextColor);
 
-        layout.addView(totalText);
-        return layout;
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        layoutParams.gravity = Gravity.TOP;
+        int topMargin = layout.getHeight() - stackedSquaresLayout.getHeight();
+        Log.d("debug", String.valueOf(topMargin));
+        layoutParams.setMargins(20,0,0,0);
+        totalText.setLayoutParams(layoutParams);
+
+        subLayout.addView(totalText);
+        Log.d("debug", String.valueOf(subLayout.getHeight() - stackedSquaresLayout.getHeight()));
     }
 
     public static String formatStorageSize(double sizeInGB) {

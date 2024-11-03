@@ -46,57 +46,124 @@ public class AssetsSourcePieChart {
         try {
             LinearLayout tempLayout = new LinearLayout(context);
             tempLayout.setOrientation(LinearLayout.VERTICAL);
-            tempLayout.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams tempLayoutParams = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-            ));
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+            tempLayoutParams.gravity = Gravity.CENTER;
+            tempLayout.setLayoutParams(tempLayoutParams);
 
             if (data != null && data.size() > 0) {
                 HorizontalBarChart barChart = new HorizontalBarChart(context);
-                configureStackedBarChartDataForDeviceSourceStatus(barChart, data);
+                ArrayList<BarEntry> entries = new ArrayList<>();
+                List<String> labels = new ArrayList<>();
+                List<Double> values = new ArrayList<>();
+
+                List<Pair<String, Double>> sourceValuePairs = new ArrayList<>();
+                for (String source : data.keySet()) {
+                    double size = data.get(source).getAsDouble();
+                    if (size != 0.0) {
+                        sourceValuePairs.add(new Pair<>(source, size));
+                    }
+                }
+                sourceValuePairs.sort((p1, p2) -> Double.compare(p2.second, p1.second));
+
+                for (Pair<String, Double> pair : sourceValuePairs) {
+                    values.add(pair.second);
+                    labels.add(pair.first);
+                }
+
+                float[] stackedValues = new float[values.size()];
+                for (int i = 0; i < values.size(); i++) {
+                    stackedValues[i] = values.get(i).floatValue();
+                }
+                entries.add(new BarEntry(0f, stackedValues));
+
+                configureBarChartDataFormatForDeviceSourceStatus(barChart, entries, labels, values);
+
                 Legend legend = barChart.getLegend();
                 legend.setEnabled(false);
-                configureBarChartDimensions(barChart,tempLayout);
-                barChart.invalidate();
+
+                tempLayout.addView(barChart);
+                tempLayout.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        LinearLayout.LayoutParams barChartParams = new LinearLayout.LayoutParams(
+                                900,
+                                230
+                        );
+                        barChartParams.gravity = Gravity.CENTER;
+                        barChartParams.setMargins((layout.getWidth() / 2) - 520,
+                                (layout.getHeight() / 2) - 210,0,0);
+                        barChart.setLayoutParams(barChartParams);
+                        barChart.invalidate();
+
+                        ScrollView scrollView = new ScrollView(context);
+                        LinearLayout.LayoutParams scrollViewParams = new LinearLayout.LayoutParams(
+                                900, 140
+                        );
+                        scrollViewParams.gravity = Gravity.CENTER_HORIZONTAL;
+                        scrollViewParams.setMargins((layout.getWidth() / 2) - 520, 0, 0, 10);
+                        scrollView.setLayoutParams(scrollViewParams);
+
+                        int parentWidth = 900;
+                        LinearLayout mainLegendLayout = new LinearLayout(context);
+                        mainLegendLayout.setOrientation(LinearLayout.VERTICAL);
+                        LinearLayout.LayoutParams mainLegendParams = new LinearLayout.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.WRAP_CONTENT
+                        );
+                        mainLegendParams.gravity = Gravity.CENTER_HORIZONTAL;
+                        mainLegendParams.setMargins(( layout.getWidth() / 2) - 420,0,0,0);
+                        mainLegendLayout.setLayoutParams(mainLegendParams);
+
+                        LinearLayout legendLayout = new LinearLayout(context);
+                        legendLayout.setOrientation(LinearLayout.HORIZONTAL);
+
+                        int[] colors = MainActivity.currentTheme.deviceAppStorageChartColors;
+                        for (int i = 0; i < labels.size(); i++) {
+//                            for(int j = 0 ; j < 10 ; j++){
+                                int color = colors[i % colors.length];
+                                View legendItem = CustomTreeMapChart.createLegendItem
+                                        (context, labels.get(i), color, values.get(i));
+
+                                legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                                legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+
+                                int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + 240;
+
+                                if (totalWidth > parentWidth) {
+                                    mainLegendLayout.addView(legendLayout);
+                                    legendLayout = new LinearLayout(context);
+                                    legendLayout.setOrientation(LinearLayout.HORIZONTAL);
+                                    legendLayout.setGravity(Gravity.LEFT);
+                                }
+
+                                legendLayout.addView(legendItem);
+//                            }
+                        }
+                        if (legendLayout.getChildCount() > 0) {
+                            mainLegendLayout.addView(legendLayout);
+                        }
+                        scrollView.addView(mainLegendLayout);
+                        tempLayout.addView(scrollView);
+                    }
+                });
+
             } else {
                 View view = Details.getErrorAsChartAlternative(context);
                 tempLayout.addView(view);
             }
             layout.addView(tempLayout);
+            Log.d("debug","4 " + layout.getWidth());
         } catch (Exception e) {
             LogHandler.crashLog(e, "AssetsSourceChart");
             View view = Details.getErrorAsChartAlternative(context);
             layout.addView(view);
         }
 }
-
-    public static void configureStackedBarChartDataForDeviceSourceStatus(HorizontalBarChart barChart, JsonObject sourcesData) {
-        ArrayList<BarEntry> entries = new ArrayList<>();
-        List<String> labels = new ArrayList<>();
-        List<Double> values = new ArrayList<>();
-
-        List<Pair<String, Double>> sourceValuePairs = new ArrayList<>();
-        for (String source : sourcesData.keySet()) {
-            double size = sourcesData.get(source).getAsDouble();
-            if (size != 0.0) {
-                sourceValuePairs.add(new Pair<>(source, size));
-            }
-        }
-        sourceValuePairs.sort((p1, p2) -> Double.compare(p2.second, p1.second));
-
-        for (Pair<String, Double> pair : sourceValuePairs) {
-            values.add(pair.second);
-            labels.add(pair.first);
-        }
-
-        float[] stackedValues = new float[values.size()];
-        for (int i = 0; i < values.size(); i++) {
-            stackedValues[i] = values.get(i).floatValue();
-        }
-        entries.add(new BarEntry(0f, stackedValues));
-
-        configureBarChartDataFormatForDeviceSourceStatus(barChart, entries, labels, values);
-    }
 
     public static void configureBarChartDataFormatForDeviceSourceStatus(HorizontalBarChart barChart, ArrayList<BarEntry> entries, List<String> labels, List<Double> values) {
         BarDataSet dataSet = new BarDataSet(entries, null);
@@ -119,27 +186,6 @@ public class AssetsSourcePieChart {
         xAxis.setDrawGridLines(false);
         xAxis.setDrawLabels(false);
         dataSet.setDrawValues(false);
-    }
-
-    public static void configureBarChartDimensions(HorizontalBarChart barChart,LinearLayout tempLayout) {
-        int width = (int) (UI.getDeviceWidth(activity) * 0.9);
-        int height = (int) (UI.getDeviceHeight(activity) * 0.085);
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                width,
-                height
-        );
-        layoutParams.gravity = Gravity.CENTER;
-        barChart.setLayoutParams(layoutParams);
-
-        tempLayout.setGravity(Gravity.CENTER);
-        tempLayout.setLayoutParams(layoutParams);
-        tempLayout.addView(barChart);
-        tempLayout.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                Gravity.CENTER_HORIZONTAL
-        ));
-        tempLayout.setPadding(35,0,0,100);
     }
 
 
@@ -211,16 +257,16 @@ public class AssetsSourcePieChart {
                 mainLegendLayout.addView(legendLayout);
             }
 
-            String updateDate = DeviceStatusSync.getDeviceStatusLastUpdateTime(deviceId);
-            LinearLayout updateDateLabelsLayout = AreaSquareChart.createUpdateDateLabel(context, updateDate);
-            LinearLayout.LayoutParams updateDateLabelsParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            );
-            updateDateLabelsParams.setMargins((int) ((UI.getDeviceWidth(context) * 0.10) + 20),30,(int) (UI.getDeviceWidth(context) * 0.1),0);
-            updateDateLabelsLayout.setLayoutParams(updateDateLabelsParams);
-            mainLegendLayout.setPadding(60,0,20,75);
-            mainLegendLayout.addView(updateDateLabelsLayout);
+//            String updateDate = DeviceStatusSync.getDeviceStatusLastUpdateTime(deviceId);
+//            LinearLayout updateDateLabelsLayout = AreaSquareChart.createUpdateDateLabel(context, updateDate);
+//            LinearLayout.LayoutParams updateDateLabelsParams = new LinearLayout.LayoutParams(
+//                    LinearLayout.LayoutParams.WRAP_CONTENT,
+//                    LinearLayout.LayoutParams.WRAP_CONTENT
+//            );
+//            updateDateLabelsParams.setMargins((int) ((UI.getDeviceWidth(context) * 0.10) + 20),30,(int) (UI.getDeviceWidth(context) * 0.1),0);
+//            updateDateLabelsLayout.setLayoutParams(updateDateLabelsParams);
+//            mainLegendLayout.setPadding(60,0,20,75);
+//            mainLegendLayout.addView(updateDateLabelsLayout);
 
             layout.addView(mainLegendLayout);
         }

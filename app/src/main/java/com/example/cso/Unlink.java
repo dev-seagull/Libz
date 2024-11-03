@@ -150,7 +150,6 @@ public class Unlink {
                 if (!account[0].equals(userEmail) && type.equals("backup")){
                     double totalStorage = Double.valueOf(account[1]);
                     double usedStorage = Double.valueOf(account[2]);
-                    Log.d("debug",String.valueOf(totalStorage - usedStorage));
                     totalFreeSpace += totalStorage - usedStorage;
                 }
             }

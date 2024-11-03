@@ -3,6 +3,9 @@ package com.example.cso.UI;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Paint;
+import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.media.Image;
@@ -72,44 +75,35 @@ public class SyncDetails {
         int colorStart = MainActivity.currentTheme.deviceStorageChartColors[3];
         int colorEnd = MainActivity.currentTheme.deviceStorageChartColors[2];
 
+        GradientDrawable firstLayer = new GradientDrawable();
         if(percentage == 100){
-            colorEnd = colorStart;
-            GradientDrawable firstLayer = new GradientDrawable(
-                    GradientDrawable.Orientation.TOP_BOTTOM,
-                    new int[] {colorStart, colorEnd}
-            );
-            firstLayer.setShape(GradientDrawable.OVAL);
-            firstLayer.setSize(UI.dpToPx(104), UI.dpToPx(104));
-            firstLayer.setCornerRadius(UI.dpToPx(52));
-
-            actionButton.setBackground(firstLayer);
+            firstLayer.setColors(new int[]{colorStart, colorStart});
         }else if(percentage == 0){
-            colorStart = colorEnd;
-            GradientDrawable firstLayer = new GradientDrawable(
-                    GradientDrawable.Orientation.TOP_BOTTOM,
-                    new int[] {colorStart, colorEnd}
-            );
-            firstLayer.setShape(GradientDrawable.OVAL);
-            firstLayer.setSize(UI.dpToPx(104), UI.dpToPx(104));
-            firstLayer.setCornerRadius(UI.dpToPx(52));
-
-            actionButton.setBackground(firstLayer);
+            firstLayer.setColors(new int[]{colorStart, colorEnd});
+        }else{
+            final float inverseRatio = 1 - (float) percentage / 100;
+            float r = Color.red(colorStart) * (float) percentage / 100 + Color.red(colorEnd) * inverseRatio;
+            float g = Color.green(colorStart) * (float) percentage / 100 + Color.green(colorEnd) * inverseRatio;
+            float b = Color.blue(colorStart) * (float) percentage / 100 + Color.blue(colorEnd) * inverseRatio;
+            int blendedColor = Color.rgb((int) r, (int) g, (int) b);
+            firstLayer.setColors(new int[]{colorStart, blendedColor, colorEnd});
         }
 
-        final float inverseRatio = 1 - (float) percentage / 100;
-        float r = Color.red(colorStart) * (float) percentage / 100 + Color.red(colorEnd) * inverseRatio;
-        float g = Color.green(colorStart) * (float) percentage / 100 + Color.green(colorEnd) * inverseRatio;
-        float b = Color.blue(colorStart) * (float) percentage / 100 + Color.blue(colorEnd) * inverseRatio;
-        int blendedColor =  Color.rgb((int) r, (int) g, (int) b);
 
-        GradientDrawable firstLayer = new GradientDrawable(
-                GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[] {colorStart,
-                        blendedColor, colorEnd}
-        );
+//        GradientDrawable firstLayer = new GradientDrawable(
+//                GradientDrawable.Orientation.TOP_BOTTOM,
+//                new int[] {colorStart,
+//                        blendedColor, colorEnd}
+//        );
+
         firstLayer.setShape(GradientDrawable.OVAL);
         firstLayer.setSize(UI.dpToPx(104), UI.dpToPx(104));
         firstLayer.setCornerRadius(UI.dpToPx(52));
+
+        firstLayer.setGradientType(GradientDrawable.LINEAR_GRADIENT);
+        firstLayer.setGradientCenter(0.5f, 0.5f);
+        firstLayer.setGradientRadius(1f);
+        firstLayer.setOrientation(GradientDrawable.Orientation.TR_BL);
 
         actionButton.setBackground(firstLayer);
     }

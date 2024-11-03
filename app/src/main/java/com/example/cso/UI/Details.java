@@ -205,7 +205,7 @@ public class Details {
         title.setLayoutParams(titleParams);
         title.setText(text);
         title.setContentDescription("title");
-        title.setPadding(0,10,0,0);
+        title.setPadding(0,50,0,0);
         title.setTextColor(MainActivity.currentTheme.primaryTextColor);
     }
 

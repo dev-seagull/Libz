@@ -304,7 +304,6 @@ public class Devices {
                 layout.addView(areaSquareChart);
 
                 areaSquareChart.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-                Log.d("debug", String.valueOf(UI.getDeviceWidth(context) / 5));
                 areaSquareChart.setPadding(UI.getDeviceWidth(context) / 5,UI.getDeviceWidth(context) / 11,0,UI.getDeviceWidth(context) / 10);
                 LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT,
@@ -401,8 +400,6 @@ public class Devices {
             activity.runOnUiThread(() -> {
                 Details.createTitleTextView(context, layout,"Files");
                 AssetsSourcePieChart.createStackedBarChartForDeviceSourceStatus(context, layout, data);
-
-//                AssetsSourcePieChart.createTextAreaForAssetSourceBarChart(chartLayout,layout,context, data, deviceId);
                 layout.removeView(loadingImage[0]);
             });
         }).start();
