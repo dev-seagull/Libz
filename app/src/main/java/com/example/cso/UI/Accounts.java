@@ -301,7 +301,7 @@ public class Accounts {
                 chartLayout = (LinearLayout) chart;
 
                 chartLayout.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-                chartLayout.setPadding(UI.getDeviceWidth(context) / 5,UI.getDeviceWidth(context) / 11,0,UI.getDeviceWidth(context) / 10);
+                chartLayout.setPadding(UI.getDeviceWidth(context) / 5,50,0,50);
                 LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT

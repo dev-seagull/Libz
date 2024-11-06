@@ -196,29 +196,45 @@ public class AreaSquareChartForAccount {
         total = total / 1024;
         used = used / 1024;
         synced = synced / 1024;
-        Log.d("AreaSquareAccountChart","0: " +  String.valueOf(total));
-        Log.d("AreaSquareAccountChart","0: " +  String.valueOf(used));
-        Log.d("AreaSquareAccountChart", "0: " + String.valueOf(synced));
         try{
             boolean isSquare2Zero = (used == 0.0);
             boolean isSquare3Zero = (synced == 0.0);
             boolean isSquare1EqualToSquare2 = (used == total);
             boolean isSquare2EqualToSquare3 = (used == synced);
-//
-            int x = (int) Math.round(100 / total);
-            used = used * x;
-            synced = synced * x;
-            Log.d("AreaSquareAccountChart","1: " +  String.valueOf(x));
-            Log.d("AreaSquareAccountChart","1: " +  String.valueOf(used));
-            Log.d("AreaSquareAccountChart", "1: " + String.valueOf(synced));
 
-            used = (int) Math.round(used / 10);
-            used = used * 10;
-            synced = (int) Math.round(synced / 10);
-            synced = synced * 10;
+            int[] numbers = new int[]{1,4,9,16,25,36,49,64,81,100};
 
-            Log.d("AreaSquareAccountChart","2: " +  String.valueOf(used));
-            Log.d("AreaSquareAccountChart", "2: " + String.valueOf(synced));
+            used = Math.round((used / total) * 100);
+            synced = Math.round((synced / total) * 100);
+
+            int minDiff = 102;
+            double tempUsed = used;
+            for(int number: numbers){
+                int diff = (int) Math.abs(tempUsed - number);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    used = number;
+                }
+            }
+
+            minDiff = 102;
+            double tempSynced = synced;
+            for(int number: numbers){
+                int diff = (int) Math.abs(tempSynced - number);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    synced = number;
+                }
+            }
+
+            Log.d("AreaSquareAccountChart","333: " +  String.valueOf(used));
+            Log.d("AreaSquareAccountChart", "333: " + String.valueOf(synced));
+
+            used = Math.sqrt(used) * 10;
+            synced = Math.sqrt(synced) * 10;
+
+            Log.d("AreaSquareAccountChart","3333: " +  String.valueOf(used));
+            Log.d("AreaSquareAccountChart", "3333: " + String.valueOf(synced));
 
             if(!isSquare1EqualToSquare2 && used >= 100){
                 used = 90;
@@ -245,13 +261,11 @@ public class AreaSquareChartForAccount {
                     used = 10;
                 }
             }
-            Log.d("AreaSquareAccountChart","3: " +  String.valueOf(used));
-            Log.d("AreaSquareAccountChart", "3: " + String.valueOf(synced));
 
             //total
             addSquareToLayout(layout,square1, 100);
             addSquareToLayout(layout,square2, (int) used);
-            addSquareToLayout(layout,square3,(int) synced);
+            addSquareToLayout(layout,square3,(int) synced );
 
             Log.d("AreaSquareChart", String.valueOf(used));
             Log.d("AreaSquareChart", String.valueOf(synced));

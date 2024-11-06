@@ -257,17 +257,6 @@ public class AssetsSourcePieChart {
                 mainLegendLayout.addView(legendLayout);
             }
 
-//            String updateDate = DeviceStatusSync.getDeviceStatusLastUpdateTime(deviceId);
-//            LinearLayout updateDateLabelsLayout = AreaSquareChart.createUpdateDateLabel(context, updateDate);
-//            LinearLayout.LayoutParams updateDateLabelsParams = new LinearLayout.LayoutParams(
-//                    LinearLayout.LayoutParams.WRAP_CONTENT,
-//                    LinearLayout.LayoutParams.WRAP_CONTENT
-//            );
-//            updateDateLabelsParams.setMargins((int) ((UI.getDeviceWidth(context) * 0.10) + 20),30,(int) (UI.getDeviceWidth(context) * 0.1),0);
-//            updateDateLabelsLayout.setLayoutParams(updateDateLabelsParams);
-//            mainLegendLayout.setPadding(60,0,20,75);
-//            mainLegendLayout.addView(updateDateLabelsLayout);
-
             layout.addView(mainLegendLayout);
         }
     }

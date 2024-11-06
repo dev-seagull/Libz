@@ -183,12 +183,10 @@ public class Devices {
                 if (detailsView.getVisibility() == View.VISIBLE) {
                     detailsView.setVisibility(View.GONE);
                 } else {
-                    PagerAdapter.currentPos = 0;
-                    PagerAdapter.getPagerAdapterByButtonId(device.getDeviceId()).notifyDataSetChanged();
-
                     detailsView.postDelayed(new Runnable() {
                         @Override
                         public void run() {
+                            PagerAdapter.getPagerAdapterByButtonId(device.getDeviceId()).notifyDataSetChanged();
                             detailsView.setVisibility(View.VISIBLE);
                         }
                     }, 300);
@@ -311,7 +309,7 @@ public class Devices {
                 layout.addView(areaSquareChart);
 
                 areaSquareChart.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-                areaSquareChart.setPadding(UI.getDeviceWidth(context) / 5,UI.getDeviceWidth(context) / 11,0,UI.getDeviceWidth(context) / 10);
+                areaSquareChart.setPadding(UI.getDeviceWidth(context) / 5,50,0,50);
                 LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT

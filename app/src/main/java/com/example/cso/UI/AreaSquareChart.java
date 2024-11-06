@@ -24,9 +24,9 @@ public class AreaSquareChart {
         layout.setOrientation(LinearLayout.HORIZONTAL);
         try{
             double total = data.get("totalStorage").getAsDouble();
-            double used = data.get("usedSpace").getAsDouble() / total * 100;
-            double media = data.get("mediaStorage").getAsDouble() / total * 100;
-            double synced = data.get("syncedAssetsStorage").getAsDouble()  / total * 100;
+            double used = (data.get("usedSpace").getAsDouble() / total) * 100;
+            double media = (data.get("mediaStorage").getAsDouble() / total) * 100;
+            double synced = (data.get("syncedAssetsStorage").getAsDouble()  / total) * 100;
 
             RelativeLayout stackedSquaresLayout = new RelativeLayout(context);
             RelativeLayout.LayoutParams stackedParams = new RelativeLayout.LayoutParams(
@@ -35,7 +35,7 @@ public class AreaSquareChart {
             );
             stackedSquaresLayout.setLayoutParams(stackedParams);
 
-            createStackedSquares(context,synced,media,used, stackedSquaresLayout);
+            createStackedSquares(context,synced,media,used, total,stackedSquaresLayout);
             drawGridLines(stackedSquaresLayout, context);
             layout.addView(stackedSquaresLayout);
 
@@ -62,7 +62,7 @@ public class AreaSquareChart {
         return layout;
     }
 
-    public static void createStackedSquares(Context context, double synced, double media, double used, RelativeLayout layout) {
+    public static void createStackedSquares(Context context, double synced, double media, double used,double total, RelativeLayout layout) {
         ImageView square1 = new ImageView(context);
         ImageView square2 = new ImageView(context);
         ImageView square3 = new ImageView(context);
@@ -72,31 +72,64 @@ public class AreaSquareChart {
         square2.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[1]);
         square3.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[2]);
         square4.setBackgroundColor(MainActivity.currentTheme.deviceStorageChartColors[3]);
-        Log.d("AreaSquareChart","0: " +  String.valueOf(used));
-        Log.d("AreaSquareChart", "0: " + String.valueOf(media));
-        Log.d("AreaSquareChart", "0: " + String.valueOf(synced));
         try{
             boolean isSquare3Zero = (media == 0.0);
             boolean isSquare4Zero = (synced == 0.0);
             boolean isSquare2EqualToSquare3 = (used == media);
             boolean isSquare3EqualToSquare4 = (media == synced);
 
-            used = (int) Math.round(used / 10);
-            used = used * 10;
-            media = (int) Math.round(media / 10);
-            media = media * 10;
-            synced = (int) Math.round(synced / 10);
-            synced = synced * 10;
+            int[] numbers = new int[]{1,4,9,16,25,36,49,64,81,100};
+
+            total = Math.round(total);
+            used = Math.round(used);
+            media = Math.round(media);
+            synced = Math.round(synced);
+
+            int minDiff = (int) (total + 1);
+            double tempUsed = used;
+            for(int number: numbers){
+                int diff = (int) Math.abs(tempUsed - number);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    used = number;
+                }
+            }
+
+            minDiff = (int) (total + 1);
+            double tempMedia = media;
+            for(int number: numbers){
+                int diff = (int) Math.abs(tempMedia - number);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    media = number;
+                }
+            }
+
+            minDiff = (int) (total + 1);
+            double tempSynced = synced;
+            for(int number: numbers){
+                int diff = (int) Math.abs(tempSynced - number);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    synced = number;
+                }
+            }
+
+            used = Math.sqrt(used) * 10;
+            media = Math.sqrt(media) * 10;
+            synced = Math.sqrt(synced) * 10;
+
+            Log.d("AreaSquareChart","s:" +  String.valueOf(used));
+            Log.d("AreaSquareChart", "s :" + String.valueOf(media));
+            Log.d("AreaSquareChart", "s :" + String.valueOf(synced));
 
             if(!isSquare2EqualToSquare3 && media == used){
                 media = media - 10;
                 synced = synced - 10;
-                Log.d("AreaSquareChart","change: " + media + " " + synced);
             }
 
             if(!isSquare3EqualToSquare4 && synced == media){
                 synced = synced - 10;
-                Log.d("AreaSquareChart","change2: " + media + " " + synced);
             }
 
             if(!isSquare4Zero && synced < 10){
@@ -141,9 +174,9 @@ public class AreaSquareChart {
             addSquareToLayout(layout,square3,(int) media);
             addSquareToLayout(layout,square4,(int) synced);
 
-            Log.d("AreaSquareChart", String.valueOf(used));
-            Log.d("AreaSquareChart", String.valueOf(media));
-            Log.d("AreaSquareChart", String.valueOf(synced));
+            Log.d("AreaSquareChart","f :" +  String.valueOf(used));
+            Log.d("AreaSquareChart", "f :" + String.valueOf(media));
+            Log.d("AreaSquareChart", "f :" + String.valueOf(synced));
         }catch (Exception e) { LogHandler.crashLog(e,"AreaSquareChart"); }
     }
 

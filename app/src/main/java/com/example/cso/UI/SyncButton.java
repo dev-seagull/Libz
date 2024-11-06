@@ -161,9 +161,9 @@ public class SyncButton {
         syncButtonsParentLayoutId = View.generateViewId();
         syncDetailsVerticalLayout.setId(syncButtonsParentLayoutId);
         syncDetailsVerticalLayout.setLayoutParams(params);
-        LinearLayout syncDetailsStatisticsLayout = SyncDetails.createSyncDetailsStatisticsLayout(activity);
+//        LinearLayout syncDetailsStatisticsLayout = SyncDetails.createSyncDetailsStatisticsLayout(activity);
         syncDetailsVerticalLayout.addView(createSyncButtonsParentLayout(activity));
-        syncDetailsVerticalLayout.addView(syncDetailsStatisticsLayout);
+//        syncDetailsVerticalLayout.addView(syncDetailsStatisticsLayout);
 
         return syncDetailsVerticalLayout;
     }

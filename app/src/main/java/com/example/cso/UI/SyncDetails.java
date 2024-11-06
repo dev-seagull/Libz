@@ -54,21 +54,8 @@ public class SyncDetails {
             syncDetailsButtonTextView.setTypeface(dseg7classic_regular);
             syncDetailsButtonTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             syncDetailsButtonTextView.setGravity(Gravity.CENTER);
-            setListenerForSyncDetailsButton(activity);
+//            setListenerForSyncDetailsButton(activity);
         });
-    }
-
-    public static LinearLayout createSyncDetailsStatisticsLayout(Activity activity){
-        LinearLayout syncDetailsStatisticsLayout = Details.createInnerDetailsLayout(activity);
-        syncDetailsStatisticsLayout.setPadding(0,15,0,15);
-
-        syncDetailsStatisticsLayout.setVisibility(View.GONE);
-        syncDetailsStatisticsLayoutId = View.generateViewId();
-        syncDetailsStatisticsLayout.setId(syncDetailsStatisticsLayoutId);
-
-        Details.createTitleTextView(activity, syncDetailsStatisticsLayout,"Sync Details");
-
-        return syncDetailsStatisticsLayout;
     }
 
     public static void addGradientOnToSyncDetailsButton(ImageButton actionButton, double percentage){
@@ -79,7 +66,7 @@ public class SyncDetails {
         if(percentage == 100){
             firstLayer.setColors(new int[]{colorStart, colorStart});
         }else if(percentage == 0){
-            firstLayer.setColors(new int[]{colorStart, colorEnd});
+            firstLayer.setColors(new int[]{colorEnd, colorEnd});
         }else{
             final float inverseRatio = 1 - (float) percentage / 100;
             float r = Color.red(colorStart) * (float) percentage / 100 + Color.red(colorEnd) * inverseRatio;
@@ -88,7 +75,6 @@ public class SyncDetails {
             int blendedColor = Color.rgb((int) r, (int) g, (int) b);
             firstLayer.setColors(new int[]{colorStart, blendedColor, colorEnd});
         }
-
 
 //        GradientDrawable firstLayer = new GradientDrawable(
 //                GradientDrawable.Orientation.TOP_BOTTOM,

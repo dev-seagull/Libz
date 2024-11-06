@@ -55,38 +55,16 @@ import java.util.List;
 
 public class Details {
 
-    public static LinearLayout createDetailsLayout(Context context) {
-        LinearLayout layout = new LinearLayout(context);
-
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT
-        );
-        params.setMargins(40,16,40,0);
-        layout.setLayoutParams(params);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setGravity(Gravity.CENTER);
-
-        layout.setElevation(4f);
-        GradientDrawable gradientDrawable = UI.createBorderInnerLayoutDrawable(context);
-        layout.setBackground(gradientDrawable);
-        layout.setVisibility(View.GONE);
-        return layout;
-    }
-
     public static LinearLayout createInnerDetailsLayout(Context context) {
         LinearLayout layout = new LinearLayout(context);
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 UI.getDeviceWidth(context),
-                LinearLayout.LayoutParams.MATCH_PARENT
+                ViewGroup.LayoutParams.MATCH_PARENT
         );
         layout.setLayoutParams(params);
         layout.setOrientation(LinearLayout.VERTICAL);
-
         layout.setElevation(4f);
-        GradientDrawable gradientDrawable = UI.createBorderInnerLayoutDrawable(context);
-        layout.setBackground(gradientDrawable);
         return layout;
     }
 
@@ -205,7 +183,7 @@ public class Details {
         title.setLayoutParams(titleParams);
         title.setText(text);
         title.setContentDescription("title");
-        title.setPadding(0,50,0,0);
+        title.setPadding(0,50,0,00);
         title.setTextColor(MainActivity.currentTheme.primaryTextColor);
     }
 

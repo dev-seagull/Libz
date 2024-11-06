@@ -104,7 +104,7 @@ public class Dialogs {
         try{
             if (isSingleAccountUnlink){
                 builder.setTitle("No other available account");
-                builder.setMessage("Caution : All of your assets in " + userEmail + " will be out of sync.\n" +
+                builder.setMessage("Caution : All of your Libz's files in " + userEmail + " will be out of sync.\n" +
                         "Also You will Disconnect from Other Devices!");
             }
 //            else if(){

@@ -834,117 +834,6 @@ public class DBHelper extends SQLiteOpenHelper {
         return resultList;
     }
 
-    public static int countAndroidAssetsOnThisDevice(String deviceId){
-        String sqlQuery = "SELECT COUNT(DISTINCT assetId) AS pathCount FROM ANDROID where device = ?";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{deviceId});
-        int pathCount = 0;
-        if(cursor != null){
-            cursor.moveToFirst();
-            int pathCountColumnIndex = cursor.getColumnIndex("pathCount");
-            if(pathCountColumnIndex >= 0){
-                pathCount = cursor.getInt(pathCountColumnIndex);
-            }
-        }
-        if(pathCount == 0){
-            LogHandler.saveLog("No android file was found in count android assets.",false);
-        }
-        cursor.close();
-        return pathCount;
-    }
-
-    public static int countAndroidAssets(){
-        String sqlQuery = "SELECT COUNT(DISTINCT assetId) AS pathCount FROM ANDROID;";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{});
-        int pathCount = 0;
-        if(cursor != null){
-            cursor.moveToFirst();
-            int pathCountColumnIndex = cursor.getColumnIndex("pathCount");
-            if(pathCountColumnIndex >= 0){
-                pathCount = cursor.getInt(pathCountColumnIndex);
-            }
-        }
-        if(pathCount == 0){
-            LogHandler.saveLog("No android file was found in count android assets.",false);
-        }
-        cursor.close();
-        return pathCount;
-    }
-
-    public static int countAssets(){
-        int assetsCount = 0;
-        Cursor cursor = null;
-        String sqlQuery = "SELECT COUNT(id) AS assetsCount FROM ASSET";
-        try{
-            cursor = dbReadable.rawQuery(sqlQuery, null);
-            if(cursor != null){
-                cursor.moveToFirst();
-                int pathCountColumnIndex = cursor.getColumnIndex("assetsCount");
-                if(pathCountColumnIndex >= 0){
-                    assetsCount = cursor.getInt(pathCountColumnIndex);
-                }
-            }
-            if(assetsCount == 0){
-                LogHandler.saveLog("No asset was found.",false);
-            }
-        }catch (Exception e){
-            LogHandler.saveLog("Failed to count assets: " + e.getLocalizedMessage(), true);
-        }finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-        return assetsCount;
-    }
-
-    public static int countAndroidSyncedAssetsOnThisDevice(String deviceId){
-        String sqlQuery = "SELECT COUNT(DISTINCT androidTable.assetId) AS rowCount FROM ANDROID androidTable\n" +
-                "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId WHERE androidTable.device = ?;";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{deviceId});
-        int count = 0;
-        if(cursor != null && cursor.moveToFirst()){
-            count = cursor.getInt(0);
-        }
-        if(count == 0){
-            LogHandler.saveLog("No android synced asset was found in countAndroidSyncedAssets",false);
-        }
-        if (cursor != null) {
-            cursor.close();
-        }
-        return count;
-    }
-
-    public static int getAndroidSyncedAssetsOnThisDevice(){
-        String sqlQuery = "SELECT DISTINCT androidTable.assetId FROM ANDROID androidTable\n" +
-                "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId WHERE androidTable.device = ?;";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{MainActivity.androidUniqueDeviceIdentifier});
-        String count = "";
-        if(cursor != null && cursor.moveToFirst()){
-            count = cursor.getString(0);
-        }
-        if (cursor != null) {
-            cursor.close();
-        }
-        System.out.println("count you want to see is : " + count);
-        return 0;
-    }
-
-    public static int countAndroidUnsyncedAssets(){
-        String sqlQuery = "SELECT COUNT(DISTINCT androidTable.assetId) AS rowCount FROM ANDROID androidTable\n" +
-                "JOIN DRIVE driveTable ON driveTable.assetId = androidTable.assetId;";
-        Cursor cursor = dbReadable.rawQuery(sqlQuery, new String[]{});
-        int count = 0;
-        if(cursor != null && cursor.moveToFirst()){
-            count = cursor.getInt(0);
-        }
-        if(count == 0){
-            LogHandler.saveLog("No android synced asset was found in countAndroidSyncedAssets",false);
-        }
-        if (cursor != null) {
-            cursor.close();
-        }
-        return count;
-    }
-
     public static boolean anyBackupAccountExists(){
         boolean exists = false;
         try{
@@ -1325,9 +1214,10 @@ public class DBHelper extends SQLiteOpenHelper {
         Log.d("media","try to get photos and videos");
         double sum = 0.0;
         String query = "SELECT SUM(fileSize) as result FROM ANDROID where device = ? ;";
-        Cursor cursor = dbReadable.rawQuery(query, new String[]{MainActivity.androidUniqueDeviceIdentifier});
+        Cursor cursor = null;
 
         try {
+            cursor = dbReadable.rawQuery(query, new String[]{MainActivity.androidUniqueDeviceIdentifier});
             if (cursor!= null && cursor.moveToFirst()) {
                 int columnIndex = cursor.getColumnIndex("result");
                 Log.d("AreaSquareChart","media size result index is " + columnIndex);
