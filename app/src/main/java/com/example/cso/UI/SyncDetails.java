@@ -76,12 +76,6 @@ public class SyncDetails {
             firstLayer.setColors(new int[]{colorStart, blendedColor, colorEnd});
         }
 
-//        GradientDrawable firstLayer = new GradientDrawable(
-//                GradientDrawable.Orientation.TOP_BOTTOM,
-//                new int[] {colorStart,
-//                        blendedColor, colorEnd}
-//        );
-
         firstLayer.setShape(GradientDrawable.OVAL);
         firstLayer.setSize(UI.dpToPx(104), UI.dpToPx(104));
         firstLayer.setCornerRadius(UI.dpToPx(52));
@@ -119,10 +113,11 @@ public class SyncDetails {
         syncDetailsText.setId(syncDetailsButtonTextId);
         double percentageOfSyncedAssets = DBHelper.getPercentageOfSyncedAssets();
         syncDetailsText.setText(String.format("%d%%", Math.round(percentageOfSyncedAssets)));
-        syncDetailsText.setTextSize(30);
-        syncDetailsText.setTextColor(ContextCompat.getColor(activity, R.color.textColor));
+        syncDetailsText.setTextSize(32);
+        syncDetailsText.setTextColor(MainActivity.currentTheme.primaryTextColor);
         syncDetailsText.setScaleX(0.9f);
         syncDetailsText.setPadding(UI.dpToPx(4), UI.dpToPx(4), UI.dpToPx(4), UI.dpToPx(4));
+        syncDetailsText.setTypeface(null, Typeface.BOLD);
         syncDetailsText.setTypeface(ResourcesCompat.getFont(activity, R.font.ptsansnarrowwebregular));
         FrameLayout.LayoutParams textParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT,

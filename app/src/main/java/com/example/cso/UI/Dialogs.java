@@ -20,21 +20,21 @@ public class Dialogs {
         MainActivity.activity.runOnUiThread(() -> {
             try{
                 String userEmail = signInResult.getUserEmail();
+
                 String message = "This account is already linked with an existing profile. This action " +
                         "will link a profile to this device. If you want to add "
                         + userEmail + " alone, you have to unlink from the existing profile.";
-
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.activity);
                 builder.setTitle("Existing profile detected")
                         .setMessage(message)
-                        .setPositiveButton("Proceed", (dialog, id) -> {
+                        .setPositiveButton("I acknowledge, proceed. ", (dialog, id) -> {
                             Log.d("signInToBackUpLauncher","Proceed pressed");
                             dialog.dismiss();
                             new Thread(() -> Profile.startSignInToProfileThread(resultJson,signInResult)).start();
 
                         })
 
-                        .setNegativeButton("Cancel", (dialog, id) -> {
+                        .setNegativeButton("Cancel.", (dialog, id) -> {
                             Log.d("signInToBackUpLauncher","Cancel pressed");
 
                             UI.update("Cancel Link profile Dialog");
@@ -66,7 +66,7 @@ public class Dialogs {
                     boolean isAbleToMoveAllAssets = handleUnlinkBuilderTitleAndMessage(builder,userEmail,
                             isSingleAccountUnlink,assetsSize, totalFreeSpace);
 
-                    builder.setPositiveButton("Proceed", (dialog, id) -> {
+                    builder.setPositiveButton("I acknowledge, unlink anyway.", (dialog, id) -> {
                         Log.d("Unlink", "Proceed pressed");
                         dialog.dismiss();
                         if (isSingleAccountUnlink) {
@@ -82,7 +82,7 @@ public class Dialogs {
                                 Unlink.unlinkAccount(userEmail,isAbleToMoveAllAssets, activity);
                             }).start();
                         }
-                    }).setNegativeButton("Cancel", (dialog, id) -> {
+                    }).setNegativeButton("Cancel.", (dialog, id) -> {
                         UI.update("cancel unlink Dialog");
                         Log.d("Unlink", "end of unlink: canceled");
                         dialog.dismiss();
@@ -104,23 +104,20 @@ public class Dialogs {
         try{
             if (isSingleAccountUnlink){
                 builder.setTitle("No other available account");
-                builder.setMessage("Caution : All of your Libz's files in " + userEmail + " will be out of sync.\n" +
-                        "Also You will Disconnect from Other Devices!");
+                builder.setMessage("This action will unlink the backup storage currently used for syncing and backup." +
+                        " If you want your files on devices to continue syncing, please first add another backup storage.");
             }
-//            else if(){
-//
-//            }
             else{
                 if (totalFreeSpace < assetsSize) {
                     builder.setTitle("Not enough space");
-                    builder.setMessage("Approximately " + AreaSquareChartForAccount.formatStorageSize(totalFreeSpace) + " out of " + AreaSquareChartForAccount.formatStorageSize(assetsSize) + " of your assets in " + userEmail + " will be moved to other available accounts. So " +
-                            AreaSquareChartForAccount.formatStorageSize(assetsSize - totalFreeSpace) + " of your assets will be out of sync.\n" +
-                            "This process may take several minutes or hours depending on the size of your assets.");
+                    builder.setMessage("This action will only move about " + AreaSquareChartForAccount.formatStorageSize(totalFreeSpace) + " out of " + AreaSquareChartForAccount.formatStorageSize(assetsSize) +
+                            " of your libz files in " + userEmail + " to other available accounts.\n" +
+                            "This process may take several minutes or hours depending on the size of your files.");
 
                 } else {
                     builder.setTitle("Unlink Backup Account");
-                    builder.setMessage("All of your assets in " + userEmail + " will be moved to your other available accounts.\n" +
-                            "This process may take several minutes or hours depending on the size of your assets.");
+                    builder.setMessage("All of your libz files in " + userEmail + " will be moved to your other available accounts.\n" +
+                            "This process may take several minutes or hours depending on the size of your files.");
                     isAbleToMoveAllAssets = true;
                 }
             }

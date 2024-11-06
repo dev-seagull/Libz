@@ -243,7 +243,7 @@ public class Theme {
                         Color.parseColor("#A7FFEB"), // Device storage chart colors (total storage, light gray for balance)
                         Color.parseColor("#80CBC4"), // Used storage (light blue for clarity)
                         Color.parseColor("#FF8A65"), // Media (teal, consistent with the theme)
-                        Color.parseColor("#004D40")  // Synced (bright yellow for strong contrast)
+                        Color.parseColor("#04977E")  // Synced (bright yellow for strong contrast)
                 },
                 new int[]{
                         Color.parseColor("#FFD166"),

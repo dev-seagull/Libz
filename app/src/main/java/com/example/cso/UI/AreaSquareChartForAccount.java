@@ -11,15 +11,10 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.example.cso.DBHelper;
-import com.example.cso.DeviceStatusSync;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
-import com.google.gson.JsonObject;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 public class AreaSquareChartForAccount {
     public static View createStorageChart(Context context, String userEmail) {
@@ -39,6 +34,10 @@ public class AreaSquareChartForAccount {
                     used = Double.parseDouble(account[1]);
                     break;
                 }
+            }
+
+            if(used < synced){
+                used = synced ;
             }
 
             RelativeLayout stackedSquaresLayout = new RelativeLayout(context);

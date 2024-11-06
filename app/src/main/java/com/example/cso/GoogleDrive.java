@@ -1,6 +1,5 @@
 package com.example.cso;
 
-import android.app.Activity;
 import android.util.Log;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;

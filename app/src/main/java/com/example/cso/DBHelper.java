@@ -1693,7 +1693,12 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public static double getSizeOfSyncedAssetsFromAccount(String userEmail) {
         double count = 0;
-        String query = "SELECT SUM(a.fileSize) as totalCount FROM (SELECT DISTINCT assetId, fileSize, fileHash,device FROM ANDROID) a WHERE a.fileHash IN (SELECT d.fileHash FROM DRIVE d WHERE d.userEmail = ?) AND a.device = ?";
+        String query = "SELECT SUM(a.fileSize) as totalCount" +
+                " FROM (SELECT assetId, fileSize, fileHash, device" +
+                " FROM ANDROID" +
+                " GROUP BY assetId, fileSize, fileHash, device) a" +
+                " WHERE a.fileHash IN (SELECT d.fileHash FROM DRIVE d WHERE d.userEmail = ?)" +
+                " AND a.device = ?";
 
         Cursor cursor = null;
         try {
