@@ -1,15 +1,11 @@
 package com.example.cso.UI;
 
-import android.app.Activity;
-import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.widget.LinearLayout;
 
-import com.example.cso.R;
-
 import com.example.cso.MainActivity;
+import com.example.cso.R;
 import com.example.cso.SharedPreferencesHandler;
 
 import java.util.ArrayList;
@@ -112,24 +108,27 @@ public class Theme {
                     Color.parseColor("#80CBC4") // buzzing along
                 },
                 new int[] {
-                        Color.parseColor("#FFD166"),
-                        Color.parseColor("#FF5733"),
-                        Color.parseColor("#858F95"),
-                        Color.parseColor("#858F95"),
-                        Color.parseColor("#858F95"),
-                        Color.parseColor("#858F95"),
-                        Color.parseColor("#858F95"),
-                        Color.parseColor("#858F95")
+                        Color.parseColor("#FFEB3B"),
+                        Color.parseColor("#FF9800"),
+                        Color.parseColor("#FFB300"),
+                        Color.parseColor("#FFD54F"),
+                        Color.parseColor("#FBC02D"),
+                        Color.parseColor("#FF5722"),
+                        Color.parseColor("#FFCA28"),
+                        Color.parseColor("#F57F17"),
+                        Color.parseColor("#FF6F00")
                 },
                 new int[] {
-                        Color.parseColor("#80CBC4"),
-                        Color.parseColor("#388E3C"),
-                        Color.parseColor("#858F95"),
-                        Color.parseColor("#858F95"),
-                        Color.parseColor("#858F95"),
-                        Color.parseColor("#858F95"),
-                        Color.parseColor("#858F95"),
-                        Color.parseColor("#858F95")
+                        Color.parseColor("#1E88E5"),
+                        Color.parseColor("#1976D2"),
+                        Color.parseColor("#0D47A1"),
+                        Color.parseColor("#42A5F5"),
+                        Color.parseColor("#1565C0"),
+                        Color.parseColor("#2196F3"),
+                        Color.parseColor("#64B5F6"),
+                        Color.parseColor("#80D8FF"),
+                        Color.parseColor("#0288D1"),
+                        Color.parseColor("#82B1FF"),
                 },
                 new int[] {
                         Color.parseColor("#FAB34B"),
@@ -177,27 +176,28 @@ public class Theme {
                         Color.parseColor("#FFCA28"),
                         Color.parseColor("#80CBC4")
                 },
-                new int[]{
-                        Color.parseColor("#FFD166"),
-                        Color.parseColor("#FF5733"),
-                        Color.parseColor("#90A4AE"),
-                        Color.parseColor("#90A4AE"),
-                        Color.parseColor("#90A4AE"),
-                        Color.parseColor("#90A4AE"),
-                        Color.parseColor("#90A4AE"),
-                        Color.parseColor("#90A4AE")
+                new int[] {
+                        Color.parseColor("#FFEB3B"),
+                        Color.parseColor("#FF9800"),
+                        Color.parseColor("#FFB300"),
+                        Color.parseColor("#FFD54F"),
+                        Color.parseColor("#FBC02D"),
+                        Color.parseColor("#FF5722"),
+                        Color.parseColor("#FFCA28"),
+                        Color.parseColor("#F57F17"),
+                        Color.parseColor("#FF6F00")
                 },
-                new int[]{
-                        Color.parseColor("#80CBC4"), // Device assets synced status chart colors
-                        Color.parseColor("#53817D"),
-                        Color.WHITE,
-                        Color.WHITE,
-                        Color.WHITE,
-                        Color.WHITE,
-                        Color.WHITE,
-                        Color.WHITE,
-                        Color.WHITE,
-                        Color.WHITE
+                new int[] {
+                        Color.parseColor("#1E88E5"),
+                        Color.parseColor("#1976D2"),
+                        Color.parseColor("#0D47A1"),
+                        Color.parseColor("#42A5F5"),
+                        Color.parseColor("#1565C0"),
+                        Color.parseColor("#2196F3"),
+                        Color.parseColor("#64B5F6"),
+                        Color.parseColor("#80D8FF"),
+                        Color.parseColor("#0288D1"),
+                        Color.parseColor("#82B1FF"),
                 },
                 new int[]{
                         Color.parseColor("#1E88E5"), // Account storage data chart colors (blue for contrast)
@@ -205,9 +205,9 @@ public class Theme {
                 },
                 Color.BLACK, // Menu text color (light gray)
                 Color.WHITE, // Primary text color (white)
-                Color.parseColor("#5A7B7D"), // onSyncButtonGradientStart (for sync progress)
+                Color.GREEN, // onSyncButtonGradientStart (for sync progress)
                 Color.parseColor("#5A7B7D"), // onSyncButtonGradientEnd (for sync progress)
-                Color.RED, // Off sync button gradient start (gray)
+                Color.WHITE, // Off sync button gradient start (gray)
                 Color.parseColor("#B0BEC5"), // Off sync button gradient end (lighter gray)
                 Color.parseColor("#00E5FF"), // syncProgressTextColor
                 Color.parseColor("#FF5722"), // Warning text color (orange)
@@ -226,7 +226,7 @@ public class Theme {
     public static Theme tealTheme() {
         return new Theme(
                 "teal",
-                Color.parseColor("#E0F7FA"), // Primary background color (light cyan)
+                Color.parseColor("#9CDCD5"), // Primary background color (light cyan)
                 new int[]{
                         Color.parseColor("#00897B"), // Device button colors (vibrant teal)
                         Color.parseColor("#04A692")  // Slightly darker teal for contrast
@@ -242,37 +242,38 @@ public class Theme {
                 new int[]{
                         Color.parseColor("#A7FFEB"), // Device storage chart colors (total storage, light gray for balance)
                         Color.parseColor("#80CBC4"), // Used storage (light blue for clarity)
-                        Color.parseColor("#FF8A65"), // Media (teal, consistent with the theme)
+                        Color.parseColor("#FFCA28"), // Media (teal, consistent with the theme)
                         Color.parseColor("#04977E")  // Synced (bright yellow for strong contrast)
                 },
-                new int[]{
-                        Color.parseColor("#FFD166"),
-                        Color.parseColor("#FF5733"),
-                        Color.parseColor("#A7FFEB"),
-                        Color.parseColor("#A7FFEB"),
-                        Color.parseColor("#A7FFEB"),
-                        Color.parseColor("#A7FFEB"),
-                        Color.parseColor("#A7FFEB"),
-                        Color.parseColor("#A7FFEB")
+                new int[] {
+                        Color.parseColor("#FFEB3B"),
+                        Color.parseColor("#FF9800"),
+                        Color.parseColor("#FFB300"),
+                        Color.parseColor("#FFD54F"),
+                        Color.parseColor("#FBC02D"),
+                        Color.parseColor("#FF5722"),
+                        Color.parseColor("#FFCA28"),
+                        Color.parseColor("#F57F17"),
+                        Color.parseColor("#FF6F00")
                 },
-                new int[]{
-                        Color.parseColor("#004D40"), // Device assets synced status chart colors
-                        Color.parseColor("#7FC1BB"),
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY
+                new int[] {
+                        Color.parseColor("#1E88E5"),
+                        Color.parseColor("#1976D2"),
+                        Color.parseColor("#0D47A1"),
+                        Color.parseColor("#42A5F5"),
+                        Color.parseColor("#1565C0"),
+                        Color.parseColor("#2196F3"),
+                        Color.parseColor("#64B5F6"),
+                        Color.parseColor("#80D8FF"),
+                        Color.parseColor("#0288D1"),
+                        Color.parseColor("#82B1FF"),
                 },
                 new int[]{
                         Color.parseColor("#1E88E5"), // Account storage data chart colors (strong blue)
                         Color.parseColor("#304194")  // Darker blue for contrast
                 },
                 Color.parseColor("#004D40"), // Menu text color (dark teal)
-                Color.BLACK,  // Primary text color (black for readability on lighter backgrounds)
+                Color.WHITE,  // Primary text color (black for readability on lighter backgrounds)
                 Color.parseColor("#008D7B"), // On sync button gradient start (teal)
                 Color.parseColor("#008D7B"), // On sync button gradient end (dark teal)
                 Color.parseColor("#90A4AE"),
@@ -313,27 +314,28 @@ public class Theme {
                         Color.parseColor("#FFC107"),
                         Color.parseColor("#05A694")
                 },
-                new int[]{
-                        Color.parseColor("#FFD166"),
-                        Color.parseColor("#FF5733"),
-                        Color.parseColor("#B0BEC5"),
-                        Color.parseColor("#B0BEC5"),
-                        Color.parseColor("#B0BEC5"),
-                        Color.parseColor("#B0BEC5"),
-                        Color.parseColor("#B0BEC5"),
-                        Color.parseColor("#B0BEC5")
+                new int[] {
+                        Color.parseColor("#FFEB3B"),
+                        Color.parseColor("#FF9800"),
+                        Color.parseColor("#FFB300"),
+                        Color.parseColor("#FFD54F"),
+                        Color.parseColor("#FBC02D"),
+                        Color.parseColor("#FF5722"),
+                        Color.parseColor("#FFCA28"),
+                        Color.parseColor("#F57F17"),
+                        Color.parseColor("#FF6F00")
                 },
-                new int[]{
-                        Color.parseColor("#05A694"), // Device assets synced status chart colors
-                        Color.parseColor("#057C6F"),
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY,
-                        Color.GRAY
+                new int[] {
+                        Color.parseColor("#EDC9AF"),
+                        Color.parseColor("#FFDAB9"),
+                        Color.parseColor("#FFEFD5"),
+                        Color.parseColor("#FFEBCD"),
+                        Color.parseColor("#FBCDA5"),
+                        Color.parseColor("#F9D5A7"),
+                        Color.parseColor("#F7E1AE"),
+                        Color.parseColor("#F9C5A0"),
+                        Color.parseColor("#FFD8A8"),
+                        Color.parseColor("#FFDDC1"),
                 },
                 new int[]{
                         Color.parseColor("#546E7A"), // Account storage data chart colors
@@ -363,6 +365,16 @@ public class Theme {
         SharedPreferencesHandler.setCurrentTheme(theme.name);
         MainActivity.currentTheme = theme;
         LinearLayout mainLayout = MainActivity.activity.findViewById(R.id.mainLayout);
+        if(Accounts.accountMap != null && !Accounts.accountMap.isEmpty()){
+            int i = 0;
+            for(String key:  Accounts.accountMap.keySet()) {
+                if(i < MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors.length){
+                    Accounts.accountMap.put(key,MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors[i]);
+                }else{
+                    Accounts.accountMap.put(key,Color.BLUE);
+                }
+            }
+        }
         mainLayout.removeAllViews();
         UI.initAppUI(MainActivity.activity);
     }

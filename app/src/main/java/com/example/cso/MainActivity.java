@@ -10,7 +10,6 @@
     import android.view.MenuItem;
     import android.view.View;
     import android.widget.LinearLayout;
-    import android.widget.Toast;
 
     import androidx.activity.result.ActivityResultLauncher;
     import androidx.activity.result.contract.ActivityResultContracts;
@@ -30,7 +29,6 @@
     import com.google.gson.JsonObject;
     import com.jaredrummler.android.device.DeviceName;
 
-    import java.sql.Time;
     import java.util.Date;
     import java.util.List;
     import java.util.Timer;
@@ -101,6 +99,7 @@
                             LinearLayout backupButtonsLinearLayout = activity.findViewById(Accounts.accountButtonsId);
                             View[] lastButton = {backupButtonsLinearLayout.getChildAt(
                                     backupButtonsLinearLayout.getChildCount() - 1)};
+                            lastButton[0].setClickable(false);
                             Thread signInToBackUpThread = new Thread(() -> {
                                 try {
                                     Log.d("signInToBackUpLauncher","Sign in started");
@@ -134,15 +133,18 @@
                                     Log.d("signInToBackUpLauncher","Checking if it's linked to accounts finished: " + isLinked);
 
                                     if (isLinked){
-                                        Dialogs.displayLinkProfileDialog(resultJson, signInResult);
+                                        Dialogs.displayLinkProfileDialog(resultJson, signInResult, lastButton[0]);
                                     }else{
                                         Profile profile = new Profile();
                                         Log.d("signInToBackUpLauncher","loginSingleAccount started");
-                                        profile.loginSingleAccount(signInResult);
+                                        profile.loginSingleAccount(signInResult, lastButton[0]);
                                         Log.d("signInToBackUpLauncher","loginSingleAccount finished");
                                     }
                                 }catch (Exception e){
-                                    FirebaseCrashlytics.getInstance().recordException(e);
+                                    MainActivity.activity.runOnUiThread(() -> {
+                                        lastButton[0].setClickable(true);
+                                    });
+                                    LogHandler.crashLog(e,"login");
                                     UI.update("failed to login steps");
                                 }
                             });

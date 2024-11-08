@@ -73,6 +73,19 @@ public class AssetsSourcePieChart {
                     labels.add(pair.first);
                 }
 
+                double syncedMaxValue = 0;
+                for(int i = 0; i < values.size(); i++){
+                    if(values.get(i) > syncedMaxValue){
+                        syncedMaxValue  = values.get(i);
+                    }
+                }
+
+                for(int i = 0; i < values.size(); i++){
+                    if(values.get(i) / syncedMaxValue < 0.01){
+                        values.set(i, syncedMaxValue / 100);
+                    }
+                }
+
                 float[] stackedValues = new float[values.size()];
                 for (int i = 0; i < values.size(); i++) {
                     stackedValues[i] = values.get(i).floatValue();

@@ -23,6 +23,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.example.cso.DeviceHandler;
@@ -30,6 +31,7 @@ import com.example.cso.DeviceStatusSync;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
+import com.github.mikephil.charting.charts.HorizontalBarChart;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
@@ -356,10 +358,11 @@ public class Devices {
             });
             JsonObject data = getSyncedAssetsLocationStatus(deviceId);
             Log.d(DeviceStatusSync.TAG, "assets of "+deviceId+" location data : " + data);
+
             MainActivity.activity.runOnUiThread(() -> {
                 Details.createTitleTextView(context, layout,"Landing Zone(s)");
 
-                CustomTreeMapChart.createStackedBarChart(context, layout, data, deviceId);
+                HorizontalBarChart stackedBarChart = CustomTreeMapChart.createStackedBarChart(context, layout, data, deviceId);
 
                 layout.removeView(loadingImage[0]);
             });

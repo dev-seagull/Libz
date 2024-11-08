@@ -9,7 +9,6 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.View;
@@ -21,21 +20,21 @@ import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 
-import androidx.viewpager2.widget.ViewPager2;
-
 import com.example.cso.DBHelper;
 import com.example.cso.GoogleCloud;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
-import com.github.mikephil.charting.charts.PieChart;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
-import com.google.gson.internal.NonNullElementWrapperList;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Accounts {
 
     public static int accountButtonsId;
+    public static Map<String, Integer> accountMap = new HashMap<>();
+    public static int accountNumbers = 0;
 
     public static LinearLayout createParentLayoutForAccountsButtons(Activity activity){
         LinearLayout parentLayout = new LinearLayout(activity);
@@ -136,8 +135,9 @@ public class Accounts {
     public static Button createNewAccountButton(Context context, String userEmail){
         Button newLoginButton = new Button(context);
         newLoginButton.setText(userEmail);
+
         newLoginButton.setContentDescription(userEmail);
-        addEffectsToAccountButton(newLoginButton, context);
+        addEffectsToAccountButton(newLoginButton, context, userEmail);
         newLoginButton.setId(View.generateViewId());
 
         RelativeLayout.LayoutParams accountButtonParams = new RelativeLayout.LayoutParams(
@@ -151,12 +151,33 @@ public class Accounts {
         return newLoginButton;
     }
 
-    public static void addEffectsToAccountButton(Button newLoginButton, Context context){
+    public static void addEffectsToAccountButton(Button newLoginButton, Context context, String userEmail){
         Drawable loginButtonLeftDrawable = context.getResources().getDrawable(R.drawable.googledriveimage);
         newLoginButton.setCompoundDrawablesWithIntrinsicBounds
                 (loginButtonLeftDrawable, null, null, null);
 
-        UI.addGradientEffectToButton(newLoginButton,MainActivity.currentTheme.accountButtonColors);
+        int[] colors = new int[0];
+        if(!userEmail.toLowerCase().equals("add a backup account")){
+            if((Accounts.accountMap == null || !Accounts.accountMap.containsKey(userEmail))){
+                if (Accounts.accountNumbers < MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors.length) {
+                    colors = new int[]{MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors[Accounts.accountNumbers],
+                            MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors[Accounts.accountNumbers]};
+                    Accounts.accountMap.put(userEmail,MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors[Accounts.accountNumbers]);
+                    Accounts.accountNumbers = Accounts.accountNumbers + 1;
+                    UI.addGradientEffectToButton(newLoginButton,colors);
+                }else{
+                    Accounts.accountMap.put(userEmail, Color.BLUE);
+                    Accounts.accountNumbers = Accounts.accountNumbers + 1;
+                    UI.addGradientEffectToButton(newLoginButton,MainActivity.currentTheme.accountButtonColors);
+                }
+            }else if(Accounts.accountMap.containsKey(userEmail)){
+                colors = new int[]{Accounts.accountMap.get(userEmail), Accounts.accountMap.get(userEmail)};
+                UI.addGradientEffectToButton(newLoginButton,colors);
+            }
+        }else{
+            UI.addGradientEffectToButton(newLoginButton,MainActivity.currentTheme.accountButtonColors);
+        }
+
 
         newLoginButton.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         newLoginButton.setTextColor(MainActivity.currentTheme.primaryTextColor);
@@ -184,6 +205,7 @@ public class Accounts {
                 if (buttonText.equals("add a backup account")) {
                     MainActivity.isAnyProccessOn = true; // add a backup account
                     button.setText("Adding in progress ...");
+                    button.setClickable(false);
                     GoogleCloud.signInToGoogleCloud(signInToBackUpLauncher, activity);
                 }else{
 //                    button.setText("Loading ... ");
@@ -246,7 +268,7 @@ public class Accounts {
                     if (item.getItemId() == R.id.unlink) {
                         MainActivity.isAnyProccessOn = true; //unlink
                         accountButton.setText("Unlink in progress ...");
-                        new Thread(() -> GoogleCloud.unlink(userEmail, activity)).start();
+                        new Thread(() -> GoogleCloud.unlink(userEmail, activity, accountButton)).start();
                     }
                     return true;
                 });

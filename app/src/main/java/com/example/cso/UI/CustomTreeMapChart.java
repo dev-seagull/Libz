@@ -1,10 +1,7 @@
 package com.example.cso.UI;
 
-import static com.example.cso.MainActivity.activity;
-
 import android.content.Context;
 import android.graphics.Color;
-import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.View;
@@ -13,7 +10,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.example.cso.DeviceStatusSync;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.github.mikephil.charting.charts.HorizontalBarChart;
@@ -31,7 +27,7 @@ import java.util.Map;
 
 public class CustomTreeMapChart {
 
-    public static void createStackedBarChart(Context context, LinearLayout layout,
+    public static HorizontalBarChart createStackedBarChart(Context context, LinearLayout layout,
                                                      JsonObject jsonData, String deviceId) {
         HorizontalBarChart stackedBarChart = new HorizontalBarChart(context);
         try {
@@ -63,6 +59,26 @@ public class CustomTreeMapChart {
                 syncedValues.add(pair.second);
             }
 
+            double syncedMaxValue = 0;
+            for(int i = 0; i < syncedValues.size(); i++){
+                if(syncedValues.get(i) > syncedMaxValue){
+                    syncedMaxValue  =syncedValues.get(i);
+                }
+            }
+            if(unsynced > syncedMaxValue){
+                syncedMaxValue = unsynced;
+            }
+
+            for(int i = 0; i < syncedValues.size(); i++){
+                if(syncedValues.get(i) / syncedMaxValue < 0.01){
+                    syncedValues.set(i, syncedMaxValue / 100);
+                }
+            }
+
+            if(unsynced / syncedMaxValue < 0.01){
+                unsynced =  syncedMaxValue / 100;
+            }
+
             float[] stackedValues = new float[syncedValues.size() + 1];
             for (int i = 0; i < syncedValues.size(); i++) {
                 stackedValues[i] = syncedValues.get(i).floatValue();
@@ -78,19 +94,29 @@ public class CustomTreeMapChart {
             }
             if(isAllZero){
                 layout.addView(Details.getErrorAsChartAlternative(context));
-                return;
+                return null;
             }
 
             List<BarEntry> entries = new ArrayList<>();
             entries.add(new BarEntry(0f, stackedValues));
 
-            int[] colors = new int[syncedLabels.size() + 1];
-            int colorsToCopy = Math.min(syncedLabels.size(), MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors.length);
-            System.arraycopy(MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors, 0, colors, 0, colorsToCopy);
-            colors[syncedValues.size()] = MainActivity.currentTheme.deviceStorageChartColors[2];
-
             BarDataSet dataSet = new BarDataSet(entries, "Storage Usage");
-            dataSet.setColors(colors);
+
+            try{
+                List<Integer> colorList = new ArrayList<>();
+                for(String syncedLabel: syncedLabels){
+                    colorList.add(Accounts.accountMap.get(syncedLabel));
+                }
+                colorList.add(Color.parseColor("#FFD166"));
+                int[] colors = new int[colorList.size()];
+                for (int i = 0; i < colorList.size(); i++) {
+                    colors[i] = colorList.get(i);
+                }
+                dataSet.setColors(colors);
+            }catch (Exception e) {
+                LogHandler.crashLog(e,"AreaSquareChartForAccount");
+            }
+
             dataSet.setDrawValues(false);
 
             String[] stackLabels = new String[syncedValues.size() + 1];
@@ -150,7 +176,12 @@ public class CustomTreeMapChart {
             legendLayout.setOrientation(LinearLayout.HORIZONTAL);
 
             for (int i = 0; i < syncedLabels.size(); i++) {
-                int color = colors[i % colors.length];
+                int color = Color.BLUE;
+                for(String syncedValue: syncedLabels){
+                    color = Accounts.accountMap.get(syncedValue);
+                    break;
+                }
+
                 View legendItem = createLegendItem(context, syncedLabels.get(i), color, syncedValues.get(i));
 
                 legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
@@ -190,6 +221,24 @@ public class CustomTreeMapChart {
 //                    }
                 }
             }
+            if(syncedLabels.size() == 0){
+                View legendItem = createLegendItem(context, "Lagging behind", Color.parseColor("#FFD166"), unsynced);
+                legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+
+                int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + 240;
+
+                if (totalWidth > parentWidth) {
+                    mainLegendLayout.addView(legendLayout);
+                    legendLayout = new LinearLayout(context);
+                    legendLayout.setGravity(Gravity.LEFT);
+                    legendLayout.setOrientation(LinearLayout.HORIZONTAL);
+                }
+
+                legendLayout.addView(legendItem);
+            }
 
             if (legendLayout.getChildCount() > 0) {
                 mainLegendLayout.addView(legendLayout);
@@ -221,6 +270,7 @@ public class CustomTreeMapChart {
             layout.removeAllViews();
             layout.addView(Details.getErrorAsChartAlternative(context));
         }
+        return stackedBarChart;
     }
 
     public static LinearLayout createLegendItem(Context context, String label, int color, double value) {

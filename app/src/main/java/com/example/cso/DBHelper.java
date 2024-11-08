@@ -923,7 +923,9 @@ public class DBHelper extends SQLiteOpenHelper {
         }catch (Exception e){
             FirebaseCrashlytics.getInstance().recordException(e);
         }finally {
-            cursor.close();
+            if(cursor != null){
+                cursor.close();
+            }
         }
         return accessToken;
     }

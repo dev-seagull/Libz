@@ -4,24 +4,23 @@ import static com.example.cso.GoogleDrive.moveFileBetweenAccounts;
 
 import android.app.Activity;
 import android.util.Log;
-import android.widget.Toast;
+import android.view.View;
+import android.widget.LinearLayout;
 
+import com.example.cso.UI.Accounts;
 import com.example.cso.UI.Devices;
 import com.example.cso.UI.UI;
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
-import com.google.gson.JsonObject;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 public class Unlink {
-    public static void unlinkSingleAccount(String sourceUserEmail, Drive sourceDriveService,boolean completeMove, boolean needToNotify){
+    public static void unlinkSingleAccount(String sourceUserEmail, Drive sourceDriveService,boolean completeMove
+            , boolean needToNotify, View lastButton){
         Thread unlinkSingleAccountThread = new Thread( () -> {
             Log.d("Threads","unlinkSingleAccountThread started");
             Log.d("unlinkNotify"," needToNotify : " + needToNotify);
@@ -36,12 +35,14 @@ public class Unlink {
                     DBHelper.deleteAccountAndRelatedAssets(sourceUserEmail);
                     GoogleDrive.startThreads();
                     unlinkDevices();
+                    Accounts.accountNumbers = Accounts.accountNumbers - 1;
                 }
             }else{
                 GoogleDrive.deleteDriveFolders(sourceDriveService,sourceUserEmail,completeMove);
 
                 boolean isRevoked = GoogleCloud.invalidateToken(sourceUserEmail);
                 if (isRevoked){
+                    Accounts.accountNumbers = Accounts.accountNumbers - 1;
                     DBHelper.deleteAccountAndRelatedAssets(sourceUserEmail);
                     GoogleDrive.startThreads();
                 }
@@ -52,12 +53,18 @@ public class Unlink {
             unlinkSingleAccountThread.join();
         }catch (Exception e){
             FirebaseCrashlytics.getInstance().recordException(e);
+        }finally {
+            MainActivity.activity.runOnUiThread(() -> {
+                if(lastButton != null){
+                    lastButton.setClickable(true);
+                }
+            });
         }
         UI.update("end of unlink single account");
         Log.d("Threads","unlinkSingleAccountThread finished");
     }
 
-    public static void unlinkAccount(String sourceUserEmail,boolean ableToMoveAllAssets, Activity activity){
+    public static void unlinkAccount(String sourceUserEmail,boolean ableToMoveAllAssets, Activity activity, View lastButton){
         boolean[] allAssetsMovedSuccessfully = {true};
         Thread unlinkAccountThread = new Thread(() -> {
             Log.d("unlink","unlinkAccountThread started");
@@ -120,7 +127,7 @@ public class Unlink {
                 Log.d("unlink", "end of back up json to remaining accounts : " + isBackedUpAndDeleted);
                 if(isBackedUpAndDeleted){
                     Log.d("Unlink", "unlink from single account after moving files and backup");
-                    Unlink.unlinkSingleAccount(sourceUserEmail,service,ableToMoveAllAssets,false);
+                    Unlink.unlinkSingleAccount(sourceUserEmail,service,ableToMoveAllAssets,false, lastButton);
                     Log.d("Unlink", "end of unlink from single account (every thing is ok)");
                 }
             }else{
@@ -135,7 +142,14 @@ public class Unlink {
         unlinkAccountThread.start();
         try{
             unlinkAccountThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }
+        catch (Exception e) {
+            FirebaseCrashlytics.getInstance().recordException(e);
+        }finally {
+            MainActivity.activity.runOnUiThread(() -> {
+                lastButton.setClickable(true);
+            });
+        }
         UI.update("end of unlink account (not single account)");
         Log.d("Unlink", "unlinkAccountThread finished");
     }
@@ -261,7 +275,7 @@ public class Unlink {
                 Log.d("unlinkNotify","founded file size : " + existingFiles.size());
                 if (existingFiles.size() == 1){
                     Log.d("unlinkNotify","unlink single account because this is last linked device");
-                    unlinkSingleAccount(userEmail,service,false,false);
+                    unlinkSingleAccount(userEmail,service,false,false, null);
                     Log.d("unlinkNotify","unlink single account because this is last linked device finished");
                 }
             }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }

@@ -173,6 +173,7 @@ public class UI{
         gradientDrawable.setOrientation(GradientDrawable.Orientation.BOTTOM_TOP);
         gradientDrawable.setShape(GradientDrawable.RECTANGLE);
         gradientDrawable.setCornerRadius(UI.dpToPx(25));
+
         gradientDrawable.setColors(colors);
         button.setBackground(gradientDrawable);
     }

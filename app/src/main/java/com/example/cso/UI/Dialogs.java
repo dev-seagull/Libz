@@ -3,6 +3,7 @@ package com.example.cso.UI;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.util.Log;
+import android.view.View;
 
 import com.example.cso.DBHelper;
 import com.example.cso.GoogleCloud;
@@ -16,7 +17,7 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
 public class Dialogs {
-    public static void displayLinkProfileDialog(JsonObject resultJson, GoogleCloud.SignInResult signInResult){
+    public static void displayLinkProfileDialog(JsonObject resultJson, GoogleCloud.SignInResult signInResult, View lastButton){
         MainActivity.activity.runOnUiThread(() -> {
             try{
                 String userEmail = signInResult.getUserEmail();
@@ -30,13 +31,15 @@ public class Dialogs {
                         .setPositiveButton("I acknowledge, proceed. ", (dialog, id) -> {
                             Log.d("signInToBackUpLauncher","Proceed pressed");
                             dialog.dismiss();
-                            new Thread(() -> Profile.startSignInToProfileThread(resultJson,signInResult)).start();
+                            new Thread(() -> Profile.startSignInToProfileThread(resultJson,signInResult, lastButton)).start();
 
                         })
 
                         .setNegativeButton("Cancel.", (dialog, id) -> {
                             Log.d("signInToBackUpLauncher","Cancel pressed");
-
+                            MainActivity.activity.runOnUiThread(() -> {
+                                lastButton.setClickable(true);
+                            });
                             UI.update("Cancel Link profile Dialog");
                             dialog.dismiss();
                         }).setCancelable(false);
@@ -49,7 +52,7 @@ public class Dialogs {
         });
     }
 
-    public static void showMoveDriveFilesDialog(String userEmail, Activity activity){
+    public static void showMoveDriveFilesDialog(String userEmail, Activity activity, View lastButton){
         try {
             double totalFreeSpace = Unlink.getTotalLinkedCloudsFreeSpace(userEmail);
             boolean isSingleAccountUnlink = Unlink.isSingleUnlink(userEmail);
@@ -75,14 +78,17 @@ public class Dialogs {
                                 String accessToken = DBHelper.getDriveBackupAccessToken(userEmail);
                                 Drive service = GoogleDrive.initializeDrive(accessToken);
                                 Log.d("Unlink", "Drive and access token : " + accessToken + service);
-                                Unlink.unlinkSingleAccount(userEmail, service,false,true);
+                                Unlink.unlinkSingleAccount(userEmail, service,false,true, lastButton);
                             }).start();
                         }else{
                             new Thread( () -> {
-                                Unlink.unlinkAccount(userEmail,isAbleToMoveAllAssets, activity);
+                                Unlink.unlinkAccount(userEmail,isAbleToMoveAllAssets, activity, lastButton);
                             }).start();
                         }
                     }).setNegativeButton("Cancel.", (dialog, id) -> {
+                        MainActivity.activity.runOnUiThread(() -> {
+                            lastButton.setClickable(true);
+                        });
                         UI.update("cancel unlink Dialog");
                         Log.d("Unlink", "end of unlink: canceled");
                         dialog.dismiss();
@@ -91,7 +97,8 @@ public class Dialogs {
                     builder.setCancelable(false);
                     AlertDialog alertDialog = builder.create();
                     alertDialog.show();
-                } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+                } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e);
+                }
             });
 
         }catch(Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }

@@ -19,6 +19,8 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
     public String buttonId;
     public static int totalPagesForAccount = 1;
     public static int totalPagesForDevice = 3;
+    public static int lastDevicePosition = 0;
+    public static int currentDevicePosition = 0;
     public static ArrayList<PagerAdapter> pagerAdapters = new ArrayList<>();
 
     public PagerAdapter(Context context, String buttonType, String buttonId) {
@@ -53,12 +55,15 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
         LinearLayout newPage = null;
 
         int pos = 0;
+        Log.d("debug", "last0 :"  + String.valueOf(lastDevicePosition));
+
         if (buttonType.equals("account")){
             pos = position % totalPagesForAccount ;
             newPage = Accounts.createChartForStorageStatus(context, buttonId);
             Log.d("viewPager", "page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
         }else if (buttonType.equals("device")){
             pos = position % totalPagesForDevice;
+            Log.d("debug","pos: " + pos);
             if (pos == 0){
                 newPage = Devices.createChartForStorageStatus(context, buttonId);
                 Log.d("viewPager", "StorageStatus = page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
@@ -68,8 +73,12 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
             } else if (pos == 2) {
                 newPage = Devices.createChartForSourceStatus(context, buttonId);
                 Log.d("viewPager", "SourceStatus = page number : " + pos + " type : " + buttonType + " buttonId : " + buttonId);
+            }else {
+                newPage = Devices.createChartForStorageStatus(context, buttonId);
+                Log.d("viewPager", "Fallback to StorageStatus = page number : 0" + " type : " + buttonType + " buttonId : " + buttonId);
             }
         }
+        Log.d("debug","current : "  +  String.valueOf(currentDevicePosition));
         holder.currentPage.addView(newPage);
     }
 

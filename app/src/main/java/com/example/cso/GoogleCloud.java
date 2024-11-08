@@ -3,11 +3,14 @@
     import android.app.Activity;
     import android.content.Intent;
     import android.util.Log;
+    import android.view.View;
+    import android.widget.LinearLayout;
     import android.widget.Toast;
 
     import androidx.activity.result.ActivityResultLauncher;
     import androidx.appcompat.app.AppCompatActivity;
 
+    import com.example.cso.UI.Accounts;
     import com.example.cso.UI.Dialogs;
     import com.example.cso.UI.UI;
     import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -552,10 +555,11 @@
             return isInvalidated[0];
         }
 
-        public static void unlink(String buttonText, Activity activity){
+        public static void unlink(String buttonText, Activity activity, View lastButton){
             Log.d("Unlink", "start to unlink");
+            lastButton.setClickable(false);
             GoogleDrive.startUpdateStorageThread();
-            Dialogs.showMoveDriveFilesDialog(buttonText, activity);
+            Dialogs.showMoveDriveFilesDialog(buttonText, activity, lastButton);
         }
 
         public static ArrayList<SignInResult> signInLinkedAccounts(JsonObject resultJson, String userEmail){

@@ -6,6 +6,7 @@ import android.view.View;
 
 import androidx.activity.result.ActivityResultLauncher;
 
+import com.example.cso.UI.Accounts;
 import com.example.cso.UI.UI;
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.json.Json;
@@ -622,7 +623,7 @@ public class Profile {
         }
     }
 
-    public static void startSignInToProfileThread(JsonObject resultJson, GoogleCloud.SignInResult signInResult){
+    public static void startSignInToProfileThread(JsonObject resultJson, GoogleCloud.SignInResult signInResult, View lastButton){
         Log.d("signInToBackUpLauncher","Adding linked accounts started");
         Thread addingLinkedAccountsThread = new Thread(() -> {
             try {
@@ -642,6 +643,7 @@ public class Profile {
                         handleNewAccounts(linkedAccounts);
                         Log.d("signInToBackUpLauncher", "handleNewAccounts finished");
 
+                        UI.update("login");
                         GoogleDrive.startThreads();
                         isDone = true;
                     }
@@ -649,6 +651,10 @@ public class Profile {
                 Log.d("signInToBackUpLauncher","Adding linked accounts finished");
             } catch (Exception e) {
                 LogHandler.saveLog("Failed to add linked accounts: " + e.getLocalizedMessage(), true);
+            }finally {
+                MainActivity.activity.runOnUiThread(() -> {
+                    lastButton.setClickable(true);
+                });
             }
         });
         addingLinkedAccountsThread.start();
@@ -667,7 +673,7 @@ public class Profile {
                     DeviceHandler.insertIntoDeviceTable(device.deviceName, device.deviceId);
                 }
             }catch (Exception e){
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.crashLog(e,"login");
             }
         });
         handleDeviceInsertionThread.start();
@@ -742,7 +748,7 @@ public class Profile {
         }
     }
 
-    public void loginSingleAccount(GoogleCloud.SignInResult signInResult){
+    public void loginSingleAccount(GoogleCloud.SignInResult signInResult, View lastButton){
         Thread loginSingleAccountThread = new Thread(() -> {
             List<String[]> existingAccounts = DBHelper.getAccounts(new String[]{"userEmail", "type", "refreshToken"});
             existingAccounts.add(new String[]{signInResult.getUserEmail(), "backup", signInResult.getTokens().getRefreshToken()});
@@ -781,7 +787,13 @@ public class Profile {
         loginSingleAccountThread.start();
         try {
             loginSingleAccountThread.join();
-        }catch (InterruptedException e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (InterruptedException e) {
+            LogHandler.crashLog(e,"login");
+        }finally {
+            MainActivity.activity.runOnUiThread(() -> {
+                lastButton.setClickable(true);
+            });
+        }
         UI.update("end of login single account");
     }
 
@@ -812,6 +824,8 @@ public class Profile {
                         signInResult.getStorage().getUsedInGmailAndPhotosStorage(),
                         parentFolderId,profileFolderId,assetsFolderId,databaseFolderId
                 );
+
+                UI.update("login");
 
                 Log.d("Threads" ,"handleLoginToSingleAccountSuccessThread finished");
             }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
