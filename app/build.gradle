@@ -18,8 +18,8 @@ android {
         applicationId "com.example.cso"
         minSdk 21
         targetSdk 32
-        versionCode 55
-        versionName "0.0.55"
+        versionCode 61
+        versionName "0.0.61"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

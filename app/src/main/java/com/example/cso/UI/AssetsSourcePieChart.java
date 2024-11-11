@@ -85,7 +85,6 @@ public class AssetsSourcePieChart {
                         values.set(i, syncedMaxValue / 100);
                     }
                 }
-
                 float[] stackedValues = new float[values.size()];
                 for (int i = 0; i < values.size(); i++) {
                     stackedValues[i] = values.get(i).floatValue();
@@ -101,25 +100,26 @@ public class AssetsSourcePieChart {
                 tempLayout.post(new Runnable() {
                     @Override
                     public void run() {
+                        int parentWidth = (int) (UI.getDeviceWidth(context) * 0.85);
                         LinearLayout.LayoutParams barChartParams = new LinearLayout.LayoutParams(
-                                900,
+                                parentWidth,
                                 230
                         );
                         barChartParams.gravity = Gravity.CENTER;
-                        barChartParams.setMargins((layout.getWidth() / 2) - 520,
-                                (layout.getHeight() / 2) - 210,0,0);
+                        barChartParams.setMargins(20, 42,0,0);
                         barChart.setLayoutParams(barChartParams);
                         barChart.invalidate();
 
                         ScrollView scrollView = new ScrollView(context);
+                        Log.d("debug","p: " + UI.getDeviceWidth(context));
                         LinearLayout.LayoutParams scrollViewParams = new LinearLayout.LayoutParams(
-                                900, 140
+                                parentWidth, 140
                         );
                         scrollViewParams.gravity = Gravity.CENTER_HORIZONTAL;
-                        scrollViewParams.setMargins((layout.getWidth() / 2) - 520, 0, 0, 10);
+                        scrollViewParams.setMargins(20, 0,0,10);
                         scrollView.setLayoutParams(scrollViewParams);
 
-                        int parentWidth = 900;
+
                         LinearLayout mainLegendLayout = new LinearLayout(context);
                         mainLegendLayout.setOrientation(LinearLayout.VERTICAL);
                         LinearLayout.LayoutParams mainLegendParams = new LinearLayout.LayoutParams(
@@ -127,7 +127,7 @@ public class AssetsSourcePieChart {
                                 ViewGroup.LayoutParams.WRAP_CONTENT
                         );
                         mainLegendParams.gravity = Gravity.CENTER_HORIZONTAL;
-                        mainLegendParams.setMargins(( layout.getWidth() / 2) - 420,0,0,0);
+                        mainLegendParams.setMargins( (int) (UI.getDeviceWidth(context) * 0.1),0,0,0);
                         mainLegendLayout.setLayoutParams(mainLegendParams);
 
                         LinearLayout legendLayout = new LinearLayout(context);
@@ -145,7 +145,8 @@ public class AssetsSourcePieChart {
                                 legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                                         View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
 
-                                int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + 240;
+                                int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + (int) (UI.getDeviceWidth(context) * 0.2)
+                                         + 37 + 37 ;
 
                                 if (totalWidth > parentWidth) {
                                     mainLegendLayout.addView(legendLayout);
@@ -170,7 +171,6 @@ public class AssetsSourcePieChart {
                 tempLayout.addView(view);
             }
             layout.addView(tempLayout);
-            Log.d("debug","4 " + layout.getWidth());
         } catch (Exception e) {
             LogHandler.crashLog(e, "AssetsSourceChart");
             View view = Details.getErrorAsChartAlternative(context);
@@ -199,105 +199,6 @@ public class AssetsSourcePieChart {
         xAxis.setDrawGridLines(false);
         xAxis.setDrawLabels(false);
         dataSet.setDrawValues(false);
-    }
-
-
-    public static void createTextAreaForAssetSourceBarChart(View chartLayout, LinearLayout layout, Context context, JsonObject sourcesData, String deviceId) {
-        if (chartLayout instanceof HorizontalBarChart) {
-            int[] colors = MainActivity.currentTheme.deviceAppStorageChartColors;
-
-            List<String> labels = new ArrayList<>();
-            List<Double> values = new ArrayList<>();
-
-            List<Pair<String, Double>> sourceValuePairs = new ArrayList<>();
-            for (String source : sourcesData.keySet()) {
-                double size = sourcesData.get(source).getAsDouble();
-                if (size != 0.0) {
-                    sourceValuePairs.add(new Pair<>(source, size));
-                }
-            }
-            sourceValuePairs.sort((p1, p2) -> Double.compare(p2.second, p1.second));
-
-            for (Pair<String, Double> pair : sourceValuePairs) {
-                values.add(pair.second);
-                labels.add(pair.first);
-            }
-
-            LinearLayout mainLegendLayout = new LinearLayout(context);
-            mainLegendLayout.setOrientation(LinearLayout.VERTICAL);
-            mainLegendLayout.setLayoutParams(new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT)
-            );
-            LinearLayout legendLayout = new LinearLayout(context);
-            legendLayout.setOrientation(LinearLayout.HORIZONTAL);
-            LinearLayout.LayoutParams legendParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
-            );
-            legendLayout.setGravity(Gravity.LEFT);
-            legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.1),0,(int) (UI.getDeviceWidth(context) * 0.1),0);
-            legendLayout.setLayoutParams(legendParams);
-
-            int parentWidth = (int) (UI.getDeviceWidth(context) * 0.80);
-
-            for (int i = 0; i < labels.size(); i++) {
-                int color = colors[i % colors.length];
-                View legendItem = createLegendItemForAssetSourceBarChart(context, labels.get(i), color, values.get(i));
-
-                legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-                legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-
-                int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + (int) (UI.getDeviceWidth(context) * 0.1) + (int) (UI.getDeviceWidth(context) * 0.1);
-
-                if (totalWidth > parentWidth) {
-                    mainLegendLayout.addView(legendLayout);
-                    legendLayout = new LinearLayout(context);
-                    legendLayout.setOrientation(LinearLayout.HORIZONTAL);
-                    legendParams = new LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
-                    );
-                    legendLayout.setGravity(Gravity.LEFT);
-                    legendParams.setMargins((int) (UI.getDeviceWidth(context) * 0.1),0,(int) (UI.getDeviceWidth(context) * 0.1),0);
-                    legendLayout.setLayoutParams(legendParams);
-                }
-
-                legendLayout.addView(legendItem);
-            }
-
-            if (legendLayout.getChildCount() > 0) {
-                mainLegendLayout.addView(legendLayout);
-            }
-
-            layout.addView(mainLegendLayout);
-        }
-    }
-
-    public static LinearLayout createLegendItemForAssetSourceBarChart(Context context, String label, int color, double value){
-        LinearLayout legendItem = new LinearLayout(context);
-        legendItem.setOrientation(LinearLayout.HORIZONTAL);
-        legendItem.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        ));
-        legendItem.setGravity(Gravity.LEFT);
-
-        View colorBox = new View(context);
-        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceHeight(context) * 0.008), (int) (UI.getDeviceHeight(context) * 0.008));
-        colorBoxParams.setMargins(20, 15, 10, 0);
-        colorBox.setLayoutParams(colorBoxParams);
-        colorBox.setBackgroundColor(color);
-
-        TextView labelText = new TextView(context);
-        labelText.setText(label);
-        labelText.setTextSize(12f);
-        labelText.setTextColor(MainActivity.currentTheme.primaryTextColor);
-
-        legendItem.addView(colorBox);
-        legendItem.addView(labelText);
-
-        return legendItem;
     }
 
 }

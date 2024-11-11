@@ -48,10 +48,6 @@ public class AreaSquareChartForAccount {
             );
             stackedSquaresLayout.setLayoutParams(stackedParams);
 
-            createStackedSquares(context,synced, used, total,stackedSquaresLayout);
-            AreaSquareChart.drawGridLines(stackedSquaresLayout,context);
-            layout.addView(stackedSquaresLayout);
-
             LinearLayout subLayout = new LinearLayout(context);
             subLayout.setOrientation(LinearLayout.VERTICAL);
             LinearLayout.LayoutParams subLayoutParams = new LinearLayout.LayoutParams(
@@ -62,6 +58,11 @@ public class AreaSquareChartForAccount {
 
             createLabels(context,total, used, synced, subLayout);
             layout.addView(subLayout);
+
+            createStackedSquares(context,synced, used, total,stackedSquaresLayout);
+            AreaSquareChart.drawGridLines(stackedSquaresLayout,context);
+            layout.addView(stackedSquaresLayout);
+            stackedSquaresLayout.setPadding(0,0,37 + (UI.getDeviceWidth(context) / 12),0);
         }catch (Exception e){
             LogHandler.crashLog(e,"AccountAreaChart");
             return Details.getErrorAsChartAlternative(context);
@@ -73,7 +74,7 @@ public class AreaSquareChartForAccount {
     private static void addSquareToLayout(RelativeLayout layout, ImageView square, int size) {
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(size * 3, size * 3);
         params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        params.addRule(RelativeLayout.ALIGN_PARENT_END);
+        params.addRule(RelativeLayout.ALIGN_PARENT_START);
         layout.addView(square, params);
     }
 
@@ -171,6 +172,7 @@ public class AreaSquareChartForAccount {
         layout.addView(legendItem);
 
         parentLayout.addView(layout);
+//        parentLayout.setPadding(0,0,37 + (UI.getDeviceWidth(context) / 12),0);
         layout.setGravity(Gravity.BOTTOM);
     }
 
@@ -224,6 +226,13 @@ public class AreaSquareChartForAccount {
                     minDiff = diff;
                     synced = number;
                 }
+            }
+
+            if(isSquare2Zero){
+                used = 0;
+            }
+            if(isSquare3Zero){
+                synced = 0;
             }
 
             Log.d("AreaSquareAccountChart","333: " +  String.valueOf(used));

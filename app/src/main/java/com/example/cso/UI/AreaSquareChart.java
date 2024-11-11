@@ -28,6 +28,11 @@ public class AreaSquareChart {
             double media = (data.get("mediaStorage").getAsDouble() / total) * 100;
             double synced = (data.get("syncedAssetsStorage").getAsDouble()  / total) * 100;
 
+//            double total = 21.3;
+//            double used = 20.4 / total * 100;
+//            double media = 5.6 / total * 100;
+//            double synced = 0;
+
             RelativeLayout stackedSquaresLayout = new RelativeLayout(context);
             RelativeLayout.LayoutParams stackedParams = new RelativeLayout.LayoutParams(
                     300,
@@ -78,42 +83,67 @@ public class AreaSquareChart {
             boolean isSquare2EqualToSquare3 = (used == media);
             boolean isSquare3EqualToSquare4 = (media == synced);
 
-            int[] numbers = new int[]{1,4,9,16,25,36,49,64,81,100};
+            int[] numbers = new int[]{1,4,9,16,25,36,49,64,81};
+
+            Log.d("AreaSquareChart","t0:" +  String.valueOf(used));
+            Log.d("AreaSquareChart", "t0 :" + String.valueOf(media));
+            Log.d("AreaSquareChart", "t0 :" + String.valueOf(synced));
 
             total = Math.round(total);
             used = Math.round(used);
             media = Math.round(media);
             synced = Math.round(synced);
 
+            Log.d("AreaSquareChart","t1:" +  String.valueOf(used));
+            Log.d("AreaSquareChart", "t1 :" + String.valueOf(media));
+            Log.d("AreaSquareChart", "t1 :" + String.valueOf(synced));
+
             int minDiff = (int) (total + 1);
-            double tempUsed = used;
-            for(int number: numbers){
-                int diff = (int) Math.abs(tempUsed - number);
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    used = number;
+            if(used != 100){
+                double tempUsed = used;
+                for(int number: numbers){
+                    int diff = (int) Math.abs(tempUsed - number);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        used = number;
+                    }
                 }
             }
 
-            minDiff = (int) (total + 1);
-            double tempMedia = media;
-            for(int number: numbers){
-                int diff = (int) Math.abs(tempMedia - number);
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    media = number;
+            if(media != 100){
+                minDiff = (int) (total + 1);
+                double tempMedia = media;
+                for(int number: numbers){
+                    int diff = (int) Math.abs(tempMedia - number);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        media = number;
+                    }
                 }
             }
 
-            minDiff = (int) (total + 1);
-            double tempSynced = synced;
-            for(int number: numbers){
-                int diff = (int) Math.abs(tempSynced - number);
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    synced = number;
+            if(synced != 100){
+                minDiff = (int) (total + 1);
+                double tempSynced = synced;
+                for(int number: numbers){
+                    int diff = (int) Math.abs(tempSynced - number);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        synced = number;
+                    }
                 }
             }
+
+            if(isSquare3Zero){
+                media = 0;
+            }
+            if(isSquare4Zero){
+                synced = 0;
+            }
+
+            Log.d("AreaSquareChart","s0:" +  String.valueOf(used));
+            Log.d("AreaSquareChart", "s0 :" + String.valueOf(media));
+            Log.d("AreaSquareChart", "s0 :" + String.valueOf(synced));
 
             used = Math.sqrt(used) * 10;
             media = Math.sqrt(media) * 10;
@@ -183,7 +213,7 @@ public class AreaSquareChart {
     private static void addSquareToLayout(RelativeLayout layout, ImageView square, int size) {
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(size * 3, size * 3);
         params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        params.addRule(RelativeLayout.ALIGN_PARENT_END);
+        params.addRule(RelativeLayout.ALIGN_PARENT_START);
         layout.addView(square, params);
     }
 
@@ -253,7 +283,7 @@ public class AreaSquareChart {
         );
 
         View colorBox = new View(context);
-        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams((int) (UI.getDeviceHeight(context) * 0.008), (int) (UI.getDeviceHeight(context) * 0.008));
+        LinearLayout.LayoutParams colorBoxParams = new LinearLayout.LayoutParams(17, 17);
         colorBoxParams.setMargins(20, 15, 10, 0);
         colorBox.setLayoutParams(colorBoxParams);
 
@@ -345,6 +375,7 @@ public class AreaSquareChart {
         legendItem.addView(syncedText);
         layout.addView(legendItem);
         parentLayout.addView(layout);
+        parentLayout.setPadding(0,0,37 + (UI.getDeviceWidth(context) / 12),0);
         layout.setGravity(Gravity.BOTTOM);
     }
 
@@ -367,6 +398,7 @@ public class AreaSquareChart {
         totalText.setLayoutParams(layoutParams);
 
         subLayout.addView(totalText);
+        subLayout.setPadding(0,0,37 + (UI.getDeviceWidth(context) / 12),0);
         Log.d("debug", String.valueOf(subLayout.getHeight() - stackedSquaresLayout.getHeight()));
     }
 

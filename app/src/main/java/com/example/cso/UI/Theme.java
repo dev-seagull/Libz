@@ -42,8 +42,6 @@ public class Theme {
         }
         purpleTheme();
         grayTheme();
-        darkTheme();
-        tealTheme();
         MainActivity.currentTheme = getThemeByName(SharedPreferencesHandler.getCurrentTheme());
         Log.d("ui","theme size : "+ themes.size());
     }
@@ -108,27 +106,27 @@ public class Theme {
                     Color.parseColor("#80CBC4") // buzzing along
                 },
                 new int[] {
-                        Color.parseColor("#FFEB3B"),
-                        Color.parseColor("#FF9800"),
-                        Color.parseColor("#FFB300"),
+                        Color.parseColor("#FFC107"),
+                        Color.parseColor("#FFF176"),
+                        Color.parseColor("#FFF9C4"),
+                        Color.parseColor("#BCAD2E"),
                         Color.parseColor("#FFD54F"),
-                        Color.parseColor("#FBC02D"),
-                        Color.parseColor("#FF5722"),
-                        Color.parseColor("#FFCA28"),
-                        Color.parseColor("#F57F17"),
-                        Color.parseColor("#FF6F00")
+                        Color.parseColor("#FFF100"),
+                        Color.parseColor("#B6A45F"),
+                        Color.parseColor("#F6933C"),
+                        Color.parseColor("#B1ACA8")
                 },
                 new int[] {
-                        Color.parseColor("#1E88E5"),
-                        Color.parseColor("#1976D2"),
-                        Color.parseColor("#0D47A1"),
-                        Color.parseColor("#42A5F5"),
-                        Color.parseColor("#1565C0"),
-                        Color.parseColor("#2196F3"),
                         Color.parseColor("#64B5F6"),
+                        Color.parseColor("#1565C0"),
+                        Color.parseColor("#3192E8"),
                         Color.parseColor("#80D8FF"),
                         Color.parseColor("#0288D1"),
+                        Color.parseColor("#0D47A1"),
                         Color.parseColor("#82B1FF"),
+                        Color.parseColor("#42A5F5"),
+                        Color.parseColor("#1976D2"),
+                        Color.parseColor("#B3E5FC"),
                 },
                 new int[] {
                         Color.parseColor("#FAB34B"),
@@ -150,144 +148,6 @@ public class Theme {
                 new int[] {
                         Color.parseColor("#80CBC4"),
                         Color.parseColor("#FFD166")
-                }
-        );
-    }
-
-    public static Theme darkTheme() {
-        return new Theme(
-                "dark",
-                Color.parseColor("#121212"), // Primary background color (dark gray/black)
-                new int[]{
-                        Color.parseColor("#607D8B"), // Device button colors (dark gray)
-                        Color.parseColor("#455A64")
-                },
-                new int[]{
-                        Color.parseColor("#607D8B"), // Account button colors (cool gray)
-                        Color.parseColor("#455A64")
-                },
-                new int[]{
-                        Color.parseColor("#607D8B"), // Add backup account button colors
-                        Color.parseColor("#455A64")
-                },
-                new int[]{
-                        Color.parseColor("#CFD8DC"), // Device storage chart colors (gray)
-                        Color.parseColor("#B0BEC5"),
-                        Color.parseColor("#FFCA28"),
-                        Color.parseColor("#80CBC4")
-                },
-                new int[] {
-                        Color.parseColor("#FFEB3B"),
-                        Color.parseColor("#FF9800"),
-                        Color.parseColor("#FFB300"),
-                        Color.parseColor("#FFD54F"),
-                        Color.parseColor("#FBC02D"),
-                        Color.parseColor("#FF5722"),
-                        Color.parseColor("#FFCA28"),
-                        Color.parseColor("#F57F17"),
-                        Color.parseColor("#FF6F00")
-                },
-                new int[] {
-                        Color.parseColor("#1E88E5"),
-                        Color.parseColor("#1976D2"),
-                        Color.parseColor("#0D47A1"),
-                        Color.parseColor("#42A5F5"),
-                        Color.parseColor("#1565C0"),
-                        Color.parseColor("#2196F3"),
-                        Color.parseColor("#64B5F6"),
-                        Color.parseColor("#80D8FF"),
-                        Color.parseColor("#0288D1"),
-                        Color.parseColor("#82B1FF"),
-                },
-                new int[]{
-                        Color.parseColor("#1E88E5"), // Account storage data chart colors (blue for contrast)
-                        Color.parseColor("#1565C0")
-                },
-                Color.BLACK, // Menu text color (light gray)
-                Color.WHITE, // Primary text color (white)
-                Color.GREEN, // onSyncButtonGradientStart (for sync progress)
-                Color.parseColor("#5A7B7D"), // onSyncButtonGradientEnd (for sync progress)
-                Color.WHITE, // Off sync button gradient start (gray)
-                Color.parseColor("#B0BEC5"), // Off sync button gradient end (lighter gray)
-                Color.parseColor("#00E5FF"), // syncProgressTextColor
-                Color.parseColor("#FF5722"), // Warning text color (orange)
-                Color.parseColor("#455A64"), // Toolbar background (dark)
-                Color.parseColor("#FFFFFF"), // Toolbar elements (white)
-                R.drawable.white_device, // Device icon
-                R.drawable.three_dot_white,
-                R.drawable.yellow_loading,
-                new int[]{
-                        Color.parseColor("#80CBC4"),
-                        Color.parseColor("#FFCA28") //unsynced color for details chart
-                }
-        );
-    }
-
-    public static Theme tealTheme() {
-        return new Theme(
-                "teal",
-                Color.parseColor("#9CDCD5"), // Primary background color (light cyan)
-                new int[]{
-                        Color.parseColor("#00897B"), // Device button colors (vibrant teal)
-                        Color.parseColor("#04A692")  // Slightly darker teal for contrast
-                },
-                new int[]{
-                        Color.parseColor("#00897B"), // Account button colors (dark teal)
-                        Color.parseColor("#04A692")  // Darker teal for stronger contrast
-                },
-                new int[]{
-                        Color.parseColor("#00897B"), // Add backup account button colors
-                        Color.parseColor("#00695C")
-                },
-                new int[]{
-                        Color.parseColor("#A7FFEB"), // Device storage chart colors (total storage, light gray for balance)
-                        Color.parseColor("#80CBC4"), // Used storage (light blue for clarity)
-                        Color.parseColor("#FFCA28"), // Media (teal, consistent with the theme)
-                        Color.parseColor("#04977E")  // Synced (bright yellow for strong contrast)
-                },
-                new int[] {
-                        Color.parseColor("#FFEB3B"),
-                        Color.parseColor("#FF9800"),
-                        Color.parseColor("#FFB300"),
-                        Color.parseColor("#FFD54F"),
-                        Color.parseColor("#FBC02D"),
-                        Color.parseColor("#FF5722"),
-                        Color.parseColor("#FFCA28"),
-                        Color.parseColor("#F57F17"),
-                        Color.parseColor("#FF6F00")
-                },
-                new int[] {
-                        Color.parseColor("#1E88E5"),
-                        Color.parseColor("#1976D2"),
-                        Color.parseColor("#0D47A1"),
-                        Color.parseColor("#42A5F5"),
-                        Color.parseColor("#1565C0"),
-                        Color.parseColor("#2196F3"),
-                        Color.parseColor("#64B5F6"),
-                        Color.parseColor("#80D8FF"),
-                        Color.parseColor("#0288D1"),
-                        Color.parseColor("#82B1FF"),
-                },
-                new int[]{
-                        Color.parseColor("#1E88E5"), // Account storage data chart colors (strong blue)
-                        Color.parseColor("#304194")  // Darker blue for contrast
-                },
-                Color.parseColor("#004D40"), // Menu text color (dark teal)
-                Color.WHITE,  // Primary text color (black for readability on lighter backgrounds)
-                Color.parseColor("#008D7B"), // On sync button gradient start (teal)
-                Color.parseColor("#008D7B"), // On sync button gradient end (dark teal)
-                Color.parseColor("#90A4AE"),
-                Color.parseColor("#90A4AE"),
-                Color.parseColor("#00B8D4"), // Sync progress text color (bright cyan for visibility)
-                Color.parseColor("#FF5722"), // Warning text color (orange remains unchanged)
-                Color.parseColor("#00796B"), // Toolbar background (deep teal)
-                Color.parseColor("#FFFFFF"), // Toolbar elements (white for clarity)
-                R.drawable.black_device, // Device icon
-                R.drawable.three_dot_black, // Three dot button
-                R.drawable.yellow_loading,
-                new int[]{
-                        Color.parseColor("#004D40"), // Media (teal, consistent with the theme)
-                        Color.parseColor("#FF8A65"), //unsynced color for details chart
                 }
         );
     }
@@ -315,27 +175,27 @@ public class Theme {
                         Color.parseColor("#05A694")
                 },
                 new int[] {
-                        Color.parseColor("#FFEB3B"),
-                        Color.parseColor("#FF9800"),
-                        Color.parseColor("#FFB300"),
+                        Color.parseColor("#FFC107"),
+                        Color.parseColor("#FFF176"),
+                        Color.parseColor("#FFF9C4"),
+                        Color.parseColor("#BCAD2E"),
                         Color.parseColor("#FFD54F"),
-                        Color.parseColor("#FBC02D"),
-                        Color.parseColor("#FF5722"),
-                        Color.parseColor("#FFCA28"),
-                        Color.parseColor("#F57F17"),
-                        Color.parseColor("#FF6F00")
+                        Color.parseColor("#FFF100"),
+                        Color.parseColor("#B6A45F"),
+                        Color.parseColor("#F6933C"),
+                        Color.parseColor("#B1ACA8")
                 },
                 new int[] {
-                        Color.parseColor("#EDC9AF"),
-                        Color.parseColor("#FFDAB9"),
-                        Color.parseColor("#FFEFD5"),
-                        Color.parseColor("#FFEBCD"),
-                        Color.parseColor("#FBCDA5"),
-                        Color.parseColor("#F9D5A7"),
-                        Color.parseColor("#F7E1AE"),
-                        Color.parseColor("#F9C5A0"),
-                        Color.parseColor("#FFD8A8"),
-                        Color.parseColor("#FFDDC1"),
+                        Color.parseColor("#64B5F6"),
+                        Color.parseColor("#1565C0"),
+                        Color.parseColor("#3192E8"),
+                        Color.parseColor("#80D8FF"),
+                        Color.parseColor("#0288D1"),
+                        Color.parseColor("#0D47A1"),
+                        Color.parseColor("#82B1FF"),
+                        Color.parseColor("#42A5F5"),
+                        Color.parseColor("#1976D2"),
+                        Color.parseColor("#B3E5FC"),
                 },
                 new int[]{
                         Color.parseColor("#546E7A"), // Account storage data chart colors

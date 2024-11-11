@@ -2,6 +2,7 @@ package com.example.cso.UI;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.View;
@@ -144,71 +145,96 @@ public class CustomTreeMapChart {
             leftAxis.setDrawAxisLine(false);
 
             layout.addView(stackedBarChart);
-            LinearLayout.LayoutParams stackedBarLayoutParams = new LinearLayout.LayoutParams(
-                    900,
-                    230
-            );
-            stackedBarLayoutParams.gravity = Gravity.CENTER;
-            stackedBarLayoutParams.setMargins((layout.getWidth() / 2) - 520,
-                    (layout.getHeight() / 2) - 210,0,0);
-            stackedBarChart.setLayoutParams(stackedBarLayoutParams);
+            double finalUnsynced = unsynced;
+            layout.post(new Runnable() {
+                @Override
+                public void run() {
+                    int parentWidth = (int) (UI.getDeviceWidth(context) * 0.85);
+                    LinearLayout.LayoutParams stackedBarLayoutParams = new LinearLayout.LayoutParams(
+                            parentWidth,
+                            230
+                    );
+                    stackedBarLayoutParams.gravity = Gravity.CENTER;
+                    stackedBarLayoutParams.setMargins(20, 42,0,0);
+                    stackedBarChart.setLayoutParams(stackedBarLayoutParams);
 
-            ScrollView scrollView = new ScrollView(context);
-            LinearLayout.LayoutParams scrollViewParams = new LinearLayout.LayoutParams(
-                    900, 140
-            );
-            scrollViewParams.gravity = Gravity.CENTER_HORIZONTAL;
-            scrollViewParams.setMargins((layout.getWidth() / 2) - 520, 0, 0, 10);
-            scrollView.setLayoutParams(scrollViewParams);
+                    ScrollView scrollView = new ScrollView(context);
+                    LinearLayout.LayoutParams scrollViewParams = new LinearLayout.LayoutParams(
+                            parentWidth, 140
+                    );
+                    scrollViewParams.gravity = Gravity.CENTER_HORIZONTAL;
+                    scrollViewParams.setMargins(20, 0,0,10);
+                    scrollView.setLayoutParams(scrollViewParams);
 
-            int parentWidth = 900;
-            LinearLayout mainLegendLayout = new LinearLayout(context);
-            mainLegendLayout.setOrientation(LinearLayout.VERTICAL);
-            LinearLayout.LayoutParams mainLegendParams = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
-            mainLegendParams.gravity = Gravity.CENTER_HORIZONTAL;
-            mainLegendParams.setMargins(( layout.getWidth() / 2) - 420,0,0,0);
-            mainLegendLayout.setLayoutParams(mainLegendParams);
+                    LinearLayout mainLegendLayout = new LinearLayout(context);
+                    mainLegendLayout.setOrientation(LinearLayout.VERTICAL);
+                    LinearLayout.LayoutParams mainLegendParams = new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT
+                    );
+                    mainLegendParams.gravity = Gravity.CENTER_HORIZONTAL;
+                    mainLegendParams.setMargins( (int) (UI.getDeviceWidth(context) * 0.1),0,0,0);
+                    mainLegendLayout.setLayoutParams(mainLegendParams);
 
-            LinearLayout legendLayout = new LinearLayout(context);
-            legendLayout.setOrientation(LinearLayout.HORIZONTAL);
-
-            for (int i = 0; i < syncedLabels.size(); i++) {
-                int color = Color.BLUE;
-                for(String syncedValue: syncedLabels){
-                    color = Accounts.accountMap.get(syncedValue);
-                    break;
-                }
-
-                View legendItem = createLegendItem(context, syncedLabels.get(i), color, syncedValues.get(i));
-
-                legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-                legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-
-                int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + 240;
-
-                if (totalWidth > parentWidth) {
-                    mainLegendLayout.addView(legendLayout);
-                    legendLayout = new LinearLayout(context);
+                    LinearLayout legendLayout = new LinearLayout(context);
                     legendLayout.setOrientation(LinearLayout.HORIZONTAL);
-                    legendLayout.setGravity(Gravity.LEFT);
-                }
 
-                legendLayout.addView(legendItem);
+                    for (int i = 0; i < syncedLabels.size(); i++) {
+                        int color = Color.BLUE;
+                        for(String syncedValue: syncedLabels){
+                            color = Accounts.accountMap.get(syncedValue);
+                            break;
+                        }
 
-                if(i + 1 == syncedLabels.size()){
-//                    for(int j =0 ; j < 13; j++){
-                        legendItem = createLegendItem(context, "Lagging behind", Color.parseColor("#FFD166"), unsynced);
+                        View legendItem = createLegendItem(context, syncedLabels.get(i), color, syncedValues.get(i));
+
                         legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
                         legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
 
-                        totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + 240;
+                        int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + (int) (UI.getDeviceWidth(context) * 0.2)
+                                + 37 + 37 ;
+
+                        if (totalWidth > parentWidth) {
+                            mainLegendLayout.addView(legendLayout);
+                            legendLayout = new LinearLayout(context);
+                            legendLayout.setOrientation(LinearLayout.HORIZONTAL);
+                            legendLayout.setGravity(Gravity.LEFT);
+                        }
+
+                        legendLayout.addView(legendItem);
+
+                        if(i + 1 == syncedLabels.size()){
+//                    for(int j =0 ; j < 13; j++){
+                            legendItem = createLegendItem(context, "Lagging behind", Color.parseColor("#FFD166"), finalUnsynced);
+                            legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                            legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+
+                            totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + (int) (UI.getDeviceWidth(context) * 0.2)
+                                    + 37 + 37 ;
+
+                            if (totalWidth > parentWidth) {
+                                mainLegendLayout.addView(legendLayout);
+                                legendLayout = new LinearLayout(context);
+                                legendLayout.setGravity(Gravity.LEFT);
+                                legendLayout.setOrientation(LinearLayout.HORIZONTAL);
+                            }
+
+                            legendLayout.addView(legendItem);
+//                    }
+                        }
+                    }
+                    if(syncedLabels.size() == 0){
+                        View legendItem = createLegendItem(context, "Lagging behind", Color.parseColor("#FFD166"), finalUnsynced);
+                        legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                        legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+
+                        int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + 240;
 
                         if (totalWidth > parentWidth) {
                             mainLegendLayout.addView(legendLayout);
@@ -218,53 +244,16 @@ public class CustomTreeMapChart {
                         }
 
                         legendLayout.addView(legendItem);
-//                    }
+                    }
+
+                    if (legendLayout.getChildCount() > 0) {
+                        mainLegendLayout.addView(legendLayout);
+                    }
+
+                    scrollView.addView(mainLegendLayout);
+                    layout.addView(scrollView);
                 }
-            }
-            if(syncedLabels.size() == 0){
-                View legendItem = createLegendItem(context, "Lagging behind", Color.parseColor("#FFD166"), unsynced);
-                legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-                legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-
-                int totalWidth = legendLayout.getMeasuredWidth() + legendItem.getMeasuredWidth() + 240;
-
-                if (totalWidth > parentWidth) {
-                    mainLegendLayout.addView(legendLayout);
-                    legendLayout = new LinearLayout(context);
-                    legendLayout.setGravity(Gravity.LEFT);
-                    legendLayout.setOrientation(LinearLayout.HORIZONTAL);
-                }
-
-                legendLayout.addView(legendItem);
-            }
-
-            if (legendLayout.getChildCount() > 0) {
-                mainLegendLayout.addView(legendLayout);
-            }
-
-//            String updateDate = DeviceStatusSync.getDeviceStatusLastUpdateTime(deviceId);
-//            LinearLayout updateDateLabelsLayout = AreaSquareChart.createUpdateDateLabel(context, updateDate);
-//            LinearLayout.LayoutParams updateDateLabelsParams = new LinearLayout.LayoutParams(
-//                    LinearLayout.LayoutParams.WRAP_CONTENT,
-//                    LinearLayout.LayoutParams.WRAP_CONTENT
-//            );
-//            updateDateLabelsParams.gravity = Gravity.CENTER;
-//            updateDateLabelsLayout.setLayoutParams(updateDateLabelsParams);
-//            mainLegendLayout.addView(updateDateLabelsLayout);
-
-//            int width = (int) (UI.getDeviceWidth(activity) * 0.9);
-//            int height = (int) (UI.getDeviceHeight(activity) * 0.085);
-//            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-//                    width,
-//                    height
-//            );
-//            layoutParams.gravity = Gravity.CENTER;
-//            stackedBarChart.setLayoutParams(layoutParams);
-
-            scrollView.addView(mainLegendLayout);
-            layout.addView(scrollView);
+            });
         } catch (Exception e) {
             LogHandler.crashLog(e, "createStackedBarChart");
             layout.removeAllViews();

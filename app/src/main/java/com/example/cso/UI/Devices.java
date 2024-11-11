@@ -6,13 +6,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.SpannableStringBuilder;
-import android.text.style.ForegroundColorSpan;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.View;
@@ -23,8 +18,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
 
 import com.example.cso.DeviceHandler;
 import com.example.cso.DeviceStatusSync;
@@ -32,15 +25,10 @@ import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.github.mikephil.charting.charts.HorizontalBarChart;
-import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.data.PieData;
-import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.data.PieEntry;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.FutureTask;
 
 public class Devices {
@@ -55,7 +43,8 @@ public class Devices {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        params.setMargins(0, UI.dpToPx(24),0,0);
+        Log.d("debug","debug " + UI.dpToPx(24) );
+        params.setMargins(0, 66,0,0);
         parentLayout.setLayoutParams(params);
         deviceButtonsId = View.generateViewId();
         parentLayout.setId(deviceButtonsId);
@@ -69,8 +58,10 @@ public class Devices {
             ArrayList<DeviceHandler> devices = DeviceHandler.getDevicesFromDB();
             for (DeviceHandler device : devices) {
                 if (!deviceButtonExistsInUI(device.getDeviceId(), activity)) {
-                    View newDeviceButtonView = createNewDeviceMainView(activity, device);
-                    MainActivity.activity.runOnUiThread(() -> deviceButtons.addView(newDeviceButtonView));
+//                    for(int i = 0; i < 7; i ++){
+                        View newDeviceButtonView = createNewDeviceMainView(activity, device);
+                        MainActivity.activity.runOnUiThread(() -> deviceButtons.addView(newDeviceButtonView));
+//                    }
                 }
             }
         });
@@ -98,7 +89,7 @@ public class Devices {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        params.setMargins(48,0,48,32);
+        params.setMargins(25,0,25,30);
         layout.setLayoutParams(params);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
@@ -128,7 +119,7 @@ public class Devices {
     public static void reInitializeDeviceButtonsLayout(RelativeLayout layout,Context context, DeviceHandler device){
         layout.removeAllViews();
         Button newDeviceButton = createNewDeviceButton(context,device);
-        Button threeDotButton = createNewDeviceThreeDotsButton(context,device.getDeviceId(),newDeviceButton);
+        Button threeDotButton = createNewDeviceThreeDotsButton(context,device.getDeviceId(),newDeviceButton, device);
 
         layout.addView(newDeviceButton);
         layout.addView(threeDotButton);
@@ -202,11 +193,11 @@ public class Devices {
         });
     }
 
-    public static Button createNewDeviceThreeDotsButton(Context context,String deviceId, Button deviceButton){
+    public static Button createNewDeviceThreeDotsButton(Context context, String deviceId, Button deviceButton, DeviceHandler device){
         Button newThreeDotButton = new Button(context);
         newThreeDotButton.setContentDescription(deviceId + "threeDot");
         addEffectsToThreeDotButton(newThreeDotButton,context);
-        setListenerToDeviceThreeDotButtons(newThreeDotButton, deviceId);
+        setListenerToDeviceButtons(newThreeDotButton,device);
 
         deviceButton.getHeight();
         int buttonSize =Math.min(UI.getDeviceHeight(context) / 20, 84);
@@ -311,7 +302,7 @@ public class Devices {
                 layout.addView(areaSquareChart);
 
                 areaSquareChart.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-                areaSquareChart.setPadding(UI.getDeviceWidth(context) / 5,50,0,50);
+                areaSquareChart.setPadding((37 + (UI.getDeviceWidth(context) / 8)),50,0,50);
                 LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT

@@ -135,7 +135,8 @@ public class Details {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         );
-        frameParams.setMargins(40,16,40,0);
+        Log.d("debug","mm"  + (float) (UI.getDeviceWidth(context) * 0.037));
+        frameParams.setMargins(20,16,20,0);
         frameLayout.setLayoutParams(frameParams);
         frameLayout.setElevation(4f);
         frameLayout.setVisibility(View.GONE);

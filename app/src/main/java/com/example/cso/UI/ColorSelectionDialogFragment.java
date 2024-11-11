@@ -52,7 +52,7 @@ public class ColorSelectionDialogFragment extends DialogFragment {
         GridLayout gridLayout = new GridLayout(getActivity());
         int rowSize = 100;
         int columnSize = 100;
-        int columnCount = 4 ;
+        int columnCount = 2;
         int rowCount = Theme.themes.size() / columnCount;
         int colorMargins = 10 ;
         gridLayout.setRowCount(rowCount);

@@ -17,13 +17,15 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent){
-        int requestCode = intent.getIntExtra("requestCode", 0);
-        if (requestCode == MyAlarmManager.deviceStatusSyncRequestId){
-            Log.d(MyAlarmManager.TAG,"alarm for deviceStatusSync received at : " + new Date().getTime() + " code : " + requestCode);
-            DeviceStatusSync.uploadDeviceStatusJsonFileToAccounts(context);
-            long timeInMillis = new Date().getTime() + DeviceStatusSync.timeInterval;
-            setAlarm(context,timeInMillis, requestCode);
-        }
+        try{
+            int requestCode = intent.getIntExtra("requestCode", 0);
+            if (requestCode == MyAlarmManager.deviceStatusSyncRequestId){
+                Log.d(MyAlarmManager.TAG,"alarm for deviceStatusSync received at : " + new Date().getTime() + " code : " + requestCode);
+                DeviceStatusSync.uploadDeviceStatusJsonFileToAccounts(context);
+                long timeInMillis = new Date().getTime() + DeviceStatusSync.timeInterval;
+                setAlarm(context,timeInMillis, requestCode);
+            }
+        }catch (Exception e) { LogHandler.crashLog(e,"broadCastReceiver"); }
 //        else if (requestCode == MyAlarmManager.syncStatusCheckRequestId ||requestCode == MyAlarmManager.syncStatusCheckRequestId2) {
 //            Log.d(MyAlarmManager.TAG,"alarm for syncStatusCheck received at : " + new Date().getTime() + " code : " + requestCode);
 //            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);

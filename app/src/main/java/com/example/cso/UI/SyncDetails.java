@@ -133,18 +133,4 @@ public class SyncDetails {
         return frameLayout;
     }
 
-    public static void setListenerForSyncDetailsButton(Activity activity){
-        LinearLayout syncDetailsStatisticsLayout = activity.findViewById(syncDetailsStatisticsLayoutId);
-        ImageButton syncDetailsButton = activity.findViewById(syncDetailsButtonId);
-        syncDetailsButton.setOnClickListener(view -> {
-            if(syncDetailsStatisticsLayout.getVisibility() == View.GONE){
-                SyncDetailsPieChart.addPieChartToSyncDetailsStatisticsLayout(activity,syncDetailsStatisticsLayout);
-                syncDetailsStatisticsLayout.setVisibility(View.VISIBLE);
-            }else{
-                syncDetailsStatisticsLayout.setVisibility(View.GONE);
-                syncDetailsStatisticsLayout.removeAllViews();
-            }
-        });
-    }
-
 }

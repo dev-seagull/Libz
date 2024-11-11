@@ -123,7 +123,7 @@ public class SharedPreferencesHandler {
 
     public static String getCurrentTheme(){
         String name = MainActivity.preferences.getString("theme", "purple");
-        if (name.equals("purple") || name.equals("dark") || name.equals("gray") || name.equals("teal")){
+        if (name.equals("purple") || name.equals("gray")){
             return name;
         }
         return "purple";

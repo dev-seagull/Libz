@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.View;
@@ -44,7 +45,7 @@ public class Accounts {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        params.setMargins(0,UI.dpToPx(24),0,0);
+        params.setMargins(0, 66,0,0);
         parentLayout.setLayoutParams(params);
         accountButtonsId = View.generateViewId();
         parentLayout.setId(accountButtonsId);
@@ -62,8 +63,10 @@ public class Accounts {
                 String type = accountRow[1];
                 if (type.equals("backup")) {
                     if (accountButtonDoesNotExistsInUI(userEmail)){
-                        LinearLayout newAccountButtonView = createNewAccountMainView(activity, userEmail);
-                        MainActivity.activity.runOnUiThread(() ->backupAccountsLinearLayout.addView(newAccountButtonView));
+//                        for(int i =0 ; i < 7 ; i++){
+                            LinearLayout newAccountButtonView = createNewAccountMainView(activity, userEmail);
+                            MainActivity.activity.runOnUiThread(() ->backupAccountsLinearLayout.addView(newAccountButtonView));
+//                        }
                     }
                 }
             }
@@ -94,7 +97,7 @@ public class Accounts {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        params.setMargins(48,0,48,32);
+        params.setMargins(25,0,25,30);
         layout.setLayoutParams(params);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
@@ -188,7 +191,7 @@ public class Accounts {
         MainActivity.activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                UI.getDeviceHeight(context) / 18
+                120
         );
         newLoginButton.setLayoutParams(layoutParams);
     }
@@ -253,7 +256,6 @@ public class Accounts {
                 UI.getDeviceHeight(context) / 20,
                 UI.getDeviceHeight(context) / 20
         );
-
         threeDotButton.setLayoutParams(layoutParams);
     }
 
@@ -287,8 +289,6 @@ public class Accounts {
         Menu menu = popupMenu.getMenu();
 
         int unlink = 0;
-        int details = 1;
-        int reportStolen = 2;
 
         // Remove items based on the type
         if (type.equals("ownDevice")) {
@@ -323,7 +323,7 @@ public class Accounts {
                 chartLayout = (LinearLayout) chart;
 
                 chartLayout.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-                chartLayout.setPadding(UI.getDeviceWidth(context) / 5,50,0,50);
+                chartLayout.setPadding(37 + (UI.getDeviceWidth(context) / 8),50,0,50);
                 LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
