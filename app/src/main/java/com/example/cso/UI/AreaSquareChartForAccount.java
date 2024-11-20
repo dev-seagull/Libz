@@ -48,6 +48,10 @@ public class AreaSquareChartForAccount {
             );
             stackedSquaresLayout.setLayoutParams(stackedParams);
 
+            createStackedSquares(context,synced, used, total,stackedSquaresLayout);
+            AreaSquareChart.drawGridLines(stackedSquaresLayout,context);
+            layout.addView(stackedSquaresLayout);
+
             LinearLayout subLayout = new LinearLayout(context);
             subLayout.setOrientation(LinearLayout.VERTICAL);
             LinearLayout.LayoutParams subLayoutParams = new LinearLayout.LayoutParams(
@@ -58,11 +62,6 @@ public class AreaSquareChartForAccount {
 
             createLabels(context,total, used, synced, subLayout);
             layout.addView(subLayout);
-
-            createStackedSquares(context,synced, used, total,stackedSquaresLayout);
-            AreaSquareChart.drawGridLines(stackedSquaresLayout,context);
-            layout.addView(stackedSquaresLayout);
-            stackedSquaresLayout.setPadding(0,0,37 + (UI.getDeviceWidth(context) / 12),0);
         }catch (Exception e){
             LogHandler.crashLog(e,"AccountAreaChart");
             return Details.getErrorAsChartAlternative(context);
@@ -77,7 +76,6 @@ public class AreaSquareChartForAccount {
         params.addRule(RelativeLayout.ALIGN_PARENT_START);
         layout.addView(square, params);
     }
-
 
     private static void createLabels(Context context, double total, double used
             , double synced, LinearLayout parentLayout){
@@ -172,10 +170,9 @@ public class AreaSquareChartForAccount {
         layout.addView(legendItem);
 
         parentLayout.addView(layout);
-//        parentLayout.setPadding(0,0,37 + (UI.getDeviceWidth(context) / 12),0);
+        parentLayout.setPadding((UI.getDeviceWidth(context) / 72),0,0,0);
         layout.setGravity(Gravity.BOTTOM);
     }
-
     public static String formatStorageSize(double sizeInMB) {
         if (sizeInMB >= 100) {
             double sizeInGB = sizeInMB / 1024;

@@ -106,9 +106,9 @@ public class CustomTreeMapChart {
             try{
                 List<Integer> colorList = new ArrayList<>();
                 for(String syncedLabel: syncedLabels){
-                    colorList.add(Accounts.accountMap.get(syncedLabel));
+                    colorList.add(Accounts.accountMap.get(syncedLabel).get(0));
                 }
-                colorList.add(Color.parseColor("#FFD166"));
+                colorList.add(Color.parseColor("#EA4335"));
                 int[] colors = new int[colorList.size()];
                 for (int i = 0; i < colorList.size(); i++) {
                     colors[i] = colorList.get(i);
@@ -127,12 +127,12 @@ public class CustomTreeMapChart {
             stackLabels[syncedLabels.size()] = "Unsynced";
             dataSet.setStackLabels(stackLabels);
 
-
             BarData barData = new BarData(dataSet);
             stackedBarChart.setData(barData);
 
             stackedBarChart.getDescription().setEnabled(false);
             stackedBarChart.getLegend().setEnabled(false);
+            stackedBarChart.setHighlightPerTapEnabled(false);
             XAxis xAxis = stackedBarChart.getXAxis();
             xAxis.setDrawGridLines(false);
             xAxis.setDrawLabels(false);
@@ -180,11 +180,7 @@ public class CustomTreeMapChart {
                     legendLayout.setOrientation(LinearLayout.HORIZONTAL);
 
                     for (int i = 0; i < syncedLabels.size(); i++) {
-                        int color = Color.BLUE;
-                        for(String syncedValue: syncedLabels){
-                            color = Accounts.accountMap.get(syncedValue);
-                            break;
-                        }
+                        int color = Accounts.accountMap.get(syncedLabels.get(i)).get(0);
 
                         View legendItem = createLegendItem(context, syncedLabels.get(i), color, syncedValues.get(i));
 
@@ -207,7 +203,7 @@ public class CustomTreeMapChart {
 
                         if(i + 1 == syncedLabels.size()){
 //                    for(int j =0 ; j < 13; j++){
-                            legendItem = createLegendItem(context, "Lagging behind", Color.parseColor("#FFD166"), finalUnsynced);
+                            legendItem = createLegendItem(context, "Lagging behind",Color.parseColor("#EA4335"), finalUnsynced);
                             legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                                     View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
                             legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
@@ -228,7 +224,7 @@ public class CustomTreeMapChart {
                         }
                     }
                     if(syncedLabels.size() == 0){
-                        View legendItem = createLegendItem(context, "Lagging behind", Color.parseColor("#FFD166"), finalUnsynced);
+                        View legendItem = createLegendItem(context, "Lagging behind", Color.parseColor("#EA4335"), finalUnsynced);
                         legendItem.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
                         legendLayout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),

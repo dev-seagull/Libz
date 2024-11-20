@@ -4,6 +4,7 @@
     import android.content.Context;
     import android.content.Intent;
     import android.content.SharedPreferences;
+    import android.os.Build;
     import android.os.Bundle;
     import android.provider.Settings;
     import android.util.Log;
@@ -59,6 +60,9 @@
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                getWindow().getDecorView().setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+            }
             setContentView(R.layout.activity_main);
 
             Log.d("state","start of onCreate");

@@ -31,7 +31,7 @@ public class MyAlarmManager {
 
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_MUTABLE);
             alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
-            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
+            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.US);
             Log.d(TAG,"upload alarm set at " + formatter.format(timeInMillis));
         } catch (Exception e) {
             LogHandler.crashLog(e,TAG);
@@ -53,7 +53,7 @@ public class MyAlarmManager {
 
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_MUTABLE);
             alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
-            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
+            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.US);
             Log.d(TAG,"sync status check alarm set at " + formatter.format(timeInMillis));
         } catch (Exception e) {
             LogHandler.crashLog(e,TAG);

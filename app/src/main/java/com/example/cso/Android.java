@@ -121,7 +121,7 @@ public class Android {
             File mediaItemFile = new File(mediaItemPath);
             String mediaItemName = currentFile.getName();
             Double mediaItemSize = currentFile.length() / (Math.pow(1024, 2));
-            SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.getDefault());
+            SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.US);
             String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));
             String mediaItemMimeType = Media.getMimeType(mediaItemName);
             if(mediaItemFile.exists()){
@@ -170,7 +170,7 @@ public class Android {
         String mediaItemPath = cursor.getString(columnIndexPath);
         File mediaItemFile = new File(mediaItemPath);
         String mediaItemName = mediaItemFile.getName();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.US);
         String mediaItemDateModified = dateFormat.format(new Date(mediaItemFile.lastModified()));
         Double mediaItemSize = Double.parseDouble(cursor.getString(columnIndexSize)) / (Math.pow(10, 6));
         String mediaItemMemeType = cursor.getString(columnIndexMimeType);

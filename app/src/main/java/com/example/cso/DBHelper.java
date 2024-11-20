@@ -466,7 +466,7 @@ public class DBHelper extends SQLiteOpenHelper {
         try{
             String sqlQuery = "INSERT INTO TRANSACTIONS(source, fileName, destination, assetId, operation, hash, date)" +
                     " VALUES (?,?,?,?,?,?,?);";
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
             String timestamp = dateFormat.format(new Date());
             dbWritable.execSQL(sqlQuery, new Object[]{source,fileName, destination, assetId, operation, fileHash, timestamp});
             dbWritable.setTransactionSuccessful();

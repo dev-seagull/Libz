@@ -141,7 +141,7 @@ public class BackUp {
 
     public static List<String[]> sortAndroidItems(List<String[]> android_items){
         Log.d("service", "sortAndroidItems started");
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.US);
         Collections.sort(android_items, (item1, item2) -> {
             try {
                 Date date1 = dateFormat.parse(item1[6]);

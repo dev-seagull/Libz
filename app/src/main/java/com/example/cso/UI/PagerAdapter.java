@@ -85,9 +85,11 @@ public class PagerAdapter extends RecyclerView.Adapter<PagerAdapter.PageViewHold
     @Override
     public int getItemCount() {
         if (buttonType.equals("account")) {
-            return totalPagesForAccount;
+//            return totalPagesForAccount;
+            return Integer.MAX_VALUE;
         } else if (buttonType.equals("device")) {
-            return totalPagesForDevice;
+//            return totalPagesForDevice;
+            return Integer.MAX_VALUE;
         }
         return 0;
     }

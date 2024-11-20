@@ -2,6 +2,7 @@ package com.example.cso.UI;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -67,7 +68,11 @@ public class ColorSelectionDialogFragment extends DialogFragment {
             params.setMargins(colorMargins,colorMargins,colorMargins,colorMargins);
 
             colorView.setLayoutParams(params);
-            colorView.setBackgroundColor(theme.primaryBackgroundColor);
+            if(theme.name.equals("purple")){
+                colorView.setBackgroundColor(Color.parseColor("#800080"));
+            }else if(theme.name.equals("gray")){
+                colorView.setBackgroundColor(Color.parseColor("#808080"));
+            }
 
             colorView.setOnClickListener(v -> {
                 Theme.applyTheme(theme);

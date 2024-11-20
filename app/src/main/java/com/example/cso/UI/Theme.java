@@ -4,9 +4,12 @@ import android.graphics.Color;
 import android.util.Log;
 import android.widget.LinearLayout;
 
+import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.example.cso.SharedPreferencesHandler;
+
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 
@@ -106,27 +109,29 @@ public class Theme {
                     Color.parseColor("#80CBC4") // buzzing along
                 },
                 new int[] {
-                        Color.parseColor("#FFC107"),
-                        Color.parseColor("#FFF176"),
-                        Color.parseColor("#FFF9C4"),
-                        Color.parseColor("#BCAD2E"),
+                        Color.parseColor("#40C4FF"),
                         Color.parseColor("#FFD54F"),
-                        Color.parseColor("#FFF100"),
-                        Color.parseColor("#B6A45F"),
-                        Color.parseColor("#F6933C"),
-                        Color.parseColor("#B1ACA8")
+                        Color.parseColor("#FFB74D"),
+                        Color.parseColor("#A4D86E"),
+                        Color.parseColor("#FF8A80"),
+                        Color.WHITE,
+                        Color.GRAY,
+                        Color.WHITE,
+                        Color.GRAY,
+                        Color.WHITE,
+                        Color.GRAY
                 },
                 new int[] {
-                        Color.parseColor("#64B5F6"),
-                        Color.parseColor("#1565C0"),
-                        Color.parseColor("#3192E8"),
-                        Color.parseColor("#80D8FF"),
-                        Color.parseColor("#0288D1"),
-                        Color.parseColor("#0D47A1"),
-                        Color.parseColor("#82B1FF"),
-                        Color.parseColor("#42A5F5"),
-                        Color.parseColor("#1976D2"),
-                        Color.parseColor("#B3E5FC"),
+                        Color.parseColor("#40C4FF"),
+                        Color.parseColor("#006E8E"),
+                        Color.parseColor("#FFD54F"),
+                        Color.parseColor("#FF8C00"),
+                        Color.parseColor("#FFB74D"),
+                        Color.parseColor("#FF7043"),
+                        Color.parseColor("#A4D86E"),
+                        Color.parseColor("#388E3C"),
+                        Color.parseColor("#FF8A80"),
+                        Color.parseColor("#FF5733")
                 },
                 new int[] {
                         Color.parseColor("#FAB34B"),
@@ -175,27 +180,29 @@ public class Theme {
                         Color.parseColor("#05A694")
                 },
                 new int[] {
-                        Color.parseColor("#FFC107"),
-                        Color.parseColor("#FFF176"),
-                        Color.parseColor("#FFF9C4"),
-                        Color.parseColor("#BCAD2E"),
+                        Color.parseColor("#40C4FF"),
                         Color.parseColor("#FFD54F"),
-                        Color.parseColor("#FFF100"),
-                        Color.parseColor("#B6A45F"),
-                        Color.parseColor("#F6933C"),
-                        Color.parseColor("#B1ACA8")
+                        Color.parseColor("#FFB74D"),
+                        Color.parseColor("#A4D86E"),
+                        Color.parseColor("#FF8A80"),
+                        Color.WHITE,
+                        Color.GRAY,
+                        Color.WHITE,
+                        Color.GRAY,
+                        Color.WHITE,
+                        Color.GRAY
                 },
                 new int[] {
-                        Color.parseColor("#64B5F6"),
-                        Color.parseColor("#1565C0"),
-                        Color.parseColor("#3192E8"),
-                        Color.parseColor("#80D8FF"),
-                        Color.parseColor("#0288D1"),
-                        Color.parseColor("#0D47A1"),
-                        Color.parseColor("#82B1FF"),
-                        Color.parseColor("#42A5F5"),
-                        Color.parseColor("#1976D2"),
-                        Color.parseColor("#B3E5FC"),
+                        Color.parseColor("#40C4FF"),
+                        Color.parseColor("#006E8E"),
+                        Color.parseColor("#FFD54F"),
+                        Color.parseColor("#FF8C00"),
+                        Color.parseColor("#FFB74D"),
+                        Color.parseColor("#FF7043"),
+                        Color.parseColor("#A4D86E"),
+                        Color.parseColor("#388E3C"),
+                        Color.parseColor("#FF8A80"),
+                        Color.parseColor("#FF5733")
                 },
                 new int[]{
                         Color.parseColor("#546E7A"), // Account storage data chart colors
@@ -222,21 +229,34 @@ public class Theme {
     }
 
     public static void applyTheme(Theme theme){
-        SharedPreferencesHandler.setCurrentTheme(theme.name);
-        MainActivity.currentTheme = theme;
-        LinearLayout mainLayout = MainActivity.activity.findViewById(R.id.mainLayout);
-        if(Accounts.accountMap != null && !Accounts.accountMap.isEmpty()){
-            int i = 0;
-            for(String key:  Accounts.accountMap.keySet()) {
-                if(i < MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors.length){
-                    Accounts.accountMap.put(key,MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors[i]);
-                }else{
-                    Accounts.accountMap.put(key,Color.BLUE);
+        try{
+            SharedPreferencesHandler.setCurrentTheme(theme.name);
+            MainActivity.currentTheme = theme;
+            LinearLayout mainLayout = MainActivity.activity.findViewById(R.id.mainLayout);
+            if(Accounts.accountMap != null && !Accounts.accountMap.isEmpty()){
+                int i = 0;
+                for(String key:  Accounts.accountMap.keySet()) {
+                    Log.d("debugs",String.valueOf(i) + " " + String.valueOf(MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors.length)
+                            + " " + key);
+                    if(i < MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors.length - 1){
+                        ArrayList<Integer> colors = new ArrayList<>();
+                        colors.add(MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors[i * 2]);
+                        colors.add(MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors[(i * 2) + 1]);
+                        Accounts.accountMap.put(key, colors);
+                        i++;
+                    }else{
+                        ArrayList<Integer> colors = new ArrayList<>();
+                        colors.add(Color.BLUE);
+                        colors.add(Color.BLUE);
+                        Accounts.accountMap.put(key,colors);
+                    }
                 }
             }
+            mainLayout.removeAllViews();
+            UI.initAppUI(MainActivity.activity);
+        }catch (Exception e) {
+            LogHandler.crashLog(e,"theme");
         }
-        mainLayout.removeAllViews();
-        UI.initAppUI(MainActivity.activity);
     }
 
     public static Theme getThemeByName(String name){

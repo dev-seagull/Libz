@@ -269,7 +269,7 @@ public class Profile {
                         .execute();
 
                 Date date = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
-                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss",Locale.getDefault());
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss",Locale.US);
                 String currentDate = formatter.format(date);
                 String fileName = "profileMap_" + currentDate + ".json";
 
@@ -377,7 +377,7 @@ public class Profile {
         final String[] uploadFileId = {""};
         Thread setAndCreateProfileMapContentThread = new Thread( () -> {
             try{
-                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
                 Date date = SharedPreferencesHandler.getJsonModifiedTime(MainActivity.preferences);
                 String currentDate = formatter.format(date);
                 String fileName = "profileMap_" + currentDate + ".json";
@@ -614,7 +614,7 @@ public class Profile {
 
     public static Date convertFileNameToTimeStamp(String fileName){
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss",Locale.getDefault());
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss",Locale.US);
             String timestamp = fileName.substring(fileName.indexOf('_') + 1, fileName.lastIndexOf('.'));
             return dateFormat.parse(timestamp);
         }catch (Exception e){

@@ -108,6 +108,7 @@ public class AssetsSourcePieChart {
                         barChartParams.gravity = Gravity.CENTER;
                         barChartParams.setMargins(20, 42,0,0);
                         barChart.setLayoutParams(barChartParams);
+                        barChart.setHighlightPerTapEnabled(false);
                         barChart.invalidate();
 
                         ScrollView scrollView = new ScrollView(context);

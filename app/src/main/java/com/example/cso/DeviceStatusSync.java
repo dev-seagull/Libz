@@ -26,7 +26,7 @@ import java.util.Map;
 
 public class DeviceStatusSync {
     public static String TAG  = "DeviceStatusSync";
-    public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+    public static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
     public static long timeInterval = 8 * 60 * 60 * 1000;
 
     public static void uploadDeviceStatusJsonFileToAccounts(Context context) {
@@ -397,7 +397,7 @@ public class DeviceStatusSync {
     }
 
     public static String getDeviceStatusLastUpdateTime(String deviceId){
-        SimpleDateFormat showDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm",Locale.getDefault());
+        SimpleDateFormat showDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm",Locale.US);
         try{
             Log.d(TAG,"getDeviceStatusLastUpdateTime Started");
             if (Devices.isCurrentDevice(deviceId)){

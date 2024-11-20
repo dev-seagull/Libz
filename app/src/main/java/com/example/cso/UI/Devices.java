@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.example.cso.DeviceHandler;
 import com.example.cso.DeviceStatusSync;
@@ -29,6 +30,7 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.concurrent.FutureTask;
 
 public class Devices {
@@ -290,24 +292,28 @@ public class Devices {
                 loadingImage[0].setBackgroundResource(R.drawable.yellow_loading);
                 LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(128,128);
                 params.setMargins(0,64,0,64);
+                params.gravity = Gravity.CENTER;
                 loadingImage[0].setLayoutParams(params);
                 layout.addView(loadingImage[0]);
             });
             JsonObject data = getStorageStatus(deviceId);
             Log.d(DeviceStatusSync.TAG,"storage for device " + deviceId +" is " + data);
             LinearLayout areaSquareChart = AreaSquareChart.createStorageChart(context,data, deviceId);
+            areaSquareChart.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
 
             MainActivity.activity.runOnUiThread(() -> {
                 Details.createTitleTextView(context, layout,"Storage");
                 layout.addView(areaSquareChart);
 
-                areaSquareChart.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-                areaSquareChart.setPadding((37 + (UI.getDeviceWidth(context) / 8)),50,0,50);
-                LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                );
-                areaSquareChart.setLayoutParams(layoutParams);
+                if(!(areaSquareChart.getChildAt(0) instanceof TextView)){
+                    areaSquareChart.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+                    areaSquareChart.setPadding((37 + (UI.getDeviceWidth(context) / 8)),50,0,50);
+                    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                    );
+                    areaSquareChart.setLayoutParams(layoutParams);
+                }
 
                 layout.removeView(loadingImage[0]);
             });
@@ -344,6 +350,7 @@ public class Devices {
                 loadingImage[0].setBackgroundResource(R.drawable.yellow_loading);
                 LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(128,128);
                 params.setMargins(0,64,0,64);
+                params.gravity = Gravity.CENTER;
                 loadingImage[0].setLayoutParams(params);
                 layout.addView(loadingImage[0]);
             });
@@ -354,7 +361,7 @@ public class Devices {
                 Details.createTitleTextView(context, layout,"Landing Zone(s)");
 
                 HorizontalBarChart stackedBarChart = CustomTreeMapChart.createStackedBarChart(context, layout, data, deviceId);
-
+                layout.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
                 layout.removeView(loadingImage[0]);
             });
         }).start();

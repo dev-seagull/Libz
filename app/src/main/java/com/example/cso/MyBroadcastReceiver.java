@@ -60,7 +60,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
 
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_MUTABLE);
             alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
-            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
+            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.US);
             Log.d(MyAlarmManager.TAG,"new alarm set at " + formatter.format(timeInMillis) + " with requestCode " + requestCode);
         } catch (Exception e) {
             LogHandler.saveLog("Failed to set alarm: " + e.getLocalizedMessage(), true);

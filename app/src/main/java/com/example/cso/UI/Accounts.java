@@ -20,6 +20,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.example.cso.DBHelper;
 import com.example.cso.GoogleCloud;
@@ -27,6 +28,7 @@ import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +36,7 @@ import java.util.Map;
 public class Accounts {
 
     public static int accountButtonsId;
-    public static Map<String, Integer> accountMap = new HashMap<>();
+    public static Map<String, ArrayList<Integer>> accountMap = new HashMap<>();
     public static int accountNumbers = 0;
 
     public static LinearLayout createParentLayoutForAccountsButtons(Activity activity){
@@ -159,23 +161,41 @@ public class Accounts {
         newLoginButton.setCompoundDrawablesWithIntrinsicBounds
                 (loginButtonLeftDrawable, null, null, null);
 
-        int[] colors = new int[0];
         if(!userEmail.toLowerCase().equals("add a backup account")){
             if((Accounts.accountMap == null || !Accounts.accountMap.containsKey(userEmail))){
-                if (Accounts.accountNumbers < MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors.length) {
-                    colors = new int[]{MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors[Accounts.accountNumbers],
-                            MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors[Accounts.accountNumbers]};
-                    Accounts.accountMap.put(userEmail,MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors[Accounts.accountNumbers]);
+                if (Accounts.accountNumbers < (MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors.length / 2)) {
+                    ArrayList<Integer> colors = new ArrayList<>();
+                    colors.add(MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors[Accounts.accountNumbers * 2]);
+                    colors.add(MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors[Accounts.accountNumbers * 2]);
+                    colors.add(MainActivity.currentTheme.deviceAssetsSyncedStatusChartColors[(Accounts.accountNumbers * 2) + 1]);
+                    Accounts.accountMap.put(userEmail,colors);
                     Accounts.accountNumbers = Accounts.accountNumbers + 1;
-                    UI.addGradientEffectToButton(newLoginButton,colors);
+                    int[] colorArray = new int[colors.size()];
+                    for (int i = 0; i < colors.size(); i++) {
+                        Log.d("colorSize", String.valueOf(colors.size()));
+                        Log.d("debugs", String.valueOf(colors.get(i)));
+                        colorArray[i] = colors.get(i);
+                    }
+                    UI.addGradientEffectToButton(newLoginButton,colorArray);
                 }else{
-                    Accounts.accountMap.put(userEmail, Color.BLUE);
+                    ArrayList<Integer> colors = new ArrayList<>();
+                    colors.add(Color.BLUE);
+                    colors.add(Color.BLUE);
+                    Accounts.accountMap.put(userEmail, colors);
                     Accounts.accountNumbers = Accounts.accountNumbers + 1;
-                    UI.addGradientEffectToButton(newLoginButton,MainActivity.currentTheme.accountButtonColors);
+                    int[] colorArray = new int[colors.size()];
+                    for (int i = 0; i < colors.size(); i++) {
+                        colorArray[i] = colors.get(i);
+                    }
+                    UI.addGradientEffectToButton(newLoginButton,colorArray);
                 }
             }else if(Accounts.accountMap.containsKey(userEmail)){
-                colors = new int[]{Accounts.accountMap.get(userEmail), Accounts.accountMap.get(userEmail)};
-                UI.addGradientEffectToButton(newLoginButton,colors);
+                ArrayList<Integer> colors = Accounts.accountMap.get(userEmail);
+                int[] colorArray = new int[colors.size()];
+                for (int i = 0; i < colors.size(); i++) {
+                    colorArray[i] = colors.get(i);
+                }
+                UI.addGradientEffectToButton(newLoginButton,colorArray);
             }
         }else{
             UI.addGradientEffectToButton(newLoginButton,MainActivity.currentTheme.accountButtonColors);
@@ -309,6 +329,7 @@ public class Accounts {
         MainActivity.activity.runOnUiThread(() -> {
             loadingImage[0].setBackgroundResource(R.drawable.yellow_loading);
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(128,128);
+            params.gravity = Gravity.CENTER;
             params.setMargins(0,64,0,64);
             loadingImage[0].setLayoutParams(params);
             layout.addView(loadingImage[0]);
@@ -322,13 +343,15 @@ public class Accounts {
             if(chart instanceof  LinearLayout){
                 chartLayout = (LinearLayout) chart;
 
-                chartLayout.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-                chartLayout.setPadding(37 + (UI.getDeviceWidth(context) / 8),50,0,50);
-                LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                );
-                chartLayout.setLayoutParams(layoutParams);
+                if(!(chartLayout.getChildAt(0) instanceof TextView)){
+                    chartLayout.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+                    chartLayout.setPadding((37 + (UI.getDeviceWidth(context) / 8)),50,0,50);
+                    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                    );
+                    chartLayout.setLayoutParams(layoutParams);
+                }
 
                 layout.addView(chartLayout);
                 layout.removeView(loadingImage[0]);

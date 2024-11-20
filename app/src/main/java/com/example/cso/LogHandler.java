@@ -166,7 +166,7 @@ public class LogHandler extends Application {
     private static String createLogEntry(String text, boolean isError){
         String logEntry = null;
         try{
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
             String timestamp = dateFormat.format(new Date());
             String logType;
             if (isError) {

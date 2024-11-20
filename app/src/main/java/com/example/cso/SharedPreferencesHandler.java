@@ -42,7 +42,7 @@ public class SharedPreferencesHandler {
         Thread setJsonModifiedTimeThread = new Thread(()-> {
             try{
                 Date now = new Date();
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
                 String currentTimestamp = dateFormat.format(now);
 
                 SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -63,7 +63,7 @@ public class SharedPreferencesHandler {
     public static void setJsonModifiedTime(SharedPreferences sharedPreferences, Date jsonModifiedTime) {
         Thread setJsonModifiedTimeThread = new Thread(()-> {
             try{
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
                 String newTimestamp = dateFormat.format(jsonModifiedTime);
 
                 SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -83,7 +83,7 @@ public class SharedPreferencesHandler {
 
     public static Date getJsonModifiedTime(SharedPreferences sharedPreferences) {
         String timeStamp = sharedPreferences.getString("jsonModifiedTime", "0");
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
         try {
             Date date =dateFormat.parse(timeStamp);
             Log.d("jsonChange","getJsonModifiedTime, timeStamp : " + timeStamp + "Date : " + date);

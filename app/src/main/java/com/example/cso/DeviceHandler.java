@@ -3,6 +3,7 @@ package com.example.cso;
 import static com.example.cso.DBHelper.dbReadable;
 import static com.example.cso.DBHelper.dbWritable;
 
+import com.github.mikephil.charting.data.BarEntry;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -123,4 +124,7 @@ public class DeviceHandler {
         }
     }
 
+    public static boolean isCurrentDeviceLeftToRight(){
+        return true;
+    }
 }

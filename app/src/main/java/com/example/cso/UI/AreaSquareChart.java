@@ -62,7 +62,8 @@ public class AreaSquareChart {
         }catch (Exception e){
             LogHandler.crashLog(e,"AreaSquareChart");
             layout.removeAllViews();
-            layout.addView(Details.getErrorAsChartAlternative(context));
+            TextView textView = Details.getErrorAsChartAlternative(context);
+            layout.addView(textView);
         }
         return layout;
     }
@@ -98,20 +99,21 @@ public class AreaSquareChart {
             Log.d("AreaSquareChart", "t1 :" + String.valueOf(media));
             Log.d("AreaSquareChart", "t1 :" + String.valueOf(synced));
 
-            int minDiff = (int) (total + 1);
+            double minDiff = 10002;
             if(used != 100){
                 double tempUsed = used;
                 for(int number: numbers){
                     int diff = (int) Math.abs(tempUsed - number);
                     if (diff < minDiff) {
                         minDiff = diff;
+                        Log.d("AreaSquareChart","Setting : " + number);
                         used = number;
                     }
                 }
             }
 
+            minDiff = 10002;
             if(media != 100){
-                minDiff = (int) (total + 1);
                 double tempMedia = media;
                 for(int number: numbers){
                     int diff = (int) Math.abs(tempMedia - number);
@@ -122,8 +124,8 @@ public class AreaSquareChart {
                 }
             }
 
+            minDiff = 10002;
             if(synced != 100){
-                minDiff = (int) (total + 1);
                 double tempSynced = synced;
                 for(int number: numbers){
                     int diff = (int) Math.abs(tempSynced - number);
@@ -294,7 +296,7 @@ public class AreaSquareChart {
         totalText.setLayoutParams(totalParams);
 
         TextView usedText = new TextView(context);
-        usedText.setText("Others: " + formattedUsed);
+        usedText.setText("Everything else: " + formattedUsed);
         usedText.setTextColor(MainActivity.currentTheme.primaryTextColor);
         usedText.setTextSize(12f);
         usedText.getHeight();
@@ -375,7 +377,7 @@ public class AreaSquareChart {
         legendItem.addView(syncedText);
         layout.addView(legendItem);
         parentLayout.addView(layout);
-        parentLayout.setPadding(0,0,37 + (UI.getDeviceWidth(context) / 12),0);
+        parentLayout.setPadding((UI.getDeviceWidth(context) / 72),0,37 + (UI.getDeviceWidth(context) / 12),0);
         layout.setGravity(Gravity.BOTTOM);
     }
 
