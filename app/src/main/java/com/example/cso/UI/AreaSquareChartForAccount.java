@@ -115,7 +115,7 @@ public class AreaSquareChartForAccount {
         usedText.setLayoutParams(usedParams);
 
         TextView syncedText = new TextView(context);
-        syncedText.setText("Buzzing Along: " + formattedSynced);
+        syncedText.setText("Buzzing along: " + formattedSynced);
         syncedText.setTextColor(MainActivity.currentTheme.primaryTextColor);
         syncedText.setTextSize(12f);
         syncedText.setLayoutParams(syncedParams);
