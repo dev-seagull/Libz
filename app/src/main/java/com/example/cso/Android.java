@@ -1,5 +1,7 @@
 package com.example.cso;
 
+import static com.example.cso.Sync.getSortedAndroidFiles;
+
 import android.app.Activity;
 import android.database.Cursor;
 import android.media.MediaScannerConnection;
@@ -13,6 +15,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Queue;
 import java.util.concurrent.Callable;
@@ -282,6 +285,26 @@ public class Android {
     public static void startThreads(Activity activity){
         startDeleteRedundantAndroidThread();
         startUpdateAndroidThread(activity);
+    }
+
+    public static long getMinimumFileSize() {
+        List<String[]> files = getSortedAndroidFiles();
+        if (files.isEmpty()) return -1;
+
+        long minSize = Long.MAX_VALUE;
+
+        for (String[] file : files) {
+            try {
+                long fileSize = Long.parseLong(file[4]);
+                if (fileSize < minSize) {
+                    minSize = fileSize;
+                }
+            } catch (Exception e) {
+                FirebaseCrashlytics.getInstance().recordException(e);
+            }
+        }
+
+        return minSize == Long.MAX_VALUE ? -1 : minSize;
     }
 
 }

@@ -35,11 +35,14 @@ public class Sync {
                         Log.d("service","sync Stopped suddenly");
                         break;
                     }
+
                     String type = account_row[1];
+
                     if(type.equals("backup")) {
                         currentDriveFreeSpace = GoogleDrive.calculateDriveFreeSpace(account_row);
+                        double minAndroidFileSize = Android.getMinimumFileSize();
                         Log.d("service","free space of " + account_row[0] + " : " + currentDriveFreeSpace);
-                        if(currentDriveFreeSpace > 50){
+                        if(currentDriveFreeSpace > 50 && currentDriveFreeSpace > minAndroidFileSize){
                             isAllOfAccountsFull = false;
                             syncAndroidToBackupAccount(account_row[0], account_row[4], activity);
                         }
@@ -270,7 +273,7 @@ public class Sync {
     }
 
 
-    private static List<String[]> getSortedAndroidFiles(){
+    public static List<String[]> getSortedAndroidFiles(){
         Log.d("service","getSortedAndroidFiles started");
         String[] selected_android_columns = {"id", "fileName", "filePath", "device",
                 "fileSize", "fileHash", "dateModified", "memeType","assetId"};
