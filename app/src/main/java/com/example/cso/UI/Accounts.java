@@ -24,6 +24,7 @@ import android.widget.TextView;
 
 import com.example.cso.DBHelper;
 import com.example.cso.GoogleCloud;
+import com.example.cso.GoogleDrive;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
@@ -291,6 +292,8 @@ public class Accounts {
                         MainActivity.isAnyProccessOn = true; //unlink
                         accountButton.setText("Unlink in progress ...");
                         new Thread(() -> GoogleCloud.unlink(userEmail, activity, accountButton)).start();
+                    } else if (item.getItemId() == R.id.open) {
+                        GoogleDrive.openGoogleDrive(activity);
                     }
                     return true;
                 });

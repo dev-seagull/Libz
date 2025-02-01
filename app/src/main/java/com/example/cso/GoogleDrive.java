@@ -1,5 +1,8 @@
 package com.example.cso;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.util.Log;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -949,5 +952,18 @@ public class GoogleDrive {
             return 0;
         }
     }
+
+    public static void openGoogleDrive(Activity activity) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse("https://accounts.google.com/AccountChooser?continue=https://drive.google.com/"));
+        intent.setPackage("com.google.android.apps.docs");
+        if (intent.resolveActivity(activity.getPackageManager()) != null) {
+            activity.startActivity(intent);
+        } else {
+            intent.setPackage(null);
+            activity.startActivity(intent);
+        }
+    }
+
 }
 
