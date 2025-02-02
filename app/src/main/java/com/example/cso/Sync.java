@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.example.cso.UI.UI;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
@@ -42,7 +43,7 @@ public class Sync {
                         currentDriveFreeSpace = GoogleDrive.calculateDriveFreeSpace(account_row);
                         double minAndroidFileSize = Android.getMinimumFileSize();
                         Log.d("service","free space of " + account_row[0] + " : " + currentDriveFreeSpace);
-                        if(currentDriveFreeSpace > 50 && currentDriveFreeSpace > minAndroidFileSize){
+                        if(currentDriveFreeSpace > 50){
                             isAllOfAccountsFull = false;
                             syncAndroidToBackupAccount(account_row[0], account_row[4], activity);
                         }
@@ -57,7 +58,7 @@ public class Sync {
                     if (!isAllOfAccountsFullToastShown){
                         isAllOfAccountsFullToastShown = true;
                         MainActivity.activity.runOnUiThread(()->{
-
+                            Toast.makeText(activity, "Not enough storage to continue", Toast.LENGTH_SHORT).show();
                         });
                     }
                 }
@@ -153,14 +154,20 @@ public class Sync {
                 String fileHash = androidRow[5];
                 Long assetId = Long.valueOf(androidRow[8]);
 
+                System.out.println("android item : " + fileName);
+
                 if (!DBHelper.androidFileExistsInDrive(assetId, fileHash)){
                     Log.d("file","file was not in drive : "  + fileName);
                     if(currentDriveFreeSpace > Double.parseDouble(fileSize) + 10) {
+                        Log.d("file","file was not in drive2 : "  + fileName);
                         File file = new File(filePath);
                         if(Hash.calculateHash(file).equals(fileHash)){
+                            Log.d("file","file was not in drive3 : "  + fileName);
                             Log.d("file","has enough space to upload to drive : "  + fileName);
                             String accessToken = GoogleCloud.updateAccessToken(refreshToken).getAccessToken();
+                            Log.d("file","file was not in drive4 : "  + fileName + " " + accessToken);
                             boolean isBackedUp = uploadAndroidToDrive(androidRow, userEmail, accessToken, syncedAssetsFolderId);
+                            Log.d("file","file was not in drive5 : "  + fileName + " " + accessToken);
                             if (isBackedUp) {
                                 Log.d("file","backed up : "  + fileName);
                                 Log.d("service" ,fileName + " is backedup");
@@ -254,10 +261,10 @@ public class Sync {
                 isBackedUp[0] = BackUp.backupAndroidToDrive(fileId,fileName, filePath,fileHash,mimeType,assetId,
                         accessToken,userEmail,syncedAssetsFolderId);
                 if(isBackedUp[0]){
-//                    Long last_insertId = DBHelper.insertAssetData(fileHash);
-//                    if (last_insertId != -1) {
-//                        DBHelper.insertIntoDriveTable(Long.valueOf(assetId), String.valueOf(fileId),fileName,fileHash,userEmail);
-//                    }
+                    Long last_insertId = DBHelper.insertAssetData(fileHash);
+                    if (last_insertId != -1) {
+                        DBHelper.insertIntoDriveTable(Long.valueOf(assetId), String.valueOf(fileId),fileName,fileHash,userEmail);
+                    }
                 }
                 MainActivity.syncDetailsStatus = "";
             });

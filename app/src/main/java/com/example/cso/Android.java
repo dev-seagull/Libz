@@ -183,6 +183,7 @@ public class Android {
             galleryItems[0]++;
             if(!DBHelper.existsInAndroidWithoutHash(mediaItemPath, MainActivity.androidUniqueDeviceIdentifier,
                     mediaItemDateModified, mediaItemSize)){
+                System.out.println("here inserting android : " + mediaItemName + " " + mediaItemDateModified);
                 String fileHash = "";
                 try {
                     fileHash = Hash.calculateHash(androidFile);

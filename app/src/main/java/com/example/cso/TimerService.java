@@ -82,9 +82,9 @@ public class TimerService extends Service {
                 @Override
                 public void run() {
                     try{
-//                        Log.d("service", "Android timer is running: " + MainActivity.isAndroidTimerRunning);
-//                        Log.d("service", "Is any process on: " + MainActivity.isAnyProccessOn);
-//                        Log.d("service","isTimer Running : " + isTimerRunning);
+                        Log.d("service", "Android timer is running: " + MainActivity.isAndroidTimerRunning);
+                        Log.d("service", "Is any process on: " + MainActivity.isAnyProccessOn);
+                        Log.d("service","isTimer Running : " + isTimerRunning);
                         isAppinForeGround = isAppInForeground();
                         if (isTimerRunning || MainActivity.isAnyProccessOn) {
                             return;
@@ -107,6 +107,7 @@ public class TimerService extends Service {
                                 Sync.syncAndroidFiles(MainActivity.activity);
                                 Log.d("serviceStatus","finish sync android files");
                             }catch (Exception e) {
+                                System.out.println("Error : " + e.getLocalizedMessage());
                                 LogHandler.crashLog(e,"Service3");
                             } finally{
                                 isTimerRunning = false; // end of timer service
@@ -114,7 +115,9 @@ public class TimerService extends Service {
 
                         }).start();
 
-                    }catch (Exception e){LogHandler.crashLog(e,"service1"); }
+                    }catch (Exception e){
+                        LogHandler.crashLog(e,"service1");
+                    }
                 }
             };
 
