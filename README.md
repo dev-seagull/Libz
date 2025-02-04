@@ -1,2 +1,1 @@
-# CSO
-Cloud storage optimization
+
