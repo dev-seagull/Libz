@@ -60,12 +60,8 @@
                             .requestScopes(
                                     //auth in drive :
                                     new Scope("https://www.googleapis.com/auth/drive"),
-                                    // read files from photos library :
-                                    new Scope("https://www.googleapis.com/auth/photoslibrary.readonly"),
                                     // read and write files in drive :
                                     new Scope("https://www.googleapis.com/auth/drive.file"),
-                                    // write files in photos library :
-                                    new Scope("https://www.googleapis.com/auth/photoslibrary.appendonly"),
                                     //delete any files from drive :
                                     new Scope("https://www.googleapis.com/auth/drive.appdata")
                             )

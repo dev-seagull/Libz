@@ -1755,6 +1755,9 @@ public class DBHelper extends SQLiteOpenHelper {
         if(percentage == 100 && syncedAssets != totalAssets){
             percentage = 99;
         }
+        if(percentage == 0 && syncedAssets != 0){
+            percentage = 1;
+        }
 
         return percentage;
     }
