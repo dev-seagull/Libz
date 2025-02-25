@@ -11,6 +11,7 @@ import com.example.cso.UI.UI;
 import kotlin.text._OneToManyTitlecaseMappingsKt;
 
 public class Upgrade {
+    public static String TAG = "Upgrade";
 
     public static void versionHandler(SharedPreferences preferences){
         try {
@@ -91,7 +92,7 @@ public class Upgrade {
                 editor.apply();
             }
         }catch (Exception e){
-           LogHandler.saveLog("Failed to upgrade: "+ e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
        }
     }
 

@@ -9,6 +9,7 @@ import java.security.NoSuchAlgorithmException;
 
 public class Hash {
 
+    private static String TAG = "Hash";
     public static String calculateHash(File file) throws IOException {
         int BUFFER_SIZE = 8192;
         StringBuilder hexString = new StringBuilder();
@@ -16,7 +17,7 @@ public class Hash {
         try {
             digest = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
-            LogHandler.saveLog("SHA-256 algorithm not available " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }
         try(BufferedInputStream bufferedInputStream = new BufferedInputStream(
                 new FileInputStream(file))){
@@ -36,7 +37,7 @@ public class Hash {
                 hexString.append(String.format("%02X", b));
             }
         }catch (Exception e){
-            LogHandler.saveLog("error in calculating hash " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }
         return hexString.toString().toLowerCase();
     }
@@ -59,7 +60,7 @@ public class Hash {
                 hexString.append(hex);
             }
         } catch (NoSuchAlgorithmException e) {
-            LogHandler.saveLog("Failed with error of :  " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }
         return hexString.toString();
     }

@@ -309,10 +309,10 @@ public class Support {
                     accessToken = responseJSONObject.getString("access_token");
                     return new GoogleCloud.Tokens(accessToken, refreshToken);
                 }else {
-                    LogHandler.saveLog("Getting access token failed with response code of " + responseCode, true);
+                    LogHandler.saveLog("");
                 }
             } catch (Exception e) {
-                LogHandler.saveLog("Getting access token failed: " + e.getLocalizedMessage(), true);
+                LogHandler.recordException(e,TAG);
             }
             return new GoogleCloud.Tokens(accessToken, refreshToken);
         };
@@ -322,7 +322,7 @@ public class Support {
             tokens_fromFuture = future.get();
             DBHelper.updateAccessTokenInDB(refreshToken,tokens_fromFuture.getAccessToken());
         }catch (Exception e){
-            LogHandler.saveLog("failed to get access token from the future: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }finally {
             executor.shutdown();
         }

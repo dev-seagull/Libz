@@ -93,7 +93,7 @@ public class GoogleDrive {
                 Log.d("GoogleDrive","media Items is not null : " + mediaItems.size() + " files were found in " + userEmail);
                 return mediaItems;
             }catch (Exception e) {
-                LogHandler.saveLog("Error when trying to get files from google drive: " + e.getLocalizedMessage());
+                LogHandler.recordException(e,TAG);
                 Log.d("GoogleDrive","media Items is null");
                 return null;
             }
@@ -103,7 +103,7 @@ public class GoogleDrive {
         try {
             uploadFileIDs_fromFuture = future.get();
         } catch (Exception e) {
-            LogHandler.saveLog("Error when trying to get drive files from future: " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }
         Log.d("GoogleDrive","returned media Items is " + uploadFileIDs_fromFuture);
         return uploadFileIDs_fromFuture;
@@ -210,7 +210,7 @@ public class GoogleDrive {
 
             files = resultJson.getFiles();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to get drive folder files : " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
         return files;
     }
@@ -467,14 +467,14 @@ public class GoogleDrive {
                     totalSize[0] += fileSize;
                 }
             }catch (Exception e){
-                LogHandler.saveLog("Failed to get assets size of drive account: " + e.getLocalizedMessage(), true);
+                LogHandler.recordException(e,TAG);
             }
         });
         getAssetsSizeOfDriveAccountThread.start();
         try {
             getAssetsSizeOfDriveAccountThread.join();
         }catch (Exception e){
-            LogHandler.saveLog("failed to join getAssetsSizeOfDriveAccountThread : " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }
 
         return totalSize[0];
@@ -530,7 +530,7 @@ public class GoogleDrive {
 //                    deleteOldProfileFiles(service,userEmail);
                 }
             }catch (Exception e){
-                LogHandler.saveLog("Failed to clean drive folders: " + e.getLocalizedMessage(), true);
+                LogHandler.recordException(e,TAG);
             }
         });
 
@@ -578,7 +578,7 @@ public class GoogleDrive {
                     DBHelper.updateAccounts(userEmail,updatedValues, "backup");
                     System.out.println("new parentFolderId: " + parentFolderId[0] + " updated");
                 }catch (Exception e){
-                    LogHandler.saveLog("Failed to get stash synced folder in drive : " +e.getLocalizedMessage(), true);
+                    LogHandler.recordException(e,TAG);
                     parentFolderId[0] = null;
                 }
             }
@@ -588,7 +588,7 @@ public class GoogleDrive {
         try {
             cleanStashSyncFolderThread.join();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to join cleanStashSyncFolderThread : " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }
         return parentFolderId[0];
     }
@@ -691,7 +691,7 @@ public class GoogleDrive {
                     DBHelper.updateAccounts(userEmail,updatedValues, "backup");
                 }
             }catch (Exception e){
-                LogHandler.saveLog("Failed to get stash synced folder in drive : " +e.getLocalizedMessage(), true);
+                LogHandler.recordException(e,TAG);
             }
         }
 
@@ -725,7 +725,7 @@ public class GoogleDrive {
                 }};
                 DBHelper.updateAccounts(userEmail,updatedValues, "backup");
             }catch (Exception e){
-                LogHandler.saveLog("Failed to get stash synced folder in drive : " +e.getLocalizedMessage(), true);
+                LogHandler.recordException(e,TAG);
             }
         }
 
@@ -773,7 +773,7 @@ public class GoogleDrive {
                 }};
                 DBHelper.updateAccounts(userEmail,updatedValues, "backup");
             }catch (Exception e){
-                LogHandler.saveLog("Failed to get stash synced folder in drive : " +e.getLocalizedMessage(), true);
+                LogHandler.recordException(e,TAG);
             }
         }
     }
@@ -807,7 +807,7 @@ public class GoogleDrive {
                 nextPageToken = fileList.getNextPageToken();
             } while (nextPageToken != null && !nextPageToken.isEmpty());
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to move files between folders in drive: " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -833,11 +833,11 @@ public class GoogleDrive {
                     service.files().delete(file.getId()).execute();
                     System.out.println("----- deleted file: " + file.getName());
                 } else {
-                    LogHandler.saveLog("No permission to delete file: " + file.getName(), true);
+                    LogHandler.saveLog("");
                 }
             }
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete old libzDatabase.db files from drive: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
 
         try {
@@ -854,11 +854,11 @@ public class GoogleDrive {
                     service.files().delete(file.getId()).execute();
                     System.out.println("----- deleted file: " + file.getName());
                 } else {
-                    LogHandler.saveLog("No permission to delete file: " + file.getName(), true);
+                    LogHandler.saveLog("");
                 }
             }
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete old stashDatabase.db files from drive: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -884,7 +884,7 @@ public class GoogleDrive {
                     service.files().delete(file.getId()).execute();
                     System.out.println("----- deleted file: " + file.getName());
                 } else {
-                    LogHandler.saveLog("No permission to delete file: " + file.getName(), true);
+                    LogHandler.saveLog("");
                 }
             }
 
@@ -901,12 +901,12 @@ public class GoogleDrive {
                     service.files().delete(file.getId()).execute();
                     System.out.println("----- deleted file: " + file.getName());
                 } else {
-                    LogHandler.saveLog("No permission to delete file: " + file.getName(), true);
+                    LogHandler.saveLog("");
                 }
             }
 
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete old profile files from drive: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -937,7 +937,7 @@ public class GoogleDrive {
             return true;
 
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to get or set delete permissions for file: " + file.getName() + " - " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
             return false;
         }
     }

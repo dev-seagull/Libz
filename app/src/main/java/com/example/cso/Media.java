@@ -1,10 +1,10 @@
 package com.example.cso;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Media {
+    public static String TAG = "Media";
     public static boolean isImage(String mimeType) {
         ArrayList<String> imageExtensions = new ArrayList<>(
                 Arrays.asList("jpeg", "jpg", "png", "gif", "bmp", "webp")
@@ -36,7 +36,7 @@ public class Media {
                 mimeType = fileName.substring(dotIndex + 1);
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to get mime type: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
 
         return mimeType;

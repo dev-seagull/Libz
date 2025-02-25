@@ -11,6 +11,7 @@ public class JsonEncryptor {
 
     private static String ALGORITHM = "AES";
     private static String TRANSFORMATION = "AES";
+    private static String TAG = "JsonEncryptor";
 
     public static String encryptJsonContent(String jsonContent) {
         try {
@@ -21,7 +22,7 @@ public class JsonEncryptor {
             byte[] encryptedBytes = cipher.doFinal(jsonContent.getBytes());
             return Base64.encodeToString(encryptedBytes, Base64.DEFAULT);
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to encrypt JSON content: " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
             return null;
         }
     }
@@ -36,7 +37,7 @@ public class JsonEncryptor {
             byte[] decryptedBytes = cipher.doFinal(decodedBytes);
             return new String(decryptedBytes);
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to decrypt JSON content: " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
             return null;
         }
     }

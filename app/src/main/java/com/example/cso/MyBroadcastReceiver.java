@@ -13,6 +13,8 @@ import java.util.Locale;
 
 public class MyBroadcastReceiver extends BroadcastReceiver {
 
+    public static String TAG = "MyBroadcastReceiver";
+
     @Override
     public void onReceive(Context context, Intent intent){
         try{
@@ -61,7 +63,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
             SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.US);
             Log.d(MyAlarmManager.TAG,"new alarm set at " + formatter.format(timeInMillis) + " with requestCode " + requestCode);
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to set alarm: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
     }
 }

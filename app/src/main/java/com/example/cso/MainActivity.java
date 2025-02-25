@@ -53,7 +53,8 @@
         public static Intent serviceIntent;
         public static boolean isAndroidTimerRunning = false; // init
         private static PermissionManager permissionManager = new PermissionManager();;
-        public static FirebaseAnalytics mFirebaseAnalytics;
+        public static FirebaseAnalytics mFBAnalytics;
+        public static FirebaseCrashlytics mFBCrashlytics;
         public static String dataBaseName = "StashDatabase";
         public static DBHelper dbHelper;
         private static String TAG = "MainActivity";
@@ -67,11 +68,12 @@
             setContentView(R.layout.activity_main);
 
             Log.d("state","start of onCreate");
-            FirebaseCrashlytics.getInstance().log("This is for testing log monitoring");
 
             activity = this;
             preferences = getPreferences(Context.MODE_PRIVATE);
-            mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+            mFBAnalytics = FirebaseAnalytics.getInstance(this);
+            mFBCrashlytics = FirebaseCrashlytics.getInstance();
+
             dbHelper = new DBHelper(this);
             Upgrade.versionHandler(preferences);
 
@@ -88,6 +90,12 @@
             UI.initAppUI(activity);
             NavigationView navigationView = findViewById(R.id.navigationView);
             navigationView.setNavigationItemSelectedListener(this);
+            FirebaseApplication app = (FirebaseApplication) getApplicationContext();
+            app.logCustomEvent("this_is_first_event_test", "message", "This is for testing log monitoring22222");
+            Throwable e1 = new Throwable("this_is_first_exception_test22222");
+            LogHandler.recordException(e1,"MainActivity");
+
+
             GoogleDrive.startThreads();
 
 //            boolean isFirstTime = SharedPreferencesHandler.getFirstTime(preferences);

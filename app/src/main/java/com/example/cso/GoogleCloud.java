@@ -227,7 +227,7 @@
                     }
                 }
             }catch (Exception e){
-                LogHandler.saveLog("handle primary sign in result failed: " + e.getLocalizedMessage(), true);
+                LogHandler.recordException(e,TAG);
             }
             return new SignInResult(userEmail, isHandled[0], isInAccounts, tokens, storage, new ArrayList<>());
         }
@@ -256,7 +256,7 @@
                     }
                 }
             }catch (Exception e){
-                LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
+                LogHandler.recordException(e,TAG);
             }
             return new SignInResult(userEmail, false, isInAccounts, tokens, storage, null);
         }
@@ -296,14 +296,14 @@
                     }
 
                 }catch (Exception e){
-                    LogHandler.saveLog("handle back up sign in result failed: " + e.getLocalizedMessage(), true);
+                    LogHandler.recordException(e,TAG);
                 }
             });
             handleSignInToBackupResultThread.start();
             try{
                 handleSignInToBackupResultThread.join();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to join   handleSignInToBackupResultThread.start(): " + e.getLocalizedMessage(), true );
+                LogHandler.recordException(e,TAG);
             }
             return new SignInResult(userEmail[0], isHandled[0], isInAccounts[0], tokens[0], storage[0], null);
         }
@@ -350,10 +350,10 @@
                         refreshToken = responseJSONObject.getString("refresh_token");
                         return new GoogleCloud.Tokens(accessToken, refreshToken);
                     }else {
-                        LogHandler.saveLog("Getting tokens failed with response code of " + responseCode, true);
+                        LogHandler.saveLog("");
                     }
                 } catch (Exception e) {
-                    LogHandler.saveLog("Getting tokens failed: " + e.getLocalizedMessage(), true);
+                    LogHandler.recordException(e,TAG);
                 }
                 return new GoogleCloud.Tokens(accessToken, refreshToken);
             };
@@ -362,7 +362,7 @@
             try {
                 tokens_fromFuture = future.get();
             }catch (Exception e){
-                LogHandler.saveLog("failed to get tokens from the future: " + e.getLocalizedMessage(), true);
+                LogHandler.recordException(e,TAG);
             }finally {
                 executor.shutdown();
             }
@@ -414,10 +414,10 @@
                         tokens[0] = new Tokens(accessToken, refreshToken);
                         return;
                     }else {
-                        LogHandler.saveLog("Getting access token failed with response code of " + responseCode, true);
+                        LogHandler.saveLog("");
                     }
                 } catch (Exception e) {
-                    LogHandler.saveLog("Getting access token failed: " + e.getLocalizedMessage(), true);
+                    LogHandler.recordException(e,TAG);
                 }
                 tokens[0] = new Tokens(accessToken, refreshToken);
             });
@@ -425,7 +425,7 @@
             try{
                 updateAccessTokenThread.join();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to join   updateAccessTokenThread.start(): " + e.getLocalizedMessage(), true );
+                LogHandler.recordException(e,TAG);
             }
             DBHelper.updateAccessTokenInDB(refreshToken,tokens[0].getAccessToken());
             return tokens[0];

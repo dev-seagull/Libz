@@ -57,7 +57,7 @@ public class Profile {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to create back up accounts json: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }finally {
             return deviceInfoJson;
         }
@@ -76,7 +76,7 @@ public class Profile {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to create back up accounts json: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }finally {
             return backupAccountsJson;
         }
@@ -298,7 +298,7 @@ public class Profile {
                 service.files().delete(existingFile.getId()).execute();
             }
         }catch (Exception e) {
-            LogHandler.saveLog("Failed to delete profile files: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -314,7 +314,7 @@ public class Profile {
                 return true;
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to check deletion status of profile files: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
         return false;
     }
@@ -327,7 +327,7 @@ public class Profile {
                 return true;
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to check deletion status of profile files: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
         return false;
     }
@@ -352,14 +352,14 @@ public class Profile {
                     Log.d("signInToBackUpLauncher","Back up launcher failed with status : " + signInResult.getHandleStatus());
                 }
             }catch (Exception e){
-                LogHandler.saveLog("Failed to backup json file: " + e.getLocalizedMessage(), true);
+                LogHandler.recordException(e,TAG);
             }
         });
         backUpJsonThread.start();
         try {
             backUpJsonThread.join();
         } catch (Exception e) {
-            LogHandler.saveLog("failed to join backUpJsonThread in backup account: " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }
         return isBackedUp[0];
     }
@@ -390,7 +390,7 @@ public class Profile {
                     uploadFileId[0] = uploadedFile.getId();
                     Log.d("profileMapContent" , "Upload file is : "+ uploadFileId[0]);
                 }catch (Exception e){
-                    LogHandler.saveLog("Failed to set profile map content:" + e.getLocalizedMessage(), true);
+                    LogHandler.recordException(e,TAG);
                 }
             }catch (Exception e) { LogHandler.recordException(e,TAG); }
         });
@@ -512,7 +512,7 @@ public class Profile {
             return profileJson;
 
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to edit profile json : " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
             return null;
         }
     }
@@ -642,7 +642,7 @@ public class Profile {
                 }
                 Log.d("signInToBackUpLauncher","Adding linked accounts finished");
             } catch (Exception e) {
-                LogHandler.saveLog("Failed to add linked accounts: " + e.getLocalizedMessage(), true);
+                LogHandler.recordException(e,TAG);
             }finally {
                 MainActivity.activity.runOnUiThread(() -> {
                     lastButton.setClickable(true);
@@ -866,7 +866,7 @@ public class Profile {
         try {
             backUpJsonThread.join();
         } catch (Exception e) {
-            LogHandler.saveLog("failed to join backUpJsonThread in backup account: " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }
         return isBackedUp[0];
     }
@@ -916,7 +916,7 @@ public class Profile {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to validate devices: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -945,7 +945,7 @@ public class Profile {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to validate accounts: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -962,7 +962,7 @@ public class Profile {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to getDevicesFromProfileJson: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }finally {
             return devices;
         }
@@ -978,7 +978,7 @@ public class Profile {
                 backUpAccounts.add(backupEmail);
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to getBackUpAccountsFromProfileJson: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }finally {
             return backUpAccounts;
         }

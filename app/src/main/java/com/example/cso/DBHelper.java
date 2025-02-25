@@ -344,8 +344,7 @@ public class DBHelper extends SQLiteOpenHelper {
 //                                dbWritable.execSQL(sqlQuery, new Object[]{assetId});
 //                                dbWritable.setTransactionSuccessful();
 //                            } catch (Exception e) {
-//                                LogHandler.saveLog("Failed to delete the database in" +
-//                                        " deleteRedundantPhotos method. " + e.getLocalizedMessage());
+//                                LogHandler.recordException(e,TAG);
 //                            } finally {
 //                                dbWritable.endTransaction();
 //                            }
@@ -1237,7 +1236,7 @@ public class DBHelper extends SQLiteOpenHelper {
 //        try {
 //            db.execSQL("CREATE INDEX IF NOT EXISTS fileSize_index ON ANDROID(fileSize)");
 //        } catch (Exception e) {
-//            LogHandler.saveLog("Failed to create index: " + e.getLocalizedMessage(), true);
+//            LogHandler.recordException(e,TAG);
 //        }
 //    }
 

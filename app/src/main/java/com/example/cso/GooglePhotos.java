@@ -29,8 +29,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class GooglePhotos {
-    public GooglePhotos(){
-    }
+
+    private static final String TAG = "GooglePhotos";
 
     public static class MediaItem{
         private String Id;
@@ -115,8 +115,7 @@ public class GooglePhotos {
                         nextPageToken = responseJson.optString("nextPageToken", null);
                     }
                 } catch (Exception e) {
-                    LogHandler.saveLog("Failed to get files from Photos account " + e.getLocalizedMessage());
-                }
+                    LogHandler.recordException(e,TAG);                }
             } while (responseJson != null && responseJson.has("nextPageToken") && responseJson.has("mediaItems"));
             return mediaItems;
         };
@@ -126,8 +125,7 @@ public class GooglePhotos {
             mediaItems = future.get();
             LogHandler.saveLog( mediaItems.size() + " files were found in Photos account",false);
         }catch (Exception e ){
-            LogHandler.saveLog("Failed when trying to get Photos files from future: " + e.getLocalizedMessage());
-        }finally {
+            LogHandler.recordException(e,TAG);        }finally {
             executor.shutdown();
         }
         return mediaItems;
@@ -177,8 +175,7 @@ public class GooglePhotos {
 //                                try {
 //                                    HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
 //                                } catch (GeneralSecurityException e) {
-//                                    LogHandler.saveLog("Failed to http_transport " + e.getLocalizedMessage());
-//                                } catch (IOException e) {
+//                                    LogHandler.recordException(e,TAG);//                                } catch (IOException e) {
 //                                }
 //                                final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 //
@@ -244,15 +241,13 @@ public class GooglePhotos {
 ////                                  test[0]--;
 //                            } catch (Exception e) {
 //                                System.out.println("Uploading android error: " + e.getMessage());
-//                                LogHandler.saveLog("Uploading android error: " + e.getMessage());
-//                            }
+//                                LogHandler.recordException(e,TAG);//                            }
 //                        }
 //                    }
 //                }
 //            } catch (Exception e){
 //                System.out.println("Uploading android error: " + e.getMessage());
-//                LogHandler.saveLog("Uploading android error: " + e.getMessage());
-//            }
+//                LogHandler.recordException(e,TAG);//            }
 //            return uploadFileIds;
 //        };
 //        Future<ArrayList<String>> future = executor.submit(uploadTask);
@@ -336,8 +331,7 @@ public class GooglePhotos {
 //                    try {
 //                        HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
 //                    } catch (GeneralSecurityException | IOException e) {
-//                        LogHandler.saveLog("Failed to initialize http transport to upload to drive: " + e.getLocalizedMessage());
-//                    }
+//                        LogHandler.recordException(e,TAG);//                    }
 //                    JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 //                    HttpRequestInitializer requestInitializer = request -> {
 //                        request.getHeaders().setAuthorization("Bearer " + accessToken);
@@ -410,8 +404,7 @@ public class GooglePhotos {
 //                        //test[0]--;
 //                        //}
 //                    }catch (Exception e) {
-//                        LogHandler.saveLog("Failed to upload to Drive backup account: " + e.getLocalizedMessage());
-//                    }
+//                        LogHandler.recordException(e,TAG);//                    }
 //                    System.out.println("here8 in photos to drive");
 //                }
 //            }
@@ -426,8 +419,7 @@ public class GooglePhotos {
 //        try{
 //            uploadFileIds = futureFileIds.get();
 //        }catch (Exception e){
-//            LogHandler.saveLog("Failed to get upload file id form background task upload: " + e.getLocalizedMessage());
-//        }
+//            LogHandler.recordException(e,TAG);//        }
 //        return uploadFileIds;
 //    }
 
@@ -452,8 +444,7 @@ public class GooglePhotos {
 //                return true;
 //            }).get();
 //        } catch (Exception e) {
-//            LogHandler.saveLog("Error in downloading from Photos: " + e.getLocalizedMessage());
-//            return false;
+//            LogHandler.recordException(e,TAG);//            return false;
 //        } finally {
 //            executor.shutdown();
 //        }
@@ -517,8 +508,7 @@ public class GooglePhotos {
 //                                                isBackedUp[0] = MainActivity.dbHelper.backUpProfileMap(false,"");
 //                                                System.out.println("isBackedUp "+isBackedUp[0]);
 //                                            }catch (Exception e){
-//                                                LogHandler.saveLog("failed to back up profile map in primary account: " + e.getLocalizedMessage());
-//                                            }
+//                                                LogHandler.recordException(e,TAG);//                                            }
 //                                            synchronized (this){
 //                                                notify();
 //                                            }
@@ -532,8 +522,7 @@ public class GooglePhotos {
 //                                                try{
 //                                                    backUpJsonThread.join();
 //                                                }catch (Exception e){
-//                                                    LogHandler.saveLog("failed to join backUpJsonThread in primary account: " + e.getLocalizedMessage());
-//                                                }
+//                                                    LogHandler.recordException(e,TAG);//                                                }
 //                                            }
 //                                            if (isBackedUp[0] == true) {
 //                                                runOnUiThread(() -> {
@@ -574,8 +563,7 @@ public class GooglePhotos {
 //                            signInExecutor.execute(backgroundTask);
 //                            runOnUiThread(() -> childview[0].setClickable(true));
 //                        }catch (Exception e){
-//                            LogHandler.saveLog("Failed to sign in to primary : "  + e.getLocalizedMessage());
-//                        }
+//                            LogHandler.recordException(e,TAG);//                        }
 //                   }else{
 //                        runOnUiThread(() -> {
 //                            LogHandler.saveLog("login with primary launcher failed with response code :" + result.getResultCode());
@@ -623,8 +611,7 @@ public class GooglePhotos {
 //                                            try {
 //                                                button.setText("Wait...");
 //                                            } catch (Exception e) {
-//                                                LogHandler.saveLog("Failed to set text to wait : " +
-//                                                e.getLocalizedMessage(), true);
+//                                                LogHandler.recordException(e,TAG);
 //                                            }
 //
 //                                            final boolean[] isSignedout = {false};
@@ -651,8 +638,7 @@ public class GooglePhotos {
 //                                                            dbHelper.deleteRedundantAsset();
 //                                                            signOutThread.join();
 //                                                        } catch (InterruptedException e) {
-//                                                            LogHandler.saveLog("Failed to join the signout thread" +
-//                                                                    " + " + e.getLocalizedMessage(), true);
+//                                                            LogHandler.recordException(e,TAG);
 //                                                        }
 //                                                    }
 //                                                    if (isSignedout[0]) {
@@ -669,8 +655,7 @@ public class GooglePhotos {
 //                                                        try {
 //                                                            backUpJsonThread.join();
 //                                                        } catch (InterruptedException e) {
-//                                                            LogHandler.saveLog("Failed to join " +
-//                                                                    " back up json thread : " + e.getLocalizedMessage(), true);
+//                                                            LogHandler.recordException(e,TAG);
 //                                                        }
 //                                                    }
 //                                                    runOnUiThread(() -> {
@@ -681,18 +666,12 @@ public class GooglePhotos {
 //                                                                ViewGroup parentView = (ViewGroup) button.getParent();
 //                                                                parentView.removeView(button);
 //                                                            } catch (Exception e) {
-//                                                                LogHandler.saveLog(
-//                                                                        "Failed to handle ui after signout : "
-//                                                                        + e.getLocalizedMessage(), true
-//                                                                );
-//                                                            }
+//                                                                LogHandler.recordException(e,TAG);//                                                            }
 //                                                        } else {
 //                                                            try {
 //                                                                button.setText(buttonText);
 //                                                            } catch (Exception e) {
-//                                                                LogHandler.saveLog(" Failed to set text " +
-//                                                                        " to button text  : " + e.getLocalizedMessage()
-//                                                                , true);
+//                                                                LogHandler.recordException(e,TAG);
 //                                                            }
 //                                                        }
 //                                                    });
