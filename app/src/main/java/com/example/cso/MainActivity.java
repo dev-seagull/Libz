@@ -67,7 +67,7 @@
             }
             setContentView(R.layout.activity_main);
 
-            Log.d("state","start of onCreate");
+            Log.d("state", "start of onCreate");
 
             activity = this;
             preferences = getPreferences(Context.MODE_PRIVATE);
@@ -77,8 +77,8 @@
             dbHelper = new DBHelper(this);
             Upgrade.versionHandler(preferences);
 
-            androidUniqueDeviceIdentifier = Settings.Secure.getString(getApplicationContext().getContentResolver(),Settings.Secure.ANDROID_ID);
-            serviceIntent = new Intent(this , TimerService.class);
+            androidUniqueDeviceIdentifier = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+            serviceIntent = new Intent(this, TimerService.class);
             androidDeviceName = DeviceName.getDeviceName();
             DeviceHandler.insertIntoDeviceTable(MainActivity.androidDeviceName,
                     MainActivity.androidUniqueDeviceIdentifier);
@@ -91,9 +91,20 @@
             NavigationView navigationView = findViewById(R.id.navigationView);
             navigationView.setNavigationItemSelectedListener(this);
             FirebaseApplication app = (FirebaseApplication) getApplicationContext();
-            app.logCustomEvent("this_is_first_event_test", "message", "This is for testing log monitoring22222");
-            Throwable e1 = new Throwable("this_is_first_exception_test22222");
-            LogHandler.recordException(e1,"MainActivity");
+            app.logCustomEvent("this_is_first_event_test", "message", "This is for testing log monitoring11111");
+            app.logCustomEvent("first_event_test", "event_name", "This is for testing log monitoring22222");
+            app.logCustomEvent("first_event_test", "message", "This is for testing log monitoring33333");
+            app.logCustomEvent("second_event_test", "event_name", "This is for testing log monitoring44444");
+            app.logCustomEvent("second_event_test", "event_name", "second_event_test");
+            app.logCustomEvent("second_event_test", "message", "This is for testing log monitoring55555");
+            Throwable e1 = new Throwable("this_is_first_exception_test66666");
+            LogHandler.recordException(e1, "MainActivity");
+            try {
+                int x;
+                x = 10 / 0;
+            } catch (Exception e){
+                LogHandler.recordException(e1, TAG + " this is second exception test 77777");
+        }
 
 
             GoogleDrive.startThreads();
