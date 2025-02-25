@@ -1,16 +1,8 @@
 package com.example.cso;
 
-import android.database.Cursor;
 import android.os.Environment;
 import android.os.StatFs;
 
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
-
-import java.io.File;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 
 public class StorageHandler {
@@ -19,6 +11,7 @@ public class StorageHandler {
     private static double desiredFreeSpace = 0;
     private double optimizedPercent = 0.15;
     private static double freeSpace;
+    private static String TAG = "StorageHandler";
     public double getTotalStorage() {
         return totalStorage;
     }
@@ -51,7 +44,7 @@ public class StorageHandler {
             if(freeSpace < desiredFreeSpace){
                 amount = desiredFreeSpace - freeSpace;
             }
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
 
         return amount;
     }

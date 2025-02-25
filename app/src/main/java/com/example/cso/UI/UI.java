@@ -16,31 +16,21 @@ import android.util.TypedValue;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.example.cso.DBHelper;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
-import com.example.cso.SharedPreferencesHandler;
 import com.example.cso.TimerService;
-import com.github.mikephil.charting.data.BarData;
-import com.github.mikephil.charting.data.BarDataSet;
-import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.formatter.ValueFormatter;
-import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.material.navigation.NavigationView;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
-
-import java.util.ArrayList;
 
 public class UI{
 
+    private static final String TAG = "UI";
 
     public static void update(String task){
         Log.d("UI.update","UI.update() called for : " + task);
@@ -85,7 +75,7 @@ public class UI{
 //                    }
                     SyncDetails.handleSyncDetailsButton(activity);
                 });
-            }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+            }catch (Exception e){ LogHandler.recordException(e,TAG); }
         });
         updateUIThread.start();
     }
@@ -115,7 +105,7 @@ public class UI{
             setMenuItemTitle(R.id.navMenuItem2, "Device id: " + MainActivity.androidUniqueDeviceIdentifier, activity);
             setMenuItemTitle(R.id.navMenuItemTheme,"Change Theme", activity);
         }catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -148,14 +138,14 @@ public class UI{
         try{
             UI.makeToast("you're deActivated, Call support");
             MainActivity.activity.finish();
-        }catch (Exception e) { LogHandler.crashLog(e,"deactivate"); }
+        }catch (Exception e) { LogHandler.recordException(e,"deactivate"); }
     }
 
     public static int dpToPx(float dp) {
         try{
             return (int) (dp * MainActivity.activity.getResources().getDisplayMetrics().density);
         }catch (Exception e) {
-            LogHandler.crashLog(e,"ui");
+            LogHandler.recordException(e,"ui");
         }
         return 0;
     }

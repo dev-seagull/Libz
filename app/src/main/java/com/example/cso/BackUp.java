@@ -1,11 +1,9 @@
 package com.example.cso;
 
 
-import android.os.FileUtils;
 import android.util.Log;
 
 import com.google.api.client.googleapis.media.MediaHttpUploader;
-import com.google.api.client.googleapis.media.MediaHttpUploaderProgressListener;
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.Drive;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
@@ -19,7 +17,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -27,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class BackUp {
+    private static String TAG = "Backup";
     public static boolean backupAndroidToDrive(Long fileId, String fileName, String filePath,
                                         String fileHash, String mimeType, String assetId,
                                         String driveBackupAccessToken, String driveEmailAccount, String syncAssetsFolderId){
@@ -47,7 +45,7 @@ public class BackUp {
                 String mimeTypeToUpload = Media.getMimeType(fileName);
                 FileContent mediaContent = handleMediaFileContent(mimeTypeToUpload,androidFile, fileName);
                 if (mediaContent == null) {
-                    LogHandler.crashLog(new Exception("media content is null in syncAndroidToDrive"), "backup");
+                    LogHandler.recordException(new Exception("media content is null in syncAndroidToDrive"), "backup");
                 }
 
 //                if(!Media.isVideoBackUp(mimeTypeToUpload)) {
@@ -69,7 +67,7 @@ public class BackUp {
 
                     String uploadFileId = uploadedFile.getId();
                     if (uploadedFile == null | uploadFileId.isEmpty()) {
-                        LogHandler.crashLog(new Exception("Failed to upload: " + fileName), "backup");
+                        LogHandler.recordException(new Exception("Failed to upload: " + fileName), "backup");
                     } else {
                         if (isUploadHashEqual(fileHash, uploadFileId, driveBackupAccessToken)) {
                             Log.d("service", "Uploading file " + fileName + " to " +driveEmailAccount +" finished : " + uploadFileId);
@@ -79,18 +77,18 @@ public class BackUp {
                                         driveEmailAccount, assetId, "sync", fileHash);
                             }catch (Exception e) { }
                         }else{
-                            LogHandler.crashLog(new Exception("Failed to detect same file hash: " + fileName + " " + fileHash), "backup");
+                            LogHandler.recordException(new Exception("Failed to detect same file hash: " + fileName + " " + fileHash), "backup");
                         }
                     }
 //                }
 
-            }catch (Exception e) { LogHandler.crashLog(e,"backup"); }
+            }catch (Exception e) { LogHandler.recordException(e,"backup"); }
         });
 
         backupAndroidToDriveThread.start();
         try{
             backupAndroidToDriveThread.join();
-        }catch (Exception e) { LogHandler.crashLog(e,"backup"); }
+        }catch (Exception e) { LogHandler.recordException(e,"backup"); }
 
         Log.d("Threads","backupAndroidToDriveThread finished");
         return isUploadValid[0];
@@ -129,12 +127,12 @@ public class BackUp {
                         mediaContent = new FileContent("video/" + lowerMimeType, androidFile);
                     }
                 } else {
-                    LogHandler.saveLog("Unsupported MIME type for file: " + mimeTypeToUpload, true);
+                    FirebaseCrashlytics.getInstance().log("Unsupported MIME type for file: " + mimeTypeToUpload);
                 }
             } else {
-                LogHandler.saveLog("The android file " + fileName + " doesn't exist in upload method", true);
+                FirebaseCrashlytics.getInstance().log("The android file " + fileName + " doesn't exist in upload method");
             }
-        } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        } catch (Exception e) { LogHandler.recordException(e,TAG); }
 
         return mediaContent;
     }
@@ -148,7 +146,7 @@ public class BackUp {
                 Date date2 = dateFormat.parse(item2[6]);
                 return date1.compareTo(date2);
             } catch (Exception e) {
-                LogHandler.saveLog("Failed to sort android media items: " + e.getLocalizedMessage(),true);
+                LogHandler.recordException(e,TAG);
                 return 0;
             }
         });
@@ -184,7 +182,7 @@ public class BackUp {
                 }
             }).get();
         } catch (Exception e) {
-            LogHandler.saveLog("Error in get file from google drive api: " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
             return false;
         } finally {
             executor.shutdown();

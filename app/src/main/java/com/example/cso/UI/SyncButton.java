@@ -12,21 +12,18 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
-import androidx.core.content.ContextCompat;
-
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
-import com.example.cso.R;
 import com.example.cso.SharedPreferencesHandler;
 import com.example.cso.Sync;
 import com.example.cso.TimerService;
 import com.google.android.material.switchmaterial.SwitchMaterial;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 public class SyncButton {
 
     public static int syncButtonId;
     public static int syncButtonsParentLayoutId;
+    private static String TAG = "SyncButton";
 
     public static void handleSyncButtonClick(Activity activity, boolean state){
         try{
@@ -43,7 +40,7 @@ public class SyncButton {
                 Sync.stopSync(activity);
             }
         }catch (Exception e){
-            LogHandler.crashLog(e,"ui");
+            LogHandler.recordException(e,"ui");
         }
     }
 
@@ -66,7 +63,7 @@ public class SyncButton {
         try{
             SharedPreferencesHandler.setSwitchState("syncSwitchState",state,MainActivity.preferences);
             return state;
-        }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
+        }catch (Exception e){LogHandler.recordException(e,TAG);}
         return false;
     }
 

@@ -1,7 +1,6 @@
 package com.example.cso;
 
 import android.content.Context;
-import android.os.Build;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -9,8 +8,6 @@ import com.example.cso.UI.Devices;
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -85,7 +82,7 @@ public class DeviceStatusSync {
                 Log.d(TAG , "Upload file is : "+ uploadFileId);
             }catch (Exception e){
                 Log.d(TAG,"failed to upload file : " + e.getLocalizedMessage());
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
 
@@ -93,7 +90,7 @@ public class DeviceStatusSync {
         try{
             uploadDeviceStatusJsonFileThread.join();
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -118,7 +115,7 @@ public class DeviceStatusSync {
         try{
             createDeviceStatusJsonThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,TAG);
+            LogHandler.recordException(e,TAG);
         }
         return jsonObjects[0];
     }
@@ -147,7 +144,7 @@ public class DeviceStatusSync {
         try{
             createStorageStatusJsonThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,"AreaSquareChart");
+            LogHandler.recordException(e,"AreaSquareChart");
         }
         return jsonObjects[0];
     }
@@ -190,7 +187,7 @@ public class DeviceStatusSync {
         try{
             createAssetsLocationStatusJsonThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,TAG);
+            LogHandler.recordException(e,TAG);
         }
         return jsonObjects[0];
     }
@@ -239,7 +236,7 @@ public class DeviceStatusSync {
         try {
             createAssetsSourceStatusJsonThread.join();
         } catch (Exception e) {
-            LogHandler.crashLog(e,TAG);
+            LogHandler.recordException(e,TAG);
         }
 
         return assetsSourceSizeJson[0];
@@ -265,7 +262,7 @@ public class DeviceStatusSync {
         try{
             getDeviceStatusJsonFileThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,TAG);
+            LogHandler.recordException(e,TAG);
         }
         return jsonObjects[0];
     }
@@ -296,7 +293,7 @@ public class DeviceStatusSync {
         try{
             downloadDeviceStatusJsonFromAccountsThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,TAG);
+            LogHandler.recordException(e,TAG);
         }
         return jsonObjects[0];
     }
@@ -322,20 +319,20 @@ public class DeviceStatusSync {
                         jsonObjects[0] = JsonParser.parseString(jsonString).getAsJsonObject();
                         Log.d(TAG, "Downloaded storage JSON file: " + jsonString);
                     }catch (Exception e){
-                        LogHandler.crashLog(e,TAG);
+                        LogHandler.recordException(e,TAG);
                     }finally {
                         outputStream.close();
                     }
                 }
             } catch (Exception e) {
-                LogHandler.crashLog(e,TAG);
+                LogHandler.recordException(e,TAG);
             }
         });
         downloadDeviceStatusJsonThread.start();
         try{
             downloadDeviceStatusJsonThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,TAG);
+            LogHandler.recordException(e,TAG);
         }
         return jsonObjects[0];
     }
@@ -358,14 +355,14 @@ public class DeviceStatusSync {
                     Log.d(TAG, "older device status file not found");
                 }
             } catch (IOException e) {
-                LogHandler.crashLog(e,TAG);
+                LogHandler.recordException(e,TAG);
             }
         });
         searchForExistingFileThread.start();
         try{
             searchForExistingFileThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,TAG);
+            LogHandler.recordException(e,TAG);
         }
         return fileId[0];
     }
@@ -384,14 +381,14 @@ public class DeviceStatusSync {
                     shouldDownload[0] = false;
                 }
             }catch (Exception e){
-                LogHandler.crashLog(e,TAG);
+                LogHandler.recordException(e,TAG);
             }
         });
         shouldDownloadBasedOnUpdateTimeThread.start();
         try{
             shouldDownloadBasedOnUpdateTimeThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,TAG);
+            LogHandler.recordException(e,TAG);
         }
         return shouldDownload[0];
     }
@@ -410,7 +407,7 @@ public class DeviceStatusSync {
             Date updateTimeDate = sdf.parse(updateTime);
             return "as of " + showDateFormat.format(updateTimeDate);
         }catch (Exception e){
-            LogHandler.crashLog(e,TAG);
+            LogHandler.recordException(e,TAG);
         }
         return "Updated Long time ago";
     }

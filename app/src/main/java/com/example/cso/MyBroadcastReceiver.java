@@ -5,8 +5,6 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.text.SimpleDateFormat;
@@ -25,7 +23,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
                 long timeInMillis = new Date().getTime() + DeviceStatusSync.timeInterval;
                 setAlarm(context,timeInMillis, requestCode);
             }
-        }catch (Exception e) { LogHandler.crashLog(e,"broadCastReceiver"); }
+        }catch (Exception e) { LogHandler.recordException(e,"broadCastReceiver"); }
 //        else if (requestCode == MyAlarmManager.syncStatusCheckRequestId ||requestCode == MyAlarmManager.syncStatusCheckRequestId2) {
 //            Log.d(MyAlarmManager.TAG,"alarm for syncStatusCheck received at : " + new Date().getTime() + " code : " + requestCode);
 //            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);

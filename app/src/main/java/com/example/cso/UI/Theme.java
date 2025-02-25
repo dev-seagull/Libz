@@ -9,8 +9,6 @@ import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.example.cso.SharedPreferencesHandler;
 
-import org.checkerframework.checker.units.qual.A;
-
 import java.util.ArrayList;
 
 public class Theme {
@@ -255,7 +253,7 @@ public class Theme {
             mainLayout.removeAllViews();
             UI.initAppUI(MainActivity.activity);
         }catch (Exception e) {
-            LogHandler.crashLog(e,"theme");
+            LogHandler.recordException(e,"theme");
         }
     }
 

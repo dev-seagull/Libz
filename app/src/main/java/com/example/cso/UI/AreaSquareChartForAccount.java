@@ -63,7 +63,7 @@ public class AreaSquareChartForAccount {
             createLabels(context,total, used, synced, subLayout);
             layout.addView(subLayout);
         }catch (Exception e){
-            LogHandler.crashLog(e,"AccountAreaChart");
+            LogHandler.recordException(e,"AccountAreaChart");
             return Details.getErrorAsChartAlternative(context);
         }
 
@@ -274,7 +274,7 @@ public class AreaSquareChartForAccount {
 
             Log.d("AreaSquareChart", String.valueOf(used));
             Log.d("AreaSquareChart", String.valueOf(synced));
-        }catch (Exception e) { LogHandler.crashLog(e,"AreaSquareChart"); }
+        }catch (Exception e) { LogHandler.recordException(e,"AreaSquareChart"); }
     }
 
 }

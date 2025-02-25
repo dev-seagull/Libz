@@ -1,13 +1,6 @@
 package com.example.cso.UI;
 
-import static com.example.cso.MainActivity.activity;
-
 import android.content.Context;
-import android.graphics.Color;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.SpannableStringBuilder;
-import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
@@ -15,29 +8,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.TextView;
 
-import com.example.cso.DeviceStatusSync;
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.github.mikephil.charting.charts.HorizontalBarChart;
-import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.data.PieData;
-import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.data.PieEntry;
 import com.google.gson.JsonObject;
 
-import org.checkerframework.checker.units.qual.C;
-
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class AssetsSourcePieChart {
@@ -173,7 +156,7 @@ public class AssetsSourcePieChart {
             }
             layout.addView(tempLayout);
         } catch (Exception e) {
-            LogHandler.crashLog(e, "AssetsSourceChart");
+            LogHandler.recordException(e, "AssetsSourceChart");
             View view = Details.getErrorAsChartAlternative(context);
             layout.addView(view);
         }

@@ -13,10 +13,10 @@ import com.example.cso.MainActivity;
 import com.example.cso.Profile;
 import com.example.cso.Unlink;
 import com.google.api.services.drive.Drive;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
 public class Dialogs {
+    private static  String TAG = "Dialogs";
     public static void displayLinkProfileDialog(JsonObject resultJson, GoogleCloud.SignInResult signInResult, View lastButton){
         MainActivity.activity.runOnUiThread(() -> {
             try{
@@ -47,7 +47,7 @@ public class Dialogs {
                 AlertDialog alertDialog = builder.create();
                 alertDialog.show();
             }catch (Exception e){
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
     }
@@ -97,11 +97,11 @@ public class Dialogs {
                     builder.setCancelable(false);
                     AlertDialog alertDialog = builder.create();
                     alertDialog.show();
-                } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e);
+                } catch (Exception e) { LogHandler.recordException(e,TAG);
                 }
             });
 
-        }catch(Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch(Exception e){ LogHandler.recordException(e,TAG); }
     }
 
     public static boolean handleUnlinkBuilderTitleAndMessage(AlertDialog.Builder builder,String userEmail,
@@ -128,7 +128,7 @@ public class Dialogs {
                     isAbleToMoveAllAssets = true;
                 }
             }
-        }catch (Exception e) { LogHandler.crashLog(e,"unlink"); }
+        }catch (Exception e) { LogHandler.recordException(e,"unlink"); }
 
         return isAbleToMoveAllAssets;
     }

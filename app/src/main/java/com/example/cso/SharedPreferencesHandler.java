@@ -3,7 +3,6 @@ package com.example.cso;
 import android.content.SharedPreferences;
 import android.util.Log;
 
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -13,7 +12,7 @@ import java.util.Date;
 import java.util.Locale;
 
 public class SharedPreferencesHandler {
-
+    private static String TAG = "SharedPreferences";
     public static boolean getWifiOnlySwitchState(){
         return MainActivity.preferences.getBoolean("wifiOnlySwitchState", false);
     }
@@ -49,14 +48,14 @@ public class SharedPreferencesHandler {
                 editor.putString("jsonModifiedTime", currentTimestamp);
                 editor.apply();
             }catch (Exception e){
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
         setJsonModifiedTimeThread.start();
         try{
             setJsonModifiedTimeThread.join();
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -70,14 +69,14 @@ public class SharedPreferencesHandler {
                 editor.putString("jsonModifiedTime", newTimestamp);
                 editor.apply();
             }catch (Exception e){
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
         setJsonModifiedTimeThread.start();
         try{
             setJsonModifiedTimeThread.join();
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -89,7 +88,7 @@ public class SharedPreferencesHandler {
             Log.d("jsonChange","getJsonModifiedTime, timeStamp : " + timeStamp + "Date : " + date);
             return date;
         } catch (ParseException e) {
-            LogHandler.saveLog("failed to parse stored date to timestamp");
+            LogHandler.recordException(e,TAG);
             return null;
         }
     }
@@ -110,14 +109,14 @@ public class SharedPreferencesHandler {
                 editor.apply();
                 Log.d("DeviceStatusSync", "Device status saved for " + filename + " with content : " + jsonObject);
             }catch (Exception e){
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
         setDeviceStatusThread.start();
         try{
             setDeviceStatusThread.join();
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -136,14 +135,14 @@ public class SharedPreferencesHandler {
                 editor.putString("theme", theme);
                 editor.apply();
             }catch (Exception e){
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
         setCurrentThemeThread.start();
         try{
             setCurrentThemeThread.join();
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -154,14 +153,14 @@ public class SharedPreferencesHandler {
                 editor.putString(userEmail, dataJsonContent);
                 editor.apply();
             }catch (Exception e){
-                LogHandler.crashLog(e,"SharedPreferences");
+                LogHandler.recordException(e,"SharedPreferences");
             }
         });
         setAccountStorageThread.start();
         try{
             setAccountStorageThread.join();
         }catch (Exception e){
-            LogHandler.crashLog(e,"SharedPreferences");
+            LogHandler.recordException(e,"SharedPreferences");
         }
     }
 

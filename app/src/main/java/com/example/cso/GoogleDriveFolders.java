@@ -5,7 +5,6 @@ import android.util.Log;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class GoogleDriveFolders {
-    public static String TAG = "GoogleDriveFolder";
+    private static String TAG = "GoogleDriveFolder";
     public static String parentFolderName = "libz_app";
     public static String assetsFolderName = "assets";
     public static String profileFolderName = "profile";
@@ -52,13 +51,13 @@ public class GoogleDriveFolders {
                         initializeSubFolder(service,parentFolderId,subFolder,userEmail);
                     }
                 }
-            } catch (Exception e) { LogHandler.crashLog(e,TAG + "1"); }
+            } catch (Exception e) { LogHandler.recordException(e,TAG + "1"); }
         });
 
         initializeParentFolderThread.start();
         try{
             initializeParentFolderThread.join();
-        }catch (Exception e) { LogHandler.crashLog(e,TAG+ "2"); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG+ "2"); }
     }
 
     private static void initializeSubFolder(Drive service, String parentFolderId, String folderName, String userEmail){
@@ -86,7 +85,7 @@ public class GoogleDriveFolders {
         initializeSubFoldersThread.start();
         try{
             initializeSubFoldersThread.join();
-        }catch (Exception e) { LogHandler.crashLog(e,TAG + "3"); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG + "3"); }
     }
 
     private static String createSubFolder(Drive service, String parentFolderId, String subFolderName){
@@ -104,7 +103,7 @@ public class GoogleDriveFolders {
 
                folderId[0] = subfolder.getId();
            }catch (Exception e) {
-               LogHandler.crashLog(e,TAG + "4");
+               LogHandler.recordException(e,TAG + "4");
            }
         });
 
@@ -112,7 +111,7 @@ public class GoogleDriveFolders {
         try{
             createSubFolderThread.join();
         }catch (Exception e) {
-            LogHandler.crashLog(e,TAG + "5");
+            LogHandler.recordException(e,TAG + "5");
         }
 
         return folderId[0];
@@ -133,13 +132,13 @@ public class GoogleDriveFolders {
                 if (!result.getFiles().isEmpty()) {
                     folderId[0] = result.getFiles().get(0).getId();
                 }
-            }catch (Exception e) { LogHandler.crashLog(e,TAG + "6"); }
+            }catch (Exception e) { LogHandler.recordException(e,TAG + "6"); }
         });
 
         getSubFolderIdFromDriveThread.start();
         try{
             getSubFolderIdFromDriveThread.join();
-        }catch (Exception e) { LogHandler.crashLog(e,TAG + "7"); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG + "7"); }
 
         return folderId[0];
     }
@@ -157,13 +156,13 @@ public class GoogleDriveFolders {
                         .execute();
 
                 folderId[0] = folder.getId();
-            }catch (Exception e){LogHandler.crashLog(e,TAG + "17");}
+            }catch (Exception e){LogHandler.recordException(e,TAG + "17");}
         });
 
         createParentFolderThread.start();
         try{
             createParentFolderThread.join();
-        }catch (Exception e)  { LogHandler.crashLog(e,TAG + "8"); }
+        }catch (Exception e)  { LogHandler.recordException(e,TAG + "8"); }
 
         return folderId[0];
     }
@@ -189,13 +188,13 @@ public class GoogleDriveFolders {
                 } while (result.getNextPageToken() != null && folderId[0] == null);
 
 
-            }catch (Exception e){LogHandler.crashLog(e,TAG+ "9");}
+            }catch (Exception e){LogHandler.recordException(e,TAG+ "9");}
         });
 
         getParentFolderThread.start();
         try{
             getParentFolderThread.join();
-        }catch (Exception e)  { LogHandler.crashLog(e,TAG + "10"); }
+        }catch (Exception e)  { LogHandler.recordException(e,TAG + "10"); }
 
         return folderId[0];
     }
@@ -214,13 +213,13 @@ public class GoogleDriveFolders {
                         syncAssetsFolderId[0] = DBHelper.getParentFolderIdFromDB(userEmail);
                     }
                 }
-            }catch (Exception e) { LogHandler.crashLog(e,TAG + "11"); }
+            }catch (Exception e) { LogHandler.recordException(e,TAG + "11"); }
         });
 
         getParentFolderIdThread.start();
         try{
             getParentFolderIdThread.join();
-        }catch (Exception e) {LogHandler.crashLog(e,TAG + "12");}
+        }catch (Exception e) {LogHandler.recordException(e,TAG + "12");}
 
         return syncAssetsFolderId[0];
     }
@@ -246,13 +245,13 @@ public class GoogleDriveFolders {
                         folderId[0] = DBHelper.getSubFolderIdFromDB(userEmail,folderName);
                     }
                 }
-            }catch (Exception e) { LogHandler.crashLog(e,TAG + "13");}
+            }catch (Exception e) { LogHandler.recordException(e,TAG + "13");}
         });
 
         getSubFolderIdThread.start();
         try{
             getSubFolderIdThread.join();
-        }catch (Exception e) { LogHandler.crashLog(e,TAG + "14"); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG + "14"); }
 
         return folderId[0];
     }
@@ -271,14 +270,14 @@ public class GoogleDriveFolders {
                 service.files().delete(folderId).execute();
 
             }catch (Exception e){
-                LogHandler.crashLog(e,TAG + "15");
+                LogHandler.recordException(e,TAG + "15");
             }
         });
 
         deleteSubFolderThread.start();
         try{
             deleteSubFolderThread.join();
-        }catch (Exception e) { LogHandler.crashLog(e,TAG + "16"); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG + "16"); }
     }
 
     public static List<com.google.api.services.drive.model.File> getUnlinkedDevicesFile(String userEmail, Drive service, String accessToken){
@@ -299,14 +298,14 @@ public class GoogleDriveFolders {
                     Log.d("unlinkNotify","size of founded file : " + existingFiles[0].size());
                 }
             }catch (Exception e){
-                LogHandler.crashLog(e,"unlinkNotify");
+                LogHandler.recordException(e,"unlinkNotify");
             }
         });
 
         getFilesInProfileFolderThread.start();
         try {
             getFilesInProfileFolderThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
 
         return existingFiles[0];
     }

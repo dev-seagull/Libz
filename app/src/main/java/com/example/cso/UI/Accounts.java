@@ -25,9 +25,9 @@ import android.widget.TextView;
 import com.example.cso.DBHelper;
 import com.example.cso.GoogleCloud;
 import com.example.cso.GoogleDrive;
+import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +39,7 @@ public class Accounts {
     public static int accountButtonsId;
     public static Map<String, ArrayList<Integer>> accountMap = new HashMap<>();
     public static int accountNumbers = 0;
+    private static String TAG = "Accounts";
 
     public static LinearLayout createParentLayoutForAccountsButtons(Activity activity){
         LinearLayout parentLayout = new LinearLayout(activity);
@@ -299,7 +300,7 @@ public class Accounts {
                 });
                 popupMenu.show();
             } catch (Exception e) {
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
     }

@@ -1,15 +1,10 @@
 package com.example.cso;
 
-import android.content.Intent;
 import android.util.Log;
 import android.view.View;
 
-import androidx.activity.result.ActivityResultLauncher;
-
-import com.example.cso.UI.Accounts;
 import com.example.cso.UI.UI;
 import com.google.api.client.http.ByteArrayContent;
-import com.google.api.client.json.Json;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
@@ -25,12 +20,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class Profile {
+    private static String TAG = "Profile";
     public static JsonObject createProfileMapContentBasedOnDB(){
         JsonObject[] resultJson = {new JsonObject()};
         Thread createProfileMapContentBasedOnDB = new Thread( () -> {
@@ -42,13 +34,13 @@ public class Profile {
                 resultJson[0].add("backupAccounts", backupAccountsJson);
                 resultJson[0].add("deviceInfo", deviceInfoJson);
             }catch (Exception e){
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
         createProfileMapContentBasedOnDB.start();
         try {
             createProfileMapContentBasedOnDB.join();
-        }catch(Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
+        }catch(Exception e){LogHandler.recordException(e,TAG);}
         return resultJson[0];
     }
 
@@ -109,7 +101,7 @@ public class Profile {
                                 break;
                             }
                         }catch (Exception e){
-                            FirebaseCrashlytics.getInstance().recordException(e);
+                            LogHandler.recordException(e,TAG);
                         }finally {
                             outputStream.close();
                         }
@@ -117,7 +109,7 @@ public class Profile {
                 }
             }catch (Exception e){
                 System.out.println("errr is r: " + e.getLocalizedMessage());
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
 
@@ -125,7 +117,7 @@ public class Profile {
         try{
             readProdileMapContentThread.join();
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
 
         return resultJson[0];
@@ -150,13 +142,13 @@ public class Profile {
                     }
                 }
                 Log.d("Threads","Map file name searching finished");
-            }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+            }catch (Exception e){ LogHandler.recordException(e,TAG); }
         });
 
         readProdileMapContentThread.start();
         try {
             readProdileMapContentThread.join();
-        } catch (InterruptedException e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        } catch (InterruptedException e) { LogHandler.recordException(e,TAG); }
 
         return resultJsonName[0];
     }
@@ -180,14 +172,14 @@ public class Profile {
                 }
             }catch (Exception e){
                 System.out.println("errr is f:"  +e.getLocalizedMessage());
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
 
         getFilesInProfileFolderThread.start();
         try {
             getFilesInProfileFolderThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
 
         return existingFiles[0];
     }
@@ -209,7 +201,7 @@ public class Profile {
                     }
                 }
             }catch (Exception e){
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
 
@@ -217,7 +209,7 @@ public class Profile {
         try {
             isLinkedToAccountsThread.join();
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
 
         return isLinkedToAccounts[0];
@@ -283,14 +275,14 @@ public class Profile {
                     }
                 }
             }catch (Exception e) {
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
         deleteProfileFileThread.start();
         try{
             deleteProfileFileThread.join();
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -400,13 +392,13 @@ public class Profile {
                 }catch (Exception e){
                     LogHandler.saveLog("Failed to set profile map content:" + e.getLocalizedMessage(), true);
                 }
-            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+            }catch (Exception e) { LogHandler.recordException(e,TAG); }
         });
 
         setAndCreateProfileMapContentThread.start();
         try{
             setAndCreateProfileMapContentThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
 
         return uploadFileId[0];
     }
@@ -428,14 +420,14 @@ public class Profile {
                     content[0] = addAccountToJson(initialContent, resultJson);
                 }
             } catch (Exception e) {
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
 
         prepareProfileMapContentThread.start();
         try{
             prepareProfileMapContentThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
 
         return content[0];
     }
@@ -572,7 +564,7 @@ public class Profile {
                 }
             }
         } catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
         return hasChanged;
     }
@@ -607,7 +599,7 @@ public class Profile {
                 }
             }
         } catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
         return null;
     }
@@ -618,7 +610,7 @@ public class Profile {
             String timestamp = fileName.substring(fileName.indexOf('_') + 1, fileName.lastIndexOf('.'));
             return dateFormat.parse(timestamp);
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
             return null;
         }
     }
@@ -660,7 +652,7 @@ public class Profile {
         addingLinkedAccountsThread.start();
         try{
             addingLinkedAccountsThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
         UI.update("end of login to linked account");
     }
 
@@ -673,13 +665,13 @@ public class Profile {
                     DeviceHandler.insertIntoDeviceTable(device.deviceName, device.deviceId);
                 }
             }catch (Exception e){
-                LogHandler.crashLog(e,"login");
+                LogHandler.recordException(e,"login");
             }
         });
         handleDeviceInsertionThread.start();
         try{
             handleDeviceInsertionThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
     }
 
     private static void handleNewAccounts(ArrayList<GoogleCloud.SignInResult> signInLinkedAccountsResult){
@@ -736,7 +728,7 @@ public class Profile {
         handleBackupsThread.start();
         try{
             handleBackupsThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
         return isBackedUp[0];
     }
 
@@ -788,7 +780,7 @@ public class Profile {
         try {
             loginSingleAccountThread.join();
         }catch (InterruptedException e) {
-            LogHandler.crashLog(e,"login");
+            LogHandler.recordException(e,"login");
         }finally {
             MainActivity.activity.runOnUiThread(() -> {
                 lastButton.setClickable(true);
@@ -828,12 +820,12 @@ public class Profile {
                 UI.update("login");
 
                 Log.d("Threads" ,"handleLoginToSingleAccountSuccessThread finished");
-            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+            }catch (Exception e) { LogHandler.recordException(e,TAG); }
         });
         handleLoginToSingleAccountSuccessThread.start();
         try{
             handleLoginToSingleAccountSuccessThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
     }
 
     private static void handleLoginToSingleAccountFailure(List<String[]> backedUpAccounts){
@@ -849,7 +841,7 @@ public class Profile {
         try{
             newAccountJson.addProperty("backupEmail", signInResult.getUserEmail());
             newAccountJson.addProperty("refreshToken", signInResult.getTokens().getRefreshToken());
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
         return newAccountJson;
     }
 
@@ -868,7 +860,7 @@ public class Profile {
                 }else{
                     isBackedUp[0] = true;
                 }
-            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e);}
+            }catch (Exception e) { LogHandler.recordException(e,TAG);}
         });
         backUpJsonThread.start();
         try {

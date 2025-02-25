@@ -1,20 +1,12 @@
 package com.example.cso;
 
 import android.util.Log;
-import android.widget.Toast;
 
-import com.google.api.client.http.ByteArrayContent;
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 public class Deactivation {
+    private static String TAG = "Deactivation";
 
     public static boolean isDeactivationFileExists() {
         String fileName = "deActive_" + MainActivity.androidUniqueDeviceIdentifier + ".json";
@@ -39,14 +31,14 @@ public class Deactivation {
                     Log.d("Deactivate","Deactivation file not found: " +fileName );
                 }
             }catch (Exception e) {
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
         downloadThread.start();
         try {
             downloadThread.join();
         } catch (InterruptedException e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
         return fileExists[0];
     }

@@ -14,7 +14,6 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import com.google.api.services.drive.model.Permission;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -32,6 +31,7 @@ import java.util.concurrent.Future;
 public class GoogleDrive {
     public static long lastThreadTime = 0;
     public static long ThreadInterval = 300000;
+    private static String TAG = "GoogleDrive";
 
     public GoogleDrive() {}
 
@@ -127,7 +127,7 @@ public class GoogleDrive {
                     try{
                         isDeleted[0] = deleteMediaItem(accessToken, fileId);
                     }catch (Exception e){
-                        FirebaseCrashlytics.getInstance().recordException(e);
+                        LogHandler.recordException(e,TAG);
                     }
                     return isDeleted[0];
                 };
@@ -136,7 +136,7 @@ public class GoogleDrive {
                 try{
                     isDeletedFuture = future.get();
                 }catch (Exception e ){
-                    FirebaseCrashlytics.getInstance().recordException(e);
+                    LogHandler.recordException(e,TAG);
                 }
                 if(isDeletedFuture){
                     DBHelper.deleteFileFromDriveTable(fileHash, id, assetId, fileId , userEmail);
@@ -166,7 +166,7 @@ public class GoogleDrive {
                 }
             }
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
         return isDeleted;
     }
@@ -187,14 +187,14 @@ public class GoogleDrive {
                         .build();
 
             }catch (Exception e){
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
 
         initializeDriveThread.start();
         try{
             initializeDriveThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
 
         return service[0];
     }
@@ -237,12 +237,12 @@ public class GoogleDrive {
                         }
                     }
                 }
-            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+            }catch (Exception e) { LogHandler.recordException(e,TAG); }
         });
         updateDriveFilesThread.start();
         try {
             updateDriveFilesThread.join();
-        } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        } catch (Exception e) { LogHandler.recordException(e,TAG); }
         Log.d("Threads","startUpdateDriveFiles thread finished");
     }
 
@@ -265,14 +265,14 @@ public class GoogleDrive {
                 DBHelper.deleteRedundantDriveFromDB(driveFileIds, userEmail);
             }catch (Exception e) {
                 Log.d("GoogleDrive","Exception in delete redundatnt ...");
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
 
         deleteRedundantDrive.start();
         try {
             deleteRedundantDrive.join();
-        } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        } catch (Exception e) { LogHandler.recordException(e,TAG); }
     }
 
     private static void startDeleteRedundantDriveThread(){
@@ -298,14 +298,14 @@ public class GoogleDrive {
                     }
                 }
             }catch (Exception e){
-                LogHandler.crashLog(e,"GoogleDrive");
+                LogHandler.recordException(e,"GoogleDrive");
             }
         });
         deleteRedundantDriveThread.start();
         try{
             deleteRedundantDriveThread.join();
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
         Log.d("Threads","startDeleteRedundantDrive thread finished");
     }
@@ -331,7 +331,7 @@ public class GoogleDrive {
         deleteDuplicatedInDriveThread.start();
         try {
             deleteDuplicatedInDriveThread.join();
-        } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        } catch (Exception e) { LogHandler.recordException(e,TAG); }
 
         Log.d("Threads","startDeleteDuplicatedInDrive thread finished");
     }
@@ -370,13 +370,13 @@ public class GoogleDrive {
                         DBHelper.updateAccounts(userEmail, updatedValues, type);
                     }
                 }
-            }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
+            }catch (Exception e){LogHandler.recordException(e,TAG);}
         });
         updateDriveStorage.start();
         try {
             updateDriveStorage.join();
         } catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
         Log.d("Threads", "startUpdateStorageThread finished");
     }
@@ -490,7 +490,7 @@ public class GoogleDrive {
                     service.files().delete(parentFolderId).execute();
                     Log.d("Unlink", "parent folder " + parentFolderId + " deleted successfully");
                 } catch (IOException e) {
-                    FirebaseCrashlytics.getInstance().recordException(e);
+                    LogHandler.recordException(e,TAG);
                 }
             }else{
                 try{
@@ -500,14 +500,14 @@ public class GoogleDrive {
                     String databaseFolderName = GoogleDriveFolders.databaseFolderName;
                     GoogleDriveFolders.deleteSubFolder(databaseFolderName, sourceUserEmail);
                 }catch (Exception e){
-                    FirebaseCrashlytics.getInstance().recordException(e);
+                    LogHandler.recordException(e,TAG);
                 }
             }
         });
         deleteDriveFoldersThread.start();
         try{
             deleteDriveFoldersThread.join();
-        }catch (Exception e) {FirebaseCrashlytics.getInstance().recordException(e);}
+        }catch (Exception e) {LogHandler.recordException(e,TAG);}
         Log.d("Threads","deleteDriveFoldersThread finished");
     }
 
@@ -537,7 +537,7 @@ public class GoogleDrive {
         cleanDriveFoldersThread.start();
         try {
             cleanDriveFoldersThread.join();
-        } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        } catch (Exception e) { LogHandler.recordException(e,TAG); }
     }
 
     private static void cleanAccount(String[] account_row){
@@ -612,13 +612,13 @@ public class GoogleDrive {
 
                 }
                 Log.d("cleanFolders","stash_synced_assets found: " + result.size());
-            } catch (Exception e) {FirebaseCrashlytics.getInstance().recordException(e); }
+            } catch (Exception e) {LogHandler.recordException(e,TAG); }
         });
 
         cleanStashSyncedAssetsFoldersThreads.start();
         try{
             cleanStashSyncedAssetsFoldersThreads.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
     }
 
     private static void cleanLibzFolders(Drive service, String userEmail, String parentFolderId){
@@ -654,13 +654,13 @@ public class GoogleDrive {
                         }
                     }
                 }
-            } catch (Exception e) {FirebaseCrashlytics.getInstance().recordException(e); }
+            } catch (Exception e) {LogHandler.recordException(e,TAG); }
         });
 
         cleanLibzParentFoldersThread.start();
         try{
 
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
     }
     public static void cleanAssetsFolder(String assetsFolderId, Drive service, String userEmail, String parentFolderId){
         if (assetsFolderId == null || assetsFolderId.isEmpty()){
@@ -948,7 +948,7 @@ public class GoogleDrive {
             String usedStorage = accountRow[3];
             return Double.parseDouble(totalStorage) - Double.parseDouble(usedStorage);
         }catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
             return 0;
         }
     }

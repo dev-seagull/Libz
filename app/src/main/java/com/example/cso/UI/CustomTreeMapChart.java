@@ -2,7 +2,6 @@ package com.example.cso.UI;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.View;
@@ -115,7 +114,7 @@ public class CustomTreeMapChart {
                 }
                 dataSet.setColors(colors);
             }catch (Exception e) {
-                LogHandler.crashLog(e,"AreaSquareChartForAccount");
+                LogHandler.recordException(e,"AreaSquareChartForAccount");
             }
 
             dataSet.setDrawValues(false);
@@ -251,7 +250,7 @@ public class CustomTreeMapChart {
                 }
             });
         } catch (Exception e) {
-            LogHandler.crashLog(e, "createStackedBarChart");
+            LogHandler.recordException(e, "createStackedBarChart");
             layout.removeAllViews();
             layout.addView(Details.getErrorAsChartAlternative(context));
         }

@@ -56,6 +56,7 @@
         public static FirebaseAnalytics mFirebaseAnalytics;
         public static String dataBaseName = "StashDatabase";
         public static DBHelper dbHelper;
+        private static String TAG = "MainActivity";
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +67,7 @@
             setContentView(R.layout.activity_main);
 
             Log.d("state","start of onCreate");
+            FirebaseCrashlytics.getInstance().log("This is for testing log monitoring");
 
             activity = this;
             preferences = getPreferences(Context.MODE_PRIVATE);
@@ -148,7 +150,7 @@
                                     MainActivity.activity.runOnUiThread(() -> {
                                         lastButton[0].setClickable(true);
                                     });
-                                    LogHandler.crashLog(e,"login");
+                                    LogHandler.recordException(e,"login");
                                     UI.update("failed to login steps");
                                 }
                             });
@@ -225,9 +227,6 @@
         Log.d("permissions","isReadAndWritePermissionGranted : " + isReadAndWritePermissionGranted);
         if(isStoragePermissionGranted && isReadAndWritePermissionGranted){
 //            dbHelper = new DBHelper(this);
-
-            boolean hasCreated = LogHandler.createLogFile();
-            Log.d("logFile","Log file is created :"  + hasCreated);
 
             setupTimers(getApplicationContext());
 
@@ -316,7 +315,7 @@
                     }
                 }, 1000, 5000);
             }
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
     }
 
     private static void setupUITimer(Context context){
@@ -338,12 +337,12 @@
                                 }
                             }
                         }catch (Exception e){
-                            LogHandler.crashLog(e,"UITimer");
+                            LogHandler.recordException(e,"UITimer");
                         }
                     }
                 }, 1000, 1000);
             }
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e);}
+        }catch (Exception e) { LogHandler.recordException(e,TAG);}
     }
 
     public static void updatesDriveFolders(){

@@ -7,7 +7,6 @@ import android.util.Log;
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.FileList;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import org.json.JSONObject;
 
@@ -25,7 +24,7 @@ import java.util.concurrent.Future;
 
 public class Support {
 //    public static String supportEmail = MainActivity.activity.getResources().getString(R.string.supportEmail);
-
+    private static String TAG = "Support";
     public static boolean backupDBFileExists() {
         String fileName = "backupDB_" + MainActivity.androidUniqueDeviceIdentifier + ".json";
         boolean[] fileExists = {false};
@@ -52,12 +51,12 @@ public class Support {
                 }else{
                     Log.d("backupDatabase","File not found: " + fileName);
                 }
-            }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+            }catch (Exception e) { LogHandler.recordException(e,TAG); }
         });
         downloadThread.start();
         try {
             downloadThread.join();
-        } catch (InterruptedException e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        } catch (InterruptedException e) { LogHandler.recordException(e,TAG); }
         return fileExists[0];
     }
 
@@ -93,11 +92,11 @@ public class Support {
                                 service.files().create(fileMetadata, mediaContent).setFields("id").execute();
                         String uploadFileId = uploadFile.getId();
                         Log.d("backupDatabase","Database backup uploaded with file ID: " + uploadFileId);
-                    }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+                    }catch (Exception e) { LogHandler.recordException(e,TAG); }
 
-                } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+                } catch (Exception e) { LogHandler.recordException(e,TAG); }
 
-            } catch (Exception e) {FirebaseCrashlytics.getInstance().recordException(e);}
+            } catch (Exception e) {LogHandler.recordException(e,TAG);}
         }).start();
     }
 

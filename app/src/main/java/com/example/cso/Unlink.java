@@ -5,7 +5,6 @@ import static com.example.cso.GoogleDrive.moveFileBetweenAccounts;
 import android.app.Activity;
 import android.util.Log;
 import android.view.View;
-import android.widget.LinearLayout;
 
 import com.example.cso.UI.Accounts;
 import com.example.cso.UI.Devices;
@@ -13,12 +12,12 @@ import com.example.cso.UI.UI;
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Unlink {
+    private static String TAG = "Unlink";
     public static void unlinkSingleAccount(String sourceUserEmail, Drive sourceDriveService,boolean completeMove
             , boolean needToNotify, View lastButton){
         Thread unlinkSingleAccountThread = new Thread( () -> {
@@ -52,7 +51,7 @@ public class Unlink {
         try{
             unlinkSingleAccountThread.join();
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }finally {
             MainActivity.activity.runOnUiThread(() -> {
                 if(lastButton != null){
@@ -144,7 +143,7 @@ public class Unlink {
             unlinkAccountThread.join();
         }
         catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }finally {
             MainActivity.activity.runOnUiThread(() -> {
                 lastButton.setClickable(true);
@@ -168,7 +167,7 @@ public class Unlink {
                 }
             }
         }catch (Exception e) {
-            LogHandler.crashLog(e,"unlink");
+            LogHandler.recordException(e,"unlink");
         }
         return totalFreeSpace;
     }
@@ -183,7 +182,7 @@ public class Unlink {
                     return false;
                 }
             }
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
         return true;
     }
 
@@ -216,7 +215,7 @@ public class Unlink {
                 }
             }
         }catch (Exception e){
-            LogHandler.crashLog(e,"unlinkNotify");
+            LogHandler.recordException(e,"unlinkNotify");
         }
     }
 
@@ -238,15 +237,15 @@ public class Unlink {
                     uploadFileId[0] = uploadedFile.getId();
                     Log.d("unlink" , "Upload file is (unlinkedDeviceFile) : "+ uploadFileId[0]);
                 }catch (Exception e){
-                    LogHandler.crashLog(e,"unlink");
+                    LogHandler.recordException(e,"unlink");
                 }
-            }catch (Exception e) { LogHandler.crashLog(e,"unlink"); }
+            }catch (Exception e) { LogHandler.recordException(e,"unlink"); }
         });
 
         setAndCreateProfileMapContentThread.start();
         try{
             setAndCreateProfileMapContentThread.join();
-        }catch (Exception e) { LogHandler.crashLog(e,"unlink"); }
+        }catch (Exception e) { LogHandler.recordException(e,"unlink"); }
         if (uploadFileId[0] == null){
             return false;
         }
@@ -278,13 +277,13 @@ public class Unlink {
                     unlinkSingleAccount(userEmail,service,false,false, null);
                     Log.d("unlinkNotify","unlink single account because this is last linked device finished");
                 }
-            }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+            }catch (Exception e){ LogHandler.recordException(e,TAG); }
         });
 
         readProdileMapContentThread.start();
         try {
             readProdileMapContentThread.join();
-        } catch (InterruptedException e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        } catch (InterruptedException e) { LogHandler.recordException(e,TAG); }
         return resultJsonName[0] != null;
     }
 

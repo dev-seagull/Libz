@@ -4,12 +4,9 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
-import android.text.StaticLayout;
 import android.util.Log;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Locale;
 
 public class MyAlarmManager {
@@ -34,7 +31,7 @@ public class MyAlarmManager {
             SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.US);
             Log.d(TAG,"upload alarm set at " + formatter.format(timeInMillis));
         } catch (Exception e) {
-            LogHandler.crashLog(e,TAG);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -56,7 +53,7 @@ public class MyAlarmManager {
             SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.US);
             Log.d(TAG,"sync status check alarm set at " + formatter.format(timeInMillis));
         } catch (Exception e) {
-            LogHandler.crashLog(e,TAG);
+            LogHandler.recordException(e,TAG);
         }
     }
 

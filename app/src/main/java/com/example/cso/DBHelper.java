@@ -32,6 +32,7 @@ import java.util.concurrent.Future;
 
 
 public class DBHelper extends SQLiteOpenHelper {
+    private static String TAG = "DbHelper";
 
     public static int DATABASE_VERSION = 12;
     public static SQLiteDatabase dbReadable;
@@ -205,7 +206,7 @@ public class DBHelper extends SQLiteOpenHelper {
 //                }
 //                newDBHelper.getWritableDatabase(ENCRYPTION_KEY).setTransactionSuccessful();
 //            } catch (Exception e) {
-//                LogHandler.saveLog( "Error copying data from " + tableName + ": " + e.getMessage(), true);
+
 //            } finally {
 //                newDBHelper.getWritableDatabase(ENCRYPTION_KEY).endTransaction();
 //                cursor.close();
@@ -271,7 +272,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to select from ASSET in insertAssetData method: " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }finally {
             if(cursor != null){
                 cursor.close();
@@ -285,7 +286,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 dbWritable.execSQL(sqlQuery, new Object[]{fileHash});
                 dbWritable.setTransactionSuccessful();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to insert data into ASSET : "  + e.getLocalizedMessage());
+                LogHandler.recordException(e,TAG);
             }finally {
                 dbWritable.endTransaction();
             }
@@ -296,11 +297,11 @@ public class DBHelper extends SQLiteOpenHelper {
             if(cursor2 != null && cursor2.moveToFirst()){
                 lastInsertedId = cursor2.getInt(0);
             }else{
-                LogHandler.saveLog("Failed to find the existing file id in Asset database.", true);
+                FirebaseCrashlytics.getInstance().log("Failed to find the existing file id in Asset database.");
             }
             cursor2.close();
         }catch (Exception e){
-            LogHandler.saveLog("Failed select asset id from asset table: " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }
         return lastInsertedId;
     }
@@ -369,7 +370,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to check if the data exists in Database : " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }
         return existsInDatabase;
     }
@@ -388,8 +389,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to select from PHOTOS in " +
-                    "insertIntoPhotosTable method: " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }
         if(!existsInPhotos){
             dbWritable.beginTransaction();
@@ -407,8 +407,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 dbWritable.execSQL(sqlQuery, values);
                 dbWritable.setTransactionSuccessful();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to save into the" +
-                        " database in insertIntoPhotosTable method. "+e.getLocalizedMessage());
+                LogHandler.recordException(e,TAG);
             }finally {
                 dbWritable.endTransaction();
             }
@@ -416,9 +415,8 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     public static void insertIntoDriveTable(Long assetId, String fileId,String fileName, String fileHash,String userEmail){
-        String sqlQuery = "";
         Boolean existsInDrive = false;
-        sqlQuery = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ? " +
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM DRIVE WHERE assetId = ? " +
                 "and fileHash = ? and fileId =? and userEmail = ?)";
         Cursor cursor = dbReadable.rawQuery(sqlQuery,new String[]{String.valueOf(assetId),
                 fileHash, fileId, userEmail});
@@ -430,8 +428,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to select from DRIVE " +
-                    "in insertIntoDriveTable method: " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }finally {
             if(cursor != null){
                 cursor.close();
@@ -452,8 +449,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 dbWritable.setTransactionSuccessful();
                 Log.d("drive","inserted : " + fileName);
             }catch (Exception e){
-                LogHandler.saveLog("Failed to save into the database" +
-                        " in insertIntoDriveTable method. "+e.getLocalizedMessage());
+                LogHandler.recordException(e,TAG);
             }finally {
                 dbWritable.endTransaction();
             }
@@ -471,7 +467,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, new Object[]{source,fileName, destination, assetId, operation, fileHash, timestamp});
             dbWritable.setTransactionSuccessful();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to insert data into ASSET : " + e.getLocalizedMessage() , true);
+            LogHandler.recordException(e,TAG);
         }finally {
             dbWritable.endTransaction();
         }
@@ -502,8 +498,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, values);
             dbWritable.setTransactionSuccessful();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to save into the database " +
-                    "in insertIntoAccounts method : "+e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }finally {
             dbWritable.endTransaction();
         }
@@ -516,7 +511,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sql);
             dbWritable.setTransactionSuccessful();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to drop the table in dropTable method : " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }finally {
             dbWritable.endTransaction();
         }
@@ -573,7 +568,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, values);
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to update the database in updateAccounts method : " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         } finally {
             dbWritable.endTransaction();
         }
@@ -586,7 +581,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, new Object[]{userEmail,type});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         } finally {
             dbWritable.endTransaction();
         }
@@ -600,7 +595,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, new Object[]{userEmail,type});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         } finally {
             dbWritable.endTransaction();
         }
@@ -613,7 +608,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, new Object[]{userEmail});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete from photos in deleteFromPhotosTable method. " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         } finally {
             dbWritable.endTransaction();
         }
@@ -679,7 +674,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public static void insertIntoAndroidTable(long assetId,String fileName,String filePath,String device,
                                        String fileHash, Double fileSize,String dateModified,String mimeType) {
         fileHash = fileHash.toLowerCase();
-        String sqlQuery = "";
+        String sqlQuery;
         boolean existsInAndroid = existsInAndroid(assetId, filePath, device, fileSize, fileHash);
         if(existsInAndroid == false){
             dbWritable.beginTransaction();
@@ -699,7 +694,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 dbWritable.execSQL(sqlQuery, values);
                 dbWritable.setTransactionSuccessful();
             }catch (Exception e){
-                LogHandler.saveLog("Failed to save into the database in insertIntoAndroidTable method. "+e.getLocalizedMessage());
+                LogHandler.recordException(e,TAG);
             }finally {
                 dbWritable.endTransaction();
             }
@@ -713,7 +708,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, new Object[]{filePath, assetId});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete the database in ANDROID, deleteRedundantAndroid method. " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         } finally {
             dbWritable.endTransaction();
         }
@@ -727,8 +722,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, values);
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete from the database in deleteFromAndroidTable method. "
-                    + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         } finally {
             dbWritable.endTransaction();
         }
@@ -755,7 +749,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to check existing in Android : " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }finally {
             if(cursor != null){
                 cursor.close();
@@ -778,7 +772,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to check existing in Android : " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }finally {
             if(cursor != null){
                 cursor.close();
@@ -799,8 +793,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 dbWritable.execSQL(sqlQuery, new Object[]{assetId});
                 dbWritable.setTransactionSuccessful();
             } catch (Exception e) {
-                LogHandler.saveLog("Failed to delete the database" +
-                        " in ASSET , deleteFileFromDriveTable method : " + e.getLocalizedMessage());
+                LogHandler.recordException(e,TAG);
             } finally {
                 dbWritable.endTransaction();
             }
@@ -846,7 +839,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
             cursor.close();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
 
         Log.d("service","anyBackUpaAccountExists: " + exists);
         return exists;
@@ -921,7 +914,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }finally {
             if(cursor != null){
                 cursor.close();
@@ -966,7 +959,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, new Object[]{fileId});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete the database in DRIVE, deleteRedundantDRIVE method. " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         } finally {
             dbWritable.endTransaction();
         }
@@ -979,7 +972,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, new Object[]{assetId});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete the database in ASSET , deleteRedundantDrive method. " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         } finally {
             dbWritable.endTransaction();
         }
@@ -998,7 +991,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to check if android file exists in drive : " +  e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }finally {
             if(cursor != null){
                 cursor.close();
@@ -1107,7 +1100,7 @@ public class DBHelper extends SQLiteOpenHelper {
                             // wait();
                             //}
                             if (uploadedFileId == null | uploadedFileId.isEmpty()) {
-                                LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
+                                FirebaseCrashlytics.getInstance().log("Failed to upload profileMap from Android to backup because it's null");
                             }else{
                                 isBackedUp[0] = true;
                             }
@@ -1130,7 +1123,7 @@ public class DBHelper extends SQLiteOpenHelper {
                     // wait();
                     //}
                     if (uploadedFileId == null | uploadedFileId.isEmpty()) {
-                        LogHandler.saveLog("Failed to upload profileMap from Android to backup because it's null");
+                        FirebaseCrashlytics.getInstance().log("Failed to upload profileMap from Android to backup because it's null");
                     }else{
                         isBackedUp[0] = true;
                     }
@@ -1142,7 +1135,7 @@ public class DBHelper extends SQLiteOpenHelper {
                     return isBackedUp[0];
                 }
             } catch (Exception e) {
-                LogHandler.saveLog("Failed to upload database from Android to backup : " + e.getLocalizedMessage());
+                LogHandler.recordException(e,TAG);
             }
             return isBackedUp[0];
         };
@@ -1167,7 +1160,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 service.files().delete(existingFile.getId()).execute();
             }
         }catch (Exception e) {
-            LogHandler.saveLog("Failed to delete database files: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -1183,7 +1176,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 return true;
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to check deletion status of database files: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
         return false;
     }
@@ -1196,17 +1189,17 @@ public class DBHelper extends SQLiteOpenHelper {
             fileMetadata.setParents(java.util.Collections.singletonList(databaseFolderId));
             File androidFile = new File(dataBasePath);
             if (!androidFile.exists()) {
-                LogHandler.saveLog("Failed to upload database from Android to backup because it doesn't exist", true);
+                FirebaseCrashlytics.getInstance().log("Failed to upload database from Android to backup because it doesn't exist");
             }
             FileContent mediaContent = new FileContent("application/x-sqlite3", androidFile);
             if (mediaContent == null) {
-                LogHandler.saveLog("Failed to upload database from Android to backup because it's null", true);
+                FirebaseCrashlytics.getInstance().log("Failed to upload database from Android to backup because it's null");
             }
             com.google.api.services.drive.model.File uploadFile =
                     service.files().create(fileMetadata, mediaContent).setFields("id").execute();
             uploadFileId = uploadFile.getId();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to set profile map content:" + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }finally {
             return uploadFileId;
         }
@@ -1229,7 +1222,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         } catch (Exception e) {
-            LogHandler.crashLog(e,"AreaSquareChart");
+            LogHandler.recordException(e,"AreaSquareChart");
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -1274,7 +1267,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(deleteAndroidContent);
             dbWritable.setTransactionSuccessful();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to delete Android table because in (deleteTableContent "+ tableName + ") : " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }finally {
             dbWritable.endTransaction();
         }
@@ -1310,7 +1303,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.setTransactionSuccessful();
 
         } catch (SQLiteException e) {
-            LogHandler.saveLog("Failed to alter table in alterAccountsTableConstraint method : " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         } finally {
             dbWritable.endTransaction();
         }
@@ -1324,7 +1317,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.setTransactionSuccessful();
             return true;
         }catch (Exception e){
-            LogHandler.saveLog("Failed to update accessToken in updateAccessTokenInDB : " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
             return false;
         }finally {
             dbWritable.endTransaction();
@@ -1391,7 +1384,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 deleteAccountAndRelatedAssets(account);
             }
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -1422,7 +1415,7 @@ public class DBHelper extends SQLiteOpenHelper {
             }
 
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -1440,7 +1433,7 @@ public class DBHelper extends SQLiteOpenHelper {
         deleteAccountAndRelatedAssetsThread.start();
         try{
             deleteAccountAndRelatedAssetsThread.join();
-        }catch (Exception e){FirebaseCrashlytics.getInstance().recordException(e);}
+        }catch (Exception e){LogHandler.recordException(e,TAG);}
         Log.d("Unlink", "deleteAccountAndRelatedAssetsThread finished");
     }
 
@@ -1466,7 +1459,7 @@ public class DBHelper extends SQLiteOpenHelper {
             }
 
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }finally {
 
             if(cursor != null){
@@ -1493,7 +1486,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 return null;
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to select from ASSET in getAssetByDriveFileId method: " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }
         return null;
     }
@@ -1525,12 +1518,12 @@ public class DBHelper extends SQLiteOpenHelper {
                     dbWritable.setTransactionSuccessful();
                     dbWritable.endTransaction();
                 }catch (Exception e) {
-                    LogHandler.saveLog("Failed to add column: " + columnName + " to table: " + tableName + " due to: " + e.getLocalizedMessage(), true);
+                    LogHandler.recordException(e,TAG);
                     return;
                 }
             }
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to check column existence: " + columnName + " to table: " + tableName,true);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -1546,7 +1539,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to select from ACCOUNTS in getAssetsFolderId method: " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }
         return null;
     }
@@ -1564,7 +1557,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to select from ACCOUNTS in getParentFolderIdFromDB method: " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }finally {
             if(cursor!= null) {
                 cursor.close();
@@ -1597,7 +1590,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to select from ACCOUNTS in getParentFolderIdFromDB method: " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }finally {
             if(cursor!= null) {
                 cursor.close();
@@ -1621,14 +1614,14 @@ public class DBHelper extends SQLiteOpenHelper {
                     }
                 }
             }catch (Exception e){
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
         getDriveBackupAccessTokenThread.start();
         try {
             getDriveBackupAccessTokenThread.join();
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
         return driveBackupAccessToken[0];
     }
@@ -1660,7 +1653,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         } catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -1684,7 +1677,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         } catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -1712,7 +1705,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         } catch (Exception e) {
-            LogHandler.crashLog(e,"AccountAreaChart");
+            LogHandler.recordException(e,"AccountAreaChart");
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -1735,7 +1728,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         } catch (Exception e) {
-            LogHandler.crashLog(e,"AccountAreaChart");
+            LogHandler.recordException(e,"AccountAreaChart");
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -1781,7 +1774,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }while (cursor.moveToNext());
             }
         } catch (Exception e) {
-            LogHandler.crashLog(e,"ui");
+            LogHandler.recordException(e,"ui");
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -1807,7 +1800,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }while (cursor.moveToNext());
             }
         } catch (Exception e) {
-            LogHandler.crashLog(e,"ui");
+            LogHandler.recordException(e,"ui");
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -1831,7 +1824,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         } catch (Exception e) {
-            LogHandler.crashLog(e, "ui");
+            LogHandler.recordException(e, "ui");
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -1858,7 +1851,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         } catch (Exception e) {
-            LogHandler.crashLog(e, "ui");
+            LogHandler.recordException(e, "ui");
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -1889,7 +1882,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
         } catch (Exception e) {
-            LogHandler.crashLog(e, "AreaSquareChart");
+            LogHandler.recordException(e, "AreaSquareChart");
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -1906,8 +1899,7 @@ public class DBHelper extends SQLiteOpenHelper {
             dbWritable.execSQL(sqlQuery, null);
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to delete from the database in deleteFromAndroidTable method. "
-                    + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         } finally {
             dbWritable.endTransaction();
         }

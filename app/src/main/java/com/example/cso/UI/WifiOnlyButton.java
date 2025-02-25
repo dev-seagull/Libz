@@ -4,28 +4,16 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
-import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
-import android.widget.TextView;
-
-import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
 
 import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
-import com.example.cso.R;
 import com.example.cso.SharedPreferencesHandler;
-import com.example.cso.Sync;
 import com.google.android.material.switchmaterial.SwitchMaterial;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
-
-import java.util.Arrays;
 
 public class WifiOnlyButton {
 
@@ -74,7 +62,7 @@ public class WifiOnlyButton {
                 }
             });
         }catch (Exception e){
-            LogHandler.crashLog(e,"ui");}
+            LogHandler.recordException(e,"ui");}
     }
 
     public static void addGradientOnToWifiButton(SwitchMaterial actionSwitch){

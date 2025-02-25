@@ -1,12 +1,10 @@
 package com.example.cso.UI;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -31,7 +29,7 @@ public class DetailsViewPager {
             pagerLayoutParams.gravity = Gravity.CENTER;
             viewPager.setLayoutParams(pagerLayoutParams);
         }catch (Exception e){
-            LogHandler.crashLog(e,"ui");
+            LogHandler.recordException(e,"ui");
         }
         return viewPager;
     }
@@ -41,7 +39,7 @@ public class DetailsViewPager {
             PagerAdapter adapter = new PagerAdapter(context,type,buttonId);
             viewPager.setAdapter(adapter);
         }catch (Exception e){
-            LogHandler.crashLog(e,"ui");
+            LogHandler.recordException(e,"ui");
         }
     }
 }

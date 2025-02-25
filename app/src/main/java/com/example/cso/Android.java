@@ -24,6 +24,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class Android {
+    private static String TAG = "Android";
     static int[] galleryItems = {0};
     static String[] forbiddenFolders = {"/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/Private",
             "/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Stickers",
@@ -33,7 +34,7 @@ public class Android {
             "/Telegram/Telegram Documents"};
     public static int getGalleryMediaItems(Activity activity) {
         galleryItems[0] = 0;
-        LogHandler.saveLog("Started to get android files from your device.", false);
+        FirebaseCrashlytics.getInstance().log("Started to get android files from your device.");
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
         Callable<Integer> backgroundTask = () -> {
@@ -50,15 +51,8 @@ public class Android {
                     }
                 }
             } catch (Exception e) {
-                LogHandler.saveLog("Failed to get gallery files : " + e.getLocalizedMessage(), true);
+                FirebaseCrashlytics.getInstance().log("Failed to get gallery files : " + e.getLocalizedMessage());
             }
-//            try{
-//                if(galleryItems[0] == 0){
-//                    getFileManagerMediaItems();
-//                }
-//            }catch (Exception e){
-//                LogHandler.saveLog("Getting device files failed: " + e.getLocalizedMessage(), true);
-//            }
             return galleryItems[0];
         };
 
@@ -66,7 +60,7 @@ public class Android {
         try{
             future = executor.submit(backgroundTask);
         }catch (Exception e){
-            LogHandler.saveLog("Failed to submit executor: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
         int result = 0;
         try {
@@ -74,15 +68,15 @@ public class Android {
                 result = future.get();
             }
         } catch (Exception e) {
-            LogHandler.saveLog("error when downloading user profile : " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
         return result;
     }
 
 
     public static void getFileManagerMediaItems(){
-        LogHandler.saveLog("Did not found any files in your gallery, so " +
-                "it started to get files from file manager." , false);
+        FirebaseCrashlytics.getInstance().log("Did not found any files in your gallery, so " +
+                "it started to get files from file manager.");
         String[] extensions = {".jpg", ".jpeg", ".png", ".webp",
                 ".gif", ".mp4", ".mkv", ".webm"};
         galleryItems[0] = 0;
@@ -103,7 +97,7 @@ public class Android {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to get files from file manager: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
     }
 
@@ -156,7 +150,7 @@ public class Android {
         try {
             mediaItemHash = Hash.calculateHash(mediaItemFile);
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to calculate hash in file manager: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
         long lastInsertedId =
                 DBHelper.insertAssetData(mediaItemHash);
@@ -164,7 +158,7 @@ public class Android {
             DBHelper.insertIntoAndroidTable(lastInsertedId,mediaItemName, mediaItemPath, MainActivity.androidUniqueDeviceIdentifier,
                     mediaItemHash,mediaItemSize, mediaItemDateModified,mediaItemMimeType);
         }else{
-            LogHandler.saveLog("Failed to insert file into android table in file manager : " + mediaItemFile.getName(), true);
+            FirebaseCrashlytics.getInstance().log("Failed to insert file into android table in file manager : " + mediaItemFile.getName());
         }
     }
 
@@ -189,7 +183,7 @@ public class Android {
                     fileHash = Hash.calculateHash(androidFile);
 
                 } catch (Exception e) {
-                    LogHandler.saveLog("Failed to calculate hash: " + e.getLocalizedMessage(), true);
+                    LogHandler.recordException(e,TAG);
                 }
                 long lastInsertedId =
                         DBHelper.insertAssetData(fileHash);
@@ -198,7 +192,7 @@ public class Android {
                             mediaItemName, mediaItemPath, MainActivity.androidUniqueDeviceIdentifier,
                             fileHash,mediaItemSize, mediaItemDateModified,mediaItemMemeType);
                 }else{
-                    LogHandler.saveLog("Failed to insert file into android table: " + mediaItemFile.getName(), true);
+                    FirebaseCrashlytics.getInstance().log("Failed to insert file into android table: " + mediaItemFile.getName());
                 }
             }
         }
@@ -226,7 +220,7 @@ public class Android {
                     sortOrder
             );
         } catch (Exception e) {
-            LogHandler.saveLog("Failed to create cursor: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
             return null;
         }
     }
@@ -247,14 +241,14 @@ public class Android {
                     }
                 }
             }catch (Exception e){
-                LogHandler.saveLog("Failed to delete android file : " + e.getLocalizedMessage(), true);
+                LogHandler.recordException(e,TAG);
             }
         });
 
         deleteAndroidFileThread.start();
         try{
             deleteAndroidFileThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e);}
+        }catch (Exception e) { LogHandler.recordException(e,TAG);}
 
         return isDeleted[0];
     }
@@ -270,14 +264,14 @@ public class Android {
         Log.d("Threads","startUpdateAndroidThread started");
         Thread updateAndroidThread = new Thread( () -> {
             int galleryItems = Android.getGalleryMediaItems(activity);
-            LogHandler.saveLog("End of getting files from your android " +
-                    "device and found : " + galleryItems + " gallery items",false);
+            FirebaseCrashlytics.getInstance().log("End of getting files from your android " +
+                    "device and found : " + galleryItems + " gallery items");
         });
         updateAndroidThread.start();
         try{
             updateAndroidThread.join();
         }catch (Exception e){
-            LogHandler.saveLog("Failed to join update android thread: " + e.getLocalizedMessage(), true );
+            LogHandler.recordException(e,TAG);
         }
         MainActivity.isAndroidTimerRunning = false; // end of android timer
         Log.d("Threads","startUpdateAndroidThread finished");
@@ -301,7 +295,7 @@ public class Android {
                     minSize = fileSize;
                 }
             } catch (Exception e) {
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         }
 

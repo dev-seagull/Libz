@@ -48,7 +48,7 @@ public class InternetManager {
                 int responseCode = urlConnection.getResponseCode();
                 return (responseCode == 200);
             } catch (Exception e) {
-                LogHandler.crashLog(e,"service");
+                LogHandler.recordException(e,"service");
                 return false;
             }
         };

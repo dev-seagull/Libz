@@ -3,8 +3,6 @@ package com.example.cso;
 import static com.example.cso.DBHelper.dbReadable;
 import static com.example.cso.DBHelper.dbWritable;
 
-import com.github.mikephil.charting.data.BarEntry;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -20,6 +18,7 @@ public class DeviceHandler {
         this.deviceName = deviceName;
         this.deviceId = deviceId;
     }
+    private static String TAG = "DeviceHandler";
     public void setDeviceName(String deviceName) {
         this.deviceName = deviceName;
     }
@@ -41,7 +40,7 @@ public class DeviceHandler {
                 devices.add(new DeviceHandler(deviceName,deviceId));
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to get devices from json: " + e.getLocalizedMessage(), true);
+            LogHandler.recordException(e,TAG);
         }
         return devices;
     }
@@ -56,7 +55,7 @@ public class DeviceHandler {
             dbWritable.execSQL(sqlQuery, new Object[]{deviceName, deviceId});
             dbWritable.setTransactionSuccessful();
         } catch (Exception e) {
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         } finally {
             dbWritable.endTransaction();
         }
@@ -75,7 +74,7 @@ public class DeviceHandler {
                 }
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to check if deviceId exists : " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }finally {
             if(cursor != null){
                 cursor.close();
@@ -102,7 +101,7 @@ public class DeviceHandler {
                 } while (cursor.moveToNext());
             }
         }catch (Exception e){
-            LogHandler.saveLog("Failed to get devices from DB : " + e.getLocalizedMessage());
+            LogHandler.recordException(e,TAG);
         }finally {
             if(cursor != null){
                 cursor.close();
@@ -118,7 +117,7 @@ public class DeviceHandler {
             dbWritable.execSQL(sqlQuery,new String[]{deviceId});
             dbWritable.setTransactionSuccessful();
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }finally {
             dbWritable.endTransaction();
         }

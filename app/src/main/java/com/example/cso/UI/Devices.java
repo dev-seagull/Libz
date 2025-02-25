@@ -26,16 +26,15 @@ import com.example.cso.LogHandler;
 import com.example.cso.MainActivity;
 import com.example.cso.R;
 import com.github.mikephil.charting.charts.HorizontalBarChart;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
-import java.util.Locale;
 import java.util.concurrent.FutureTask;
 
 public class Devices {
 
     public static int deviceButtonsId;
+    private static final String TAG = "Devices";
 
     public static LinearLayout createParentLayoutForDeviceButtons(Activity activity){
         LinearLayout parentLayout = new LinearLayout(activity);
@@ -190,7 +189,7 @@ public class Devices {
                 RelativeLayout parent = (RelativeLayout) view.getParent();
                 reInitializeDeviceButtonsLayout(parent,activity,device);
             }catch (Exception e){
-                LogHandler.crashLog(e,"ui");
+                LogHandler.recordException(e,"ui");
             }
         });
     }
@@ -249,7 +248,7 @@ public class Devices {
                 });
                 popupMenu.show();
             }catch (Exception e){
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
         });
     }
@@ -337,7 +336,7 @@ public class Devices {
         try {
             return futureTask.get();
         } catch (Exception e) {
-            LogHandler.crashLog(e,"DeviceStatusSync");
+            LogHandler.recordException(e,"DeviceStatusSync");
             return null;
         }
     }
@@ -384,7 +383,7 @@ public class Devices {
         try {
             return futureTask.get();
         } catch (Exception e) {
-            LogHandler.crashLog(e,"DeviceStatusSync");
+            LogHandler.recordException(e,"DeviceStatusSync");
             return null;
         }
     }
@@ -428,7 +427,7 @@ public class Devices {
         try {
             return futureTask.get();
         } catch (Exception e) {
-            LogHandler.crashLog(e,"DeviceStatusSync");
+            LogHandler.recordException(e,"DeviceStatusSync");
             return null;
         }
     }

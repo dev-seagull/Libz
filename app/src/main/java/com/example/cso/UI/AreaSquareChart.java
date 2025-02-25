@@ -60,7 +60,7 @@ public class AreaSquareChart {
 
             layout.addView(subLayout);
         }catch (Exception e){
-            LogHandler.crashLog(e,"AreaSquareChart");
+            LogHandler.recordException(e,"AreaSquareChart");
             layout.removeAllViews();
             TextView textView = Details.getErrorAsChartAlternative(context);
             layout.addView(textView);
@@ -209,7 +209,7 @@ public class AreaSquareChart {
             Log.d("AreaSquareChart","f :" +  String.valueOf(used));
             Log.d("AreaSquareChart", "f :" + String.valueOf(media));
             Log.d("AreaSquareChart", "f :" + String.valueOf(synced));
-        }catch (Exception e) { LogHandler.crashLog(e,"AreaSquareChart"); }
+        }catch (Exception e) { LogHandler.recordException(e,"AreaSquareChart"); }
     }
 
     private static void addSquareToLayout(RelativeLayout layout, ImageView square, int size) {

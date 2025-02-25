@@ -8,7 +8,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.cso.UI.UI;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -25,6 +24,7 @@ public class Sync {
     public static long toastInterval = 10000;
     public static double amountToFreeUp;
     public static double currentDriveFreeSpace;
+    private static String TAG = "Sync";
     public static void syncAndroidFiles(Activity activity){
         Log.d("Threads","startSyncThread started");
         Thread syncThread =  new Thread( () -> {
@@ -63,13 +63,13 @@ public class Sync {
                     }
                 }
                 Log.d("service","end of check for account existence and capacity");
-            }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e);  }
+            }catch (Exception e){ LogHandler.recordException(e,TAG);  }
         });
 
         syncThread.start();
         try{
             syncThread.join();
-        }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e){ LogHandler.recordException(e,TAG); }
 
         Log.d("Threads","startSyncThread finished");
     }
@@ -138,7 +138,7 @@ public class Sync {
 
                 syncAndroidFile(androidRow, userEmail, refreshToken, syncedAssetsSubFolderId, activity);
             }
-        }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e){ LogHandler.recordException(e,TAG); }
     }
 
 
@@ -212,13 +212,13 @@ public class Sync {
                     }
                 }
                 Log.d("service","amount needed to free up after sync one file : " + amountToFreeUp);
-            }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+            }catch (Exception e){ LogHandler.recordException(e,TAG); }
         });
 
         syncAndroidFileThread.start();
         try{
             syncAndroidFileThread.join();
-        }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e) { LogHandler.recordException(e,TAG); }
         Log.d("Threads","syncAndroidFileThread finished");
     }
 
@@ -272,9 +272,9 @@ public class Sync {
             backupThread.start();
             try {
                 backupThread.join();
-            } catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+            } catch (Exception e) { LogHandler.recordException(e,TAG); }
 
-        }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e){ LogHandler.recordException(e,TAG); }
 
         return isBackedUp[0];
     }
@@ -298,7 +298,7 @@ public class Sync {
                     unique_android_rows.add(android_row);
                 }
             }
-        }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+        }catch (Exception e){ LogHandler.recordException(e,TAG); }
         Log.d("service7","getSortedAndroidFiles finished");
         return unique_android_rows;
     }
@@ -309,7 +309,7 @@ public class Sync {
             if (TimerService.isMyServiceRunning(activity.getApplicationContext(), TimerService.class).equals("on")) {
                 MainActivity.activity.getApplicationContext().stopService(MainActivity.serviceIntent);
             }
-        }catch (Exception e) {  LogHandler.crashLog(e,"Service4"); }
+        }catch (Exception e) {  LogHandler.recordException(e,"Service4"); }
     }
 
     public static void startSync(Context context){
@@ -317,7 +317,7 @@ public class Sync {
             if (TimerService.isMyServiceRunning(context, TimerService.class).equals("off")){
                 context.startService(MainActivity.serviceIntent);
             }
-        }catch (Exception e) { LogHandler.crashLog(e,"Service5"); }
+        }catch (Exception e) { LogHandler.recordException(e,"Service5"); }
     }
 
     public static void startSync(Context context, Intent serviceIntent){
@@ -329,7 +329,7 @@ public class Sync {
                     context.startService(serviceIntent);
                 }
             }
-        }catch (Exception e) { LogHandler.crashLog(e,"Service6"); }
+        }catch (Exception e) { LogHandler.recordException(e,"Service6"); }
     }
 
 
@@ -362,7 +362,7 @@ public class Sync {
                     try {
                         t.join();
                     }catch (Exception e){
-                        FirebaseCrashlytics.getInstance().recordException(e);
+                        LogHandler.recordException(e,TAG);
                     }
                     try {
                         Thread.sleep(10000);
@@ -373,7 +373,7 @@ public class Sync {
                     DBHelper.updateDatabaseBasedOnJson();
                     UI.update("after json has changed in Sync checkStatusChange");
                 } catch (Exception e) {
-                    FirebaseCrashlytics.getInstance().recordException(e);
+                    LogHandler.recordException(e,TAG);
                 }
             }
             Sync.isJsonChangeCheckRunning = false;
@@ -382,7 +382,7 @@ public class Sync {
         try{
             checkForStatusChangesThread.join();
         }catch (Exception e){
-            FirebaseCrashlytics.getInstance().recordException(e);
+            LogHandler.recordException(e,TAG);
         }
     }
 

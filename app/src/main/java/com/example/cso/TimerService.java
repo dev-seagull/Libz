@@ -20,7 +20,6 @@ import androidx.core.app.NotificationCompat;
 import com.example.cso.UI.SyncButton;
 import com.example.cso.UI.WifiOnlyButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import java.util.List;
 import java.util.Timer;
@@ -108,7 +107,7 @@ public class TimerService extends Service {
                                 Log.d("serviceStatus","finish sync android files");
                             }catch (Exception e) {
                                 System.out.println("Error : " + e.getLocalizedMessage());
-                                LogHandler.crashLog(e,"Service3");
+                                LogHandler.recordException(e,"Service3");
                             } finally{
                                 isTimerRunning = false; // end of timer service
                             }
@@ -116,7 +115,7 @@ public class TimerService extends Service {
                         }).start();
 
                     }catch (Exception e){
-                        LogHandler.crashLog(e,"service1");
+                        LogHandler.recordException(e,"service1");
                     }
                 }
             };
@@ -232,7 +231,7 @@ public class TimerService extends Service {
                     return true;
                 }
             }
-        }catch (Exception e) {LogHandler.crashLog(e,"service2");}
+        }catch (Exception e) {LogHandler.recordException(e,"service2");}
 
         return false;
     }

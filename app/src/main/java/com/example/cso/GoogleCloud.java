@@ -4,13 +4,10 @@
     import android.content.Intent;
     import android.util.Log;
     import android.view.View;
-    import android.widget.LinearLayout;
-    import android.widget.Toast;
 
     import androidx.activity.result.ActivityResultLauncher;
     import androidx.appcompat.app.AppCompatActivity;
 
-    import com.example.cso.UI.Accounts;
     import com.example.cso.UI.Dialogs;
     import com.example.cso.UI.UI;
     import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -22,7 +19,6 @@
     import com.google.android.gms.tasks.Task;
     import com.google.api.services.drive.Drive;
     import com.google.api.services.drive.model.About;
-    import com.google.firebase.crashlytics.FirebaseCrashlytics;
     import com.google.gson.JsonArray;
     import com.google.gson.JsonObject;
 
@@ -46,6 +42,7 @@
 
     public class GoogleCloud extends AppCompatActivity {
         private static GoogleSignInClient googleSignInClient;
+        private static String TAG = "GoogleCloud";
 
         public GoogleCloud(){
 
@@ -76,7 +73,7 @@
                         signInLauncher.launch(signInIntent);
                     });
                 } catch (Exception e){
-                    LogHandler.saveLog("login failed in signInGoogleCloud : "+e.getLocalizedMessage(),true);
+                    LogHandler.recordException(e,TAG);
                 }
             }).start();
         }
@@ -106,7 +103,7 @@
                         DBHelper.updateAccounts(userEmail, updatedValues, type);
                         accessTokens[0] = tokens.getAccessToken();
                     }
-                }catch (Exception e) { FirebaseCrashlytics.getInstance().recordException(e); }
+                }catch (Exception e) { LogHandler.recordException(e,TAG); }
 
                 try {
                     String revokeUrl = "https://accounts.google.com/o/oauth2/revoke";
@@ -128,13 +125,13 @@
                     if (!isAccessTokenValid) {
                         isRevoked[0] = true;
                     }
-                } catch (IOException e) {FirebaseCrashlytics.getInstance().recordException(e); }
+                } catch (IOException e) {LogHandler.recordException(e,TAG); }
             });
             revokeTokenThread.start();
             try{
                 revokeTokenThread.join();
             }catch (Exception e){
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
             return isRevoked[0];
         }
@@ -157,7 +154,7 @@
                     }
                     isValid[0] = !response.toString().contains("error");
                 } catch (Exception e){
-                    FirebaseCrashlytics.getInstance().recordException(e);
+                    LogHandler.recordException(e,TAG);
                 }finally{
                     if (connection != null){
                         connection.disconnect();
@@ -168,7 +165,7 @@
             try {
                 isAccessTokenValidThread.join();
             } catch (Exception e) {
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
            return isValid[0];
         }
@@ -463,7 +460,7 @@
                     storage[0] = new Storage(totalStorage[0], usedStorage[0], usedInDriveStorage[0]);
                     return storage[0];
                 } catch (Exception e) {
-                    LogHandler.crashLog(e,"GoogleCloud");
+                    LogHandler.recordException(e,"GoogleCloud");
                 }
                 return storage[0];
             };
@@ -472,7 +469,7 @@
                 Future<Storage> future = executor.submit(backgroundTask);
                 storage[0] = future.get();
             }catch (Exception e){
-                LogHandler.crashLog(e,"GoogleCloud");
+                LogHandler.recordException(e,"GoogleCloud");
             }finally {
                 executor.shutdown();
             }
@@ -545,7 +542,7 @@
             invalidateTokenThread.start();
             try{
                 invalidateTokenThread.join();
-            }catch (Exception e){ FirebaseCrashlytics.getInstance().recordException(e); }
+            }catch (Exception e){ LogHandler.recordException(e,TAG); }
 
             Log.d("Unlink", "invalidate token thread finished : " + isInvalidated[0]);
             return isInvalidated[0];
@@ -586,14 +583,14 @@
                         signInLinkedAccountsResult.add(signInResult);
                     }
                 }catch (Exception e){
-                    FirebaseCrashlytics.getInstance().recordException(e);
+                    LogHandler.recordException(e,TAG);
                 }
             });
             signInLinkedAccountsThread.start();
             try{
                 signInLinkedAccountsThread.join();
             }catch (Exception e){
-                FirebaseCrashlytics.getInstance().recordException(e);
+                LogHandler.recordException(e,TAG);
             }
             return isHandled[0] ? signInLinkedAccountsResult : null;
         }
