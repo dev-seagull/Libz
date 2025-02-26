@@ -60,9 +60,12 @@ public class GoogleDriveFolders {
         Thread initializeSubFoldersThread = new Thread( () -> {
             String folderId = getSubFolderIdFromDrive(service,folderName,parentFolderId);
             Log.d(TAG, "Folder :" + folderName + " and id: " + folderId);
-
+            boolean isHidden = false;
             if(folderId == null){
-                folderId = createSubFolder(service,parentFolderId,folderName);
+                if(folderName.equals(GoogleDriveFolders.databaseFolderName)){
+                    isHidden = true;
+                }
+                folderId = createSubFolder(service,parentFolderId,folderName,isHidden);
             }
 
             HashMap<String, Object> updatedValues = new HashMap<String, Object>() {};
@@ -86,14 +89,18 @@ public class GoogleDriveFolders {
 
 
 
-    private static String createSubFolder(Drive service, String parentFolderId, String subFolderName){
+    private static String createSubFolder(Drive service, String parentFolderId, String subFolderName, boolean isHidden){
         final String[] folderId = {null};
         Thread createSubFolderThread = new Thread( () -> {
            try{
                File folderMetadata = new File();
                folderMetadata.setName(subFolderName);
-               folderMetadata.setMimeType("application/vnd.google-apps.folder");
-               folderMetadata.setParents(Collections.singletonList(parentFolderId));
+               if (isHidden) {
+                   folderMetadata.setParents(Collections.singletonList("appDataFolder"));
+               } else {
+                   folderMetadata.setMimeType("application/vnd.google-apps.folder");
+                   folderMetadata.setParents(Collections.singletonList(parentFolderId));
+               }
 
                File subfolder = service.files().create(folderMetadata)
                        .setFields("id")
@@ -115,28 +122,46 @@ public class GoogleDriveFolders {
         return folderId[0];
     }
 
-    private static String getSubFolderIdFromDrive(Drive service, String folderName, String parentFolderId){
+    private static String getSubFolderIdFromDrive(Drive service, String folderName, String parentFolderId) {
         final String[] folderId = {null};
-        Thread getSubFolderIdFromDriveThread = new Thread( () -> {
-            try{
-                String query = String.format("mimeType='application/vnd.google-apps.folder' " +
-                        "and name='%s' and '%s' in parents and trashed=false", folderName, parentFolderId);
+        Thread getSubFolderIdFromDriveThread = new Thread(() -> {
+            try {
+                String query;
+                String spaces;
+                boolean isHidden = false;
+                if(folderName.equals(GoogleDriveFolders.databaseFolderName)){
+                    isHidden = true;
+                }
+                if (isHidden) {
+                    // Query within the appDataFolder (hidden folder)
+                    query = String.format("mimeType='application/vnd.google-apps.folder' and name='%s' and 'appDataFolder' in parents and trashed=false", folderName);
+                    spaces = "appDataFolder";
+                } else {
+                    // Query in a specific parent folder within the regular Drive space
+                    query = String.format("mimeType='application/vnd.google-apps.folder' and name='%s' and '%s' in parents and trashed=false", folderName, parentFolderId);
+                    spaces = "drive";
+                }
+
                 FileList result = service.files().list()
                         .setQ(query)
-                        .setSpaces("drive")
+                        .setSpaces(spaces)
                         .setFields("files(id)")
                         .execute();
 
                 if (!result.getFiles().isEmpty()) {
                     folderId[0] = result.getFiles().get(0).getId();
                 }
-            }catch (Exception e) { LogHandler.recordException(e,TAG + "6"); }
+            } catch (Exception e) {
+                LogHandler.recordException(e, TAG + "6");
+            }
         });
 
         getSubFolderIdFromDriveThread.start();
-        try{
+        try {
             getSubFolderIdFromDriveThread.join();
-        }catch (Exception e) { LogHandler.recordException(e,TAG + "7"); }
+        } catch (Exception e) {
+            LogHandler.recordException(e, TAG + "7");
+        }
 
         return folderId[0];
     }
