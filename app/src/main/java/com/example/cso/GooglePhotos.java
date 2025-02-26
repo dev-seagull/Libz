@@ -287,7 +287,7 @@ public class GooglePhotos {
 //    public ArrayList<String> uploadPhotosToDrive(String destinationUserEmail,String accessToken){
 //        System.out.println("here in photos to drive");
 //        String destinationFolderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()
-//                + File.separator + "stash";
+//                + File.separator + "stash";// need to change
 //        String sqlQury = "SELECT * FROM PHOTOS";
 //        Cursor cursor = DBHelper.dbReadable.rawQuery(sqlQury, null);
 //        ArrayList<String[]> destinationFiles = new ArrayList<>();

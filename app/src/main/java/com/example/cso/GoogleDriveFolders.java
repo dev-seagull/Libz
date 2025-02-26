@@ -84,6 +84,8 @@ public class GoogleDriveFolders {
         }catch (Exception e) { LogHandler.recordException(e,TAG + "3"); }
     }
 
+
+
     private static String createSubFolder(Drive service, String parentFolderId, String subFolderName){
         final String[] folderId = {null};
         Thread createSubFolderThread = new Thread( () -> {

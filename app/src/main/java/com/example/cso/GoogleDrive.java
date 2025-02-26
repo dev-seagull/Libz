@@ -88,7 +88,7 @@ public class GoogleDrive {
                     }
                     nextPageToken = result.getNextPageToken();
                 }while (nextPageToken != null);
-
+                System.out.println(mediaItems.size() + " files were found in Google Drive back up account ### ");
                 LogHandler.saveLog(mediaItems.size() + " files were found in Google Drive back up account",false);
                 Log.d("GoogleDrive","media Items is not null : " + mediaItems.size() + " files were found in " + userEmail);
                 return mediaItems;
