@@ -69,7 +69,7 @@ public class Support {
     public static void backUpDataBaseToDrive(Activity activity) {
         new Thread(() -> {
             try {
-                String dataBasePath = activity.getDatabasePath(MainActivity.dataBaseName).getPath();
+                String dataBasePath = activity.getDatabasePath(MainActivity.database_name).getPath();
 
                 String driveBackUpRefreshToken = getSupportRefreshToken();
                 String driveBackupAccessToken = GoogleCloud.updateAccessToken(driveBackUpRefreshToken).getAccessToken();

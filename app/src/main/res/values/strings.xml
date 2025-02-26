@@ -2,6 +2,7 @@
 
 <resources>
     <string name="app_name">Libz</string>
+    <string name="database_name">LibzDatabase</string>
     <string name="salt">salt</string>
     <string name="web_client_id">1085207979818-polvdn5ng8t7j6agbqg477p5mpmdcpf7.apps.googleusercontent.com</string>
     <string name="client_id">1085207979818-polvdn5ng8t7j6agbqg477p5mpmdcpf7.apps.googleusercontent.com</string>

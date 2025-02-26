@@ -14,15 +14,11 @@ import java.util.List;
 
 public class GoogleDriveFolders {
     private static String TAG = "GoogleDriveFolder";
-    public static String parentFolderName = "libz_app";
+    public static String parentFolderName = MainActivity.app_name.toLowerCase() + "_app";
     public static String assetsFolderName = "assets";
     public static String profileFolderName = "profile";
     public static String databaseFolderName = "database";
     public static String unlinkedFolderName = "unlinked";
-    public static String oldParentFolderName = "stash_synced_assets";
-    public static String oldProfileFolderName = "stash_user_profile";
-    public static String oldDatabaseFolderName = "libz_database";
-    public static String oldAssetsFolderName = "assets";
 
     public static void initializeParentFolder(String userEmail, String accessToken, boolean shouldInitSubFolders){
         Thread initializeParentFolderThread = new Thread(() -> {

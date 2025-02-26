@@ -58,7 +58,7 @@
 
         <service
             android:name=".TimerService"
-            android:label="Stash Is Syncing All Of Your Files"
+            android:label="Is Syncing All Of Your Files"
             android:exported="false"
             />
 

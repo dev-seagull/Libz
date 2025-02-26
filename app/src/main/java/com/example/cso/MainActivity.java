@@ -51,11 +51,12 @@
         public static Timer androidTimer;
         public static Timer UITimer;
         public static Intent serviceIntent;
+        public static String database_name;
+        public static String app_name;
         public static boolean isAndroidTimerRunning = false; // init
         private static PermissionManager permissionManager = new PermissionManager();;
         public static FirebaseAnalytics mFBAnalytics;
         public static FirebaseCrashlytics mFBCrashlytics;
-        public static String dataBaseName = "StashDatabase";
         public static DBHelper dbHelper;
         private static String TAG = "MainActivity";
 
@@ -70,6 +71,8 @@
             Log.d("state", "start of onCreate");
 
             activity = this;
+            database_name = getResources().getString(R.string.ENCRYPTION_KEY);
+            app_name = getResources().getString(R.string.app_name);
             preferences = getPreferences(Context.MODE_PRIVATE);
             mFBAnalytics = FirebaseAnalytics.getInstance(this);
             mFBCrashlytics = FirebaseCrashlytics.getInstance();
@@ -245,7 +248,6 @@
         Log.d("permissions","isStoragePermissionGranted : " + isStoragePermissionGranted);
         Log.d("permissions","isReadAndWritePermissionGranted : " + isReadAndWritePermissionGranted);
         if(isStoragePermissionGranted && isReadAndWritePermissionGranted){
-//            dbHelper = new DBHelper(this);
 
             setupTimers(getApplicationContext());
 
